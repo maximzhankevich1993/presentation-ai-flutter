@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/api_service.dart';
+import 'loading_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -41,38 +42,13 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
     
-    setState(() => _isLoading = true);
-    
-    try {
-      // Используем одну бесплатную генерацию
-      await userProvider.useGeneration();
-      
-      // Отправляем запрос на генерацию
-      final presentation = await ApiService.generatePresentation(topic);
-      
-      if (mounted) {
-        setState(() => _isLoading = false);
-        
-        // Пока просто показываем сообщение об успехе
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Презентация "${presentation.title}" создана! ${presentation.slides.length} слайдов'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        
-        _topicController.clear();
-      }
-    } catch (e) {
-      setState(() => _isLoading = false);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ошибка: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+    // Переходим на экран загрузки
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => LoadingScreen(topic: topic),
+      ),
+    );
   }
 
   void _showPremiumDialog() {
@@ -103,7 +79,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // Здесь будет переход на экран Premium
+              _showComingSoonDialog();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.amber,
@@ -112,6 +88,91 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  void _showComingSoonDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Скоро'),
+        content: const Text('Premium подписка будет доступна в ближайшее время!'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSettingsDialog() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Тема оформления',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Icons.brightness_4),
+                title: const Text('Системная'),
+                trailing: themeProvider.themeModeType == ThemeModeType.system
+                    ? const Icon(Icons.check, color: Color(0xFF4F46E5))
+                    : null,
+                onTap: () {
+                  themeProvider.setThemeMode(ThemeModeType.system);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.light_mode),
+                title: const Text('Светлая'),
+                trailing: themeProvider.themeModeType == ThemeModeType.light
+                    ? const Icon(Icons.check, color: Color(0xFF4F46E5))
+                    : null,
+                onTap: () {
+                  themeProvider.setThemeMode(ThemeModeType.light);
+                  Navigator.pop(context);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.dark_mode),
+                title: const Text('Тёмная'),
+                trailing: themeProvider.themeModeType == ThemeModeType.dark
+                    ? const Icon(Icons.check, color: Color(0xFF4F46E5))
+                    : null,
+                onTap: () {
+                  themeProvider.setThemeMode(ThemeModeType.dark);
+                  Navigator.pop(context);
+                },
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -130,9 +191,7 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icon(Icons.crown, color: Colors.amber[700]),
             ),
           IconButton(
-            onPressed: () {
-              // Настройки
-            },
+            onPressed: _showSettingsDialog,
             icon: const Icon(Icons.settings_outlined),
           ),
         ],
