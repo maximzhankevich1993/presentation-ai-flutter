@@ -1,0 +1,28 @@
+# Flutter
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+ios/
+android/
+windows/flutter/
+macos/flutter/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+*.env
+
+# Local data
+*.db
+*.hive
