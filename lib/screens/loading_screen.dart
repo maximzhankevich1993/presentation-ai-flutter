@@ -8,7 +8,6 @@ import 'editor_screen.dart';
 
 class LoadingScreen extends StatefulWidget {
   final String topic;
-
   const LoadingScreen({super.key, required this.topic});
 
   @override
@@ -18,13 +17,11 @@ class LoadingScreen extends StatefulWidget {
 class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProviderStateMixin {
   late AnimationController _bounceController;
   late Animation<double> _bounceAnimation;
-  
   int _step = 0;
   Timer? _messageTimer;
   double _progress = 0.0;
   bool _isGenerating = true;
   String? _error;
-  
   int _slidesGenerated = 0;
   
   final List<String> _messages = [
@@ -40,16 +37,8 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    
-    _bounceController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 800),
-    );
-    
-    _bounceAnimation = Tween<double>(begin: 0, end: -12).animate(
-      CurvedAnimation(parent: _bounceController, curve: Curves.easeInOut),
-    );
-    
+    _bounceController = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
+    _bounceAnimation = Tween<double>(begin: 0, end: -12).animate(CurvedAnimation(parent: _bounceController, curve: Curves.easeInOut));
     _bounceController.repeat(reverse: true);
     _startGeneration();
   }
@@ -60,7 +49,6 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
         setState(() => _step++);
       }
     });
-    
     _simulateProgress();
     _generatePresentation();
   }
@@ -78,49 +66,23 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
   Future<void> _generatePresentation() async {
     try {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
-      
       final success = await userProvider.useGeneration();
-      if (!success) {
-        throw Exception('Нет доступных генераций');
-      }
+      if (!success) throw Exception('Нет доступных генераций');
       
-      final presentation = await ApiService.generatePresentation(
-        widget.topic,
-        maxSlides: userProvider.maxSlidesPerPresentation,
-      );
-      
+      final presentation = await ApiService.generatePresentation(widget.topic, maxSlides: userProvider.maxSlidesPerPresentation);
       _slidesGenerated = presentation.slides.length;
       
-      setState(() {
-        _isGenerating = false;
-        _progress = 1.0;
-        _step = _messages.length - 1;
-      });
-      
+      setState(() { _isGenerating = false; _progress = 1.0; _step = _messages.length - 1; });
       _messageTimer?.cancel();
-      
       await Future.delayed(const Duration(milliseconds: 500));
       
       if (mounted) {
-        _showSuccessDialog(presentation);
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => EditorScreen(presentation: presentation)));
       }
-      
     } catch (e) {
-      setState(() {
-        _isGenerating = false;
-        _error = e.toString();
-      });
+      setState(() { _isGenerating = false; _error = e.toString(); });
       _messageTimer?.cancel();
     }
-  }
-
-  void _showSuccessDialog(Presentation presentation) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => EditorScreen(presentation: presentation),
-      ),
-    );
   }
 
   @override
@@ -140,137 +102,61 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Doodle профессор
             AnimatedBuilder(
               animation: _bounceAnimation,
-              builder: (context, child) {
-                return Transform.translate(
-                  offset: Offset(0, _bounceAnimation.value),
-                  child: child,
-                );
-              },
+              builder: (context, child) => Transform.translate(offset: Offset(0, _bounceAnimation.value), child: child),
               child: Container(
-                width: 200.w,
-                height: 200.w,
+                width: 200.w, height: 200.w,
                 decoration: BoxDecoration(
-                  color: _error != null 
-                      ? Colors.red.withOpacity(0.1)
-                      : const Color(0xFF4F46E5).withOpacity(0.1),
+                  color: _error != null ? Colors.red.withOpacity(0.1) : const Color(0xFF4F46E5).withOpacity(0.1),
                   shape: BoxShape.circle,
-                  border: Border.all(
-                    color: _error != null ? Colors.red : const Color(0xFF4F46E5),
-                    width: 3,
-                  ),
+                  border: Border.all(color: _error != null ? Colors.red : const Color(0xFF4F46E5), width: 3),
                 ),
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    Text(
-                      _error != null ? '😔' : '🧑‍🏫',
-                      style: TextStyle(fontSize: 80.sp),
-                    ),
+                    Text(_error != null ? '😔' : '🧑‍🏫', style: TextStyle(fontSize: 80.sp)),
                     if (_error == null) ...[
-                      Positioned(
-                        top: 20,
-                        right: 30,
-                        child: Text('💡', style: TextStyle(fontSize: 40.sp)),
-                      ),
-                      Positioned(
-                        top: 10,
-                        left: 20,
-                        child: Text('✨', style: TextStyle(fontSize: 20.sp)),
-                      ),
-                      Positioned(
-                        bottom: 20,
-                        right: 20,
-                        child: Text('📝', style: TextStyle(fontSize: 30.sp)),
-                      ),
+                      Positioned(top: 20, right: 30, child: Text('💡', style: TextStyle(fontSize: 40.sp))),
+                      Positioned(top: 10, left: 20, child: Text('✨', style: TextStyle(fontSize: 20.sp))),
+                      Positioned(bottom: 20, right: 20, child: Text('📝', style: TextStyle(fontSize: 30.sp))),
                     ],
                   ],
                 ),
               ),
             ),
-            
             SizedBox(height: 40.h),
-            
             Container(
               padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-              decoration: BoxDecoration(
-                color: const Color(0xFF4F46E5).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: Text(
-                widget.topic,
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  color: const Color(0xFF4F46E5),
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              decoration: BoxDecoration(color: const Color(0xFF4F46E5).withOpacity(0.1), borderRadius: BorderRadius.circular(30)),
+              child: Text(widget.topic, style: TextStyle(fontSize: 16.sp, color: const Color(0xFF4F46E5), fontWeight: FontWeight.w500), textAlign: TextAlign.center),
             ),
-            
             SizedBox(height: 24.h),
-            
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: Container(
                 key: ValueKey(_error != null ? 'error' : _step),
                 padding: EdgeInsets.symmetric(horizontal: 32.w),
                 child: Text(
-                  _error != null 
-                      ? '❌ ${_error.toString().replaceAll('Exception: ', '')}'
-                      : _messages[_step],
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Caveat',
-                    color: _error != null 
-                        ? Colors.red 
-                        : (isDark ? Colors.white : const Color(0xFF1E1E2A)),
-                  ),
+                  _error != null ? '❌ ${_error.toString().replaceAll('Exception: ', '')}' : _messages[_step],
+                  style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w500, fontFamily: 'Caveat', color: _error != null ? Colors.red : (isDark ? Colors.white : const Color(0xFF1E1E2A))),
                   textAlign: TextAlign.center,
                 ),
               ),
             ),
-            
             SizedBox(height: 40.h),
-            
             if (_error != null)
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _step = 0;
-                    _progress = 0.0;
-                    _isGenerating = true;
-                    _error = null;
-                  });
-                  _startGeneration();
-                },
-                child: const Text('Попробовать снова'),
-              )
+              ElevatedButton(onPressed: () { setState(() { _step = 0; _progress = 0.0; _isGenerating = true; _error = null; }); _startGeneration(); }, child: const Text('Попробовать снова'))
             else
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 60.w),
                 child: Column(
                   children: [
-                    CustomPaint(
-                      size: Size(double.infinity, 8.h),
-                      painter: DoodleProgressPainter(progress: _progress),
-                    ),
+                    CustomPaint(size: Size(double.infinity, 8.h), painter: DoodleProgressPainter(progress: _progress)),
                     SizedBox(height: 8.h),
-                    Text(
-                      '${(_progress * 100).toInt()}%',
-                      style: TextStyle(fontSize: 14.sp, color: Colors.grey),
-                    ),
+                    Text('${(_progress * 100).toInt()}%', style: TextStyle(fontSize: 14.sp, color: Colors.grey)),
                     if (_slidesGenerated > 0)
-                      Padding(
-                        padding: EdgeInsets.only(top: 8.h),
-                        child: Text(
-                          '📊 Создано $_slidesGenerated слайдов',
-                          style: TextStyle(fontSize: 12.sp, color: Colors.grey),
-                        ),
-                      ),
+                      Padding(padding: EdgeInsets.only(top: 8.h), child: Text('📊 Создано $_slidesGenerated слайдов', style: TextStyle(fontSize: 12.sp, color: Colors.grey))),
                   ],
                 ),
               ),
@@ -283,53 +169,28 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
 
 class DoodleProgressPainter extends CustomPainter {
   final double progress;
-
   DoodleProgressPainter({required this.progress});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final backgroundPaint = Paint()
-      ..color = Colors.grey.withOpacity(0.2)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round;
-    
-    final progressPaint = Paint()
-      ..color = const Color(0xFF4F46E5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round;
-    
-    canvas.drawLine(
-      Offset(0, size.height / 2),
-      Offset(size.width, size.height / 2),
-      backgroundPaint,
-    );
-    
+    final backgroundPaint = Paint()..color = Colors.grey.withOpacity(0.2)..style = PaintingStyle.stroke..strokeWidth = 3..strokeCap = StrokeCap.round;
+    final progressPaint = Paint()..color = const Color(0xFF4F46E5)..style = PaintingStyle.stroke..strokeWidth = 3..strokeCap = StrokeCap.round;
+    canvas.drawLine(Offset(0, size.height / 2), Offset(size.width, size.height / 2), backgroundPaint);
     final progressWidth = size.width * progress;
     final path = Path();
     path.moveTo(0, size.height / 2);
-    
     for (double x = 0; x < progressWidth; x += 5) {
       final y = size.height / 2 + (x * 0.02).sin() * 2;
       path.lineTo(x, y);
     }
-    
     canvas.drawPath(path, progressPaint);
-    
     if (progress > 0.05) {
-      canvas.drawCircle(
-        Offset(progressWidth, size.height / 2 + (progressWidth * 0.02).sin() * 2),
-        4,
-        Paint()..color = const Color(0xFF4F46E5),
-      );
+      canvas.drawCircle(Offset(progressWidth, size.height / 2 + (progressWidth * 0.02).sin() * 2), 4, Paint()..color = const Color(0xFF4F46E5));
     }
   }
 
   @override
-  bool shouldRepaint(covariant DoodleProgressPainter oldDelegate) {
-    return oldDelegate.progress != progress;
-  }
+  bool shouldRepaint(covariant DoodleProgressPainter oldDelegate) => oldDelegate.progress != progress;
 }
 
 extension on double {
