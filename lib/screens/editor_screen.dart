@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../services/api_service.dart';
+import 'package:provider/provider.dart';
+import '../models/presentation.dart';
+import '../providers/user_provider.dart';
+import '../services/export_service.dart';
 
 class EditorScreen extends StatefulWidget {
   final Presentation presentation;
@@ -27,16 +30,61 @@ class _EditorScreenState extends State<EditorScreen> {
     setState(() => _currentSlideIndex = index);
   }
 
-  void _nextSlide() {
-    if (_currentSlideIndex < _presentation.slides.length - 1) {
-      setState(() => _currentSlideIndex++);
-    }
-  }
-
-  void _previousSlide() {
-    if (_currentSlideIndex > 0) {
-      setState(() => _currentSlideIndex--);
-    }
+  void _exportPresentation() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final isPremium = userProvider.isPremium;
+    
+    showModalBottomSheet(
+      context: context,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24.r))),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.all(24.w),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(width: 40.w, height: 4.h, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))),
+                SizedBox(height: 24.h),
+                Text('Экспорт презентации', style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold)),
+                SizedBox(height: 24.h),
+                ListTile(
+                  leading: const Icon(Icons.insert_drive_file, color: Color(0xFF4F46E5)),
+                  title: const Text('PPTX (PowerPoint)'),
+                  subtitle: Text(isPremium ? 'Без водяного знака' : 'С водяным знаком'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    Navigator.pop(context);
+                    ExportService.exportToPPTX(presentation: _presentation, isPremium: isPremium);
+                  },
+                ),
+                ListTile(
+                  leading: Icon(Icons.picture_as_pdf, color: isPremium ? Colors.red : Colors.grey),
+                  title: const Text('PDF'),
+                  subtitle: Text(isPremium ? 'Доступно' : 'Premium'),
+                  trailing: isPremium ? const Icon(Icons.chevron_right) : const Icon(Icons.lock),
+                  onTap: isPremium ? () {
+                    Navigator.pop(context);
+                    ExportService.exportToPDF(presentation: _presentation, isPremium: true);
+                  } : null,
+                ),
+                ListTile(
+                  leading: Icon(Icons.image, color: isPremium ? Colors.green : Colors.grey),
+                  title: const Text('PNG (изображения)'),
+                  subtitle: Text(isPremium ? 'Все слайды как картинки' : 'Premium'),
+                  trailing: isPremium ? const Icon(Icons.chevron_right) : const Icon(Icons.lock),
+                  onTap: isPremium ? () {
+                    Navigator.pop(context);
+                    ExportService.exportToImages(presentation: _presentation, isPremium: true);
+                  } : null,
+                ),
+                SizedBox(height: 24.h),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -54,16 +102,12 @@ class _EditorScreenState extends State<EditorScreen> {
         ),
         actions: [
           IconButton(
-            onPressed: () {
-              // Экспорт
-            },
+            onPressed: _exportPresentation,
             icon: const Icon(Icons.download),
             tooltip: 'Скачать',
           ),
           IconButton(
-            onPressed: () {
-              // Поделиться
-            },
+            onPressed: () => ExportService.shareAsText(_presentation),
             icon: const Icon(Icons.share),
             tooltip: 'Поделиться',
           ),
@@ -71,15 +115,10 @@ class _EditorScreenState extends State<EditorScreen> {
       ),
       body: Column(
         children: [
-          // Предпросмотр слайда
           Expanded(
             child: _buildSlidePreview(_currentSlide, isDark),
           ),
-          
-          // Навигация по слайдам
           _buildSlideNavigation(),
-          
-          // Содержание слайда
           Container(
             height: 200.h,
             decoration: BoxDecoration(
@@ -118,7 +157,6 @@ class _EditorScreenState extends State<EditorScreen> {
         borderRadius: BorderRadius.circular(16.r),
         child: Stack(
           children: [
-            // Фоновое изображение
             if (slide.imageUrl != null)
               Positioned.fill(
                 child: Image.network(
@@ -130,53 +168,34 @@ class _EditorScreenState extends State<EditorScreen> {
                   ),
                 ),
               ),
-            
-            // Затемнение для читаемости
             if (slide.imageUrl != null)
               Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withOpacity(0.3),
-                      Colors.black.withOpacity(0.1),
-                    ],
+                    colors: [Colors.black.withOpacity(0.3), Colors.black.withOpacity(0.1)],
                   ),
                 ),
               ),
-            
-            // Контент слайда
             Padding(
               padding: EdgeInsets.all(24.w),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Заголовок
                   Text(
                     slide.title,
                     style: TextStyle(
                       fontSize: 28.sp,
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'Poppins',
                       color: slide.imageUrl != null ? Colors.white : Colors.black87,
                     ),
                   ),
-                  
                   if (slide.subtitle != null) ...[
                     SizedBox(height: 8.h),
-                    Text(
-                      slide.subtitle!,
-                      style: TextStyle(
-                        fontSize: 18.sp,
-                        color: slide.imageUrl != null ? Colors.white70 : Colors.grey[700],
-                      ),
-                    ),
+                    Text(slide.subtitle!, style: TextStyle(fontSize: 18.sp, color: slide.imageUrl != null ? Colors.white70 : Colors.grey[700])),
                   ],
-                  
                   SizedBox(height: 20.h),
-                  
-                  // Буллеты
                   ...slide.content.map((item) {
                     return Padding(
                       padding: EdgeInsets.only(bottom: 8.h),
@@ -185,12 +204,9 @@ class _EditorScreenState extends State<EditorScreen> {
                         children: [
                           Container(
                             margin: EdgeInsets.only(top: 6.h, right: 12.w),
-                            width: 8.w,
-                            height: 8.w,
+                            width: 8.w, height: 8.w,
                             decoration: BoxDecoration(
-                              color: slide.imageUrl != null 
-                                  ? Colors.white 
-                                  : const Color(0xFF4F46E5),
+                              color: slide.imageUrl != null ? Colors.white : const Color(0xFF4F46E5),
                               shape: BoxShape.circle,
                             ),
                           ),
@@ -198,11 +214,8 @@ class _EditorScreenState extends State<EditorScreen> {
                             child: Text(
                               item,
                               style: TextStyle(
-                                fontSize: 14.sp,
-                                height: 1.5,
-                                color: slide.imageUrl != null 
-                                    ? Colors.white 
-                                    : Colors.black87,
+                                fontSize: 14.sp, height: 1.5,
+                                color: slide.imageUrl != null ? Colors.white : Colors.black87,
                               ),
                             ),
                           ),
@@ -227,25 +240,13 @@ class _EditorScreenState extends State<EditorScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Предыдущий слайд
           IconButton(
-            onPressed: _currentSlideIndex > 0 ? _previousSlide : null,
-            icon: Icon(
-              Icons.chevron_left,
-              color: _currentSlideIndex > 0 ? const Color(0xFF4F46E5) : Colors.grey,
-            ),
+            onPressed: _currentSlideIndex > 0 ? () => _goToSlide(_currentSlideIndex - 1) : null,
+            icon: Icon(Icons.chevron_left, color: _currentSlideIndex > 0 ? const Color(0xFF4F46E5) : Colors.grey),
           ),
-          
-          // Индикатор
           Column(
             children: [
-              Text(
-                'Слайд ${_currentSlideIndex + 1} из $totalSlides',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
+              Text('Слайд ${_currentSlideIndex + 1} из $totalSlides', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500)),
               SizedBox(height: 8.h),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -253,14 +254,11 @@ class _EditorScreenState extends State<EditorScreen> {
                   return GestureDetector(
                     onTap: () => _goToSlide(index),
                     child: Container(
-                      width: 8.w,
-                      height: 8.w,
+                      width: 8.w, height: 8.w,
                       margin: EdgeInsets.symmetric(horizontal: 4.w),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: index == _currentSlideIndex
-                            ? const Color(0xFF4F46E5)
-                            : Colors.grey.withOpacity(0.3),
+                        color: index == _currentSlideIndex ? const Color(0xFF4F46E5) : Colors.grey.withOpacity(0.3),
                       ),
                     ),
                   );
@@ -268,14 +266,9 @@ class _EditorScreenState extends State<EditorScreen> {
               ),
             ],
           ),
-          
-          // Следующий слайд
           IconButton(
-            onPressed: _currentSlideIndex < totalSlides - 1 ? _nextSlide : null,
-            icon: Icon(
-              Icons.chevron_right,
-              color: _currentSlideIndex < totalSlides - 1 ? const Color(0xFF4F46E5) : Colors.grey,
-            ),
+            onPressed: _currentSlideIndex < totalSlides - 1 ? () => _goToSlide(_currentSlideIndex + 1) : null,
+            icon: Icon(Icons.chevron_right, color: _currentSlideIndex < totalSlides - 1 ? const Color(0xFF4F46E5) : Colors.grey),
           ),
         ],
       ),
@@ -292,14 +285,7 @@ class _EditorScreenState extends State<EditorScreen> {
             children: [
               Icon(Icons.list, size: 18, color: Colors.grey[600]),
               SizedBox(width: 8.w),
-              Text(
-                'Содержание слайда',
-                style: TextStyle(
-                  fontSize: 14.sp,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey[600],
-                ),
-              ),
+              Text('Содержание слайда', style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w600, color: Colors.grey[600])),
             ],
           ),
           SizedBox(height: 12.h),
@@ -309,30 +295,17 @@ class _EditorScreenState extends State<EditorScreen> {
               child: Row(
                 children: [
                   Container(
-                    width: 24.w,
-                    height: 24.w,
+                    width: 24.w, height: 24.w,
                     decoration: BoxDecoration(
                       color: const Color(0xFF4F46E5).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Center(
-                      child: Text(
-                        '${entry.key + 1}',
-                        style: TextStyle(
-                          fontSize: 12.sp,
-                          color: const Color(0xFF4F46E5),
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
+                      child: Text('${entry.key + 1}', style: TextStyle(fontSize: 12.sp, color: const Color(0xFF4F46E5), fontWeight: FontWeight.w600)),
                     ),
                   ),
                   SizedBox(width: 12.w),
-                  Expanded(
-                    child: Text(
-                      entry.value,
-                      style: TextStyle(fontSize: 14.sp, height: 1.4),
-                    ),
-                  ),
+                  Expanded(child: Text(entry.value, style: TextStyle(fontSize: 14.sp, height: 1.4))),
                 ],
               ),
             );
