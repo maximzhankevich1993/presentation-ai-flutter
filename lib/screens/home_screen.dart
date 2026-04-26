@@ -10,6 +10,7 @@ import 'profile_screen.dart';
 import 'history_screen.dart';
 import 'features_screen.dart';
 import 'workspace_screen.dart';
+import 'teacher_screen.dart';
 import '../services/surprise_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -78,6 +79,11 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkspaceScreen()));
   }
 
+  void _showTeacherScreen() {
+    // TODO: передавать реальный countryCode из определения по IP
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const TeacherScreen(countryCode: 'RU')));
+  }
+
   void _surpriseMe(BuildContext context) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     if (!userProvider.canUseSurpriseMe) { _showPremiumDialog(); return; }
@@ -85,7 +91,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final style = SurpriseService.generateRandomStyle();
     if (mounted) {
       SurpriseService.showSurpriseAnimation(context, () {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Применён стиль: ${style.themeName} 🎉'), backgroundColor: style.primaryColor, behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Применён стиль: ${style.themeName} 🎉'), backgroundColor: style.primaryColor, behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+        );
       });
     }
   }
@@ -101,6 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(onPressed: _showFeaturesScreen, icon: const Icon(Icons.stars), tooltip: 'Все возможности'),
           IconButton(onPressed: _showWorkspaceScreen, icon: const Icon(Icons.workspaces_outline), tooltip: 'Команда'),
+          IconButton(onPressed: _showTeacherScreen, icon: const Icon(Icons.school), tooltip: 'Учителям'),
           if (!userProvider.isPremium) IconButton(onPressed: _showPremiumDialog, icon: Icon(Icons.crown, color: Colors.amber[700])),
           IconButton(onPressed: _showHistoryScreen, icon: const Icon(Icons.history)),
           IconButton(onPressed: _showProfileScreen, icon: const Icon(Icons.person_outline)),
@@ -125,13 +134,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(30), boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 4))]),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(30),
+                          boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 4))],
+                        ),
                         child: Row(
                           children: [
                             Expanded(
                               child: TextField(
                                 controller: _topicController, enabled: !_isLoading,
-                                decoration: InputDecoration(hintText: 'Введи тему презентации...', border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h)),
+                                decoration: InputDecoration(
+                                  hintText: 'Введи тему презентации...',
+                                  border: InputBorder.none,
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h),
+                                ),
                                 onSubmitted: (_) => _generatePresentation(),
                               ),
                             ),
@@ -144,8 +161,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                   borderRadius: BorderRadius.circular(30),
                                   child: Container(
                                     padding: EdgeInsets.all(12.w),
-                                    decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)]), shape: BoxShape.circle),
-                                    child: _isLoading ? SizedBox(width: 24.w, height: 24.w, child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : Icon(Icons.auto_awesome, color: Colors.white, size: 24.w),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)]),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: _isLoading
+                                        ? SizedBox(width: 24.w, height: 24.w, child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                        : Icon(Icons.auto_awesome, color: Colors.white, size: 24.w),
                                   ),
                                 ),
                               ),
@@ -191,23 +213,60 @@ class _HomeScreenState extends State<HomeScreen> {
     if (userProvider.isPremium) {
       return Container(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
-        decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)]), borderRadius: BorderRadius.circular(20)),
-        child: const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.crown, color: Colors.amber, size: 24), SizedBox(width: 12), Text('Premium активен', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)), Spacer(), Text('∞', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold))]),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)]),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.crown, color: Colors.amber, size: 24),
+            SizedBox(width: 12),
+            Text('Premium активен', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+            Spacer(),
+            Text('∞', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
+          ],
+        ),
       );
     }
     final left = userProvider.freeGenerationsLeft;
     final progress = left / 5.0;
     return Container(
       padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.grey.withOpacity(0.1))),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('Осталось генераций', style: TextStyle(fontSize: 14.sp, color: Colors.grey[600])),
-          Container(padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h), decoration: BoxDecoration(color: const Color(0xFF10B981).withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Text('$left из 5', style: const TextStyle(color: Color(0xFF10B981), fontSize: 16, fontWeight: FontWeight.bold))),
-        ]),
-        SizedBox(height: 12.h),
-        ClipRRect(borderRadius: BorderRadius.circular(10), child: LinearProgressIndicator(value: progress, backgroundColor: Colors.grey.withOpacity(0.2), valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)), minHeight: 8)),
-      ]),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Осталось генераций', style: TextStyle(fontSize: 14.sp, color: Colors.grey[600])),
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text('$left из 5', style: const TextStyle(color: Color(0xFF10B981), fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          SizedBox(height: 12.h),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: progress,
+              backgroundColor: Colors.grey.withOpacity(0.2),
+              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
+              minHeight: 8,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
