@@ -5,6 +5,7 @@ import '../providers/user_provider.dart';
 import '../services/auth_service.dart';
 import '../services/payment_service.dart';
 import 'premium_screen.dart';
+import 'subscription_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -41,12 +42,47 @@ class ProfileScreen extends StatelessWidget {
       child: Column(children: [
         Container(
           width: 100.w, height: 100.w,
-          decoration: BoxDecoration(gradient: LinearGradient(colors: userProvider.isPremium ? [const Color(0xFFF59E0B), const Color(0xFFD97706)] : [const Color(0xFF4F46E5), const Color(0xFF7C3AED)]), shape: BoxShape.circle),
-          child: Center(child: Text('U', style: TextStyle(color: Colors.white, fontSize: 36.sp, fontWeight: FontWeight.bold))),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: userProvider.isPremium 
+                  ? [const Color(0xFFF59E0B), const Color(0xFFD97706)]
+                  : [const Color(0xFF4F46E5), const Color(0xFF7C3AED)],
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: (userProvider.isPremium ? const Color(0xFFF59E0B) : const Color(0xFF4F46E5)).withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              _getInitials(),
+              style: TextStyle(color: Colors.white, fontSize: 36.sp, fontWeight: FontWeight.bold),
+            ),
+          ),
         ),
         SizedBox(height: 16.h),
         FutureBuilder<String?>(future: AuthService.getName(), builder: (context, snapshot) => Text(snapshot.data ?? 'Пользователь', style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold))),
-        if (userProvider.isPremium) Container(margin: EdgeInsets.only(top: 8.h), padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFD97706)]), borderRadius: BorderRadius.circular(20)), child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.crown, color: Colors.white, size: 16.sp), SizedBox(width: 4.w), Text('PREMIUM', style: TextStyle(color: Colors.white, fontSize: 12.sp, fontWeight: FontWeight.bold))])),
+        if (userProvider.isPremium)
+          Container(
+            margin: EdgeInsets.only(top: 8.h),
+            padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFD97706)]),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.crown, color: Colors.white, size: 16.sp),
+                SizedBox(width: 4.w),
+                Text('PREMIUM', style: TextStyle(color: Colors.white, fontSize: 12.sp, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
       ]),
     );
   }
@@ -64,27 +100,93 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildStatCard({required IconData icon, required String value, required String label, required Color color}) {
     return Expanded(
       child: Container(
-        padding: EdgeInsets.all(16.w), decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(16), border: Border.all(color: color.withOpacity(0.2))),
-        child: Column(children: [Icon(icon, color: color, size: 24.sp), SizedBox(height: 8.h), Text(value, style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.bold, color: color)), SizedBox(height: 4.h), Text(label, style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]))]),
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.2)),
+        ),
+        child: Column(children: [
+          Icon(icon, color: color, size: 24.sp),
+          SizedBox(height: 8.h),
+          Text(value, style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.bold, color: color)),
+          SizedBox(height: 4.h),
+          Text(label, style: TextStyle(fontSize: 12.sp, color: Colors.grey[600])),
+        ]),
       ),
     );
   }
 
   Widget _buildAccountInfo(BuildContext context, UserProvider userProvider) {
     return Container(
-      padding: EdgeInsets.all(20.w), decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.grey.withOpacity(0.1))),
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+      ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Информация об аккаунте', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
         SizedBox(height: 16.h),
-        FutureBuilder<String?>(future: AuthService.getEmail(), builder: (context, snapshot) => ListTile(leading: const Icon(Icons.email_outlined), title: const Text('Email'), subtitle: Text(snapshot.data ?? 'Не указан'), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)))),
-        ListTile(leading: const Icon(Icons.verified_user_outlined), title: const Text('Статус'), subtitle: Text(userProvider.isPremium ? 'Premium активен' : 'Бесплатный тариф'), trailing: userProvider.isPremium ? const Icon(Icons.check_circle, color: Colors.green) : null, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+        FutureBuilder<String?>(
+          future: AuthService.getEmail(),
+          builder: (context, snapshot) {
+            return ListTile(
+              leading: const Icon(Icons.email_outlined),
+              title: const Text('Email'),
+              subtitle: Text(snapshot.data ?? 'Не указан'),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            );
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.verified_user_outlined),
+          title: const Text('Статус'),
+          subtitle: Text(userProvider.isPremium ? 'Premium активен' : 'Бесплатный тариф'),
+          trailing: userProvider.isPremium ? const Icon(Icons.check_circle, color: Colors.green) : null,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        if (userProvider.isPremium)
+          FutureBuilder<DateTime?>(
+            future: PaymentService.getExpiryDate(),
+            builder: (context, snapshot) {
+              final expiry = snapshot.data;
+              return ListTile(
+                leading: const Icon(Icons.event),
+                title: const Text('Действует до'),
+                subtitle: Text(expiry != null 
+                    ? '${expiry.day}.${expiry.month}.${expiry.year}'
+                    : 'Неизвестно'),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              );
+            },
+          ),
+        SizedBox(height: 12.h),
+        ListTile(
+          leading: const Icon(Icons.manage_accounts_outlined, color: Color(0xFF4F46E5)),
+          title: const Text('Управление подпиской'),
+          subtitle: const Text('Продление, отмена, платёжные данные'),
+          trailing: const Icon(Icons.chevron_right),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+            );
+          },
+        ),
       ]),
     );
   }
 
   Widget _buildPremiumBanner(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(20.w), decoration: BoxDecoration(gradient: LinearGradient(colors: [const Color(0xFFF59E0B).withOpacity(0.1), const Color(0xFFD97706).withOpacity(0.05)]), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3))),
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [const Color(0xFFF59E0B).withOpacity(0.1), const Color(0xFFD97706).withOpacity(0.05)]),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)),
+      ),
       child: Column(children: [
         Icon(Icons.crown, color: Colors.amber[700], size: 40.sp),
         SizedBox(height: 12.h),
@@ -92,31 +194,106 @@ class ProfileScreen extends StatelessWidget {
         SizedBox(height: 8.h),
         Text('Premium — это безлимитные презентации,\nвсе фоны, шрифты и экспорт без знака', textAlign: TextAlign.center, style: TextStyle(fontSize: 14.sp, color: Colors.grey[600])),
         SizedBox(height: 16.h),
-        ElevatedButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF59E0B)), child: const Text('Перейти на Premium')),
+        ElevatedButton(
+          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())),
+          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF59E0B)),
+          child: const Text('Перейти на Premium'),
+        ),
       ]),
     );
   }
 
   Widget _buildPremiumActive(BuildContext context) {
-    return Container(padding: EdgeInsets.all(20.w), decoration: BoxDecoration(color: Colors.green.withOpacity(0.05), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.green.withOpacity(0.2))), child: Column(children: [const Icon(Icons.check_circle, color: Colors.green, size: 40), SizedBox(height: 12.h), const Text('Premium активен!', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold))]));
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: Colors.green.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.green.withOpacity(0.2)),
+      ),
+      child: Column(children: [
+        const Icon(Icons.check_circle, color: Colors.green, size: 40),
+        SizedBox(height: 12.h),
+        const Text('Premium активен!', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
+        SizedBox(height: 4.h),
+        Text('Спасибо, что вы с нами!', style: TextStyle(color: Colors.grey[600])),
+      ]),
+    );
   }
 
   Widget _buildEmailSection(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(20.w), decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(20)),
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.withOpacity(0.1)),
+      ),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('Рассылка', style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.bold)),
         SizedBox(height: 12.h),
-        FutureBuilder<bool>(future: AuthService.isSubscribedToNewsletter(), builder: (context, snapshot) => SwitchListTile(title: const Text('Новости и обновления'), value: snapshot.data ?? false, onChanged: (value) => AuthService.updateNewsletter(value), secondary: Icon((snapshot.data ?? false) ? Icons.notifications_active : Icons.notifications_off))),
+        FutureBuilder<bool>(
+          future: AuthService.isSubscribedToNewsletter(),
+          builder: (context, snapshot) {
+            final isSubscribed = snapshot.data ?? false;
+            return SwitchListTile(
+              title: const Text('Новости и обновления'),
+              subtitle: const Text('Получать новости о новых функциях'),
+              value: isSubscribed,
+              onChanged: (value) => AuthService.updateNewsletter(value),
+              secondary: Icon(isSubscribed ? Icons.notifications_active : Icons.notifications_off),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            );
+          },
+        ),
       ]),
     );
   }
 
   Widget _buildLogoutButton(BuildContext context) {
-    return SizedBox(width: double.infinity, child: OutlinedButton.icon(onPressed: () => _showLogoutDialog(context), icon: const Icon(Icons.logout, color: Colors.red), label: const Text('Выйти из аккаунта', style: TextStyle(color: Colors.red)), style: OutlinedButton.styleFrom(side: const BorderSide(color: Colors.red), padding: EdgeInsets.symmetric(vertical: 16.h), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)))));
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () => _showLogoutDialog(context),
+        icon: const Icon(Icons.logout, color: Colors.red),
+        label: const Text('Выйти из аккаунта', style: TextStyle(color: Colors.red)),
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: Colors.red),
+          padding: EdgeInsets.symmetric(vertical: 16.h),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        ),
+      ),
+    );
   }
 
   void _showLogoutDialog(BuildContext context) {
-    showDialog(context: context, builder: (context) => AlertDialog(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)), title: const Text('Выход'), content: const Text('Вы уверены, что хотите выйти?'), actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')), ElevatedButton(onPressed: () async { await AuthService.logout(); if (context.mounted) { Navigator.pop(context); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Вы вышли из аккаунта'))); } }, style: ElevatedButton.styleFrom(backgroundColor: Colors.red), child: const Text('Выйти'))]));
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Выход'),
+        content: const Text('Вы уверены, что хотите выйти из аккаунта?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена')),
+          ElevatedButton(
+            onPressed: () async {
+              await AuthService.logout();
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Вы вышли из аккаунта')),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Выйти'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getInitials() {
+    return 'U';
   }
 }
