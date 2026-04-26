@@ -8,6 +8,7 @@ import 'premium_screen.dart';
 import 'settings_screen.dart';
 import 'profile_screen.dart';
 import 'history_screen.dart';
+import 'features_screen.dart';
 import '../services/surprise_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -48,9 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
     
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => LoadingScreen(topic: topic),
-      ),
+      MaterialPageRoute(builder: (_) => LoadingScreen(topic: topic)),
     );
   }
 
@@ -82,6 +81,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _showFeaturesScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const FeaturesScreen()),
+    );
+  }
+
   void _surpriseMe(BuildContext context) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     
@@ -91,7 +97,6 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     
     await SurpriseService.useSurprise(context);
-    
     final style = SurpriseService.generateRandomStyle();
     
     if (mounted) {
@@ -117,6 +122,11 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Презентатор ИИ'),
         centerTitle: true,
         actions: [
+          IconButton(
+            onPressed: _showFeaturesScreen,
+            icon: const Icon(Icons.stars),
+            tooltip: 'Все возможности',
+          ),
           if (!userProvider.isPremium)
             IconButton(
               onPressed: _showPremiumDialog,
@@ -142,28 +152,12 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Создай презентацию',
-                style: TextStyle(
-                  fontSize: 28.sp,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              Text('Создай презентацию', style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.bold)),
               SizedBox(height: 8.h),
-              Text(
-                'с помощью Искусственного Интеллекта',
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  color: Colors.grey[600],
-                ),
-              ),
-              
+              Text('с помощью Искусственного Интеллекта', style: TextStyle(fontSize: 16.sp, color: Colors.grey[600])),
               SizedBox(height: 24.h),
-              
               _buildGenerationCounter(userProvider),
-              
               SizedBox(height: 32.h),
-              
               Expanded(
                 child: Center(
                   child: Column(
@@ -173,13 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         decoration: BoxDecoration(
                           color: Theme.of(context).cardColor,
                           borderRadius: BorderRadius.circular(30),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Theme.of(context).primaryColor.withOpacity(0.1),
-                              blurRadius: 20,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
+                          boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 4))],
                         ),
                         child: Row(
                           children: [
@@ -190,10 +178,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 decoration: InputDecoration(
                                   hintText: 'Введи тему презентации...',
                                   border: InputBorder.none,
-                                  contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 24.w,
-                                    vertical: 20.h,
-                                  ),
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h),
                                 ),
                                 onSubmitted: (_) => _generatePresentation(),
                               ),
@@ -208,25 +193,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                   child: Container(
                                     padding: EdgeInsets.all(12.w),
                                     decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
-                                        colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)],
-                                      ),
+                                      gradient: const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)]),
                                       shape: BoxShape.circle,
                                     ),
                                     child: _isLoading
-                                        ? SizedBox(
-                                            width: 24.w,
-                                            height: 24.w,
-                                            child: const CircularProgressIndicator(
-                                              color: Colors.white,
-                                              strokeWidth: 2,
-                                            ),
-                                          )
-                                        : Icon(
-                                            Icons.auto_awesome,
-                                            color: Colors.white,
-                                            size: 24.w,
-                                          ),
+                                        ? SizedBox(width: 24.w, height: 24.w, child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                        : Icon(Icons.auto_awesome, color: Colors.white, size: 24.w),
                                   ),
                                 ),
                               ),
@@ -235,9 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                       ),
-                      
                       SizedBox(height: 20.h),
-                      
                       SizedBox(
                         height: 40.h,
                         child: ListView.separated(
@@ -248,28 +218,18 @@ class _HomeScreenState extends State<HomeScreen> {
                             return ActionChip(
                               label: Text(_examples[index]),
                               onPressed: _isLoading ? null : () {
-                                final text = _examples[index].substring(2);
-                                _topicController.text = text;
+                                _topicController.text = _examples[index].substring(2);
                               },
                             );
                           },
                         ),
                       ),
-                      
                       SizedBox(height: 16.h),
-                      
-                      // Кнопка «Удиви меня»
                       Center(
                         child: TextButton.icon(
                           onPressed: () => _surpriseMe(context),
                           icon: const Text('🎲', style: TextStyle(fontSize: 20)),
-                          label: Text(
-                            'Удиви меня',
-                            style: TextStyle(
-                              fontSize: 16.sp,
-                              color: const Color(0xFF7C3AED),
-                            ),
-                          ),
+                          label: Text('Удиви меня', style: TextStyle(fontSize: 16.sp, color: const Color(0xFF7C3AED))),
                         ),
                       ),
                     ],
@@ -288,9 +248,7 @@ class _HomeScreenState extends State<HomeScreen> {
       return Container(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)],
-          ),
+          gradient: const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)]),
           borderRadius: BorderRadius.circular(20),
         ),
         child: const Row(
@@ -298,10 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Icon(Icons.crown, color: Colors.amber, size: 24),
             SizedBox(width: 12),
-            Text(
-              'Premium активен',
-              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
-            ),
+            Text('Premium активен', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
             Spacer(),
             Text('∞', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold)),
           ],
@@ -328,26 +283,15 @@ class _HomeScreenState extends State<HomeScreen> {
               Text('Осталось генераций', style: TextStyle(fontSize: 14.sp, color: Colors.grey[600])),
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  '$left из 5',
-                  style: const TextStyle(color: Color(0xFF10B981), fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+                decoration: BoxDecoration(color: const Color(0xFF10B981).withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
+                child: Text('$left из 5', style: const TextStyle(color: Color(0xFF10B981), fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
           SizedBox(height: 12.h),
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: progress,
-              backgroundColor: Colors.grey.withOpacity(0.2),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
-              minHeight: 8,
-            ),
+            child: LinearProgressIndicator(value: progress, backgroundColor: Colors.grey.withOpacity(0.2), valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)), minHeight: 8),
           ),
         ],
       ),
