@@ -5,6 +5,7 @@ import '../providers/user_provider.dart';
 import '../providers/theme_provider.dart';
 import 'loading_screen.dart';
 import 'premium_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -57,72 +58,10 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showSettingsDialog() {
-    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
-    
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 8),
-              Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Тема оформления',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              ListTile(
-                leading: const Icon(Icons.brightness_4),
-                title: const Text('Системная'),
-                trailing: themeProvider.themeModeType == ThemeModeType.system
-                    ? const Icon(Icons.check, color: Color(0xFF4F46E5))
-                    : null,
-                onTap: () {
-                  themeProvider.setThemeMode(ThemeModeType.system);
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.light_mode),
-                title: const Text('Светлая'),
-                trailing: themeProvider.themeModeType == ThemeModeType.light
-                    ? const Icon(Icons.check, color: Color(0xFF4F46E5))
-                    : null,
-                onTap: () {
-                  themeProvider.setThemeMode(ThemeModeType.light);
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.dark_mode),
-                title: const Text('Тёмная'),
-                trailing: themeProvider.themeModeType == ThemeModeType.dark
-                    ? const Icon(Icons.check, color: Color(0xFF4F46E5))
-                    : null,
-                onTap: () {
-                  themeProvider.setThemeMode(ThemeModeType.dark);
-                  Navigator.pop(context);
-                },
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
-        );
-      },
+  void _showSettingsScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const SettingsScreen()),
     );
   }
 
@@ -141,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Icon(Icons.crown, color: Colors.amber[700]),
             ),
           IconButton(
-            onPressed: _showSettingsDialog,
+            onPressed: _showSettingsScreen,
             icon: const Icon(Icons.settings_outlined),
           ),
         ],
