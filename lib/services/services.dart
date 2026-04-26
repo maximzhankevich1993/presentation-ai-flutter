@@ -27,3 +27,6 @@ export 'ai_consultant_service.dart';
 export 'qr_service.dart';
 export 'workspace_service.dart';
 export 'analytics_service.dart';
+export 'lesson_plan_service.dart';
+export 'quiz_service.dart';
+export 'teacher_service.dart';
