@@ -11,6 +11,7 @@ import 'history_screen.dart';
 import 'features_screen.dart';
 import 'workspace_screen.dart';
 import 'teacher_screen.dart';
+import 'corporate_screen.dart';
 import '../services/surprise_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -80,8 +81,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showTeacherScreen() {
-    // TODO: передавать реальный countryCode из определения по IP
     Navigator.push(context, MaterialPageRoute(builder: (_) => const TeacherScreen(countryCode: 'RU')));
+  }
+
+  void _showCorporateScreen() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const CorporateScreen(countryCode: 'RU')));
   }
 
   void _surpriseMe(BuildContext context) async {
@@ -110,6 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(onPressed: _showFeaturesScreen, icon: const Icon(Icons.stars), tooltip: 'Все возможности'),
           IconButton(onPressed: _showWorkspaceScreen, icon: const Icon(Icons.workspaces_outline), tooltip: 'Команда'),
           IconButton(onPressed: _showTeacherScreen, icon: const Icon(Icons.school), tooltip: 'Учителям'),
+          IconButton(onPressed: _showCorporateScreen, icon: const Icon(Icons.business), tooltip: 'Бизнесу'),
           if (!userProvider.isPremium) IconButton(onPressed: _showPremiumDialog, icon: Icon(Icons.crown, color: Colors.amber[700])),
           IconButton(onPressed: _showHistoryScreen, icon: const Icon(Icons.history)),
           IconButton(onPressed: _showProfileScreen, icon: const Icon(Icons.person_outline)),
