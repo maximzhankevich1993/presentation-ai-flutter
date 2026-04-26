@@ -1,7 +1,3 @@
-// ============================================
-// ПРЕЗЕНТАТОР ИИ — ЕДИНЫЙ ЭКСПОРТ СЕРВИСОВ
-// ============================================
-
 export 'api_service.dart';
 export 'security_service.dart';
 export 'auth_service.dart';
@@ -29,3 +25,5 @@ export 'full_package_service.dart';
 export 'white_label_service.dart';
 export 'ai_consultant_service.dart';
 export 'qr_service.dart';
+export 'workspace_service.dart';
+export 'analytics_service.dart';
