@@ -30,3 +30,4 @@ export 'analytics_service.dart';
 export 'lesson_plan_service.dart';
 export 'quiz_service.dart';
 export 'teacher_service.dart';
+export 'corporate_service.dart';
