@@ -3,8 +3,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../providers/theme_provider.dart';
-import '../services/api_service.dart';
 import 'loading_screen.dart';
+import 'premium_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -42,7 +42,6 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
     
-    // Переходим на экран загрузки
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -52,58 +51,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showPremiumDialog() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Icon(Icons.crown, color: Colors.amber[700]),
-            const SizedBox(width: 8),
-            const Text('Premium'),
-          ],
-        ),
-        content: const Text(
-          'Бесплатные генерации закончились.\n\n'
-          'Оформи Premium и получи:\n'
-          '• Безлимитные презентации\n'
-          '• До 50 слайдов\n'
-          '• Все фоны и шрифты\n'
-          '• Экспорт без водяного знака'
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Позже'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _showComingSoonDialog();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.amber,
-            ),
-            child: const Text('299 ₽ / месяц'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showComingSoonDialog() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Скоро'),
-        content: const Text('Premium подписка будет доступна в ближайшее время!'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
-          ),
-        ],
-      ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PremiumScreen()),
     );
   }
 
@@ -220,12 +170,10 @@ class _HomeScreenState extends State<HomeScreen> {
               
               SizedBox(height: 24.h),
               
-              // Счётчик генераций
               _buildGenerationCounter(userProvider),
               
               SizedBox(height: 32.h),
               
-              // Поле ввода
               Expanded(
                 child: Center(
                   child: Column(
@@ -300,7 +248,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       
                       SizedBox(height: 20.h),
                       
-                      // Примеры
                       SizedBox(
                         height: 40.h,
                         child: ListView.separated(
