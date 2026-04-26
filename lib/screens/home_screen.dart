@@ -6,6 +6,9 @@ import '../providers/theme_provider.dart';
 import 'loading_screen.dart';
 import 'premium_screen.dart';
 import 'settings_screen.dart';
+import 'profile_screen.dart';
+import 'history_screen.dart';
+import '../services/surprise_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -65,6 +68,46 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _showProfileScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+    );
+  }
+
+  void _showHistoryScreen() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const HistoryScreen()),
+    );
+  }
+
+  void _surpriseMe(BuildContext context) async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    
+    if (!userProvider.canUseSurpriseMe) {
+      _showPremiumDialog();
+      return;
+    }
+    
+    await SurpriseService.useSurprise(context);
+    
+    final style = SurpriseService.generateRandomStyle();
+    
+    if (mounted) {
+      SurpriseService.showSurpriseAnimation(context, () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Применён стиль: ${style.themeName} 🎉'),
+            backgroundColor: style.primaryColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        );
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
@@ -79,6 +122,14 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: _showPremiumDialog,
               icon: Icon(Icons.crown, color: Colors.amber[700]),
             ),
+          IconButton(
+            onPressed: _showHistoryScreen,
+            icon: const Icon(Icons.history),
+          ),
+          IconButton(
+            onPressed: _showProfileScreen,
+            icon: const Icon(Icons.person_outline),
+          ),
           IconButton(
             onPressed: _showSettingsScreen,
             icon: const Icon(Icons.settings_outlined),
@@ -202,6 +253,23 @@ class _HomeScreenState extends State<HomeScreen> {
                               },
                             );
                           },
+                        ),
+                      ),
+                      
+                      SizedBox(height: 16.h),
+                      
+                      // Кнопка «Удиви меня»
+                      Center(
+                        child: TextButton.icon(
+                          onPressed: () => _surpriseMe(context),
+                          icon: const Text('🎲', style: TextStyle(fontSize: 20)),
+                          label: Text(
+                            'Удиви меня',
+                            style: TextStyle(
+                              fontSize: 16.sp,
+                              color: const Color(0xFF7C3AED),
+                            ),
+                          ),
                         ),
                       ),
                     ],
