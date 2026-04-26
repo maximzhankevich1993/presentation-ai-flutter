@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
+import '../services/api_service.dart';
 
 class LoadingScreen extends StatefulWidget {
   final String topic;
@@ -17,8 +20,11 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
   
   int _step = 0;
   Timer? _messageTimer;
-  Timer? _progressTimer;
   double _progress = 0.0;
+  bool _isGenerating = true;
+  String? _error;
+  
+  int _slidesGenerated = 0;
   
   final List<String> _messages = [
     '🤔 Анализирую тему...',
@@ -44,30 +50,129 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
     );
     
     _bounceController.repeat(reverse: true);
-    _startAnimations();
+    _startGeneration();
   }
 
-  void _startAnimations() {
+  void _startGeneration() {
     _messageTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
-      if (_step < _messages.length - 1) {
+      if (_step < _messages.length - 1 && _isGenerating) {
         setState(() => _step++);
       }
     });
     
-    _progressTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      setState(() {
-        if (_progress < 0.9) {
-          _progress += 0.02;
-        }
-      });
+    _simulateProgress();
+    _generatePresentation();
+  }
+
+  void _simulateProgress() {
+    Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      if (_isGenerating && _progress < 0.9) {
+        setState(() => _progress += 0.015);
+      } else if (!_isGenerating) {
+        timer.cancel();
+      }
     });
+  }
+
+  Future<void> _generatePresentation() async {
+    try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      
+      // Используем генерацию
+      final success = await userProvider.useGeneration();
+      if (!success) {
+        throw Exception('Нет доступных генераций');
+      }
+      
+      // Отправляем запрос к API
+      final presentation = await ApiService.generatePresentation(
+        widget.topic,
+        maxSlides: userProvider.maxSlidesPerPresentation,
+      );
+      
+      _slidesGenerated = presentation.slides.length;
+      
+      // Завершаем загрузку
+      setState(() {
+        _isGenerating = false;
+        _progress = 1.0;
+        _step = _messages.length - 1;
+      });
+      
+      _messageTimer?.cancel();
+      
+      // Ждём немного и переходим к редактору (пока просто возвращаемся)
+      await Future.delayed(const Duration(milliseconds: 800));
+      
+      if (mounted) {
+        _showSuccessDialog(presentation);
+      }
+      
+    } catch (e) {
+      setState(() {
+        _isGenerating = false;
+        _error = e.toString();
+      });
+      _messageTimer?.cancel();
+    }
+  }
+
+  void _showSuccessDialog(Presentation presentation) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.green, size: 28),
+            const SizedBox(width: 12),
+            const Text('Готово!'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Презентация "${presentation.title}" создана!'),
+            const SizedBox(height: 8),
+            Text('📊 Слайдов: ${presentation.slides.length}'),
+            const SizedBox(height: 4),
+            Text('🖼 Картинок: ${presentation.slides.where((s) => s.imageUrl != null).length}'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Закрыть диалог
+              Navigator.pop(context); // Вернуться на HomeScreen
+            },
+            child: const Text('Закрыть'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context); // Закрыть диалог
+              Navigator.pop(context); // Вернуться на HomeScreen
+              
+              // TODO: Переход в редактор
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Редактор в разработке'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+            child: const Text('Редактировать'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   void dispose() {
     _bounceController.dispose();
     _messageTimer?.cancel();
-    _progressTimer?.cancel();
     super.dispose();
   }
 
@@ -81,6 +186,17 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Кнопка назад (если ошибка)
+            if (_error != null)
+              Positioned(
+                top: 40,
+                left: 16,
+                child: IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.arrow_back),
+                ),
+              ),
+            
             // Doodle профессор
             AnimatedBuilder(
               animation: _bounceAnimation,
@@ -94,47 +210,39 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
                 width: 200.w,
                 height: 200.w,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4F46E5).withOpacity(0.1),
+                  color: _error != null 
+                      ? Colors.red.withOpacity(0.1)
+                      : const Color(0xFF4F46E5).withOpacity(0.1),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: const Color(0xFF4F46E5),
+                    color: _error != null ? Colors.red : const Color(0xFF4F46E5),
                     width: 3,
                   ),
                 ),
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    // Профессор (эмодзи)
                     Text(
-                      '🧑‍🏫',
+                      _error != null ? '😔' : '🧑‍🏫',
                       style: TextStyle(fontSize: 80.sp),
                     ),
-                    // Лампочка
-                    Positioned(
-                      top: 20,
-                      right: 30,
-                      child: Text(
-                        '💡',
-                        style: TextStyle(fontSize: 40.sp),
+                    if (_error == null) ...[
+                      Positioned(
+                        top: 20,
+                        right: 30,
+                        child: Text('💡', style: TextStyle(fontSize: 40.sp)),
                       ),
-                    ),
-                    // Звёздочки
-                    Positioned(
-                      top: 10,
-                      left: 20,
-                      child: Text(
-                        '✨',
-                        style: TextStyle(fontSize: 20.sp),
+                      Positioned(
+                        top: 10,
+                        left: 20,
+                        child: Text('✨', style: TextStyle(fontSize: 20.sp)),
                       ),
-                    ),
-                    Positioned(
-                      bottom: 20,
-                      right: 20,
-                      child: Text(
-                        '📝',
-                        style: TextStyle(fontSize: 30.sp),
+                      Positioned(
+                        bottom: 20,
+                        right: 20,
+                        child: Text('📝', style: TextStyle(fontSize: 30.sp)),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -162,19 +270,23 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
             
             SizedBox(height: 24.h),
             
-            // Анимированный текст
+            // Текст статуса
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: Container(
-                key: ValueKey<int>(_step),
+                key: ValueKey(_error != null ? 'error' : _step),
                 padding: EdgeInsets.symmetric(horizontal: 32.w),
                 child: Text(
-                  _messages[_step],
+                  _error != null 
+                      ? '❌ ${_error.toString().replaceAll('Exception: ', '')}'
+                      : _messages[_step],
                   style: TextStyle(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.w500,
                     fontFamily: 'Caveat',
-                    color: isDark ? Colors.white : const Color(0xFF1E1E2A),
+                    color: _error != null 
+                        ? Colors.red 
+                        : (isDark ? Colors.white : const Color(0xFF1E1E2A)),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -183,26 +295,45 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
             
             SizedBox(height: 40.h),
             
-            // Прогресс бар в doodle стиле
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 60.w),
-              child: Column(
-                children: [
-                  CustomPaint(
-                    size: Size(double.infinity, 8.h),
-                    painter: DoodleProgressPainter(progress: _progress),
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    '${(_progress * 100).toInt()}%',
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      color: Colors.grey,
+            // Прогресс или кнопка повтора
+            if (_error != null)
+              ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    _step = 0;
+                    _progress = 0.0;
+                    _isGenerating = true;
+                    _error = null;
+                  });
+                  _startGeneration();
+                },
+                child: const Text('Попробовать снова'),
+              )
+            else
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 60.w),
+                child: Column(
+                  children: [
+                    CustomPaint(
+                      size: Size(double.infinity, 8.h),
+                      painter: DoodleProgressPainter(progress: _progress),
                     ),
-                  ),
-                ],
+                    SizedBox(height: 8.h),
+                    Text(
+                      '${(_progress * 100).toInt()}%',
+                      style: TextStyle(fontSize: 14.sp, color: Colors.grey),
+                    ),
+                    if (_slidesGenerated > 0)
+                      Padding(
+                        padding: EdgeInsets.only(top: 8.h),
+                        child: Text(
+                          '📊 Создано $_slidesGenerated слайдов',
+                          style: TextStyle(fontSize: 12.sp, color: Colors.grey),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -230,29 +361,26 @@ class DoodleProgressPainter extends CustomPainter {
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round;
     
-    // Фоновая линия
     canvas.drawLine(
       Offset(0, size.height / 2),
       Offset(size.width, size.height / 2),
       backgroundPaint,
     );
     
-    // Прогресс линия с doodle эффектом
     final progressWidth = size.width * progress;
     final path = Path();
     path.moveTo(0, size.height / 2);
     
     for (double x = 0; x < progressWidth; x += 5) {
-      final y = size.height / 2 + (x * 0.01).sin() * 2;
+      final y = size.height / 2 + (x * 0.02).sin() * 2;
       path.lineTo(x, y);
     }
     
     canvas.drawPath(path, progressPaint);
     
-    // Кружок на конце
     if (progress > 0.05) {
       canvas.drawCircle(
-        Offset(progressWidth, size.height / 2 + (progressWidth * 0.01).sin() * 2),
+        Offset(progressWidth, size.height / 2 + (progressWidth * 0.02).sin() * 2),
         4,
         Paint()..color = const Color(0xFF4F46E5),
       );
@@ -265,17 +393,15 @@ class DoodleProgressPainter extends CustomPainter {
   }
 }
 
-// Расширение для sin
 extension on double {
-  double sin() => _sin(this);
-}
-
-double _sin(double x) {
-  double result = 0;
-  double term = x;
-  for (int i = 1; i <= 10; i++) {
-    result += term;
-    term *= -x * x / ((2 * i) * (2 * i + 1));
+  double sin() {
+    double x = this;
+    double result = x;
+    double term = x;
+    for (int i = 1; i <= 5; i++) {
+      term *= -x * x / ((2 * i) * (2 * i + 1));
+      result += term;
+    }
+    return result;
   }
-  return result;
 }
