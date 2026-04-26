@@ -1,0 +1,31 @@
+// ============================================
+// ПРЕЗЕНТАТОР ИИ — ЕДИНЫЙ ЭКСПОРТ СЕРВИСОВ
+// ============================================
+
+export 'api_service.dart';
+export 'security_service.dart';
+export 'auth_service.dart';
+export 'payment_service.dart';
+export 'export_service.dart';
+export 'animation_service.dart';
+export 'ai_improve_service.dart';
+export 'template_service.dart';
+export 'webhook_service.dart';
+export 'localization_service.dart';
+export 'surprise_service.dart';
+export 'competitor_analysis_service.dart';
+export 'smart_data_service.dart';
+export 'citation_service.dart';
+export 'brand_kit_service.dart';
+export 'anti_template_service.dart';
+export 'story_mode_service.dart';
+export 'gallery_service.dart';
+export 'referral_service.dart';
+export 'rehearsal_service.dart';
+export 'ai_translation_service.dart';
+export 'materials_generator_service.dart';
+export 'digest_service.dart';
+export 'full_package_service.dart';
+export 'white_label_service.dart';
+export 'ai_consultant_service.dart';
+export 'qr_service.dart';
