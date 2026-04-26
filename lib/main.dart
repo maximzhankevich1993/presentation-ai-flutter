@@ -12,7 +12,6 @@ import 'themes/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Настройка окна для десктопа
   if (Platform.isWindows || Platform.isMacOS) {
     await windowManager.ensureInitialized();
     await windowManager.setMinimumSize(const Size(500, 700));
