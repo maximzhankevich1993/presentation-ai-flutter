@@ -64,4 +64,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
         SizedBox(height: 32.h),
         TextFormField(controller: _nameController, decoration: InputDecoration(labelText: 'Имя (необязательно)', prefixIcon: const Icon(Icons.person_outline), border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)))),
         SizedBox(height: 16.h),
-        TextFormField(controller: _emailController, keyboardType: TextInputType.emailAddress, decoration: InputDecoration(labelText: 'Email', prefixIcon: const Icon(Icons.email_outlined), border: OutlineInputBorder(borderRadius: BorderRadius.circular(16))), validator: (value) { if (value == null || value.isEmpty) return 'Введите email'; if (!SecurityService.isValidEmail
+        TextFormField(controller: _emailController, keyboardType: TextInputType.emailAddress, decoration: InputDecoration(labelText: 'Email', prefixIcon: const Icon(Icons.email_outlined), border: OutlineInputBorder(borderRadius: BorderRadius.circular(16))), validator: (value) { if (value == null || value.isEmpty) return 'Введите email'; if (!SecurityService.isValidEmail(value.trim())) return 'Введите корректный email'; return null; }),
+        SizedBox(height: 24.h),
+        Container(padding: EdgeInsets.all(16.w), decoration: BoxDecoration(color: Colors.green.withOpacity(0.05), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.green.withOpacity(0.2))), child: Row(children: [const Icon(Icons.lock, color: Colors.green, size: 20), SizedBox(width: 12.w), Expanded(child: Text('Ваши данные защищены шифрованием', style: TextStyle(fontSize: 12.sp, color: Colors.grey[700])))])),
+        SizedBox(height: 24.h),
+        CheckboxListTile(value: _acceptNewsletter, onChanged: (value) => setState(() => _acceptNewsletter = value ?? true), title: Text('Получать новости и предложения', style: TextStyle(fontSize: 14.sp)), controlAffinity: ListTileControlAffinity.leading, contentPadding: EdgeInsets.zero),
+        SizedBox(height: 24.h),
+        SizedBox(width: double.infinity, child: ElevatedButton(onPressed: _isLoading ? null : _register, style: ElevatedButton.styleFrom(padding: EdgeInsets.symmetric(vertical: 16.h), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))), child: _isLoading ? SizedBox(width: 24.w, height: 24.w, child: const CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : Text('Зарегистрироваться', style: TextStyle(fontSize: 16.sp)))),
+        SizedBox(height: 16.h),
+        if (widget.isOptional) Center(child: TextButton(onPressed: _skip, child: Text('Пропустить', style: TextStyle(fontSize: 16.sp, color: Colors.grey[600])))),
+        SizedBox(height: 24.h),
+        Center(child: Text('Регистрируясь, вы соглашаетесь с\nУсловиями использования', textAlign: TextAlign.center, style: TextStyle(fontSize: 12.sp, color: Colors.grey[500]))),
+      ])))),
+    );
+  }
+}
