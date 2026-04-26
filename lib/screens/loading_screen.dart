@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
+import 'editor_screen.dart';
 
 class LoadingScreen extends StatefulWidget {
   final String topic;
@@ -78,13 +79,11 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
     try {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       
-      // Используем генерацию
       final success = await userProvider.useGeneration();
       if (!success) {
         throw Exception('Нет доступных генераций');
       }
       
-      // Отправляем запрос к API
       final presentation = await ApiService.generatePresentation(
         widget.topic,
         maxSlides: userProvider.maxSlidesPerPresentation,
@@ -92,7 +91,6 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
       
       _slidesGenerated = presentation.slides.length;
       
-      // Завершаем загрузку
       setState(() {
         _isGenerating = false;
         _progress = 1.0;
@@ -101,8 +99,7 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
       
       _messageTimer?.cancel();
       
-      // Ждём немного и переходим к редактору (пока просто возвращаемся)
-      await Future.delayed(const Duration(milliseconds: 800));
+      await Future.delayed(const Duration(milliseconds: 500));
       
       if (mounted) {
         _showSuccessDialog(presentation);
@@ -118,53 +115,10 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
   }
 
   void _showSuccessDialog(Presentation presentation) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            const Icon(Icons.check_circle, color: Colors.green, size: 28),
-            const SizedBox(width: 12),
-            const Text('Готово!'),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Презентация "${presentation.title}" создана!'),
-            const SizedBox(height: 8),
-            Text('📊 Слайдов: ${presentation.slides.length}'),
-            const SizedBox(height: 4),
-            Text('🖼 Картинок: ${presentation.slides.where((s) => s.imageUrl != null).length}'),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Закрыть диалог
-              Navigator.pop(context); // Вернуться на HomeScreen
-            },
-            child: const Text('Закрыть'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context); // Закрыть диалог
-              Navigator.pop(context); // Вернуться на HomeScreen
-              
-              // TODO: Переход в редактор
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Редактор в разработке'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
-            },
-            child: const Text('Редактировать'),
-          ),
-        ],
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditorScreen(presentation: presentation),
       ),
     );
   }
@@ -186,17 +140,6 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Кнопка назад (если ошибка)
-            if (_error != null)
-              Positioned(
-                top: 40,
-                left: 16,
-                child: IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.arrow_back),
-                ),
-              ),
-            
             // Doodle профессор
             AnimatedBuilder(
               animation: _bounceAnimation,
@@ -250,7 +193,6 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
             
             SizedBox(height: 40.h),
             
-            // Тема презентации
             Container(
               padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
               decoration: BoxDecoration(
@@ -270,7 +212,6 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
             
             SizedBox(height: 24.h),
             
-            // Текст статуса
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: Container(
@@ -295,7 +236,6 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
             
             SizedBox(height: 40.h),
             
-            // Прогресс или кнопка повтора
             if (_error != null)
               ElevatedButton(
                 onPressed: () {
@@ -341,7 +281,6 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
   }
 }
 
-// Кастомный рисованный прогресс-бар
 class DoodleProgressPainter extends CustomPainter {
   final double progress;
 
