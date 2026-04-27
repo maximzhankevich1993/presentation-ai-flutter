@@ -13,6 +13,7 @@ import 'workspace_screen.dart';
 import 'teacher_screen.dart';
 import 'corporate_screen.dart';
 import 'referral_screen.dart';
+import 'vip_screen.dart';
 import '../services/surprise_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -43,14 +44,8 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _generatePresentation() async {
     final topic = _topicController.text.trim();
     if (topic.isEmpty) return;
-    
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    
-    if (!userProvider.canGenerate) {
-      _showPremiumDialog();
-      return;
-    }
-    
+    if (!userProvider.canGenerate) { _showPremiumDialog(); return; }
     Navigator.push(context, MaterialPageRoute(builder: (_) => LoadingScreen(topic: topic)));
   }
 
@@ -63,6 +58,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showTeacherScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const TeacherScreen(countryCode: 'RU')));
   void _showCorporateScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const CorporateScreen(countryCode: 'RU')));
   void _showReferralScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReferralScreen()));
+  void _showVipScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const VipScreen()));
 
   void _surpriseMe(BuildContext context) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
@@ -81,12 +77,12 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
-    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Презентатор ИИ'),
         centerTitle: true,
         actions: [
+          IconButton(onPressed: _showVipScreen, icon: const Icon(Icons.diamond), tooltip: 'VIP-доступ'),
           IconButton(onPressed: _showFeaturesScreen, icon: const Icon(Icons.stars), tooltip: 'Все возможности'),
           IconButton(onPressed: _showWorkspaceScreen, icon: const Icon(Icons.workspaces_outline), tooltip: 'Команда'),
           IconButton(onPressed: _showTeacherScreen, icon: const Icon(Icons.school), tooltip: 'Учителям'),
@@ -101,46 +97,38 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.all(24.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Создай презентацию', style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.bold)),
-              SizedBox(height: 8.h),
-              Text('с помощью Искусственного Интеллекта', style: TextStyle(fontSize: 16.sp, color: Colors.grey[600])),
-              SizedBox(height: 24.h),
-              _buildGenerationCounter(userProvider),
-              SizedBox(height: 32.h),
-              Expanded(
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(30), boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 4))]),
-                        child: Row(children: [
-                          Expanded(child: TextField(controller: _topicController, enabled: !_isLoading, decoration: InputDecoration(hintText: 'Введи тему презентации...', border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h)), onSubmitted: (_) => _generatePresentation())),
-                          Padding(
-                            padding: EdgeInsets.only(right: 8.w),
-                            child: Material(color: Colors.transparent, child: InkWell(
-                              onTap: _isLoading ? null : _generatePresentation,
-                              borderRadius: BorderRadius.circular(30),
-                              child: Container(padding: EdgeInsets.all(12.w), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)]), shape: BoxShape.circle),
-                                child: _isLoading ? SizedBox(width: 24.w, height: 24.w, child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : Icon(Icons.auto_awesome, color: Colors.white, size: 24.w)),
-                            )),
-                          ),
-                          SizedBox(width: 8.w),
-                        ]),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Создай презентацию', style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.bold)),
+            SizedBox(height: 8.h),
+            Text('с помощью Искусственного Интеллекта', style: TextStyle(fontSize: 16.sp, color: Colors.grey[600])),
+            SizedBox(height: 24.h),
+            _buildGenerationCounter(userProvider),
+            SizedBox(height: 32.h),
+            Expanded(
+              child: Center(
+                child: Column(mainAxisSize: MainAxisSize.min, children: [
+                  Container(
+                    decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(30), boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 4))]),
+                    child: Row(children: [
+                      Expanded(child: TextField(controller: _topicController, enabled: !_isLoading, decoration: InputDecoration(hintText: 'Введи тему презентации...', border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h)), onSubmitted: (_) => _generatePresentation())),
+                      Padding(
+                        padding: EdgeInsets.only(right: 8.w),
+                        child: Material(color: Colors.transparent, child: InkWell(
+                          onTap: _isLoading ? null : _generatePresentation, borderRadius: BorderRadius.circular(30),
+                          child: Container(padding: EdgeInsets.all(12.w), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)]), shape: BoxShape.circle), child: _isLoading ? SizedBox(width: 24.w, height: 24.w, child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : Icon(Icons.auto_awesome, color: Colors.white, size: 24.w)),
+                        )),
                       ),
-                      SizedBox(height: 20.h),
-                      SizedBox(height: 40.h, child: ListView.separated(scrollDirection: Axis.horizontal, itemCount: _examples.length, separatorBuilder: (_, __) => SizedBox(width: 8.w), itemBuilder: (context, index) => ActionChip(label: Text(_examples[index]), onPressed: _isLoading ? null : () { _topicController.text = _examples[index].substring(2); }))),
-                      SizedBox(height: 16.h),
-                      Center(child: TextButton.icon(onPressed: () => _surpriseMe(context), icon: const Text('🎲', style: TextStyle(fontSize: 20)), label: Text('Удиви меня', style: TextStyle(fontSize: 16.sp, color: const Color(0xFF7C3AED))))),
-                    ],
+                      SizedBox(width: 8.w),
+                    ]),
                   ),
-                ),
+                  SizedBox(height: 20.h),
+                  SizedBox(height: 40.h, child: ListView.separated(scrollDirection: Axis.horizontal, itemCount: _examples.length, separatorBuilder: (_, __) => SizedBox(width: 8.w), itemBuilder: (context, index) => ActionChip(label: Text(_examples[index]), onPressed: _isLoading ? null : () { _topicController.text = _examples[index].substring(2); }))),
+                  SizedBox(height: 16.h),
+                  Center(child: TextButton.icon(onPressed: () => _surpriseMe(context), icon: const Text('🎲', style: TextStyle(fontSize: 20)), label: Text('Удиви меня', style: TextStyle(fontSize: 16.sp, color: const Color(0xFF7C3AED))))),
+                ]),
               ),
-            ],
-          ),
+            ),
+          ]),
         ),
       ),
     );
