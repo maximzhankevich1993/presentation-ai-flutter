@@ -14,6 +14,7 @@ import 'teacher_screen.dart';
 import 'corporate_screen.dart';
 import 'referral_screen.dart';
 import 'vip_screen.dart';
+import 'login_screen.dart';
 import '../services/surprise_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -59,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showCorporateScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const CorporateScreen(countryCode: 'RU')));
   void _showReferralScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReferralScreen()));
   void _showVipScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const VipScreen()));
+  void _showLoginScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
 
   void _surpriseMe(BuildContext context) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
@@ -82,6 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Презентатор ИИ'),
         centerTitle: true,
         actions: [
+          IconButton(onPressed: _showLoginScreen, icon: const Icon(Icons.login), tooltip: 'Войти'),
           IconButton(onPressed: _showVipScreen, icon: const Icon(Icons.diamond), tooltip: 'VIP-доступ'),
           IconButton(onPressed: _showFeaturesScreen, icon: const Icon(Icons.stars), tooltip: 'Все возможности'),
           IconButton(onPressed: _showWorkspaceScreen, icon: const Icon(Icons.workspaces_outline), tooltip: 'Команда'),
