@@ -65,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _surpriseMe(BuildContext context) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     if (!userProvider.canUseSurpriseMe) { _showPremiumDialog(); return; }
-    await SurpriseService.useSurprise(context);
+    await userProvider.useSurpriseMe();
     final style = SurpriseService.generateRandomStyle();
     if (mounted) {
       SurpriseService.showSurpriseAnimation(context, () {
@@ -87,11 +87,11 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(onPressed: _showLoginScreen, icon: const Icon(Icons.login), tooltip: 'Войти'),
           IconButton(onPressed: _showVipScreen, icon: const Icon(Icons.diamond), tooltip: 'VIP-доступ'),
           IconButton(onPressed: _showFeaturesScreen, icon: const Icon(Icons.stars), tooltip: 'Все возможности'),
-          IconButton(onPressed: _showWorkspaceScreen, icon: const Icon(Icons.workspaces_outline), tooltip: 'Команда'),
+          IconButton(onPressed: _showWorkspaceScreen, icon: const Icon(Icons.workspaces_outlined), tooltip: 'Команда'),
           IconButton(onPressed: _showTeacherScreen, icon: const Icon(Icons.school), tooltip: 'Учителям'),
           IconButton(onPressed: _showCorporateScreen, icon: const Icon(Icons.business), tooltip: 'Бизнесу'),
           IconButton(onPressed: _showReferralScreen, icon: const Icon(Icons.card_giftcard), tooltip: 'Приведи друга'),
-          if (!userProvider.isPremium) IconButton(onPressed: _showPremiumDialog, icon: Icon(Icons.crown, color: Colors.amber[700])),
+          if (!userProvider.isPremium) IconButton(onPressed: _showPremiumDialog, icon: Icon(Icons.star, color: Colors.amber[700])),
           IconButton(onPressed: _showHistoryScreen, icon: const Icon(Icons.history)),
           IconButton(onPressed: _showProfileScreen, icon: const Icon(Icons.person_outline)),
           IconButton(onPressed: _showSettingsScreen, icon: const Icon(Icons.settings_outlined)),
@@ -139,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildGenerationCounter(UserProvider userProvider) {
     if (userProvider.isPremium) {
-      return Container(padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)]), borderRadius: BorderRadius.circular(20)), child: const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.crown, color: Colors.amber, size: 24), SizedBox(width: 12), Text('Premium активен', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)), Spacer(), Text('∞', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold))]));
+      return Container(padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)]), borderRadius: BorderRadius.circular(20)), child: const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.star, color: Colors.amber, size: 24), SizedBox(width: 12), Text('Premium активен', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)), Spacer(), Text('∞', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold))]));
     }
     final left = userProvider.freeGenerationsLeft;
     final progress = left / 5.0;
