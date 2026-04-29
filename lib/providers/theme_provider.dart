@@ -5,9 +5,12 @@ enum ThemeModeType { system, light, dark }
 
 class ThemeProvider extends ChangeNotifier {
   ThemeModeType _themeMode = ThemeModeType.system;
-  
+  SharedPreferences? _prefs;
+  bool _isLoaded = false;
+
   ThemeModeType get themeModeType => _themeMode;
-  
+  bool get isLoaded => _isLoaded;
+
   ThemeMode get themeMode {
     switch (_themeMode) {
       case ThemeModeType.light:
@@ -24,23 +27,27 @@ class ThemeProvider extends ChangeNotifier {
   }
 
   Future<void> _loadTheme() async {
-    final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getString('themeMode') ?? 'system';
-    
+    _prefs = await SharedPreferences.getInstance();
+
+    final saved = _prefs?.getString('themeMode') ?? 'system';
+
     _themeMode = ThemeModeType.values.firstWhere(
       (e) => e.name == saved,
       orElse: () => ThemeModeType.system,
     );
-    
+
+    _isLoaded = true;
     notifyListeners();
   }
 
   Future<void> setThemeMode(ThemeModeType mode) async {
+    if (_themeMode == mode) return;
+
     _themeMode = mode;
-    
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('themeMode', mode.name);
-    
+
+    _prefs ??= await SharedPreferences.getInstance();
+    await _prefs!.setString('themeMode', mode.name);
+
     notifyListeners();
   }
 }
