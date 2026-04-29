@@ -18,32 +18,34 @@ class Presentation {
   });
 
   factory Presentation.fromJson(Map<String, dynamic> json) {
-    final slidesList = (json['slides'] as List)
-        .map((s) => Slide.fromJson(s))
-        .toList();
-    
+    final slidesList = (json['slides'] as List?)
+            ?.map((s) => Slide.fromJson(s))
+            .toList() ??
+        [];
+
     return Presentation(
-      id: json['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      title: json['title'] ?? 'Без названия',
+      id: json['id']?.toString() ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
+      title: json['title']?.toString() ?? 'Без названия',
       slides: slidesList,
-      createdAt: json['createdAt'] != null 
-          ? DateTime.parse(json['createdAt']) 
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt']) ?? DateTime.now()
           : DateTime.now(),
-      fontPair: json['fontPair'],
-      themeId: json['themeId'],
-      transitionType: json['transitionType'] ?? 'fade',
+      fontPair: json['fontPair']?.toString(),
+      themeId: json['themeId']?.toString(),
+      transitionType: json['transitionType']?.toString() ?? 'fade',
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'id': id,
-    'title': title,
-    'slides': slides.map((s) => s.toJson()).toList(),
-    'createdAt': createdAt.toIso8601String(),
-    'fontPair': fontPair,
-    'themeId': themeId,
-    'transitionType': transitionType,
-  };
+        'id': id,
+        'title': title,
+        'slides': slides.map((s) => s.toJson()).toList(),
+        'createdAt': createdAt.toIso8601String(),
+        'fontPair': fontPair,
+        'themeId': themeId,
+        'transitionType': transitionType,
+      };
 }
 
 class Slide {
@@ -69,23 +71,30 @@ class Slide {
 
   factory Slide.fromJson(Map<String, dynamic> json) {
     return Slide(
-      title: json['title'] ?? '',
-      subtitle: json['subtitle'],
-      content: List<String>.from(json['content'] ?? []),
-      imageUrl: json['imageUrl'] ?? json['image_url'],
-      imageKeywords: json['imageKeywords'] ?? json['image_keywords'],
+      title: json['title']?.toString() ?? '',
+      subtitle: json['subtitle']?.toString(),
+      content: (json['content'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          [],
+      imageUrl: json['imageUrl']?.toString() ??
+          json['image_url']?.toString(),
+      imageKeywords: json['imageKeywords']?.toString() ??
+          json['image_keywords']?.toString(),
       useCustomImage: json['useCustomImage'] ?? false,
-      background: json['background'],
+      background: json['background'] is Map<String, dynamic>
+          ? json['background']
+          : null,
     );
   }
 
   Map<String, dynamic> toJson() => {
-    'title': title,
-    'subtitle': subtitle,
-    'content': content,
-    'imageUrl': imageUrl,
-    'imageKeywords': imageKeywords,
-    'useCustomImage': useCustomImage,
-    'background': background,
-  };
+        'title': title,
+        'subtitle': subtitle,
+        'content': content,
+        'imageUrl': imageUrl,
+        'imageKeywords': imageKeywords,
+        'useCustomImage': useCustomImage,
+        'background': background,
+      };
 }
