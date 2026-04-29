@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+
 import '../providers/user_provider.dart';
 import '../providers/theme_provider.dart';
+
 import 'loading_screen.dart';
 import 'premium_screen.dart';
 import 'settings_screen.dart';
@@ -15,6 +17,7 @@ import 'corporate_screen.dart';
 import 'referral_screen.dart';
 import 'vip_screen.dart';
 import 'login_screen.dart';
+
 import '../services/surprise_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -25,10 +28,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final _topicController = TextEditingController();
+  final TextEditingController _topicController = TextEditingController();
   bool _isLoading = false;
-  
-  final List<String> _examples = [
+
+  final List<String> _examples = const [
     '🤖 Искусственный интеллект',
     '📈 Бизнес-план для стартапа',
     '🌍 Глобальное потепление',
@@ -44,109 +47,245 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _generatePresentation() async {
     final topic = _topicController.text.trim();
-    if (topic.isEmpty) return;
+    if (topic.isEmpty || _isLoading) return;
+
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    if (!userProvider.canGenerate) { _showPremiumDialog(); return; }
-    Navigator.push(context, MaterialPageRoute(builder: (_) => LoadingScreen(topic: topic)));
+
+    if (!userProvider.canGenerate) {
+      _showPremiumDialog();
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      if (!mounted) return;
+
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => LoadingScreen(topic: topic),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
-  void _showPremiumDialog() => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen()));
-  void _showSettingsScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
-  void _showProfileScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen()));
-  void _showHistoryScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen()));
-  void _showFeaturesScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const FeaturesScreen()));
-  void _showWorkspaceScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkspaceScreen()));
-  void _showTeacherScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const TeacherScreen(countryCode: 'RU')));
-  void _showCorporateScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const CorporateScreen(countryCode: 'RU')));
-  void _showReferralScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReferralScreen()));
-  void _showVipScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const VipScreen()));
-  void _showLoginScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+  void _showPremiumDialog() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const PremiumScreen()),
+    );
+  }
+
+  void _showScreen(Widget screen) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => screen),
+    );
+  }
 
   void _surpriseMe(BuildContext context) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    if (!userProvider.canUseSurpriseMe) { _showPremiumDialog(); return; }
-    await userProvider.useSurpriseMe();
-    final style = SurpriseService.generateRandomStyle();
-    if (mounted) {
-      SurpriseService.showSurpriseAnimation(context, () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Применён стиль: ${style.themeName} 🎉'), backgroundColor: style.primaryColor, behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-        );
-      });
+
+    if (!userProvider.canUseSurpriseMe) {
+      _showPremiumDialog();
+      return;
     }
+
+    await userProvider.useSurpriseMe();
+
+    final style = SurpriseService.generateRandomStyle();
+
+    if (!mounted) return;
+
+    SurpriseService.showSurpriseAnimation(context, () {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Применён стиль: ${style.themeName} 🎉'),
+          backgroundColor: style.primaryColor,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Презентатор ИИ'),
         centerTitle: true,
         actions: [
-          IconButton(onPressed: _showLoginScreen, icon: const Icon(Icons.login), tooltip: 'Войти'),
-          IconButton(onPressed: _showVipScreen, icon: const Icon(Icons.diamond), tooltip: 'VIP-доступ'),
-          IconButton(onPressed: _showFeaturesScreen, icon: const Icon(Icons.stars), tooltip: 'Все возможности'),
-          IconButton(onPressed: _showWorkspaceScreen, icon: const Icon(Icons.workspaces_outlined), tooltip: 'Команда'),
-          IconButton(onPressed: _showTeacherScreen, icon: const Icon(Icons.school), tooltip: 'Учителям'),
-          IconButton(onPressed: _showCorporateScreen, icon: const Icon(Icons.business), tooltip: 'Бизнесу'),
-          IconButton(onPressed: _showReferralScreen, icon: const Icon(Icons.card_giftcard), tooltip: 'Приведи друга'),
-          if (!userProvider.isPremium) IconButton(onPressed: _showPremiumDialog, icon: Icon(Icons.star, color: Colors.amber[700])),
-          IconButton(onPressed: _showHistoryScreen, icon: const Icon(Icons.history)),
-          IconButton(onPressed: _showProfileScreen, icon: const Icon(Icons.person_outline)),
-          IconButton(onPressed: _showSettingsScreen, icon: const Icon(Icons.settings_outlined)),
+          IconButton(onPressed: () => _showScreen(const LoginScreen()), icon: const Icon(Icons.login)),
+          IconButton(onPressed: () => _showScreen(const VipScreen()), icon: const Icon(Icons.diamond)),
+          IconButton(onPressed: () => _showScreen(const FeaturesScreen()), icon: const Icon(Icons.stars)),
+          IconButton(onPressed: () => _showScreen(const WorkspaceScreen()), icon: const Icon(Icons.workspaces_outlined)),
+          IconButton(onPressed: () => _showScreen(const TeacherScreen(countryCode: 'RU')), icon: const Icon(Icons.school)),
+          IconButton(onPressed: () => _showScreen(const CorporateScreen(countryCode: 'RU')), icon: const Icon(Icons.business)),
+          IconButton(onPressed: () => _showScreen(const ReferralScreen()), icon: const Icon(Icons.card_giftcard)),
+          if (!userProvider.isPremium)
+            IconButton(
+              onPressed: _showPremiumDialog,
+              icon: Icon(Icons.star, color: Colors.amber[700]),
+            ),
+          IconButton(onPressed: () => _showScreen(const HistoryScreen()), icon: const Icon(Icons.history)),
+          IconButton(onPressed: () => _showScreen(const ProfileScreen()), icon: const Icon(Icons.person_outline)),
+          IconButton(onPressed: () => _showScreen(const SettingsScreen()), icon: const Icon(Icons.settings_outlined)),
         ],
       ),
+
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.all(24.w),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Создай презентацию', style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.bold)),
-            SizedBox(height: 8.h),
-            Text('с помощью Искусственного Интеллекта', style: TextStyle(fontSize: 16.sp, color: Colors.grey[600])),
-            SizedBox(height: 24.h),
-            _buildGenerationCounter(userProvider),
-            SizedBox(height: 32.h),
-            Expanded(
-              child: Center(
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Container(
-                    decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(30), boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 4))]),
-                    child: Row(children: [
-                      Expanded(child: TextField(controller: _topicController, enabled: !_isLoading, decoration: InputDecoration(hintText: 'Введи тему презентации...', border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h)), onSubmitted: (_) => _generatePresentation())),
-                      Padding(
-                        padding: EdgeInsets.only(right: 8.w),
-                        child: Material(color: Colors.transparent, child: InkWell(
-                          onTap: _isLoading ? null : _generatePresentation, borderRadius: BorderRadius.circular(30),
-                          child: Container(padding: EdgeInsets.all(12.w), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)]), shape: BoxShape.circle), child: _isLoading ? SizedBox(width: 24.w, height: 24.w, child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : Icon(Icons.auto_awesome, color: Colors.white, size: 24.w)),
-                        )),
-                      ),
-                      SizedBox(width: 8.w),
-                    ]),
-                  ),
-                  SizedBox(height: 20.h),
-                  SizedBox(height: 40.h, child: ListView.separated(scrollDirection: Axis.horizontal, itemCount: _examples.length, separatorBuilder: (_, __) => SizedBox(width: 8.w), itemBuilder: (context, index) => ActionChip(label: Text(_examples[index]), onPressed: _isLoading ? null : () { _topicController.text = _examples[index].substring(2); }))),
-                  SizedBox(height: 16.h),
-                  Center(child: TextButton.icon(onPressed: () => _surpriseMe(context), icon: const Text('🎲', style: TextStyle(fontSize: 20)), label: Text('Удиви меня', style: TextStyle(fontSize: 16.sp, color: const Color(0xFF7C3AED))))),
-                ]),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Создай презентацию',
+                style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.bold),
               ),
-            ),
-          ]),
+              SizedBox(height: 8.h),
+              Text(
+                'с помощью Искусственного Интеллекта',
+                style: TextStyle(fontSize: 16.sp, color: Colors.grey[600]),
+              ),
+              SizedBox(height: 24.h),
+
+              _buildGenerationCounter(userProvider),
+
+              SizedBox(height: 32.h),
+
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildInputField(),
+                    SizedBox(height: 20.h),
+                    _buildExamples(),
+                    SizedBox(height: 16.h),
+                    _buildSurpriseButton(),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildInputField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).primaryColor.withOpacity(0.1),
+            blurRadius: 20,
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: _topicController,
+              enabled: !_isLoading,
+              decoration: const InputDecoration(
+                hintText: 'Введи тему презентации...',
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              ),
+              onSubmitted: (_) => _generatePresentation(),
+            ),
+          ),
+          IconButton(
+            onPressed: _isLoading ? null : _generatePresentation,
+            icon: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.auto_awesome),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExamples() {
+    return SizedBox(
+      height: 40.h,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: _examples.length,
+        separatorBuilder: (_, __) => SizedBox(width: 8.w),
+        itemBuilder: (context, index) {
+          return ActionChip(
+            label: Text(_examples[index]),
+            onPressed: _isLoading
+                ? null
+                : () {
+                    _topicController.text = _examples[index].substring(2);
+                  },
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSurpriseButton() {
+    return TextButton.icon(
+      onPressed: () => _surpriseMe(context),
+      icon: const Text('🎲'),
+      label: Text(
+        'Удиви меня',
+        style: TextStyle(fontSize: 16.sp),
       ),
     );
   }
 
   Widget _buildGenerationCounter(UserProvider userProvider) {
     if (userProvider.isPremium) {
-      return Container(padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)]), borderRadius: BorderRadius.circular(20)), child: const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.star, color: Colors.amber, size: 24), SizedBox(width: 12), Text('Premium активен', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)), Spacer(), Text('∞', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold))]));
+      return Container(
+        padding: EdgeInsets.all(16.w),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)],
+          ),
+          borderRadius: BorderRadius.all(Radius.circular(20)),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.star, color: Colors.amber),
+            SizedBox(width: 12),
+            Text(
+              'Premium активен',
+              style: TextStyle(color: Colors.white),
+            ),
+            Spacer(),
+            Text('∞', style: TextStyle(color: Colors.white)),
+          ],
+        ),
+      );
     }
-    final left = userProvider.freeGenerationsLeft;
-    final progress = left / 5.0;
-    return Container(padding: EdgeInsets.all(20.w), decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.grey.withOpacity(0.1))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Осталось генераций', style: TextStyle(fontSize: 14.sp, color: Colors.grey[600])), Container(padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h), decoration: BoxDecoration(color: const Color(0xFF10B981).withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Text('$left из 5', style: const TextStyle(color: Color(0xFF10B981), fontSize: 16, fontWeight: FontWeight.bold)))]),
-      SizedBox(height: 12.h),
-      ClipRRect(borderRadius: BorderRadius.circular(10), child: LinearProgressIndicator(value: progress, backgroundColor: Colors.grey.withOpacity(0.2), valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)), minHeight: 8)),
-    ]));
+
+    final left = userProvider.freeGenerationsLeft / 5;
+
+    return Column(
+      children: [
+        LinearProgressIndicator(value: left),
+        SizedBox(height: 8.h),
+        Text('Осталось генераций: ${userProvider.freeGenerationsLeft}'),
+      ],
+    );
   }
 }
