@@ -20,25 +20,37 @@ class PresentationTemplate {
 
 class TemplateService {
   static List<PresentationTemplate> getTemplates({bool? freeOnly}) {
-    final templates = _allTemplates;
-    
+    final templates = List<PresentationTemplate>.unmodifiable(_allTemplates);
+
     if (freeOnly == true) {
-      return templates.where((t) => t.isFree).toList();
+      return templates.where((t) => t.isFree).toList(growable: false);
     }
-    
+
     return templates;
   }
 
   static List<PresentationTemplate> getTemplatesByCategory(String category) {
-    return _allTemplates.where((t) => t.category == category).toList();
+    if (category.trim().isEmpty) return [];
+
+    final normalized = category.trim().toLowerCase();
+
+    return _allTemplates
+        .where((t) => t.category.toLowerCase() == normalized)
+        .toList(growable: false);
   }
 
   static List<String> getCategories() {
-    return _allTemplates.map((t) => t.category).toSet().toList();
+    final categories = _allTemplates
+        .map((t) => t.category.trim())
+        .where((c) => c.isNotEmpty)
+        .toSet()
+        .toList();
+
+    categories.sort(); // стабильный порядок
+    return categories;
   }
 
-  static final List<PresentationTemplate> _allTemplates = [
-    // Бесплатные шаблоны
+  static final List<PresentationTemplate> _allTemplates = List.unmodifiable([
     const PresentationTemplate(
       id: 'pitch_deck',
       name: 'Pitch Deck',
@@ -126,5 +138,5 @@ class TemplateService {
       ],
       isFree: false,
     ),
-  ];
+  ]);
 }
