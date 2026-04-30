@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:image_picker/image_picker.dart';
@@ -28,7 +29,7 @@ class _BackgroundUploaderState extends State<BackgroundUploader> {
         maxWidth: 1920,
         maxHeight: 1080,
       );
-      
+
       if (image != null) {
         setState(() => _selectedImage = File(image.path));
       }
@@ -42,20 +43,20 @@ class _BackgroundUploaderState extends State<BackgroundUploader> {
   }
 
   void _applyBackground() {
-    if (_selectedImage != null) {
-      widget.onImageSelected(_selectedImage!.path);
-      Navigator.pop(context);
-    }
+    if (_selectedImage == null) return;
+
+    widget.onImageSelected(_selectedImage!.path);
+    Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
-    
+    final userProvider = context.watch<UserProvider>();
+
     if (!userProvider.isPremium) {
       return _buildPremiumRequired();
     }
-    
+
     return Container(
       padding: EdgeInsets.all(20.w),
       child: Column(
@@ -64,7 +65,10 @@ class _BackgroundUploaderState extends State<BackgroundUploader> {
         children: [
           Row(
             children: [
-              const Text('Загрузить свой фон', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const Text(
+                'Загрузить свой фон',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
               const Spacer(),
               IconButton(
                 onPressed: () => Navigator.pop(context),
@@ -72,10 +76,9 @@ class _BackgroundUploaderState extends State<BackgroundUploader> {
               ),
             ],
           ),
-          
+
           SizedBox(height: 20.h),
-          
-          // Источник изображения
+
           Row(
             children: [
               Expanded(
@@ -95,10 +98,10 @@ class _BackgroundUploaderState extends State<BackgroundUploader> {
               ),
             ],
           ),
-          
-          // Предпросмотр
+
           if (_selectedImage != null) ...[
             SizedBox(height: 20.h),
+
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Stack(
@@ -109,28 +112,38 @@ class _BackgroundUploaderState extends State<BackgroundUploader> {
                     width: double.infinity,
                     fit: BoxFit.cover,
                   ),
+
+                  // DARKNESS
                   Container(
                     height: 200.h,
                     width: double.infinity,
                     color: Colors.black.withOpacity(_darkness),
                   ),
+
+                  // BLUR (исправлено)
                   if (_blur > 0)
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child: Image.file(
-                        _selectedImage!,
-                        height: 200.h,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        color: Colors.black.withOpacity(0.3),
-                        colorBlendMode: BlendMode.darken,
+                    Positioned.fill(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(
+                            sigmaX: _blur,
+                            sigmaY: _blur,
+                          ),
+                          child: Container(
+                            color: Colors.transparent,
+                          ),
+                        ),
                       ),
                     ),
+
                   Center(
                     child: Text(
                       'Предпросмотр текста',
                       style: TextStyle(
-                        color: _darkness > 0.5 ? Colors.white : Colors.black,
+                        color: _darkness > 0.5
+                            ? Colors.white
+                            : Colors.black,
                         fontSize: 20.sp,
                         fontWeight: FontWeight.bold,
                       ),
@@ -139,10 +152,9 @@ class _BackgroundUploaderState extends State<BackgroundUploader> {
                 ],
               ),
             ),
-            
+
             SizedBox(height: 16.h),
-            
-            // Затемнение
+
             Text('Затемнение: ${(_darkness * 100).toInt()}%'),
             Slider(
               value: _darkness,
@@ -150,8 +162,7 @@ class _BackgroundUploaderState extends State<BackgroundUploader> {
               max: 0.8,
               onChanged: (value) => setState(() => _darkness = value),
             ),
-            
-            // Размытие
+
             Text('Размытие: ${(_blur * 10).toInt()}%'),
             Slider(
               value: _blur,
@@ -159,10 +170,9 @@ class _BackgroundUploaderState extends State<BackgroundUploader> {
               max: 5,
               onChanged: (value) => setState(() => _blur = value),
             ),
-            
+
             SizedBox(height: 20.h),
-            
-            // Кнопка применить
+
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -171,9 +181,9 @@ class _BackgroundUploaderState extends State<BackgroundUploader> {
               ),
             ),
           ],
-          
+
           SizedBox(height: 16.h),
-          
+
           Text(
             'Поддерживаются JPG, PNG, HEIC\nРекомендуемый размер: 1920×1080',
             style: TextStyle(fontSize: 12.sp, color: Colors.grey[500]),
@@ -201,7 +211,13 @@ class _BackgroundUploaderState extends State<BackgroundUploader> {
           children: [
             Icon(icon, size: 40.sp, color: const Color(0xFF4F46E5)),
             SizedBox(height: 8.h),
-            Text(title, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.w500)),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14.sp,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
       ),
@@ -229,10 +245,16 @@ class _BackgroundUploaderState extends State<BackgroundUploader> {
           SizedBox(height: 24.h),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen()));
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const PremiumScreen(),
+                ),
+              );
             },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF59E0B)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF59E0B),
+            ),
             child: const Text('Перейти на Premium'),
           ),
         ],
