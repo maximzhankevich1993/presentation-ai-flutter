@@ -4,7 +4,7 @@ class NarrativeAdvice {
   final String type;
   final String advice;
   final String? slideReference;
-  final int priority; // 1 = срочно, 2 = важно, 3 = рекомендация
+  final int priority;
 
   const NarrativeAdvice({
     required this.type,
@@ -15,7 +15,7 @@ class NarrativeAdvice {
 }
 
 class NarrativeAnalysis {
-  final int overallScore; // 0-100
+  final int overallScore;
   final String structureType;
   final List<NarrativeAdvice> advice;
   final List<String> strengths;
@@ -33,7 +33,6 @@ class NarrativeAnalysis {
 class AiConsultantService {
   static final Random _random = Random();
 
-  /// Анализирует структуру презентации
   static NarrativeAnalysis analyzeStructure({
     required String title,
     required List<String> slideTitles,
@@ -43,65 +42,79 @@ class AiConsultantService {
     final strengths = <String>[];
     final weaknesses = <String>[];
 
-    // Проверяем первый слайд
-    if (slideTitles.isNotEmpty) {
-      if (!_hasHook(slideContent.first)) {
+    if (slideTitles.isNotEmpty && slideContent.isNotEmpty) {
+      final firstContent = slideContent.first;
+
+      if (!_hasHook(firstContent)) {
         advice.add(const NarrativeAdvice(
           type: 'Открытие',
-          advice: 'Добавьте шокирующую статистику или неожиданный факт в первый слайд, чтобы захватить внимание',
+          advice:
+              'Добавьте шокирующую статистику или факт в первый слайд',
           slideReference: 'Слайд 1',
           priority: 1,
         ));
+        weaknesses.add('Слабое открытие');
       } else {
         strengths.add('Сильное открытие с хуком');
       }
     }
 
-    // Проверяем структуру
     if (slideTitles.length < 5) {
       advice.add(const NarrativeAdvice(
         type: 'Структура',
-        advice: 'Слишком мало слайдов. Рекомендуем минимум 5-7 для полного раскрытия темы',
+        advice:
+            'Рекомендуем минимум 5–7 слайдов для раскрытия темы',
         priority: 1,
       ));
+      weaknesses.add('Слишком короткая структура');
     }
 
-    // Проверяем последний слайд
-    if (slideTitles.isNotEmpty && !_hasCallToAction(slideContent.last)) {
+    if (slideTitles.isNotEmpty &&
+        slideContent.isNotEmpty &&
+        !_hasCallToAction(slideContent.last)) {
       advice.add(NarrativeAdvice(
         type: 'Закрытие',
-        advice: 'Добавьте призыв к действию на последнем слайде. Например: "${_generateCTA()}"',
+        advice:
+            'Добавьте призыв к действию: "${_generateCTA()}"',
         slideReference: 'Слайд ${slideTitles.length}',
         priority: 2,
       ));
+      weaknesses.add('Нет CTA');
     } else {
-      strengths.add('Чёткий призыв к действию в конце');
+      strengths.add('Чёткий финал с CTA');
     }
 
-    // Проверяем наличие кейсов
-    final hasCaseStudy = slideContent.any((content) => 
-      content.any((line) => line.toLowerCase().contains('пример') || line.toLowerCase().contains('кейс'))
-    );
-    
+    final hasCaseStudy = slideContent.any((content) {
+      return content.any((line) {
+        final l = line.toLowerCase();
+        return l.contains('пример') ||
+            l.contains('кейс') ||
+            l.contains('case') ||
+            l.contains('example');
+      });
+    });
+
     if (!hasCaseStudy && slideTitles.length > 5) {
       advice.add(const NarrativeAdvice(
         type: 'Примеры',
-        advice: 'Добавьте реальный кейс или пример между слайдами 3 и 4 для удержания внимания',
+        advice:
+            'Добавьте кейс между слайдами 3–4 для удержания внимания',
         priority: 3,
       ));
+      weaknesses.add('Нет примеров');
     } else if (hasCaseStudy) {
-      strengths.add('Использование кейсов для иллюстрации');
+      strengths.add('Используются кейсы');
     }
 
-    // Общая оценка
-    var score = 70;
-    score += strengths.length * 5;
-    score -= advice.where((a) => a.priority == 1).length * 15;
-    score -= advice.where((a) => a.priority == 2).length * 8;
-    score = score.clamp(0, 100);
+    var score = 70 +
+        strengths.length * 5 -
+        advice.where((a) => a.priority == 1).length * 15 -
+        advice.where((a) => a.priority == 2).length * 8;
+
+    final finalScore = score.clamp(0, 100).toInt();
 
     return NarrativeAnalysis(
-      overallScore: score,
+      overallScore: finalScore,
       structureType: _detectStructureType(slideTitles),
       advice: advice,
       strengths: strengths,
@@ -110,62 +123,86 @@ class AiConsultantService {
   }
 
   static bool _hasHook(List<String> content) {
-    final hookIndicators = ['статистика', 'факт', 'знаете ли вы', 'представьте', 'шокирует', 'рекорд'];
-    return content.any((line) => hookIndicators.any((h) => line.toLowerCase().contains(h)));
+    final hookIndicators = [
+      'статистика',
+      'факт',
+      'знаете ли вы',
+      'представьте',
+      'шокирует',
+      'рекорд',
+    ];
+
+    return content.any((line) {
+      final l = line.toLowerCase();
+      return hookIndicators.any((h) => l.contains(h));
+    });
   }
 
   static bool _hasCallToAction(List<String> content) {
-    final ctaIndicators = ['действуйте', 'начните', 'попробуйте', 'свяжитесь', 'подпишитесь', 'купите'];
-    return content.any((line) => ctaIndicators.any((c) => line.toLowerCase().contains(c)));
+    final ctaIndicators = [
+      'действуйте',
+      'начните',
+      'попробуйте',
+      'свяжитесь',
+      'подпишитесь',
+      'купите',
+    ];
+
+    return content.any((line) {
+      final l = line.toLowerCase();
+      return ctaIndicators.any((c) => l.contains(c));
+    });
   }
 
   static String _generateCTA() {
-    final ctas = [
-      'Начните применять эти советы уже сегодня',
-      'Запишитесь на бесплатную консультацию',
-      'Скачайте полную версию отчёта',
-      'Подпишитесь на наши обновления',
-      'Попробуйте бесплатный триал',
+    const ctas = [
+      'Начните применять советы уже сегодня',
+      'Запишитесь на консультацию',
+      'Скачайте полный отчёт',
+      'Попробуйте бесплатно',
+      'Изучите подробнее сейчас',
     ];
+
     return ctas[_random.nextInt(ctas.length)];
   }
 
   static String _detectStructureType(List<String> slideTitles) {
     if (slideTitles.isEmpty) return 'Не определена';
-    if (slideTitles.first.toLowerCase().contains('проблема') || slideTitles.first.toLowerCase().contains('вызов')) {
+
+    final first = slideTitles.first.toLowerCase();
+    final last = slideTitles.last.toLowerCase();
+
+    if (first.contains('проблема') || first.contains('вызов')) {
       return 'Проблема → Решение';
     }
-    if (slideTitles.last.toLowerCase().contains('вывод') || slideTitles.last.toLowerCase().contains('итог')) {
-      return 'Классическая (Введение → Основная часть → Заключение)';
+
+    if (last.contains('вывод') || last.contains('итог')) {
+      return 'Классическая структура';
     }
+
     return 'Повествовательная';
   }
 
-  /// Генерирует сценарий для Q&A-сессии
   static List<String> generateQAScript(String topic) {
     return [
-      'Вопрос 1: Как это работает на практике?',
-      'Ответ: Приведите конкретный пример из вашего опыта.',
-      '',
-      'Вопрос 2: Какие есть ограничения?',
-      'Ответ: Честно расскажите о границах применимости.',
-      '',
-      'Вопрос 3: Сколько это стоит?',
-      'Ответ: Подготовьте прозрачную таблицу с ценами.',
-      '',
-      'Вопрос 4: Чем вы отличаетесь от конкурентов?',
-      'Ответ: Выделите 2-3 ключевых преимущества.',
+      'Как это работает на практике?',
+      'Какие есть ограничения?',
+      'Сколько это стоит?',
+      'Чем вы отличаетесь от конкурентов?',
     ];
   }
 
-  /// Генерирует заметки докладчика для каждого слайда
-  static String generateSpeakerNotes(String slideTitle, List<String> slideContent) {
-    final notes = StringBuffer();
-    notes.writeln('🎤 Заметки докладчика для слайда "$slideTitle":');
-    notes.writeln('- Начните с паузы в 2 секунды');
-    notes.writeln('- Не читайте текст со слайда слово в слово');
-    notes.writeln('- Приведите дополнительный пример, которого нет на слайде');
-    notes.writeln('- Задайте вопрос аудитории для вовлечения');
-    return notes.toString();
+  static String generateSpeakerNotes(
+    String slideTitle,
+    List<String> slideContent,
+  ) {
+    return '''
+🎤 $slideTitle
+
+- Пауза 2 секунды перед началом
+- Не читать текст со слайда
+- Добавить личный пример
+- Задать вопрос аудитории
+''';
   }
 }
