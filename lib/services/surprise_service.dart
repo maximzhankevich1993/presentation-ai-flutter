@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -25,7 +26,6 @@ class SurpriseStyle {
 class SurpriseService {
   static final Random _random = Random();
 
-  // Список названий стилей для интриги
   static final List<String> _styleNames = [
     '🔥 Огненный закат',
     '🌊 Морская волна',
@@ -44,7 +44,6 @@ class SurpriseService {
     '🧪 Химическая лаборатория',
   ];
 
-  // Список забавных фактов для показа во время генерации
   static final List<String> _funFacts = [
     'Знаете ли вы? Первая компьютерная презентация была создана в 1979 году.',
     'Факт: Слушатели запоминают только 10% сказанного, но 65% увиденного на слайдах.',
@@ -55,41 +54,53 @@ class SurpriseService {
 
   /// Генерирует случайный стиль презентации
   static SurpriseStyle generateRandomStyle() {
-    final themes = [
-      'Киберпанк', 'Закат', 'Северный лес', 'Мятный', 
-      'Вишнёвый', 'Космический', 'Песчаный', 'Графитовый',
-    ];
-    
     final fonts = [
-      'modern_tech', 'clean_swiss', 'classic_elegance', 
-      'playful_hand', 'brutal_mono', 'serious_business',
+      'modern_tech',
+      'clean_swiss',
+      'classic_elegance',
+      'playful_hand',
+      'brutal_mono',
+      'serious_business',
     ];
-    
+
     final gradients = [
-      'aurora', 'peach', 'purple', 'mojito', 'blood_moon', 'simple',
+      'aurora',
+      'peach',
+      'purple',
+      'mojito',
+      'blood_moon',
+      'simple',
     ];
-    
+
     final transitions = AnimationService.getTransitions();
-    
+
     final colors = [
-      Colors.indigo, Colors.teal, Colors.deepOrange, Colors.pink,
-      Colors.amber, Colors.cyan, Colors.lightGreen, Colors.deepPurple,
+      Colors.indigo,
+      Colors.teal,
+      Colors.deepOrange,
+      Colors.pink,
+      Colors.amber,
+      Colors.cyan,
+      Colors.lightGreen,
+      Colors.deepPurple,
     ];
 
     return SurpriseStyle(
       themeName: _styleNames[_random.nextInt(_styleNames.length)],
       fontPair: fonts[_random.nextInt(fonts.length)],
       gradientId: gradients[_random.nextInt(gradients.length)],
-      transitionId: transitions[_random.nextInt(transitions.length)].id,
+      transitionId: transitions.isNotEmpty
+          ? transitions[_random.nextInt(transitions.length)].id
+          : 'fade', // fallback
       primaryColor: colors[_random.nextInt(colors.length)],
-      backgroundColor: _random.nextBool() 
-          ? Colors.white 
-          : const Color(0xFF1E1E2A),
+      backgroundColor:
+          _random.nextBool() ? Colors.white : const Color(0xFF1E1E2A),
     );
   }
 
   /// Возвращает случайный забавный факт
   static String getRandomFunFact() {
+    if (_funFacts.isEmpty) return '';
     return _funFacts[_random.nextInt(_funFacts.length)];
   }
 
@@ -106,7 +117,8 @@ class SurpriseService {
   }
 
   /// Показывает экран «Удиви меня» с анимацией
-  static void showSurpriseAnimation(BuildContext context, VoidCallback onComplete) {
+  static void showSurpriseAnimation(
+      BuildContext context, VoidCallback onComplete) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -117,67 +129,81 @@ class SurpriseService {
   }
 }
 
-// Анимированный диалог «Удиви меня»
 class _SurpriseAnimationDialog extends StatefulWidget {
   final VoidCallback onComplete;
 
   const _SurpriseAnimationDialog({required this.onComplete});
 
   @override
-  State<_SurpriseAnimationDialog> createState() => _SurpriseAnimationDialogState();
+  State<_SurpriseAnimationDialog> createState() =>
+      _SurpriseAnimationDialogState();
 }
 
-class _SurpriseAnimationDialogState extends State<_SurpriseAnimationDialog>
+class _SurpriseAnimationDialogState
+    extends State<_SurpriseAnimationDialog>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnimation;
   late Animation<double> _rotationAnimation;
-  
+
   int _factIndex = 0;
   final List<String> _facts = SurpriseService._funFacts;
-  
+
+  Timer? _factTimer;
+  Timer? _closeTimer;
+
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     );
-    
+
     _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
       CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
     );
-    
-    _rotationAnimation = Tween<double>(begin: 0, end: 2 * 3.14159).animate(
+
+    _rotationAnimation = Tween<double>(
+      begin: 0,
+      end: 2 * pi, // исправлено
+    ).animate(
       CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
-    
+
     _controller.forward();
-    
-    // Меняем факты каждые 1.5 секунды
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      if (mounted) {
-        setState(() => _factIndex = 1);
-      }
-    });
-    
-    Future.delayed(const Duration(milliseconds: 2500), () {
-      if (mounted) {
-        Navigator.pop(context);
-        widget.onComplete();
-      }
+
+    // безопасный таймер смены факта
+    if (_facts.length > 1) {
+      _factTimer = Timer(const Duration(milliseconds: 1500), () {
+        if (!mounted) return;
+        setState(() {
+          _factIndex = (_factIndex + 1) % _facts.length;
+        });
+      });
+    }
+
+    // закрытие
+    _closeTimer = Timer(const Duration(milliseconds: 2500), () {
+      if (!mounted) return;
+      Navigator.of(context).pop();
+      widget.onComplete();
     });
   }
 
   @override
   void dispose() {
+    _factTimer?.cancel();
+    _closeTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final factText = _facts.isNotEmpty ? _facts[_factIndex] : '';
+
     return Center(
       child: AnimatedBuilder(
         animation: _controller,
@@ -224,7 +250,7 @@ class _SurpriseAnimationDialogState extends State<_SurpriseAnimationDialog>
               ),
               const SizedBox(height: 16),
               Text(
-                _facts[_factIndex],
+                factText,
                 style: const TextStyle(
                   fontSize: 14,
                   color: Colors.grey,
