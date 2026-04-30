@@ -9,14 +9,24 @@ import 'providers/user_provider.dart';
 import 'screens/home_screen.dart';
 import 'themes/app_theme.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (Platform.isWindows || Platform.isMacOS) {
+  // Desktop window setup
+  if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
     await windowManager.ensureInitialized();
-    await windowManager.setMinimumSize(const Size(500, 700));
-    await windowManager.setSize(const Size(600, 900));
-    await windowManager.center();
+
+    WindowOptions windowOptions = const WindowOptions(
+      size: Size(600, 900),
+      minimumSize: Size(500, 700),
+      center: true,
+      title: 'Презентатор ИИ',
+    );
+
+    windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
   }
 
   runApp(const MyApp());
@@ -35,7 +45,7 @@ class MyApp extends StatelessWidget {
       child: ScreenUtilInit(
         designSize: const Size(375, 812),
         minTextAdapt: true,
-        builder: (_, child) {
+        builder: (context, _) {
           return MaterialApp(
             title: 'Презентатор ИИ',
             debugShowCheckedModeBanner: false,
