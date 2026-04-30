@@ -46,64 +46,38 @@ class TeacherService {
       'academicYear': 'Сентябрь-Май',
       'languages': ['Русский'],
     },
-    'BY': {
-      'country': 'Беларусь',
-      'standard': 'Образовательные стандарты РБ',
-      'curriculum': 'Программы Минобра РБ',
-      'integrations': ['Знай.бай', 'Электронная школа'],
-      'grading': '1-10',
-      'academicYear': 'Сентябрь-Май',
-      'languages': ['Русский', 'Беларуская'],
-    },
-    'KZ': {
-      'country': 'Казахстан',
-      'standard': 'ГОСО РК',
-      'curriculum': 'Типовые учебные программы',
-      'integrations': ['Күнделік', 'BilimLand'],
-      'grading': '1-5',
-      'academicYear': 'Сентябрь-Май',
-      'languages': ['Қазақша', 'Русский'],
-    },
-    'IN': {
-      'country': 'Индия',
-      'standard': 'CBSE / NCERT',
-      'curriculum': 'NCERT + State Boards',
-      'integrations': ['Google Classroom', 'Diksha'],
-      'grading': '0-100',
-      'academicYear': 'Апрель-Март',
-      'languages': ['English', 'Hindi'],
-    },
-    'BR': {
-      'country': 'Бразилия',
-      'standard': 'BNCC',
-      'curriculum': 'Base Nacional Comum Curricular',
-      'integrations': ['Google Classroom', 'Khan Academy'],
-      'grading': '0-10',
-      'academicYear': 'Февраль-Декабрь',
-      'languages': ['Português'],
-    },
-    'JP': {
-      'country': 'Япония',
-      'standard': '学習指導要領 (MEXT)',
-      'curriculum': 'MEXT Guidelines',
-      'integrations': ['Google Classroom', 'ロイロノート'],
-      'grading': '1-5',
-      'academicYear': 'Апрель-Март',
-      'languages': ['日本語'],
-    },
   };
 
-  /// Возвращает образовательную систему по коду страны
+  /// Безопасное получение системы
   static Map<String, dynamic>? getSystem(String countryCode) {
+    if (countryCode.isEmpty) return null;
     return educationSystems[countryCode.toUpperCase()];
+  }
+
+  /// Безопасное получение строки
+  static String _safeString(dynamic value, String fallback) {
+    if (value is String && value.trim().isNotEmpty) return value;
+    return fallback;
+  }
+
+  /// Безопасное получение списка строк
+  static List<String> _safeStringList(dynamic value, List<String> fallback) {
+    if (value is List) {
+      return value.whereType<String>().toList();
+    }
+    return fallback;
   }
 
   /// Возвращает список поддерживаемых стран
   static List<Map<String, String>> getSupportedCountries() {
-    return educationSystems.entries.map((e) => {
-      'code': e.key,
-      'country': e.value['country'] as String,
-      'standard': e.value['standard'] as String,
+    return educationSystems.entries.map((e) {
+      final data = e.value;
+
+      return {
+        'code': e.key,
+        'country': _safeString(data['country'], 'Unknown'),
+        'standard': _safeString(data['standard'], '—'),
+      };
     }).toList();
   }
 
@@ -116,45 +90,106 @@ class TeacherService {
     int durationMinutes = 45,
   }) {
     final system = getSystem(countryCode);
-    final standard = system?['standard'] ?? 'Международный стандарт';
-    final country = system?['country'] ?? countryCode;
-    final integrations = system?['integrations'] as List<String>? ?? ['Google Classroom'];
-    final languages = system?['languages'] as List<String>? ?? ['English'];
+
+    final standard =
+        _safeString(system?['standard'], 'Международный стандарт');
+    final country = _safeString(system?['country'], countryCode);
+
+    final integrations = _safeStringList(
+      system?['integrations'],
+      ['Google Classroom'],
+    );
+
+    final languages = _safeStringList(
+      system?['languages'],
+      ['English'],
+    );
+
+    final safeDuration = durationMinutes.clamp(10, 180);
 
     return {
       'topic': topic,
+      'subject': subject,
       'country': country,
       'standard': standard,
       'grade': grade,
-      'duration': '$durationMinutes минут',
-      'language': languages.first,
+      'duration': '$safeDuration минут',
+      'language': languages.isNotEmpty ? languages.first : 'English',
       'integrations': integrations,
-      'stages': _generateStages(standard, durationMinutes),
-      'homework': _generateHomework(topic, languages.first),
+      'stages': _generateStages(safeDuration),
+      'homework': _generateHomework(topic, languages.isNotEmpty ? languages.first : 'English'),
       'assessment': _generateAssessment(standard),
     };
   }
 
-  static List<Map<String, dynamic>> _generateStages(String standard, int total) {
-    return [
-      {'name': 'Организационный момент', 'minutes': (total * 0.1).round(), 'description': 'Приветствие, проверка готовности'},
-      {'name': 'Актуализация знаний', 'minutes': (total * 0.15).round(), 'description': 'Повторение пройденного, вопросы'},
-      {'name': 'Изучение нового', 'minutes': (total * 0.35).round(), 'description': 'Объяснение темы, презентация, примеры'},
-      {'name': 'Закрепление', 'minutes': (total * 0.25).round(), 'description': 'Практическая работа, групповая активность'},
-      {'name': 'Рефлексия', 'minutes': (total * 0.15).round(), 'description': 'Подведение итогов, домашнее задание'},
+  /// Генерация этапов урока (с контролем суммы)
+  static List<Map<String, dynamic>> _generateStages(int total) {
+    final parts = [
+      0.1,
+      0.15,
+      0.35,
+      0.25,
+      0.15,
     ];
+
+    final stages = [
+      'Организационный момент',
+      'Актуализация знаний',
+      'Изучение нового',
+      'Закрепление',
+      'Рефлексия',
+    ];
+
+    final descriptions = [
+      'Приветствие, проверка готовности',
+      'Повторение пройденного, вопросы',
+      'Объяснение темы, презентация, примеры',
+      'Практическая работа, групповая активность',
+      'Подведение итогов, домашнее задание',
+    ];
+
+    int used = 0;
+
+    final result = List.generate(parts.length, (i) {
+      int minutes = (total * parts[i]).round();
+      used += minutes;
+
+      return {
+        'name': stages[i],
+        'minutes': minutes,
+        'description': descriptions[i],
+      };
+    });
+
+    // корректируем последний элемент, чтобы сумма совпала
+    final diff = total - used;
+    if (diff != 0 && result.isNotEmpty) {
+      result.last['minutes'] += diff;
+    }
+
+    return result;
   }
 
   static String _generateHomework(String topic, String language) {
-    if (language == 'Русский') return 'Подготовить краткое сообщение по теме "$topic"';
-    if (language == 'Deutsch') return 'Erstellen Sie eine kurze Zusammenfassung zum Thema "$topic"';
-    if (language == 'Français') return 'Préparer un résumé sur "$topic"';
-    return 'Prepare a short summary on "$topic"';
+    switch (language) {
+      case 'Русский':
+        return 'Подготовить краткое сообщение по теме "$topic"';
+      case 'Deutsch':
+        return 'Erstellen Sie eine kurze Zusammenfassung zum Thema "$topic"';
+      case 'Français':
+        return 'Préparer un résumé sur "$topic"';
+      default:
+        return 'Prepare a short summary on "$topic"';
+    }
   }
 
   static String _generateAssessment(String standard) {
-    if (standard.contains('ФГОС')) return 'Самооценка по критериям, тест из 5 вопросов';
-    if (standard.contains('Common Core')) return 'Exit ticket with 3 questions, peer assessment';
+    if (standard.contains('ФГОС')) {
+      return 'Самооценка по критериям, тест из 5 вопросов';
+    }
+    if (standard.contains('Common Core')) {
+      return 'Exit ticket with 3 questions, peer assessment';
+    }
     return 'Quick quiz (5 questions), self-reflection';
   }
 }
