@@ -23,41 +23,67 @@ class WhiteLabelConfig {
 }
 
 class WhiteLabelService {
-  /// Применяет White-label конфигурацию к теме
-  static ThemeData applyWhiteLabel(ThemeData baseTheme, WhiteLabelConfig config) {
+  static ThemeData applyWhiteLabel(
+    ThemeData baseTheme,
+    WhiteLabelConfig config,
+  ) {
+    final secondary = config.secondaryColor ?? config.primaryColor;
+
     return baseTheme.copyWith(
       primaryColor: config.primaryColor,
       colorScheme: baseTheme.colorScheme.copyWith(
         primary: config.primaryColor,
-        secondary: config.secondaryColor ?? config.primaryColor,
+        secondary: secondary,
       ),
       appBarTheme: baseTheme.appBarTheme.copyWith(
+        backgroundColor: config.primaryColor,
         titleTextStyle: baseTheme.appBarTheme.titleTextStyle?.copyWith(
-          color: Colors.white,
+          color: _getContrastColor(config.primaryColor),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: config.primaryColor,
+        style: ButtonStyle(
+          backgroundColor: MaterialStateProperty.resolveWith((states) {
+            if (states.contains(MaterialState.disabled)) {
+              return config.primaryColor.withOpacity(0.5);
+            }
+            if (states.contains(MaterialState.pressed)) {
+              return config.primaryColor.withOpacity(0.8);
+            }
+            return config.primaryColor;
+          }),
         ),
       ),
     );
   }
 
-  /// Возвращает кастомизированный логотип
+  /// Контрастный цвет текста
+  static Color _getContrastColor(Color color) {
+    return color.computeLuminance() > 0.5 ? Colors.black : Colors.white;
+  }
+
   static Widget buildLogo(WhiteLabelConfig config, {double size = 32}) {
-    if (config.logoUrl != null && config.logoUrl!.isNotEmpty) {
+    final url = config.logoUrl?.trim();
+
+    if (url != null && url.isNotEmpty) {
       return Image.network(
-        config.logoUrl!,
+        url,
         width: size,
         height: size,
         errorBuilder: (_, __, ___) => _buildDefaultLogo(config, size),
       );
     }
+
     return _buildDefaultLogo(config, size);
   }
 
-  static Widget _buildDefaultLogo(WhiteLabelConfig config, double size) {
+  static Widget _buildDefaultLogo(
+      WhiteLabelConfig config, double size) {
+    final name = config.companyName.trim();
+
+    final letter =
+        name.isNotEmpty ? name.characters.first.toUpperCase() : '?';
+
     return Container(
       width: size,
       height: size,
@@ -67,7 +93,7 @@ class WhiteLabelService {
       ),
       child: Center(
         child: Text(
-          config.companyName.substring(0, 1).toUpperCase(),
+          letter,
           style: TextStyle(
             color: Colors.white,
             fontSize: size * 0.5,
@@ -78,7 +104,6 @@ class WhiteLabelService {
     );
   }
 
-  /// Возвращает кастомизированный футер
   static Widget buildFooter(WhiteLabelConfig config) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -98,8 +123,8 @@ class WhiteLabelService {
     );
   }
 
-  /// Тарифы White-label
-  static final Map<String, WhiteLabelConfig> plans = {
+  static final Map<String, WhiteLabelConfig> plans =
+      Map.unmodifiable({
     'starter': WhiteLabelConfig(
       companyName: 'Стартовый',
       primaryColor: const Color(0xFF4F46E5),
@@ -121,5 +146,5 @@ class WhiteLabelService {
       removeWatermark: true,
       customEmails: true,
     ),
-  };
+  });
 }
