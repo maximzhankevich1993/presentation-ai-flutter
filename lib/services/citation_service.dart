@@ -19,7 +19,6 @@ class Citation {
 class CitationService {
   static final Random _random = Random();
 
-  /// База цитат по категориям
   static final Map<String, List<Citation>> _citations = {
     'технологии': [
       Citation(text: 'Будущее уже здесь. Просто оно неравномерно распределено.', author: 'Уильям Гибсон', category: 'технологии'),
@@ -51,73 +50,91 @@ class CitationService {
     ],
   };
 
-  /// Подбирает релевантные цитаты по теме
   static List<Citation> getRelevantCitations(String topic, {int count = 3}) {
     final lowercaseTopic = topic.toLowerCase();
     final results = <Citation>[];
-    
-    // Ищем по категориям
+
     for (final entry in _citations.entries) {
-      if (lowercaseTopic.contains(entry.key) || entry.key.contains(lowercaseTopic)) {
+      if (lowercaseTopic.contains(entry.key) ||
+          entry.key.contains(lowercaseTopic)) {
         results.addAll(entry.value);
       }
     }
-    
-    // Если не нашли — добавляем случайные
+
     if (results.isEmpty) {
-      final allCitations = _citations.values.expand((c) => c).toList();
-      results.addAll(allCitations);
+      results.addAll(_citations.values.expand((c) => c));
     }
-    
-    // Перемешиваем и берём нужное количество
+
     results.shuffle(_random);
-    return results.take(count).toList();
+
+    // убираем дубликаты (по тексту)
+    final unique = <String, Citation>{};
+    for (final c in results) {
+      unique[c.text] = c;
+    }
+
+    return unique.values.take(count).toList();
   }
 
-  /// Форматирует цитату для слайда (APA стиль)
   static String formatCitationAPA(Citation citation) {
-    final buffer = StringBuffer();
-    buffer.writeln('"${citation.text}"');
-    buffer.write('— ${citation.author}');
-    if (citation.source != null) {
-      buffer.write(', ${citation.source}');
+    final parts = <String>[];
+
+    parts.add('"${citation.text}"');
+    parts.add('— ${citation.author}');
+
+    if (citation.source != null && citation.source!.isNotEmpty) {
+      parts.add(citation.source!);
     }
-    if (citation.year != null) {
-      buffer.write(' (${citation.year})');
+
+    if (citation.year != null && citation.year!.isNotEmpty) {
+      parts.add('(${citation.year})');
     }
-    return buffer.toString();
+
+    return parts.join(', ');
   }
 
-  /// Форматирует цитату для слайда (ГОСТ стиль)
   static String formatCitationGOST(Citation citation) {
     return '"${citation.text}" / ${citation.author}.';
   }
 
-  /// Форматирует список источников
   static String formatReferences(List<Citation> citations) {
     final buffer = StringBuffer();
     buffer.writeln('📚 Источники:');
-    
+
     for (int i = 0; i < citations.length; i++) {
       final c = citations[i];
-      buffer.writeln('${i + 1}. ${c.author}. ${c.source ?? ""} ${c.year ?? ""}');
+
+      final source = c.source ?? '';
+      final year = c.year ?? '';
+
+      final extra = [source, year]
+          .where((e) => e.isNotEmpty)
+          .join(' ');
+
+      buffer.writeln('${i + 1}. ${c.author}. $extra');
     }
-    
+
     return buffer.toString();
   }
 
-  /// Генерирует слайд с цитатами
-  static Map<String, dynamic> generateCitationSlide(String topic, {String style = 'APA'}) {
+  static Map<String, dynamic> generateCitationSlide(
+    String topic, {
+    String style = 'APA',
+  }) {
     final citations = getRelevantCitations(topic);
-    
+
     return {
       'title': 'Мнения экспертов',
       'subtitle': 'Что говорят о "$topic"',
-      'content': citations.map((c) => 
-        style == 'APA' ? formatCitationAPA(c) : formatCitationGOST(c)
-      ).toList(),
+      'content': citations
+          .map((c) =>
+              style == 'APA'
+                  ? formatCitationAPA(c)
+                  : formatCitationGOST(c))
+          .toList(),
       'image_keywords': 'quote inspiration motivation',
-      'references': citations.map((c) => '${c.author}, ${c.source ?? ""}').toList(),
+      'references':
+          citations.map((c) => '${c.author}, ${c.source ?? ""}').toList(),
     };
   }
 }
