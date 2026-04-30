@@ -57,7 +57,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
   }
 
   Widget _buildBackgroundTab() {
-    final userProvider = Provider.of<UserProvider>(context);
+    final userProvider = context.watch<UserProvider>();
     
     return SingleChildScrollView(
       padding: EdgeInsets.all(24.w),
@@ -168,7 +168,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
   }
 
   Widget _buildFontsTab() {
-    final userProvider = Provider.of<UserProvider>(context);
+    final userProvider = context.watch<UserProvider>();
     
     return SingleChildScrollView(
       padding: EdgeInsets.all(24.w),
@@ -202,8 +202,8 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
   }
 
   Widget _buildAppTab() {
-    final themeProvider = Provider.of<ThemeProvider>(context);
-    final userProvider = Provider.of<UserProvider>(context);
+    final themeProvider = context.watch<ThemeProvider>();
+    final userProvider = context.watch<UserProvider>();
     
     return SingleChildScrollView(
       padding: EdgeInsets.all(24.w),
@@ -234,10 +234,10 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     );
   }
 
-  void _selectBackground(int colorValue) => ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Фон выбран'), duration: Duration(seconds: 1)));
-  void _selectGradient(String name) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Градиент "$name" выбран'), duration: const Duration(seconds: 1)));
-  void _selectTexture(String name) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Текстура "$name" выбрана'), duration: const Duration(seconds: 1)));
-  void _selectFont(String name) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Шрифт "$name" выбран'), duration: const Duration(seconds: 1)));
+  void _selectBackground(int colorValue) => _showSnack('Фон выбран');
+  void _selectGradient(String name) => _showSnack('Градиент "$name" выбран');
+  void _selectTexture(String name) => _showSnack('Текстура "$name" выбрана');
+  void _selectFont(String name) => _showSnack('Шрифт "$name" выбран');
 
   void _showPremiumNudge() {
     showDialog(
@@ -250,6 +250,16 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Позже')),
           ElevatedButton(onPressed: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())); }, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF59E0B)), child: const Text('Оформить Premium')),
         ],
+      ),
+    );
+  }
+
+  void _showSnack(String text) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(text),
+        duration: const Duration(seconds: 1),
       ),
     );
   }
