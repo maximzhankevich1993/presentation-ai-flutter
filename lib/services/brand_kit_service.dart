@@ -27,11 +27,7 @@ class BrandKit {
 class BrandKitService {
   static final Random _random = Random();
 
-  /// Анализирует логотип и создаёт бренд-кит
   static Future<BrandKit> generateFromImage(ui.Image logoImage) async {
-    // В реальной версии: анализ доминирующих цветов из изображения
-    // Сейчас: генерируем на основе случайного выбора с хорошим вкусом
-    
     final palettes = [
       {
         'primary': const Color(0xFF4F46E5),
@@ -73,24 +69,31 @@ class BrandKitService {
 
     final palette = palettes[_random.nextInt(palettes.length)];
 
+    final Color primary = palette['primary'] as Color;
+    final Color secondary = palette['secondary'] as Color;
+    final Color accent = palette['accent'] as Color;
+    final Color background = palette['background'] as Color;
+
     return BrandKit(
-      primaryColor: palette['primary'] as Color,
-      secondaryColor: palette['secondary'] as Color,
-      accentColor: palette['accent'] as Color,
-      backgroundColor: palette['background'] as Color,
+      primaryColor: primary,
+      secondaryColor: secondary,
+      accentColor: accent,
+      backgroundColor: background,
       fontHeading: palette['heading'] as String,
       fontBody: palette['body'] as String,
       styleName: palette['style'] as String,
       colorPalette: [
-        palette['primary'] as Color,
-        palette['secondary'] as Color,
-        palette['accent'] as Color,
-        palette['background'] as Color,
-      ].map((c) => '#${c.value.toRadixString(16).substring(2).toUpperCase()}').toList(),
+        primary,
+        secondary,
+        accent,
+        background,
+      ].map((c) {
+        final hex = c.value.toRadixString(16).padLeft(8, '0');
+        return '#${hex.substring(2).toUpperCase()}';
+      }).toList(),
     );
   }
 
-  /// Применяет бренд-кит к теме приложения
   static ThemeData applyBrandKit(BrandKit kit, bool isDark) {
     return ThemeData(
       primaryColor: kit.primaryColor,
@@ -98,7 +101,8 @@ class BrandKitService {
         seedColor: kit.primaryColor,
         brightness: isDark ? Brightness.dark : Brightness.light,
       ),
-      scaffoldBackgroundColor: isDark ? const Color(0xFF1E1E2A) : kit.backgroundColor,
+      scaffoldBackgroundColor:
+          isDark ? const Color(0xFF1E1E2A) : kit.backgroundColor,
       fontFamily: kit.fontBody,
       appBarTheme: AppBarTheme(
         titleTextStyle: TextStyle(
@@ -110,7 +114,9 @@ class BrandKitService {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: kit.primaryColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
       ),
     );
