@@ -40,7 +40,7 @@ class StoryModeService {
     return presentation.slides.asMap().entries.map((entry) {
       final index = entry.key;
       final slide = entry.value;
-      
+
       return StoryFrame(
         title: slide.title,
         subtitle: slide.subtitle,
@@ -55,9 +55,21 @@ class StoryModeService {
 
   /// Рассчитывает оптимальную длительность показа
   static double _calculateDuration(Slide slide) {
-    final wordCount = slide.content.fold<int>(0, (sum, line) => sum + line.split(' ').length);
+    final wordCount = slide.content.fold<int>(
+      0,
+      (sum, line) => sum +
+          line
+              .trim()
+              .split(RegExp(r'\s+'))
+              .where((w) => w.isNotEmpty)
+              .length,
+    );
+
     // ~3 слова в секунду + 2 секунды на заголовок
-    return (wordCount / 3) + 2;
+    final duration = (wordCount / 3) + 2;
+
+    // Ограничиваем (UX)
+    return duration.clamp(3.0, 10.0);
   }
 
   /// Возвращает переход для кадра
@@ -75,13 +87,21 @@ class StoryModeService {
   }
 
   /// Создаёт виджет для одного кадра Story
-  static Widget buildStoryFrame(BuildContext context, StoryFrame frame) {
+  static Widget buildStoryFrame(
+    BuildContext context,
+    StoryFrame frame, {
+    int currentIndex = 0,
+    int totalFrames = 1,
+  }) {
+    final hasImage =
+        frame.imageUrl != null && frame.imageUrl!.trim().isNotEmpty;
+
     return Container(
       color: frame.backgroundColor,
       child: Stack(
         children: [
           // Фоновое изображение
-          if (frame.imageUrl != null)
+          if (hasImage)
             Positioned.fill(
               child: Opacity(
                 opacity: 0.4,
@@ -92,7 +112,7 @@ class StoryModeService {
                 ),
               ),
             ),
-          
+
           // Контент
           Padding(
             padding: const EdgeInsets.all(40),
@@ -109,7 +129,8 @@ class StoryModeService {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                if (frame.subtitle != null) ...[
+                if (frame.subtitle != null &&
+                    frame.subtitle!.trim().isNotEmpty) ...[
                   const SizedBox(height: 16),
                   Text(
                     frame.subtitle!,
@@ -135,20 +156,22 @@ class StoryModeService {
               ],
             ),
           ),
-          
+
           // Индикатор прогресса
           Positioned(
             top: 60,
             left: 20,
             right: 20,
             child: Row(
-              children: List.generate(5, (i) {
+              children: List.generate(totalFrames, (i) {
                 return Expanded(
                   child: Container(
                     height: 3,
                     margin: const EdgeInsets.symmetric(horizontal: 2),
                     decoration: BoxDecoration(
-                      color: i == 0 ? Colors.white : Colors.white.withOpacity(0.3),
+                      color: i == currentIndex
+                          ? Colors.white
+                          : Colors.white.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -156,14 +179,17 @@ class StoryModeService {
               }),
             ),
           ),
-          
+
           // Кнопка «Поделиться»
           Positioned(
             bottom: 40,
             right: 30,
             child: IconButton(
               onPressed: () {},
-              icon: Icon(Icons.share, color: Colors.white.withOpacity(0.7)),
+              icon: Icon(
+                Icons.share,
+                color: Colors.white.withOpacity(0.7),
+              ),
             ),
           ),
         ],
