@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
+
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
 import '../models/presentation.dart';
@@ -10,7 +12,11 @@ import 'editor_screen.dart';
 
 class LoadingScreen extends StatefulWidget {
   final String topic;
-  const LoadingScreen({super.key, required this.topic});
+
+  const LoadingScreen({
+    super.key,
+    required this.topic,
+  });
 
   @override
   State<LoadingScreen> createState() => _LoadingScreenState();
@@ -20,14 +26,18 @@ class _LoadingScreenState extends State<LoadingScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _bounceController;
   late Animation<double> _bounceAnimation;
-  int _step = 0;
+
   Timer? _messageTimer;
+  Timer? _progressTimer;
+
+  int _step = 0;
   double _progress = 0.0;
+
   bool _isGenerating = true;
   String? _error;
   int _slidesGenerated = 0;
 
-  final List<String> _messages = [
+  final List<String> _messages = const [
     '🤔 Анализирую тему...',
     '📚 Собираю информацию...',
     '💡 Придумываю структуру...',
@@ -40,44 +50,70 @@ class _LoadingScreenState extends State<LoadingScreen>
   @override
   void initState() {
     super.initState();
+
     _bounceController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 800));
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
     _bounceAnimation = Tween<double>(begin: 0, end: -12).animate(
-        CurvedAnimation(parent: _bounceController, curve: Curves.easeInOut));
+      CurvedAnimation(
+        parent: _bounceController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
     _bounceController.repeat(reverse: true);
+
     _startGeneration();
   }
 
   void _startGeneration() {
+    _messageTimer?.cancel();
+    _progressTimer?.cancel();
+
     _messageTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
-      if (_step < _messages.length - 1 && _isGenerating) {
+      if (!_isGenerating || !mounted) {
+        timer.cancel();
+        return;
+      }
+
+      if (_step < _messages.length - 1) {
         setState(() => _step++);
       }
     });
-    _simulateProgress();
-    _generatePresentation();
-  }
 
-  void _simulateProgress() {
-    Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      if (_isGenerating && _progress < 0.9) {
-        setState(() => _progress += 0.015);
-      } else if (!_isGenerating) {
+    _progressTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      if (!_isGenerating || !mounted) {
         timer.cancel();
+        return;
+      }
+
+      if (_progress < 0.9) {
+        setState(() => _progress += 0.015);
       }
     });
+
+    _generatePresentation();
   }
 
   Future<void> _generatePresentation() async {
     try {
       final userProvider =
           Provider.of<UserProvider>(context, listen: false);
+
       final success = await userProvider.useGeneration();
-      if (!success) throw Exception('Нет доступных генераций');
+      if (!success) {
+        throw Exception('Нет доступных генераций');
+      }
 
       final presentation = await ApiService.generatePresentation(
-          widget.topic,
-          maxSlides: userProvider.maxSlidesPerPresentation);
+        widget.topic,
+        maxSlides: userProvider.maxSlidesPerPresentation,
+      );
+
+      if (!mounted) return;
+
       _slidesGenerated = presentation.slides.length;
 
       setState(() {
@@ -85,34 +121,64 @@ class _LoadingScreenState extends State<LoadingScreen>
         _progress = 1.0;
         _step = _messages.length - 1;
       });
-      _messageTimer?.cancel();
+
+      _cancelTimers();
+
       await Future.delayed(const Duration(milliseconds: 500));
 
-      if (mounted) {
-        Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-                builder: (_) => EditorScreen(presentation: presentation)));
-      }
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => EditorScreen(presentation: presentation),
+        ),
+      );
     } catch (e) {
+      if (!mounted) return;
+
       setState(() {
         _isGenerating = false;
-        _error = e.toString();
+        _error = _formatError(e);
       });
-      _messageTimer?.cancel();
+
+      _cancelTimers();
     }
+  }
+
+  String _formatError(Object e) {
+    final text = e.toString();
+    return text.replaceAll('Exception: ', '');
+  }
+
+  void _retry() {
+    setState(() {
+      _step = 0;
+      _progress = 0.0;
+      _isGenerating = true;
+      _error = null;
+      _slidesGenerated = 0;
+    });
+
+    _startGeneration();
+  }
+
+  void _cancelTimers() {
+    _messageTimer?.cancel();
+    _progressTimer?.cancel();
   }
 
   @override
   void dispose() {
+    _cancelTimers();
     _bounceController.dispose();
-    _messageTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDark =
+        Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor:
@@ -121,175 +187,175 @@ class _LoadingScreenState extends State<LoadingScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            /// ✅ используем встроенный AnimatedBuilder (НЕ свой)
             AnimatedBuilder(
               animation: _bounceAnimation,
-              builder: (context, child) => Transform.translate(
-                offset: Offset(0, _bounceAnimation.value),
-                child: child,
-              ),
-              child: Container(
-                width: 200.w,
-                height: 200.w,
-                decoration: BoxDecoration(
-                  color: _error != null
-                      ? Colors.red.withOpacity(0.1)
-                      : const Color(0xFF4F46E5).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                      color: _error != null
-                          ? Colors.red
-                          : const Color(0xFF4F46E5),
-                      width: 3),
-                ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Text(_error != null ? '😔' : '🧑‍🏫',
-                        style: TextStyle(fontSize: 80.sp)),
-                    if (_error == null) ...[
-                      Positioned(
-                          top: 20,
-                          right: 30,
-                          child: Text('💡', style: TextStyle(fontSize: 40.sp))),
-                      Positioned(
-                          top: 10,
-                          left: 20,
-                          child: Text('✨', style: TextStyle(fontSize: 20.sp))),
-                      Positioned(
-                          bottom: 20,
-                          right: 20,
-                          child: Text('📝', style: TextStyle(fontSize: 30.sp))),
-                    ],
-                  ],
-                ),
-              ),
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(0, _bounceAnimation.value),
+                  child: child,
+                );
+              },
+              child: _buildAvatar(),
             ),
+
             SizedBox(height: 40.h),
-            Container(
-              padding:
-                  EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-              decoration: BoxDecoration(
-                  color: const Color(0xFF4F46E5).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(30)),
-              child: Text(widget.topic,
-                  style: TextStyle(
-                      fontSize: 16.sp,
-                      color: const Color(0xFF4F46E5),
-                      fontWeight: FontWeight.w500),
-                  textAlign: TextAlign.center),
-            ),
+
+            _buildTopic(),
+
             SizedBox(height: 24.h),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: Container(
-                key: ValueKey(_error != null ? 'error' : _step),
-                padding: EdgeInsets.symmetric(horizontal: 32.w),
-                child: Text(
-                  _error != null
-                      ? '❌ ${_error.toString().replaceAll('Exception: ', '')}'
-                      : _messages[_step],
-                  style: TextStyle(
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w500,
-                      color: _error != null
-                          ? Colors.red
-                          : (isDark
-                              ? Colors.white
-                              : const Color(0xFF1E1E2A))),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
+
+            _buildMessage(isDark),
+
             SizedBox(height: 40.h),
-            if (_error != null)
-              ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _step = 0;
-                      _progress = 0.0;
-                      _isGenerating = true;
-                      _error = null;
-                    });
-                    _startGeneration();
-                  },
-                  child: const Text('Попробовать снова'))
-            else
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 60.w),
-                child: Column(
-                  children: [
-                    CustomPaint(
-                        size: Size(double.infinity, 8.h),
-                        painter:
-                            DoodleProgressPainter(progress: _progress)),
-                    SizedBox(height: 8.h),
-                    Text('${(_progress * 100).toInt()}%',
-                        style:
-                            TextStyle(fontSize: 14.sp, color: Colors.grey)),
-                    if (_slidesGenerated > 0)
-                      Padding(
-                          padding: EdgeInsets.only(top: 8.h),
-                          child: Text(
-                              '📊 Создано $_slidesGenerated слайдов',
-                              style: TextStyle(
-                                  fontSize: 12.sp, color: Colors.grey))),
-                  ],
-                ),
-              ),
+
+            _error != null ? _buildRetryButton() : _buildProgress(),
           ],
         ),
       ),
     );
   }
-}
 
-class AnimatedBuilder extends AnimatedWidget {
-  final Widget? child;
-  final Widget Function(BuildContext context, Widget? child) builder;
+  Widget _buildAvatar() {
+    return Container(
+      width: 200.w,
+      height: 200.w,
+      decoration: BoxDecoration(
+        color: _error != null
+            ? Colors.red.withOpacity(0.1)
+            : const Color(0xFF4F46E5).withOpacity(0.1),
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: _error != null
+              ? Colors.red
+              : const Color(0xFF4F46E5),
+          width: 3,
+        ),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Text(
+            _error != null ? '😔' : '🧑‍🏫',
+            style: TextStyle(fontSize: 80.sp),
+          ),
+          if (_error == null) ...[
+            Positioned(
+                top: 20,
+                right: 30,
+                child: Text('💡', style: TextStyle(fontSize: 40.sp))),
+            Positioned(
+                top: 10,
+                left: 20,
+                child: Text('✨', style: TextStyle(fontSize: 20.sp))),
+            Positioned(
+                bottom: 20,
+                right: 20,
+                child: Text('📝', style: TextStyle(fontSize: 30.sp))),
+          ],
+        ],
+      ),
+    );
+  }
 
-  const AnimatedBuilder({
-    super.key,
-    required super.listenable,
-    required this.builder,
-    this.child,
-  });
+  Widget _buildTopic() {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 24.w,
+        vertical: 12.h,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF4F46E5).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(30),
+      ),
+      child: Text(
+        widget.topic,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 16.sp,
+          color: const Color(0xFF4F46E5),
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) => builder(context, child);
+  Widget _buildMessage(bool isDark) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      child: Text(
+        _error != null ? '❌ $_error' : _messages[_step],
+        key: ValueKey(_error ?? _step),
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 18.sp,
+          fontWeight: FontWeight.w500,
+          color: _error != null
+              ? Colors.red
+              : (isDark ? Colors.white : const Color(0xFF1E1E2A)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRetryButton() {
+    return ElevatedButton(
+      onPressed: _retry,
+      child: const Text('Попробовать снова'),
+    );
+  }
+
+  Widget _buildProgress() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 60.w),
+      child: Column(
+        children: [
+          CustomPaint(
+            size: Size(double.infinity, 8.h),
+            painter: DoodleProgressPainter(progress: _progress),
+          ),
+          SizedBox(height: 8.h),
+          Text('${(_progress * 100).toInt()}%'),
+          if (_slidesGenerated > 0)
+            Text('📊 Создано $_slidesGenerated слайдов'),
+        ],
+      ),
+    );
+  }
 }
 
 class DoodleProgressPainter extends CustomPainter {
   final double progress;
+
   DoodleProgressPainter({required this.progress});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final backgroundPaint = Paint()
+    final bg = Paint()
       ..color = Colors.grey.withOpacity(0.2)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round;
-    final progressPaint = Paint()
+      ..strokeWidth = 3;
+
+    final fg = Paint()
       ..color = const Color(0xFF4F46E5)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round;
-    canvas.drawLine(Offset(0, size.height / 2),
-        Offset(size.width, size.height / 2), backgroundPaint);
-    final progressWidth = size.width * progress;
+      ..strokeWidth = 3;
+
+    canvas.drawLine(
+      Offset(0, size.height / 2),
+      Offset(size.width, size.height / 2),
+      bg,
+    );
+
     final path = Path();
+    final width = size.width * progress;
+
     path.moveTo(0, size.height / 2);
-    for (double x = 0; x < progressWidth; x += 5) {
+
+    for (double x = 0; x < width; x += 5) {
       final y = size.height / 2 + sin(x * 0.02) * 2;
       path.lineTo(x, y);
     }
-    canvas.drawPath(path, progressPaint);
-    if (progress > 0.05) {
-      canvas.drawCircle(
-          Offset(progressWidth, size.height / 2 + sin(progressWidth * 0.02) * 2),
-          4,
-          Paint()..color = const Color(0xFF4F46E5));
-    }
+
+    canvas.drawPath(path, fg);
   }
 
   @override
