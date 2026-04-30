@@ -57,6 +57,7 @@ class ReferralService {
       return {'success': false, 'message': 'Нельзя использовать свой код'};
     }
 
+    // Добавление кода в пользовательские настройки
     await prefs.setString(_referredByKey, code);
     await prefs.setInt(_freeMonthsRemainingKey, 1);
 
