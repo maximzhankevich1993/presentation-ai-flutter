@@ -23,28 +23,47 @@ class CompetitorAnalysisService {
   static final Dio _dio = Dio();
   static final Random _random = Random();
 
-  /// Анализирует тему и предлагает уникальный угол
   static Future<CompetitorInsight> analyzeTopic(String topic) async {
     try {
       final response = await _dio.post(
         '$_baseUrl/analyze-competitors',
-        data: jsonEncode({'topic': topic}),
+        data: {'topic': topic},
+        options: Options(
+          contentType: Headers.jsonContentType,
+        ),
       );
-      
+
       if (response.statusCode == 200) {
+        final data = _normalizeResponse(response.data);
+
         return CompetitorInsight(
           topic: topic,
-          uniqueAngle: response.data['unique_angle'] ?? '',
-          whatOthersSay: List<String>.from(response.data['what_others_say'] ?? []),
-          gaps: List<String>.from(response.data['gaps'] ?? []),
-          suggestions: List<String>.from(response.data['suggestions'] ?? []),
+          uniqueAngle: data['unique_angle'] ?? '',
+          whatOthersSay:
+              List<String>.from(data['what_others_say'] ?? []),
+          gaps: List<String>.from(data['gaps'] ?? []),
+          suggestions:
+              List<String>.from(data['suggestions'] ?? []),
         );
       }
     } catch (e) {
-      // Fallback на локальную генерацию
+      // fallback
     }
-    
+
     return _localAnalysis(topic);
+  }
+
+  /// Защита от String JSON или Map
+  static Map<String, dynamic> _normalizeResponse(dynamic data) {
+    if (data is Map<String, dynamic>) return data;
+    if (data is String) {
+      try {
+        return jsonDecode(data);
+      } catch (_) {
+        return {};
+      }
+    }
+    return {};
   }
 
   static CompetitorInsight _localAnalysis(String topic) {
@@ -55,19 +74,19 @@ class CompetitorAnalysisService {
       'Сравнение старого и нового подхода: что изменилось за 5 лет',
       'Неочевидные применения, о которых молчат конкуренты',
     ];
-    
+
     final whatOthersSay = [
       'Большинство презентаций фокусируются на определениях',
       'Конкуренты часто упускают статистику и цифры',
       'Обычно не хватает конкретных примеров применения',
     ];
-    
+
     final gaps = [
       'Нет сравнения с альтернативами',
       'Отсутствуют данные последних исследований',
       'Не раскрыта экономическая сторона вопроса',
     ];
-    
+
     final suggestions = [
       'Начните с неожиданной статистики',
       'Добавьте слайд с разбором мифов',
