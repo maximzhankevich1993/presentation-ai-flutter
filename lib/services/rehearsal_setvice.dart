@@ -77,6 +77,7 @@ class RehearsalService {
             advice: 'Термин "${_extractComplexTerm(line)}" может быть непонятен аудитории. Объясните его простыми словами.',
             severity: TipSeverity.suggestion,
           ));
+          improvements.add('Объяснить сложные термины');
         }
       }
     }
@@ -99,6 +100,7 @@ class RehearsalService {
     strengths.add('Хорошая структура презентации');
     strengths.add('Понятные заголовки слайдов');
 
+    // Пересчитываем балл
     final score = (strengths.length * 15 + 30).clamp(0, 100);
 
     return RehearsalFeedback(
