@@ -39,15 +39,22 @@ class QuizService {
   }) {
     final questions = <QuizQuestion>[];
 
-    for (int i = 0; i < questionCount && i < slideContents.length; i++) {
-      final content = slideContents[i];
-      final isCorrect = _random.nextBool();
-      
+    final usableSlides = slideContents.isNotEmpty
+        ? slideContents
+        : ['Нет данных'];
+
+    for (int i = 0; i < questionCount; i++) {
+      final content = usableSlides[i % usableSlides.length];
+
+      final correctOptionIndex = _random.nextInt(4);
+
+      final options = _generateOptions(content, correctOptionIndex);
+
       questions.add(QuizQuestion(
-        question: 'Вопрос по материалу слайда ${i + 1}: $content',
-        options: _generateOptions(content, isCorrect),
-        correctIndex: isCorrect ? 0 : _random.nextInt(3) + 1,
-        explanation: 'Правильный ответ основан на материале слайда ${i + 1}.',
+        question: 'Что описано в этом фрагменте: "$content"?',
+        options: options,
+        correctIndex: correctOptionIndex,
+        explanation: 'Правильный ответ основан на содержании: "$content".',
       ));
     }
 
@@ -59,19 +66,28 @@ class QuizService {
     );
   }
 
-  static List<String> _generateOptions(String content, bool firstIsCorrect) {
-    final options = <String>[];
-    if (firstIsCorrect) {
-      options.add(content);
-      options.add('Неверный вариант 1');
-      options.add('Неверный вариант 2');
-      options.add('Все вышеперечисленное');
-    } else {
-      options.add('Неверный вариант 1');
-      options.add(content);
-      options.add('Неверный вариант 2');
-      options.add('Ничего из перечисленного');
+  static List<String> _generateOptions(
+    String content,
+    int correctIndex,
+  ) {
+    final options = List<String>.filled(4, '');
+
+    final distractors = [
+      'Совершенно другое утверждение',
+      'Частично неверная интерпретация',
+      'Противоположный смысл',
+      'Неправильный вывод',
+      'Несвязанный факт',
+    ];
+
+    for (int i = 0; i < 4; i++) {
+      if (i == correctIndex) {
+        options[i] = content;
+      } else {
+        options[i] = distractors[_random.nextInt(distractors.length)];
+      }
     }
+
     return options;
   }
 }
