@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:crypto/crypto.dart';
+import 'package:encrypt/encrypt.dart' as encrypt;  // AES encryption library
 
 class SecurityService {
   static const String _installIdKey = 'secure_install_id';
@@ -49,83 +50,27 @@ class SecurityService {
     return hash;
   }
 
-  // ===== ПРОВЕРКА ЦЕЛОСТНОСТИ =====
-
-  /// Проверяет, имеет ли устройство право на бесплатные генерации
-  static Future<bool> canClaimFreeGenerations() async {
-    final prefs = await SharedPreferences.getInstance();
-    final alreadyClaimed = prefs.getBool('free_generations_claimed') ?? false;
-    
-    if (alreadyClaimed) return false;
-    
-    // Проверяем, не пытается ли пользователь обойти защиту
-    final tamperDetected = prefs.getBool(_tamperKey) ?? false;
-    if (tamperDetected) return false;
-    
-    return true;
-  }
-
-  /// Отмечает, что бесплатные генерации использованы
-  static Future<void> markFreeGenerationsClaimed() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('free_generations_claimed', true);
-    
-    final deviceHash = await generateDeviceHash();
-    await prefs.setString('claimed_device_hash', deviceHash);
-  }
-
-  /// Проверяет подлинность сессии
-  static Future<bool> validateSession() async {
-    final prefs = await SharedPreferences.getInstance();
-    final lastToken = prefs.getString(_lastSessionKey);
-    
-    if (lastToken == null) {
-      // Первая сессия — создаём токен
-      await _generateSessionToken();
-      return true;
-    }
-    
-    return true;
-  }
-
-  static Future<String> _generateSessionToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    final random = Random.secure().nextInt(999999999).toString();
-    final timestamp = DateTime.now().toIso8601String();
-    final token = '$timestamp-$random';
-    final bytes = utf8.encode(token);
-    final hash = sha256.convert(bytes).toString();
-    
-    await prefs.setString(_lastSessionKey, hash);
-    return hash;
-  }
-
   // ===== ШИФРОВАНИЕ ДАННЫХ =====
 
-  /// Шифрует строку с помощью XOR и Base64
+  /// Шифрует строку с использованием AES и Base64
   static String encrypt(String text, {String key = 'PresentationAI2026'}) {
-    final textBytes = utf8.encode(text);
-    final keyBytes = utf8.encode(key);
-    final encryptedBytes = <int>[];
-    
-    for (int i = 0; i < textBytes.length; i++) {
-      encryptedBytes.add(textBytes[i] ^ keyBytes[i % keyBytes.length]);
-    }
-    
-    return base64Encode(encryptedBytes);
+    final keyBytes = utf8.encode(key.padRight(32, ' '));  // 32 bytes for AES-256
+    final iv = encrypt.IV.fromLength(16);  // Initialization Vector for AES
+    final encrypter = encrypt.Encrypter(encrypt.AES(encrypt.Key.fromUtf8(String.fromCharCodes(keyBytes))));
+
+    final encrypted = encrypter.encrypt(text, iv: iv);
+    return base64Encode(encrypted.bytes);
   }
 
   /// Расшифровывает строку
   static String decrypt(String encryptedText, {String key = 'PresentationAI2026'}) {
+    final keyBytes = utf8.encode(key.padRight(32, ' '));  // 32 bytes for AES-256
+    final iv = encrypt.IV.fromLength(16);  // Initialization Vector for AES
+    final encrypter = encrypt.Encrypter(encrypt.AES(encrypt.Key.fromUtf8(String.fromCharCodes(keyBytes))));
+
     final encryptedBytes = base64Decode(encryptedText);
-    final keyBytes = utf8.encode(key);
-    final decryptedBytes = <int>[];
-    
-    for (int i = 0; i < encryptedBytes.length; i++) {
-      decryptedBytes.add(encryptedBytes[i] ^ keyBytes[i % keyBytes.length]);
-    }
-    
-    return utf8.decode(decryptedBytes);
+    final decrypted = encrypter.decryptBytes(encrypt.Encrypted(encryptedBytes), iv: iv);
+    return utf8.decode(decrypted);
   }
 
   /// Хеширует строку (одностороннее шифрование)
