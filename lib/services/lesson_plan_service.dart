@@ -67,7 +67,7 @@ class LessonPlanService {
       duration: '$durationMinutes минут',
       objectives: _getObjectives(topic, subject, standard),
       stages: _getStages(standard, durationMinutes),
-      homework: _getHomework(topic),
+      homework: _getHomework(topic, standard),
       assessment: _getAssessment(standard),
       differentiation: _getDifferentiation(),
     );
@@ -110,22 +110,66 @@ class LessonPlanService {
 
   static List<LessonStage> _getStages(String standard, int totalMinutes) {
     return [
-      LessonStage(name: 'Организационный момент', minutes: (totalMinutes * 0.1).round(), teacherActions: 'Приветствие, проверка готовности', studentActions: 'Подготовка к уроку', resources: 'Слайд 1'),
-      LessonStage(name: 'Актуализация знаний', minutes: (totalMinutes * 0.15).round(), teacherActions: 'Вопросы по предыдущей теме', studentActions: 'Ответы на вопросы', resources: 'Слайды 2-3'),
-      LessonStage(name: 'Изучение нового', minutes: (totalMinutes * 0.35).round(), teacherActions: 'Объяснение темы, презентация', studentActions: 'Запись ключевых моментов', resources: 'Слайды 4-8'),
-      LessonStage(name: 'Закрепление', minutes: (totalMinutes * 0.25).round(), teacherActions: 'Практические задания', studentActions: 'Работа в группах', resources: 'Раздаточный материал'),
-      LessonStage(name: 'Рефлексия', minutes: (totalMinutes * 0.15).round(), teacherActions: 'Подведение итогов', studentActions: 'Самооценка', resources: 'Слайд 9-10'),
+      LessonStage(
+          name: 'Организационный момент',
+          minutes: (totalMinutes * 0.1).round(),
+          teacherActions: 'Приветствие, проверка готовности',
+          studentActions: 'Подготовка к уроку',
+          resources: 'Слайд 1'),
+      LessonStage(
+          name: 'Актуализация знаний',
+          minutes: (totalMinutes * 0.15).round(),
+          teacherActions: 'Вопросы по предыдущей теме',
+          studentActions: 'Ответы на вопросы',
+          resources: 'Слайды 2-3'),
+      LessonStage(
+          name: 'Изучение нового',
+          minutes: (totalMinutes * 0.35).round(),
+          teacherActions: 'Объяснение темы, презентация',
+          studentActions: 'Запись ключевых моментов',
+          resources: 'Слайды 4-8'),
+      LessonStage(
+          name: 'Закрепление',
+          minutes: (totalMinutes * 0.25).round(),
+          teacherActions: 'Практические задания',
+          studentActions: 'Работа в группах',
+          resources: 'Раздаточный материал'),
+      LessonStage(
+          name: 'Рефлексия',
+          minutes: (totalMinutes * 0.15).round(),
+          teacherActions: 'Подведение итогов',
+          studentActions: 'Самооценка',
+          resources: 'Слайд 9-10'),
     ];
   }
 
-  static String _getHomework(String topic) {
-    final homeworks = [
-      'Создать ментальную карту по теме "$topic"',
-      'Написать краткое эссе (150 слов) по теме "$topic"',
-      'Подготовить 3 вопроса по теме "$topic" для одноклассников',
-      'Найти интересный факт по теме "$topic" и поделиться с классом',
-    ];
-    return homeworks[topic.length % homeworks.length];
+  static String _getHomework(String topic, String standard) {
+    final homeworks = {
+      'common_core': [
+        'Research and summarize "$topic"',
+        'Write an essay explaining "$topic" in detail',
+        'Create a presentation on "$topic"',
+      ],
+      'cambridge': [
+        'Write a report on "$topic"',
+        'Prepare a group presentation about "$topic"',
+        'Create a mind map of "$topic"',
+      ],
+      'ib': [
+        'Research how "$topic" can be applied in real life',
+        'Prepare a case study based on "$topic"',
+        'Create a project plan for implementing "$topic" in practice',
+      ],
+      'fgos': [
+        'Напишите эссе по теме "$topic"',
+        'Создайте проект по "$topic"',
+        'Подготовьте презентацию по теме "$topic"',
+      ],
+    };
+
+    // Default homework
+    return homeworks[standard]?[topic.length % homeworks[standard]!.length] ??
+        'Написать краткое эссе по теме "$topic"';
   }
 
   static String _getAssessment(String standard) {
