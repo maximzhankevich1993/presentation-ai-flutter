@@ -9,7 +9,7 @@ class AppTheme {
     cardColor: AppColors.lightSurface,
     fontFamily: 'Inter',
     useMaterial3: true,
-    
+
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -21,22 +21,9 @@ class AppTheme {
         fontWeight: FontWeight.w600,
       ),
     ),
-    
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        minimumSize: const Size(double.infinity, 56),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        textStyle: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    ),
-    
+
+    elevatedButtonTheme: _buttonTheme(),
+
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: AppColors.lightSurface,
@@ -64,7 +51,7 @@ class AppTheme {
     cardColor: AppColors.darkSurface,
     fontFamily: 'Inter',
     useMaterial3: true,
-    
+
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -76,22 +63,9 @@ class AppTheme {
         fontWeight: FontWeight.w600,
       ),
     ),
-    
-    elevatedButtonTheme: ElevatedButtonThemeData(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        minimumSize: const Size(double.infinity, 56),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        textStyle: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    ),
-    
+
+    elevatedButtonTheme: _buttonTheme(),
+
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: AppColors.darkSurface,
@@ -111,4 +85,21 @@ class AppTheme {
       contentPadding: const EdgeInsets.all(20),
     ),
   );
+
+  static ElevatedButtonThemeData _buttonTheme() {
+    return ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        minimumSize: const Size.fromHeight(56), // исправлено
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        textStyle: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
 }
