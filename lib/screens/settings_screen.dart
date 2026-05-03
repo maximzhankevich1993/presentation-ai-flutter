@@ -219,7 +219,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
             padding: EdgeInsets.all(20.w),
             decoration: BoxDecoration(gradient: LinearGradient(colors: [const Color(0xFFF59E0B).withOpacity(0.1), const Color(0xFFD97706).withOpacity(0.05)]), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3))),
             child: Row(children: [
-              Container(width: 48.w, height: 48.w, decoration: BoxDecoration(color: const Color(0xFFF59E0B).withOpacity(0.2), shape: BoxShape.circle), child: const Icon(Icons.crown, color: Color(0xFFF59E0B))),
+              Container(width: 48.w, height: 48.w, decoration: BoxDecoration(color: const Color(0xFFF59E0B).withOpacity(0.2), shape: BoxShape.circle), child: const Icon(Icons.star, color: Color(0xFFF59E0B))),
               SizedBox(width: 16.w),
               Expanded(child: Text('Разблокируй все настройки с Premium', style: TextStyle(fontSize: 14.sp))),
               ElevatedButton(onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF59E0B)), child: const Text('Premium')),
@@ -244,7 +244,7 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(children: [Icon(Icons.crown, color: Colors.amber[700]), SizedBox(width: 8.w), const Text('Premium')]),
+        title: Row(children: [Icon(Icons.star, color: Colors.amber[700]), SizedBox(width: 8.w), const Text('Premium')]),
         content: const Text('Эта возможность доступна в Premium версии.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Позже')),
