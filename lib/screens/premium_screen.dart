@@ -45,7 +45,7 @@ class PremiumScreen extends StatelessWidget {
                     )
                   ],
                 ),
-                child: Icon(Icons.crown, color: Colors.white, size: 40.sp),
+                child: Icon(Icons.star, color: Colors.white, size: 40.sp),
               ),
             ),
             SizedBox(height: 24.h),
