@@ -233,7 +233,7 @@ class WorkspaceScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Icons.crown,
+                        Icons.star,
                         color: Color(0xFFF59E0B),
                       ),
                     ),
