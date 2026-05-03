@@ -125,7 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(onPressed: () => _showScreen(const LoginScreen()), icon: const Icon(Icons.login)),
           IconButton(onPressed: () => _showScreen(const VipScreen()), icon: const Icon(Icons.diamond)),
           IconButton(onPressed: () => _showScreen(const FeaturesScreen()), icon: const Icon(Icons.stars)),
-          IconButton(onPressed: _showWorkspaceScreen, icon: const Icon(Icons.workspaces_outlined)),
+          IconButton(onPressed: _showWorkspaceScreen, icon: const Icon(Icons.workspace_outlined)),
           IconButton(onPressed: () => _showScreen(const TeacherScreen(countryCode: 'RU')), icon: const Icon(Icons.school)),
           IconButton(onPressed: () => _showScreen(const CorporateScreen(countryCode: 'RU')), icon: const Icon(Icons.business)),
           IconButton(onPressed: () => _showScreen(const ReferralScreen()), icon: const Icon(Icons.card_giftcard)),
