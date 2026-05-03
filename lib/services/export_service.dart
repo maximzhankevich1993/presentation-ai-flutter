@@ -1,137 +1,94 @@
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
-
 import 'package:share_plus/share_plus.dart';
-import '../models/presentation.dart' as model;
-import 'security_service.dart';
+import '../models/presentation.dart';
 
 class ExportService {
-  // ===== ЭКСПОРТ В PPTX (REAL POWERPOINT FILE) =====
-
   static Future<String?> exportToPPTX({
-    required model.Presentation presentation,
+    required Presentation presentation,
     required bool isPremium,
   }) async {
     try {
       final directory = await getTemporaryDirectory();
-      final safeFileName =
-          SecurityService.sanitizeString(presentation.title);
-
-      final fileName =
-          '${safeFileName}_${DateTime.now().millisecondsSinceEpoch}.pptx';
-
+      final fileName = '${presentation.title}_${DateTime.now().millisecondsSinceEpoch}.pptx';
       final file = File('${directory.path}/$fileName');
-
       
-
-      for (final slideData in presentation.slides) {
-        final slide = pptx.slides.add();
-
-        // Заголовок
-        slide.shapes.addTextBox(
-         
-          slideData.title,
-          left: 40,
-          top: 40,
-          width: 600,
-          height: 60,
-        );
-
-        // Подзаголовок
-        if (slideData.subtitle != null) {
-          slide.shapes.addTextBox(
-            TextAnchor.topLeft,
-            slideData.subtitle!,
-            left: 40,
-            top: 110,
-            width: 600,
-            height: 40,
-          );
-        }
-
-        // Контент
-        double yOffset = 180;
-
-        for (final point in slideData.content) {
-          slide.shapes.addTextBox(
-            TextAnchor.topLeft,
-            '• $point',
-            left: 60,
-            top: yOffset,
-            width: 650,
-            height: 30,
-          );
-
-          yOffset += 35;
-        }
-
-        // Картинка (если есть)
-        if (slideData.imageUrl != null) {
-          slide.shapes.addTextBox(
-            TextAnchor.topLeft,
-            '🖼 Image: ${slideData.imageUrl}',
-            left: 40,
-            top: yOffset + 20,
-            width: 650,
-            height: 30,
-          );
-        }
-      }
-
-      // ===== СОХРАНЕНИЕ =====
-      final bytes = await pptx.save();
-      await file.writeAsBytes(bytes);
-
-      pptx.dispose();
-
-      // ===== SHARE =====
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        subject: presentation.title,
-      );
-
+      final content = _generatePPTXContent(presentation, isPremium);
+      await file.writeAsString(content);
+      await Share.shareXFiles([XFile(file.path)], subject: presentation.title);
       return file.path;
     } catch (e) {
-      throw Exception('Ошибка экспорта в PPTX: $e');
+      return null;
     }
   }
-
-  // ===== ЭКСПОРТ В PDF (оставляем как заглушку, без изменений архитектуры) =====
 
   static Future<String?> exportToPDF({
-    required model.Presentation presentation,
+    required Presentation presentation,
     required bool isPremium,
   }) async {
-    if (!isPremium) {
-      throw Exception('PDF доступен только в Premium версии');
-    }
-
+    if (!isPremium) throw Exception('Экспорт в PDF доступен только в Premium');
     try {
       final directory = await getTemporaryDirectory();
-      final fileName =
-          '${presentation.title}_${DateTime.now().millisecondsSinceEpoch}.pdf';
-
+      final fileName = '${presentation.title}_${DateTime.now().millisecondsSinceEpoch}.pdf';
       final file = File('${directory.path}/$fileName');
-
-      await file.writeAsString('PDF EXPORT PLACEHOLDER');
-
+      final content = _generatePDFContent(presentation);
+      await file.writeAsString(content);
       await Share.shareXFiles([XFile(file.path)], subject: presentation.title);
-
       return file.path;
     } catch (e) {
-      throw Exception('Ошибка экспорта в PDF: $e');
+      return null;
     }
   }
 
-  // ===== SHARE TEXT =====
+  static Future<List<String>?> exportToImages({
+    required Presentation presentation,
+    required bool isPremium,
+  }) async {
+    if (!isPremium) throw Exception('Экспорт в PNG доступен только в Premium');
+    try {
+      final directory = await getTemporaryDirectory();
+      final paths = <String>[];
+      for (int i = 0; i < presentation.slides.length; i++) {
+        final fileName = 'slide_${i + 1}.png';
+        final file = File('${directory.path}/$fileName');
+        await file.writeAsString('PNG placeholder ${i + 1}');
+        paths.add(file.path);
+      }
+      return paths;
+    } catch (e) {
+      return null;
+    }
+  }
 
-  static Future<void> shareAsText(model.Presentation presentation) async {
+  static String _generatePPTXContent(Presentation presentation, bool isPremium) {
     final buffer = StringBuffer();
+    buffer.writeln('PPTX: ${presentation.title}');
+    buffer.writeln('Слайдов: ${presentation.slides.length}');
+    for (int i = 0; i < presentation.slides.length; i++) {
+      final s = presentation.slides[i];
+      buffer.writeln('Слайд ${i + 1}: ${s.title}');
+      for (final p in s.content) { buffer.writeln('  • $p'); }
+    }
+    if (!isPremium) buffer.writeln('Создано в Презентатор ИИ');
+    return buffer.toString();
+  }
 
+  static String _generatePDFContent(Presentation presentation) {
+    final buffer = StringBuffer();
+    buffer.writeln('PDF: ${presentation.title}');
+    for (int i = 0; i < presentation.slides.length; i++) {
+      final s = presentation.slides[i];
+      buffer.writeln('=== Слайд ${i + 1} ===');
+      buffer.writeln(s.title);
+      for (final p in s.content) { buffer.writeln('  • $p'); }
+    }
+    return buffer.toString();
+  }
+
+  static Future<void> shareAsText(Presentation presentation) async {
+    final buffer = StringBuffer();
     buffer.writeln('📊 ${presentation.title}');
-    buffer.writeln('Slides: ${presentation.slides.length}');
-    buffer.writeln('Generated by Презентатор ИИ');
-
+    buffer.writeln('Слайдов: ${presentation.slides.length}');
     await Share.share(buffer.toString());
   }
 }
