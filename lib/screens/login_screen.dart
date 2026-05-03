@@ -60,7 +60,6 @@ class _LoginScreenState extends State<LoginScreen> {
       if (_rememberMe) {
         await AuthService.register(
           email: email,
-          password: password,
         );
       }
 
