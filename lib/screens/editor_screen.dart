@@ -319,7 +319,7 @@ class _EditorScreenState extends State<EditorScreen> {
         ),
         title: Row(
           children: [
-            Icon(Icons.crown, color: Colors.amber[700]),
+            Icon(Icons.star, color: Colors.amber[700]),
             SizedBox(width: 8.w),
             const Text('Premium'),
           ],
