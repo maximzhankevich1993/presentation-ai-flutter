@@ -1,3 +1,4 @@
+import '../services/analytics_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import '../services/analytics_service.dart';
