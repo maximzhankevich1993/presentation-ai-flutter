@@ -22,15 +22,14 @@ class ExportService {
 
       final file = File('${directory.path}/$fileName');
 
-      // ===== СОЗДАЁМ РЕАЛЬНУЮ PPTX ПРЕЗЕНТАЦИЮ =====
-      final pptx = Presentation();
+      
 
       for (final slideData in presentation.slides) {
         final slide = pptx.slides.add();
 
         // Заголовок
         slide.shapes.addTextBox(
-          TextAnchor.topLeft,
+         
           slideData.title,
           left: 40,
           top: 40,
