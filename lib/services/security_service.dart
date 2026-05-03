@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:crypto/crypto.dart';
-import 'package:encrypt/encrypt.dart' as encrypt;  // AES encryption library
+
 
 class SecurityService {
   static const String _installIdKey = 'secure_install_id';
