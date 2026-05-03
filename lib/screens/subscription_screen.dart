@@ -75,7 +75,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
       child: Column(
         children: [
           Icon(
-            isPremium ? Icons.crown : Icons.star_outline,
+            isPremium ? Icons.star : Icons.star_outline,
             color: Colors.white,
             size: 48.sp,
           ),
