@@ -56,8 +56,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showHistoryScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const HistoryScreen()));
   void _showFeaturesScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const FeaturesScreen()));
   void _showWorkspaceScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const WorkspaceScreen()));
-  void _showTeacherScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const TeacherScreen(countryCode: 'RU')));
-  void _showCorporateScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const CorporateScreen(countryCode: 'RU')));
+  void _showTeacherScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => TeacherScreen(countryCode: 'RU')));
+  void _showCorporateScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => CorporateScreen(countryCode: 'RU')));
   void _showReferralScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReferralScreen()));
   void _showVipScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const VipScreen()));
   void _showLoginScreen() => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
