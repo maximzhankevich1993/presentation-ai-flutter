@@ -43,7 +43,7 @@ class WorkspaceScreen extends StatelessWidget {
             SizedBox(height: 16.h),
 
             ...WorkspaceService.getTeamMembers().map((user) {
-              final color = _safeColor(user.avatarColor);
+              final color = Color(int.parse(user.avatarColor.replaceFirst('#', '0xFF')));
 
               return Container(
                 margin: EdgeInsets.only(bottom: 12.h),
