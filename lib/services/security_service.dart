@@ -115,7 +115,7 @@ class SecurityService {
 
   /// Проверяет, что строка не содержит опасных символов
   static bool isSafeString(String input) {
-    final dangerousPattern = RegExp(r'[<>{}[\]()\'";]');
+    final dangerousPattern = RegExp(r'[<>{}()\'"]');
     return !dangerousPattern.hasMatch(input);
   }
 
