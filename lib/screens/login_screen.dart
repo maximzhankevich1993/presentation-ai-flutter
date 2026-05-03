@@ -58,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
       userProvider.setUserEmail(email);
 
       if (_rememberMe) {
-        await AuthService.login(
+        await AuthService.register(
           email: email,
           password: password,
         );
