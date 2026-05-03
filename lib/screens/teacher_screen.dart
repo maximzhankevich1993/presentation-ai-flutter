@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:presentation_ai/services/teacher_service.dart'; // ⚠️ ВАЖНО
+import 'package:presentation_ai/services/teacher_service.dart';
 
 class TeacherScreen extends StatefulWidget {
   final String countryCode;
@@ -11,17 +11,46 @@ class TeacherScreen extends StatefulWidget {
   State<TeacherScreen> createState() => _TeacherScreenState();
 }
 
-class _TeacherScreenState extends State<TeacherScreen> {
+class _TeacherScreenState extends State<TeacherScreen>
+    with SingleTickerProviderStateMixin {
   final _topicController = TextEditingController();
   final _subjectController = TextEditingController();
 
   String _grade = '6-8';
   Map<String, dynamic>? _plan;
 
+  late AnimationController _controller;
+
+  late Animation<double> _fade;
+  late Animation<Offset> _slide;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 600),
+    );
+
+    _fade = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeOut,
+    );
+
+    _slide = Tween<Offset>(
+      begin: const Offset(0, 0.05),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
+    );
+  }
+
   @override
   void dispose() {
     _topicController.dispose();
     _subjectController.dispose();
+    _controller.dispose();
     super.dispose();
   }
 
@@ -39,19 +68,17 @@ class _TeacherScreenState extends State<TeacherScreen> {
         grade: _grade,
       );
     });
+
+    _controller.forward(from: 0); // 🔥 запуск анимации
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
     final system = TeacherService.getSystem(widget.countryCode);
     final country = system?['country'] ?? widget.countryCode;
     final standard = system?['standard'] ?? 'Международный';
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF1E1E2A) : const Color(0xFFFAFAFA),
       appBar: AppBar(
         title: Text('Учитель: $country'),
         centerTitle: true,
@@ -61,37 +88,7 @@ class _TeacherScreenState extends State<TeacherScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// HEADER
-            Container(
-              padding: EdgeInsets.all(20.w),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF10b981), Color(0xFF34d399)],
-                ),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '🏫 $country',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 22.sp,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    'Стандарт: $standard',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.9),
-                      fontSize: 14.sp,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            _buildHeader(country, standard),
 
             SizedBox(height: 24.h),
 
@@ -140,53 +137,222 @@ class _TeacherScreenState extends State<TeacherScreen> {
                   padding: EdgeInsets.symmetric(vertical: 16.h),
                 ),
                 child: Text(
-                  'Создать план урока', // ❗ убрали const
+                  'Создать план урока',
                   style: TextStyle(fontSize: 16.sp),
                 ),
               ),
             ),
 
-            /// RESULT
             if (_plan != null) ...[
               SizedBox(height: 32.h),
 
-              Text(
-                '📋 ${_plan!['topic']}',
-                style: TextStyle(
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.bold,
+              /// 🔥 MAIN CARD WITH FADE + SLIDE
+              FadeTransition(
+                opacity: _fade,
+                child: SlideTransition(
+                  position: _slide,
+                  child: _buildPlanCard(),
                 ),
               ),
-
-              SizedBox(height: 12.h),
-
-              Text('Предмет: ${_plan!['subject']}'),
-              Text('Класс: ${_plan!['grade']}'),
-              Text('Длительность: ${_plan!['duration']}'),
-
-              SizedBox(height: 16.h),
-
-              Text(
-                'Этапы:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-
-              ...(_plan!['stages'] as List).map((stage) {
-                return ListTile(
-                  title: Text(stage['name']),
-                  subtitle: Text(stage['description']),
-                  trailing: Text('${stage['minutes']} мин'),
-                );
-              }),
-
-              SizedBox(height: 12.h),
-
-              Text('Домашка: ${_plan!['homework']}'),
-              Text('Оценка: ${_plan!['assessment']}'),
-            ]
+            ],
           ],
         ),
       ),
+    );
+  }
+
+  /// HEADER
+  Widget _buildHeader(String country, String standard) {
+    return AnimatedOpacity(
+      duration: const Duration(milliseconds: 500),
+      opacity: 1,
+      child: Container(
+        padding: EdgeInsets.all(20.w),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF10b981), Color(0xFF34d399)],
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '🏫 $country',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22.sp,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 8.h),
+            Text(
+              'Стандарт: $standard',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.9),
+                fontSize: 14.sp,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// PLAN CARD (DRIBBBLE STYLE)
+  Widget _buildPlanCard() {
+    final stages = _plan!['stages'] as List;
+
+    return Container(
+      padding: EdgeInsets.all(20.w),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF6366F1).withOpacity(0.15),
+            const Color(0xFF8B5CF6).withOpacity(0.15),
+          ],
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          /// TITLE
+          Text(
+            _plan!['topic'],
+            style: TextStyle(
+              fontSize: 18.sp,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          SizedBox(height: 12.h),
+
+          /// INFO ROW
+          Wrap(
+            spacing: 8,
+            children: [
+              _chip(_plan!['subject']),
+              _chip('Класс ${_plan!['grade']}'),
+              _chip(_plan!['duration']),
+            ],
+          ),
+
+          SizedBox(height: 20.h),
+
+          Text(
+            'Этапы урока',
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+
+          SizedBox(height: 12.h),
+
+          /// 🔥 STAGGER ANIMATION LIST
+          ...List.generate(stages.length, (i) {
+            final stage = stages[i];
+
+            return TweenAnimationBuilder(
+              duration: Duration(milliseconds: 300 + (i * 120)),
+              tween: Tween<double>(begin: 0, end: 1),
+              builder: (context, double value, child) {
+                return Opacity(
+                  opacity: value,
+                  child: Transform.translate(
+                    offset: Offset(0, (1 - value) * 20),
+                    child: child,
+                  ),
+                );
+              },
+              child: _stageTile(stage),
+            );
+          }),
+
+          SizedBox(height: 16.h),
+
+          _section('Домашнее задание', _plan!['homework']),
+          SizedBox(height: 10.h),
+          _section('Оценивание', _plan!['assessment']),
+        ],
+      ),
+    );
+  }
+
+  /// STAGE ITEM
+  Widget _stageTile(Map stage) {
+    return Container(
+      margin: EdgeInsets.only(bottom: 10.h),
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+            decoration: BoxDecoration(
+              color: const Color(0xFF10B981),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              '${stage['minutes']} мин',
+              style: const TextStyle(color: Colors.white, fontSize: 12),
+            ),
+          ),
+          SizedBox(width: 12.w),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  stage['name'],
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  stage['description'],
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// SECTION
+  Widget _section(String title, String text) {
+    return Container(
+      padding: EdgeInsets.all(14.w),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.circle, size: 8),
+          SizedBox(width: 10.w),
+          Expanded(
+            child: Text('$title: $text'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// CHIP
+  Widget _chip(String text) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 6.h),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(text),
     );
   }
 }
