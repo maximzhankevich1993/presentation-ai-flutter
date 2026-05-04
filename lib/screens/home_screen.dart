@@ -30,10 +30,10 @@ class _HomeScreenState extends State<HomeScreen> {
   
   final List<String> _examples = [
     '🤖 Искусственный интеллект',
-    '📈 Бизнес-план для стартапа',
-    '🌍 Глобальное потепление',
-    '🚀 Будущее космонавтики',
-    '📱 Тренды мобильной разработки',
+    '📈 Бизнес-план',
+    '🌍 Экология',
+    '🚀 Космос',
+    '📱 IT-тренды',
   ];
 
   @override
@@ -79,74 +79,157 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0F0F1A) : const Color(0xFFFAFAFA),
       appBar: AppBar(
-        title: const Text('Презентатор ИИ'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: ShaderMask(
+          shaderCallback: (bounds) => const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]).createShader(bounds),
+          child: const Text('Презентатор ИИ', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        ),
         centerTitle: true,
         actions: [
-          IconButton(onPressed: _showLoginScreen, icon: const Icon(Icons.login), tooltip: 'Войти'),
-          IconButton(onPressed: _showVipScreen, icon: const Icon(Icons.diamond), tooltip: 'VIP-доступ'),
-          IconButton(onPressed: _showFeaturesScreen, icon: const Icon(Icons.stars), tooltip: 'Все возможности'),
-          IconButton(onPressed: _showWorkspaceScreen, icon: const Icon(Icons.workspaces_outlined), tooltip: 'Команда'),
-          IconButton(onPressed: _showTeacherScreen, icon: const Icon(Icons.school), tooltip: 'Учителям'),
-          IconButton(onPressed: _showCorporateScreen, icon: const Icon(Icons.business), tooltip: 'Бизнесу'),
-          IconButton(onPressed: _showReferralScreen, icon: const Icon(Icons.card_giftcard), tooltip: 'Приведи друга'),
-          if (!userProvider.isPremium) IconButton(onPressed: _showPremiumDialog, icon: Icon(Icons.star, color: Colors.amber[700])),
-          IconButton(onPressed: _showHistoryScreen, icon: const Icon(Icons.history)),
-          IconButton(onPressed: _showProfileScreen, icon: const Icon(Icons.person_outline)),
-          IconButton(onPressed: _showSettingsScreen, icon: const Icon(Icons.settings_outlined)),
+          IconButton(onPressed: _showVipScreen, icon: const Icon(Icons.diamond, color: Color(0xFFF59E0B)), tooltip: 'VIP'),
+          IconButton(onPressed: _showLoginScreen, icon: const Icon(Icons.person_outline, color: Color(0xFF6366F1)), tooltip: 'Войти'),
         ],
       ),
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
           padding: EdgeInsets.all(24.w),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Создай презентацию', style: TextStyle(fontSize: 28.sp, fontWeight: FontWeight.bold)),
-            SizedBox(height: 8.h),
-            Text('с помощью Искусственного Интеллекта', style: TextStyle(fontSize: 16.sp, color: Colors.grey[600])),
-            SizedBox(height: 24.h),
-            _buildGenerationCounter(userProvider),
-            SizedBox(height: 32.h),
-            Expanded(
-              child: Center(
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  Container(
-                    decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(30), boxShadow: [BoxShadow(color: Theme.of(context).primaryColor.withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 4))]),
-                    child: Row(children: [
-                      Expanded(child: TextField(controller: _topicController, enabled: !_isLoading, decoration: InputDecoration(hintText: 'Введи тему презентации...', border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 20.h)), onSubmitted: (_) => _generatePresentation())),
-                      Padding(
-                        padding: EdgeInsets.only(right: 8.w),
-                        child: Material(color: Colors.transparent, child: InkWell(
-                          onTap: _isLoading ? null : _generatePresentation, borderRadius: BorderRadius.circular(30),
-                          child: Container(padding: EdgeInsets.all(12.w), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)]), shape: BoxShape.circle), child: _isLoading ? SizedBox(width: 24.w, height: 24.w, child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : Icon(Icons.auto_awesome, color: Colors.white, size: 24.w)),
-                        )),
-                      ),
-                      SizedBox(width: 8.w),
-                    ]),
-                  ),
-                  SizedBox(height: 20.h),
-                  SizedBox(height: 40.h, child: ListView.separated(scrollDirection: Axis.horizontal, itemCount: _examples.length, separatorBuilder: (_, __) => SizedBox(width: 8.w), itemBuilder: (context, index) => ActionChip(label: Text(_examples[index]), onPressed: _isLoading ? null : () { _topicController.text = _examples[index].substring(2); }))),
-                  SizedBox(height: 16.h),
-                  Center(child: TextButton.icon(onPressed: () => _surpriseMe(context), icon: const Text('🎲', style: TextStyle(fontSize: 20)), label: Text('Удиви меня', style: TextStyle(fontSize: 16.sp, color: const Color(0xFF7C3AED))))),
-                ]),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(height: 20.h),
+              
+              // VIP бейдж
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.5)),
+                  borderRadius: BorderRadius.circular(30),
+                  color: const Color(0xFFF59E0B).withOpacity(0.1),
+                ),
+                child: const Text('👑 Первые 50 — Premium навсегда!', style: TextStyle(color: Color(0xFFF59E0B), fontWeight: FontWeight.w600, fontSize: 13)),
               ),
-            ),
-          ]),
+              
+              SizedBox(height: 32.h),
+              
+              // Заголовок
+              Text('Создай презентацию', style: TextStyle(fontSize: 32.sp, fontWeight: FontWeight.bold, color: isDark ? Colors.white : const Color(0xFF0F172A))),
+              SizedBox(height: 8.h),
+              Text('за 1 минуту', style: TextStyle(fontSize: 32.sp, fontWeight: FontWeight.bold, color: const Color(0xFF6366F1))),
+              SizedBox(height: 8.h),
+              Text('с помощью Искусственного Интеллекта', style: TextStyle(fontSize: 14.sp, color: isDark ? Colors.white70 : Colors.grey[600])),
+              
+              SizedBox(height: 40.h),
+              
+              // Поле ввода
+              Container(
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white.withOpacity(0.05) : Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: isDark ? Colors.white.withOpacity(0.1) : Colors.grey.withOpacity(0.2)),
+                  boxShadow: [BoxShadow(color: const Color(0xFF6366F1).withOpacity(0.1), blurRadius: 20, offset: const Offset(0, 10))],
+                ),
+                child: TextField(
+                  controller: _topicController,
+                  style: TextStyle(color: isDark ? Colors.white : Colors.black),
+                  decoration: InputDecoration(
+                    hintText: 'О чём презентация?',
+                    hintStyle: TextStyle(color: Colors.grey[500]),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 18.h),
+                  ),
+                  onSubmitted: (_) => _generatePresentation(),
+                ),
+              ),
+              
+              SizedBox(height: 16.h),
+              
+              // Кнопка Создать
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _generatePresentation,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6366F1),
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 16.h),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('✨', style: TextStyle(fontSize: 18)),
+                      SizedBox(width: 8),
+                      Text('Создать', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+              ),
+              
+              SizedBox(height: 24.h),
+              
+              // Примеры
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                alignment: WrapAlignment.center,
+                children: _examples.map((e) => ActionChip(
+                  label: Text(e, style: const TextStyle(fontSize: 12)),
+                  onPressed: () { _topicController.text = e.substring(2); },
+                  backgroundColor: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100],
+                )).toList(),
+              ),
+              
+              SizedBox(height: 16.h),
+              
+              // Счётчик
+              _buildCounter(userProvider, isDark),
+              
+              SizedBox(height: 24.h),
+              
+              // Удиви меня
+              TextButton.icon(
+                onPressed: () => _surpriseMe(context),
+                icon: const Text('🎲', style: TextStyle(fontSize: 18)),
+                label: const Text('Удиви меня', style: TextStyle(color: Color(0xFF7C3AED), fontSize: 14)),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildGenerationCounter(UserProvider userProvider) {
+  Widget _buildCounter(UserProvider userProvider, bool isDark) {
     if (userProvider.isPremium) {
-      return Container(padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)]), borderRadius: BorderRadius.circular(20)), child: const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.star, color: Colors.amber, size: 24), SizedBox(width: 12), Text('Premium активен', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)), Spacer(), Text('∞', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.bold))]));
+      return Container(
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.star, color: Colors.amber, size: 20),
+          SizedBox(width: 8),
+          Text('Premium активен', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+          Spacer(),
+          Text('∞', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+        ]),
+      );
     }
     final left = userProvider.freeGenerationsLeft;
-    final progress = left / 5.0;
-    return Container(padding: EdgeInsets.all(20.w), decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.grey.withOpacity(0.1))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Осталось генераций', style: TextStyle(fontSize: 14.sp, color: Colors.grey[600])), Container(padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h), decoration: BoxDecoration(color: const Color(0xFF10B981).withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Text('$left из 5', style: const TextStyle(color: Color(0xFF10B981), fontSize: 16, fontWeight: FontWeight.bold)))]),
-      SizedBox(height: 12.h),
-      ClipRRect(borderRadius: BorderRadius.circular(10), child: LinearProgressIndicator(value: progress, backgroundColor: Colors.grey.withOpacity(0.2), valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)), minHeight: 8)),
-    ]));
+    return Container(
+      padding: EdgeInsets.all(16.w),
+      decoration: BoxDecoration(color: isDark ? Colors.white.withOpacity(0.05) : Colors.grey[100], borderRadius: BorderRadius.circular(20)),
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        Text('Осталось генераций', style: TextStyle(fontSize: 13.sp, color: Colors.grey[600])),
+        Container(padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h), decoration: BoxDecoration(color: const Color(0xFF10B981).withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Text('$left из 5', style: const TextStyle(color: Color(0xFF10B981), fontSize: 14, fontWeight: FontWeight.bold))),
+      ]),
+    );
   }
 }
