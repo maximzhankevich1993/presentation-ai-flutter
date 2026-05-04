@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 
 class ApiService {
-  static const String _baseUrl = 'http://localhost:3000/api';
+  static const String _baseUrl = 'http://localhost:3001/api';
   
   static final Dio _dio = Dio(BaseOptions(
     connectTimeout: const Duration(seconds: 30),
