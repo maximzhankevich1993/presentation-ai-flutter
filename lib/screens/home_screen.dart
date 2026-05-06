@@ -109,7 +109,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     onTap: _showVip,
                     child: Container(
                       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-                      decoration: BoxDecoration(border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)), borderRadius: BorderRadius.circular(20), color: const Color(0xFFF59E0B).withOpacity(0.06)),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)),
+                        borderRadius: BorderRadius.circular(20),
+                        color: const Color(0xFFF59E0B).withOpacity(0.06),
+                      ),
                       child: const Text('👑 Первые 50 — Premium навсегда!', style: TextStyle(color: Color(0xFFF59E0B), fontSize: 10, fontWeight: FontWeight.w500)),
                     ),
                   ),
@@ -119,25 +123,27 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 SizedBox(height: 3.h),
                 Text('с помощью ИИ за 1 минуту', style: TextStyle(fontSize: 11.sp, color: Colors.white60, letterSpacing: 0.2)),
                 SizedBox(height: 24.h),
-                // Поле ввода
-                Container(
-                  width: 260.w, height: 36.h,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(25),
-                    boxShadow: [BoxShadow(color: const Color(0xFF6366F1).withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 4))],
-                  ),
-                  child: TextField(
-                    controller: _topicController,
-                    style: const TextStyle(fontSize: 12, color: Colors.black87),
-                    textAlign: TextAlign.center,
-                    decoration: InputDecoration(
-                      hintText: 'О чём презентация?',
-                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 12),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16.w),
+                // Поле ввода — iOS-стиль, уменьшено в 2 раза
+                Center(
+                  child: Container(
+                    width: 130.w, height: 36.h,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [BoxShadow(color: const Color(0xFF6366F1).withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 4))],
                     ),
-                    onSubmitted: (_) => _generate(),
+                    child: TextField(
+                      controller: _topicController,
+                      style: const TextStyle(fontSize: 12, color: Colors.black87),
+                      textAlign: TextAlign.center,
+                      decoration: InputDecoration(
+                        hintText: 'О чём презентация?',
+                        hintStyle: TextStyle(color: Colors.grey[400], fontSize: 12),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 12.w),
+                      ),
+                      onSubmitted: (_) => _generate(),
+                    ),
                   ),
                 ),
                 SizedBox(height: 10.h),
@@ -159,7 +165,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
                     onTap: () { _topicController.text = e; },
-                    child: Container(padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h), decoration: BoxDecoration(color: Colors.white.withOpacity(0.04), borderRadius: BorderRadius.circular(14)), child: Text(e, style: TextStyle(fontSize: 10, color: Colors.white60))),
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                      decoration: BoxDecoration(color: Colors.white.withOpacity(0.04), borderRadius: BorderRadius.circular(14)),
+                      child: Text(e, style: TextStyle(fontSize: 10, color: Colors.white60)),
+                    ),
                   ),
                 )).toList()),
                 SizedBox(height: 18.h),
@@ -176,21 +186,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                 ),
                 SizedBox(height: 24.h),
-                // Иконки — собраны к центру с одинаковыми отступами
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _navItem('🏫', 'Учителям', _showTeacher),
-                    SizedBox(width: 24.w),
-                    _navItem('💼', 'Бизнесу', _showCorporate),
-                    SizedBox(width: 24.w),
-                    _navItem('👥', 'Команда', _showWorkspace),
-                    SizedBox(width: 24.w),
-                    _navItem('🎁', 'Друзья', _showReferral),
-                    SizedBox(width: 24.w),
-                    _navItem('👤', 'Профиль', _showProfile),
-                  ],
-                ),
+                // Иконки — iOS-стиль, собраны к центру
+                Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                  _navItem('🏫', 'Учителям', _showTeacher),
+                  SizedBox(width: 24.w),
+                  _navItem('💼', 'Бизнесу', _showCorporate),
+                  SizedBox(width: 24.w),
+                  _navItem('👥', 'Команда', _showWorkspace),
+                  SizedBox(width: 24.w),
+                  _navItem('🎁', 'Друзья', _showReferral),
+                  SizedBox(width: 24.w),
+                  _navItem('👤', 'Профиль', _showProfile),
+                ]),
                 SizedBox(height: 20.h),
               ]),
             ),
