@@ -112,29 +112,32 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 SizedBox(height: 3.h),
                 Text('с помощью ИИ за 1 минуту', style: TextStyle(fontSize: 11.sp, color: Colors.white60, letterSpacing: 0.2)),
                 SizedBox(height: 24.h),
-                // Поле ввода
+                // Поле ввода — короткое, круглое, тёмное
                 Container(
-                  width: 280.w, height: 38.h,
-                  decoration: BoxDecoration(color: const Color(0xFF1A1A2E), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(0.12))),
+                  width: 260.w, height: 36.h,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF252540),
+                    borderRadius: BorderRadius.circular(25),
+                    border: Border.all(color: Colors.white.withOpacity(0.15)),
+                  ),
                   child: TextField(
                     controller: _topicController,
                     style: const TextStyle(fontSize: 12, color: Colors.white),
                     textAlign: TextAlign.center,
                     decoration: InputDecoration(
                       hintText: 'О чём презентация?',
-                      hintStyle: TextStyle(color: Colors.grey[600], fontSize: 12),
+                      hintStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 16.w),
                     ),
                     onSubmitted: (_) => _generate(),
                   ),
                 ),
                 SizedBox(height: 10.h),
-                // Кнопка Создать
                 GestureDetector(
                   onTap: _generate,
                   child: Container(
-                    width: 160.w, height: 34.h,
+                    width: 140.w, height: 32.h,
                     decoration: BoxDecoration(color: const Color(0xFF6366F1), borderRadius: BorderRadius.circular(20)),
                     child: const Center(child: Text('✨ Создать', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600))),
                   ),
@@ -198,9 +201,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _navItem(String icon, String label, VoidCallback onTap) => GestureDetector(
     onTap: onTap,
     child: Column(children: [
-      Text(icon, style: const TextStyle(fontSize: 16)),
+      Text(icon, style: const TextStyle(fontSize: 18)),
       SizedBox(height: 2.h),
-      Text(label, style: const TextStyle(fontSize: 7, color: Colors.white38)),
+      Text(label, style: const TextStyle(fontSize: 9, color: Colors.white54)),
     ]),
   );
 }
