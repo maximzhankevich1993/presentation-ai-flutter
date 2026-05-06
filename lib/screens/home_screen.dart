@@ -102,17 +102,24 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               padding: EdgeInsets.symmetric(horizontal: 24.w),
               child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                 SizedBox(height: 28.h),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-                  decoration: BoxDecoration(border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)), borderRadius: BorderRadius.circular(20), color: const Color(0xFFF59E0B).withOpacity(0.06)),
-                  child: const Text('👑 Первые 50 — Premium навсегда!', style: TextStyle(color: Color(0xFFF59E0B), fontSize: 10, fontWeight: FontWeight.w500)),
+                // VIP
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: _showVip,
+                    child: Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                      decoration: BoxDecoration(border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)), borderRadius: BorderRadius.circular(20), color: const Color(0xFFF59E0B).withOpacity(0.06)),
+                      child: const Text('👑 Первые 50 — Premium навсегда!', style: TextStyle(color: Color(0xFFF59E0B), fontSize: 10, fontWeight: FontWeight.w500)),
+                    ),
+                  ),
                 ),
                 SizedBox(height: 28.h),
                 Text('Создай презентацию', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: -0.3)),
                 SizedBox(height: 3.h),
                 Text('с помощью ИИ за 1 минуту', style: TextStyle(fontSize: 11.sp, color: Colors.white60, letterSpacing: 0.2)),
                 SizedBox(height: 24.h),
-                // Поле ввода — БЕЛОЕ, текст ЧЁРНЫЙ
+                // Поле ввода
                 Container(
                   width: 260.w, height: 36.h,
                   decoration: BoxDecoration(
@@ -134,36 +141,56 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   ),
                 ),
                 SizedBox(height: 10.h),
-                GestureDetector(
-                  onTap: _generate,
-                  child: Container(
-                    width: 140.w, height: 32.h,
-                    decoration: BoxDecoration(color: const Color(0xFF6366F1), borderRadius: BorderRadius.circular(20)),
-                    child: const Center(child: Text('✨ Создать', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600))),
+                // Кнопка Создать
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: _generate,
+                    child: Container(
+                      width: 140.w, height: 32.h,
+                      decoration: BoxDecoration(color: const Color(0xFF6366F1), borderRadius: BorderRadius.circular(20)),
+                      child: const Center(child: Text('✨ Создать', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600))),
+                    ),
                   ),
                 ),
                 SizedBox(height: 12.h),
-                Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.center, children: _examples.map((e) => GestureDetector(
-                  onTap: () { _topicController.text = e; },
-                  child: Container(padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h), decoration: BoxDecoration(color: Colors.white.withOpacity(0.04), borderRadius: BorderRadius.circular(14)), child: Text(e, style: TextStyle(fontSize: 10, color: Colors.white60))),
+                // Примеры
+                Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.center, children: _examples.map((e) => MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () { _topicController.text = e; },
+                    child: Container(padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h), decoration: BoxDecoration(color: Colors.white.withOpacity(0.04), borderRadius: BorderRadius.circular(14)), child: Text(e, style: TextStyle(fontSize: 10, color: Colors.white60))),
+                  ),
                 )).toList()),
                 SizedBox(height: 18.h),
                 _counter(up),
                 SizedBox(height: 12.h),
-                TextButton.icon(
-                  onPressed: _surprise,
-                  icon: const Text('🎲', style: TextStyle(fontSize: 12)),
-                  label: const Text('Удиви меня', style: TextStyle(color: Color(0xFF7C3AED), fontSize: 10)),
-                  style: TextButton.styleFrom(padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h)),
+                // Удиви меня
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: TextButton.icon(
+                    onPressed: _surprise,
+                    icon: const Text('🎲', style: TextStyle(fontSize: 12)),
+                    label: const Text('Удиви меня', style: TextStyle(color: Color(0xFF7C3AED), fontSize: 10)),
+                    style: TextButton.styleFrom(padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h)),
+                  ),
                 ),
                 SizedBox(height: 24.h),
-                Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                  _navItem('🏫', 'Учителям', _showTeacher),
-                  _navItem('💼', 'Бизнесу', _showCorporate),
-                  _navItem('👥', 'Команда', _showWorkspace),
-                  _navItem('🎁', 'Друзья', _showReferral),
-                  _navItem('👤', 'Профиль', _showProfile),
-                ]),
+                // Иконки — собраны к центру с одинаковыми отступами
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _navItem('🏫', 'Учителям', _showTeacher),
+                    SizedBox(width: 24.w),
+                    _navItem('💼', 'Бизнесу', _showCorporate),
+                    SizedBox(width: 24.w),
+                    _navItem('👥', 'Команда', _showWorkspace),
+                    SizedBox(width: 24.w),
+                    _navItem('🎁', 'Друзья', _showReferral),
+                    SizedBox(width: 24.w),
+                    _navItem('👤', 'Профиль', _showProfile),
+                  ],
+                ),
                 SizedBox(height: 20.h),
               ]),
             ),
@@ -198,12 +225,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _navItem(String icon, String label, VoidCallback onTap) => GestureDetector(
-    onTap: onTap,
-    child: Column(children: [
-      Text(icon, style: const TextStyle(fontSize: 18)),
-      SizedBox(height: 2.h),
-      Text(label, style: const TextStyle(fontSize: 9, color: Colors.white54)),
-    ]),
+  Widget _navItem(String icon, String label, VoidCallback onTap) => MouseRegion(
+    cursor: SystemMouseCursors.click,
+    child: GestureDetector(
+      onTap: onTap,
+      child: Column(children: [
+        Text(icon, style: const TextStyle(fontSize: 18)),
+        SizedBox(height: 2.h),
+        Text(label, style: const TextStyle(fontSize: 9, color: Colors.white54)),
+      ]),
+    ),
   );
 }
