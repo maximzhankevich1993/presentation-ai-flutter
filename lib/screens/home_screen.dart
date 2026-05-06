@@ -112,21 +112,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 SizedBox(height: 3.h),
                 Text('с помощью ИИ за 1 минуту', style: TextStyle(fontSize: 11.sp, color: Colors.white60, letterSpacing: 0.2)),
                 SizedBox(height: 24.h),
-                // Поле ввода — короткое, круглое, тёмное
+                // Поле ввода — БЕЛОЕ, текст ЧЁРНЫЙ
                 Container(
                   width: 260.w, height: 36.h,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF252540),
+                    color: Colors.white,
                     borderRadius: BorderRadius.circular(25),
-                    border: Border.all(color: Colors.white.withOpacity(0.15)),
+                    boxShadow: [BoxShadow(color: const Color(0xFF6366F1).withOpacity(0.1), blurRadius: 8, offset: const Offset(0, 4))],
                   ),
                   child: TextField(
                     controller: _topicController,
-                    style: const TextStyle(fontSize: 12, color: Colors.white),
+                    style: const TextStyle(fontSize: 12, color: Colors.black87),
                     textAlign: TextAlign.center,
                     decoration: InputDecoration(
                       hintText: 'О чём презентация?',
-                      hintStyle: TextStyle(color: Colors.grey[500], fontSize: 12),
+                      hintStyle: TextStyle(color: Colors.grey[400], fontSize: 12),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(horizontal: 16.w),
                     ),
