@@ -102,60 +102,51 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               padding: EdgeInsets.symmetric(horizontal: 24.w),
               child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
                 SizedBox(height: 28.h),
-                // VIP
                 Container(
                   padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
                   decoration: BoxDecoration(border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)), borderRadius: BorderRadius.circular(20), color: const Color(0xFFF59E0B).withOpacity(0.06)),
                   child: const Text('👑 Первые 50 — Premium навсегда!', style: TextStyle(color: Color(0xFFF59E0B), fontSize: 10, fontWeight: FontWeight.w500)),
                 ),
                 SizedBox(height: 28.h),
-                // Заголовок
                 Text('Создай презентацию', style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: -0.3)),
                 SizedBox(height: 3.h),
                 Text('с помощью ИИ за 1 минуту', style: TextStyle(fontSize: 11.sp, color: Colors.white60, letterSpacing: 0.2)),
                 SizedBox(height: 24.h),
                 // Поле ввода
                 Container(
-                  height: 42.h,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1A1A2E),
-                    borderRadius: BorderRadius.circular(25),
-                    border: Border.all(color: Colors.white.withOpacity(0.1)),
-                  ),
+                  width: 280.w, height: 38.h,
+                  decoration: BoxDecoration(color: const Color(0xFF1A1A2E), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withOpacity(0.12))),
                   child: TextField(
                     controller: _topicController,
-                    style: const TextStyle(fontSize: 13, color: Colors.white),
+                    style: const TextStyle(fontSize: 12, color: Colors.white),
+                    textAlign: TextAlign.center,
                     decoration: InputDecoration(
                       hintText: 'О чём презентация?',
-                      hintStyle: TextStyle(color: Colors.grey[700], fontSize: 13),
+                      hintStyle: TextStyle(color: Colors.grey[600], fontSize: 12),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 18.w, vertical: 10.h),
-                      suffixIcon: Padding(
-                        padding: EdgeInsets.all(5.w),
-                        child: GestureDetector(
-                          onTap: _generate,
-                          child: Container(
-                            width: 30.w, height: 30.w,
-                            decoration: BoxDecoration(color: const Color(0xFF6366F1), borderRadius: BorderRadius.circular(20)),
-                            child: const Icon(Icons.arrow_forward_ios, color: Colors.white, size: 12),
-                          ),
-                        ),
-                      ),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
                     ),
                     onSubmitted: (_) => _generate(),
                   ),
                 ),
+                SizedBox(height: 10.h),
+                // Кнопка Создать
+                GestureDetector(
+                  onTap: _generate,
+                  child: Container(
+                    width: 160.w, height: 34.h,
+                    decoration: BoxDecoration(color: const Color(0xFF6366F1), borderRadius: BorderRadius.circular(20)),
+                    child: const Center(child: Text('✨ Создать', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600))),
+                  ),
+                ),
                 SizedBox(height: 12.h),
-                // Примеры
                 Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.center, children: _examples.map((e) => GestureDetector(
                   onTap: () { _topicController.text = e; },
                   child: Container(padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h), decoration: BoxDecoration(color: Colors.white.withOpacity(0.04), borderRadius: BorderRadius.circular(14)), child: Text(e, style: TextStyle(fontSize: 10, color: Colors.white60))),
                 )).toList()),
                 SizedBox(height: 18.h),
-                // Счётчик
                 _counter(up),
                 SizedBox(height: 12.h),
-                // Удиви меня
                 TextButton.icon(
                   onPressed: _surprise,
                   icon: const Text('🎲', style: TextStyle(fontSize: 12)),
@@ -163,7 +154,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   style: TextButton.styleFrom(padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h)),
                 ),
                 SizedBox(height: 24.h),
-                // Иконки с подписями
                 Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
                   _navItem('🏫', 'Учителям', _showTeacher),
                   _navItem('💼', 'Бизнесу', _showCorporate),
@@ -208,9 +198,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   Widget _navItem(String icon, String label, VoidCallback onTap) => GestureDetector(
     onTap: onTap,
     child: Column(children: [
-      Text(icon, style: TextStyle(fontSize: 20.sp)),
-      SizedBox(height: 3.h),
-      Text(label, style: TextStyle(fontSize: 8.sp, color: Colors.white38)),
+      Text(icon, style: const TextStyle(fontSize: 16)),
+      SizedBox(height: 2.h),
+      Text(label, style: const TextStyle(fontSize: 7, color: Colors.white38)),
     ]),
   );
 }
