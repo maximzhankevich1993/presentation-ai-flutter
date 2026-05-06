@@ -16,31 +16,22 @@ class LoadingScreen extends StatefulWidget {
 }
 
 class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _bounceController;
-  late Animation<double> _bounceAnimation;
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
   int _step = 0;
   Timer? _messageTimer;
   double _progress = 0.0;
   bool _isGenerating = true;
   String? _error;
-  int _slidesGenerated = 0;
-  
-  final List<String> _messages = [
-    '🤔 Анализирую тему...',
-    '📚 Собираю информацию...',
-    '💡 Придумываю структуру...',
-    '✍️ Пишу текст слайдов...',
-    '🖼 Подбираю иллюстрации...',
-    '🎨 Оформляю дизайн...',
-    '✨ Финальные штрихи...',
-  ];
+
+  final List<String> _messages = ['🤔 Анализирую...', '📚 Собираю...', '💡 Придумываю...', '✍️ Пишу...', '✨ Завершаю...'];
 
   @override
   void initState() {
     super.initState();
-    _bounceController = AnimationController(vsync: this, duration: const Duration(milliseconds: 800));
-    _bounceAnimation = Tween<double>(begin: 0, end: -12).animate(CurvedAnimation(parent: _bounceController, curve: Curves.easeInOut));
-    _bounceController.repeat(reverse: true);
+    _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
+    _pulseAnimation = Tween<double>(begin: 0.9, end: 1.05).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
+    _pulseController.repeat(reverse: true);
     _startGeneration();
   }
 
@@ -48,36 +39,20 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
     _messageTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
       if (_step < _messages.length - 1 && _isGenerating) setState(() => _step++);
     });
-    _simulateProgress();
     _generatePresentation();
-  }
-
-  void _simulateProgress() {
-    Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      if (_isGenerating && _progress < 0.9) setState(() => _progress += 0.015);
-      else if (!_isGenerating) timer.cancel();
-    });
   }
 
   Future<void> _generatePresentation() async {
     try {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
-      if (!userProvider.canGenerate) throw Exception('Нет доступных генераций');
+      if (!userProvider.canGenerate) throw Exception('Нет генераций');
       await userProvider.useGeneration();
-
       final response = await ApiService.generatePresentation(widget.topic, maxSlides: userProvider.maxSlidesPerPresentation);
-      
-      // Преобразуем JSON в Presentation
       final presentation = Presentation.fromJson(response);
-      _slidesGenerated = presentation.slides.length;
-
       setState(() { _isGenerating = false; _progress = 1.0; _step = _messages.length - 1; });
       _messageTimer?.cancel();
-      await Future.delayed(const Duration(milliseconds: 500));
-
-      if (mounted) {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => EditorScreen(presentation: presentation)));
-      }
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (mounted) Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => EditorScreen(presentation: presentation)));
     } catch (e) {
       setState(() { _isGenerating = false; _error = e.toString().replaceAll('Exception: ', ''); });
       _messageTimer?.cancel();
@@ -86,193 +61,75 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
 
   @override
   void dispose() {
-    _bounceController.dispose();
+    _pulseController.dispose();
     _messageTimer?.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0F1A),
+      backgroundColor: const Color(0xAA0F0F1A), // полупрозрачный фон
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Doodle профессор
+        child: Container(
+          width: 220.w,
+          padding: EdgeInsets.all(20.w),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1A2E),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 20)],
+          ),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            // Иконка
             AnimatedBuilder(
-              animation: _bounceAnimation,
-              builder: (context, child) {
-                return Transform.translate(
-                  offset: Offset(0, _bounceAnimation.value),
-                  child: child,
-                );
-              },
+              animation: _pulseAnimation,
+              builder: (_, child) => Transform.scale(scale: _pulseAnimation.value, child: child),
               child: Container(
-                width: 200.w,
-                height: 200.w,
-                decoration: BoxDecoration(
-                  color: _error != null ? Colors.red.withOpacity(0.1) : const Color(0xFF4F46E5).withOpacity(0.1),
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: _error != null ? Colors.red : const Color(0xFF4F46E5),
-                    width: 3,
+                width: 48.w, height: 48.w,
+                decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]), shape: BoxShape.circle),
+                child: const Center(child: Text('✨', style: TextStyle(fontSize: 20))),
+              ),
+            ),
+            SizedBox(height: 14.h),
+            // Тема
+            Text(widget.topic, style: TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w500), textAlign: TextAlign.center, maxLines: 1, overflow: TextOverflow.ellipsis),
+            SizedBox(height: 10.h),
+            // Статус
+            Text(
+              _error ?? _messages[_step],
+              style: TextStyle(fontSize: 11, color: _error != null ? Colors.red[300] : Colors.white54),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 10.h),
+            // Прогресс
+            if (_error == null)
+              Container(
+                width: 100.w, height: 3.h,
+                decoration: BoxDecoration(borderRadius: BorderRadius.circular(2), color: Colors.white.withOpacity(0.1)),
+                child: FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: _progress,
+                  child: Container(decoration: BoxDecoration(borderRadius: BorderRadius.circular(2), gradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]))),
+                ),
+              ),
+            if (_error != null) ...[
+              SizedBox(height: 10.h),
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () { setState(() { _step = 0; _progress = 0.0; _isGenerating = true; _error = null; }); _startGeneration(); },
+                  child: Container(
+                    padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+                    decoration: BoxDecoration(color: const Color(0xFF6366F1), borderRadius: BorderRadius.circular(14)),
+                    child: Text('Повторить', style: TextStyle(fontSize: 11, color: Colors.white, fontWeight: FontWeight.w500)),
                   ),
                 ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Text(
-                      _error != null ? '😔' : '🧑‍🏫',
-                      style: TextStyle(fontSize: 80.sp),
-                    ),
-                    if (_error == null) ...[
-                      Positioned(
-                        top: 20,
-                        right: 30,
-                        child: Text('💡', style: TextStyle(fontSize: 40.sp)),
-                      ),
-                      Positioned(
-                        top: 10,
-                        left: 20,
-                        child: Text('✨', style: TextStyle(fontSize: 20.sp)),
-                      ),
-                      Positioned(
-                        bottom: 20,
-                        right: 20,
-                        child: Text('📝', style: TextStyle(fontSize: 30.sp)),
-                      ),
-                    ],
-                  ],
-                ),
               ),
-            ),
-            
-            SizedBox(height: 40.h),
-            
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-              decoration: BoxDecoration(
-                color: const Color(0xFF4F46E5).withOpacity(0.1),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: Text(
-                widget.topic,
-                style: TextStyle(
-                  fontSize: 16.sp,
-                  color: const Color(0xFF4F46E5),
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            
-            SizedBox(height: 24.h),
-            
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: Container(
-                key: ValueKey(_error != null ? 'error' : _step),
-                padding: EdgeInsets.symmetric(horizontal: 32.w),
-                child: Text(
-                  _error != null 
-                      ? '❌ ${_error.toString().replaceAll('Exception: ', '')}'
-                      : _messages[_step],
-                  style: TextStyle(
-                    fontSize: 18.sp,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Caveat',
-                    color: _error != null 
-                        ? Colors.red 
-                        : (isDark ? Colors.white : const Color(0xFF1E1E2A)),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-            
-            SizedBox(height: 40.h),
-            
-            if (_error != null)
-              ElevatedButton(
-                onPressed: () {
-                  setState(() {
-                    _step = 0;
-                    _progress = 0.0;
-                    _isGenerating = true;
-                    _error = null;
-                  });
-                  _startGeneration();
-                },
-                child: const Text('Попробовать снова'),
-              )
-            else
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 60.w),
-                child: Column(
-                  children: [
-                    CustomPaint(
-                      size: Size(double.infinity, 8.h),
-                      painter: DoodleProgressPainter(progress: _progress),
-                    ),
-                    SizedBox(height: 8.h),
-                    Text(
-                      '${(_progress * 100).toInt()}%',
-                      style: TextStyle(fontSize: 14.sp, color: Colors.grey),
-                    ),
-                    if (_slidesGenerated > 0)
-                      Padding(
-                        padding: EdgeInsets.only(top: 8.h),
-                        child: Text(
-                          '📊 Создано $_slidesGenerated слайдов',
-                          style: TextStyle(fontSize: 12.sp, color: Colors.grey),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-          ],
+            ],
+          ]),
         ),
       ),
     );
-  }
-}
-
-class DoodleProgressPainter extends CustomPainter {
-  final double progress;
-  DoodleProgressPainter({required this.progress});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final bgPaint = Paint()..color = Colors.grey.withOpacity(0.2)..style = PaintingStyle.stroke..strokeWidth = 3..strokeCap = StrokeCap.round;
-    final progressPaint = Paint()..color = const Color(0xFF4F46E5)..style = PaintingStyle.stroke..strokeWidth = 3..strokeCap = StrokeCap.round;
-    
-    canvas.drawLine(Offset(0, size.height / 2), Offset(size.width, size.height / 2), bgPaint);
-    
-    final progressWidth = size.width * progress;
-    final path = Path();
-    path.moveTo(0, size.height / 2);
-    for (double x = 0; x < progressWidth; x += 5) {
-      final y = size.height / 2 + (x * 0.02).sin() * 2;
-      path.lineTo(x, y);
-    }
-    canvas.drawPath(path, progressPaint);
-    
-    if (progress > 0.05) {
-      canvas.drawCircle(Offset(progressWidth, size.height / 2 + (progressWidth * 0.02).sin() * 2), 4, Paint()..color = const Color(0xFF4F46E5));
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant DoodleProgressPainter oldDelegate) => oldDelegate.progress != progress;
-}
-
-extension on double {
-  double sin() {
-    double x = this, result = x, term = x;
-    for (int i = 1; i <= 5; i++) { term *= -x * x / ((2 * i) * (2 * i + 1)); result += term; }
-    return result;
   }
 }
