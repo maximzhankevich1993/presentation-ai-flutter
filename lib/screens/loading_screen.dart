@@ -31,6 +31,7 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
     '💡 Придумываю структуру...',
     '✍️ Пишу текст слайдов...',
     '🖼 Подбираю иллюстрации...',
+    '🎨 Оформляю дизайн...',
     '✨ Финальные штрихи...',
   ];
 
@@ -97,59 +98,181 @@ class _LoadingScreenState extends State<LoadingScreen> with SingleTickerProvider
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F1A),
       body: Center(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 32.w),
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Doodle профессор
             AnimatedBuilder(
               animation: _bounceAnimation,
-              builder: (context, child) => Transform.translate(offset: Offset(0, _bounceAnimation.value), child: child),
+              builder: (context, child) {
+                return Transform.translate(
+                  offset: Offset(0, _bounceAnimation.value),
+                  child: child,
+                );
+              },
               child: Container(
-                width: 160.w, height: 160.w,
+                width: 200.w,
+                height: 200.w,
                 decoration: BoxDecoration(
-                  color: _error != null ? Colors.red.withOpacity(0.1) : const Color(0xFF6366F1).withOpacity(0.1),
+                  color: _error != null ? Colors.red.withOpacity(0.1) : const Color(0xFF4F46E5).withOpacity(0.1),
                   shape: BoxShape.circle,
-                  border: Border.all(color: _error != null ? Colors.red : const Color(0xFF6366F1), width: 2),
+                  border: Border.all(
+                    color: _error != null ? Colors.red : const Color(0xFF4F46E5),
+                    width: 3,
+                  ),
                 ),
-                child: Stack(alignment: Alignment.center, children: [
-                  Text(_error != null ? '😔' : '🧑‍🏫', style: TextStyle(fontSize: 64.sp)),
-                  if (_error == null) Positioned(top: 16, right: 24, child: Text('💡', style: TextStyle(fontSize: 32.sp))),
-                ]),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Text(
+                      _error != null ? '😔' : '🧑‍🏫',
+                      style: TextStyle(fontSize: 80.sp),
+                    ),
+                    if (_error == null) ...[
+                      Positioned(
+                        top: 20,
+                        right: 30,
+                        child: Text('💡', style: TextStyle(fontSize: 40.sp)),
+                      ),
+                      Positioned(
+                        top: 10,
+                        left: 20,
+                        child: Text('✨', style: TextStyle(fontSize: 20.sp)),
+                      ),
+                      Positioned(
+                        bottom: 20,
+                        right: 20,
+                        child: Text('📝', style: TextStyle(fontSize: 30.sp)),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
-            SizedBox(height: 32.h),
+            
+            SizedBox(height: 40.h),
+            
             Container(
-              padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
-              decoration: BoxDecoration(color: const Color(0xFF6366F1).withOpacity(0.1), borderRadius: BorderRadius.circular(20)),
-              child: Text(widget.topic, style: TextStyle(fontSize: 14.sp, color: const Color(0xFF6366F1), fontWeight: FontWeight.w500), textAlign: TextAlign.center, maxLines: 2, overflow: TextOverflow.ellipsis),
+              padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
+              decoration: BoxDecoration(
+                color: const Color(0xFF4F46E5).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: Text(
+                widget.topic,
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  color: const Color(0xFF4F46E5),
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
             ),
-            SizedBox(height: 20.h),
-            Text(
-              _error ?? _messages[_step],
-              style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w500, color: _error != null ? Colors.red : (isDark ? Colors.white : Colors.black87)),
-              textAlign: TextAlign.center,
-            ),
+            
             SizedBox(height: 24.h),
-            if (_error == null)
-              Container(
-                width: double.infinity, height: 6.h,
-                decoration: BoxDecoration(borderRadius: BorderRadius.circular(3), color: Colors.white.withOpacity(0.1)),
-                child: FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: _progress,
-                  child: Container(decoration: BoxDecoration(borderRadius: BorderRadius.circular(3), gradient: const LinearGradient(colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)]))),
+            
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: Container(
+                key: ValueKey(_error != null ? 'error' : _step),
+                padding: EdgeInsets.symmetric(horizontal: 32.w),
+                child: Text(
+                  _error != null 
+                      ? '❌ ${_error.toString().replaceAll('Exception: ', '')}'
+                      : _messages[_step],
+                  style: TextStyle(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Caveat',
+                    color: _error != null 
+                        ? Colors.red 
+                        : (isDark ? Colors.white : const Color(0xFF1E1E2A)),
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ),
-            if (_error != null) ...[
-              SizedBox(height: 20.h),
+            ),
+            
+            SizedBox(height: 40.h),
+            
+            if (_error != null)
               ElevatedButton(
-                onPressed: () { setState(() { _step = 0; _progress = 0.0; _isGenerating = true; _error = null; }); _startGeneration(); },
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF6366F1), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))),
+                onPressed: () {
+                  setState(() {
+                    _step = 0;
+                    _progress = 0.0;
+                    _isGenerating = true;
+                    _error = null;
+                  });
+                  _startGeneration();
+                },
                 child: const Text('Попробовать снова'),
+              )
+            else
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 60.w),
+                child: Column(
+                  children: [
+                    CustomPaint(
+                      size: Size(double.infinity, 8.h),
+                      painter: DoodleProgressPainter(progress: _progress),
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      '${(_progress * 100).toInt()}%',
+                      style: TextStyle(fontSize: 14.sp, color: Colors.grey),
+                    ),
+                    if (_slidesGenerated > 0)
+                      Padding(
+                        padding: EdgeInsets.only(top: 8.h),
+                        child: Text(
+                          '📊 Создано $_slidesGenerated слайдов',
+                          style: TextStyle(fontSize: 12.sp, color: Colors.grey),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-            ],
-          ]),
+          ],
         ),
       ),
     );
+  }
+}
+
+class DoodleProgressPainter extends CustomPainter {
+  final double progress;
+  DoodleProgressPainter({required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bgPaint = Paint()..color = Colors.grey.withOpacity(0.2)..style = PaintingStyle.stroke..strokeWidth = 3..strokeCap = StrokeCap.round;
+    final progressPaint = Paint()..color = const Color(0xFF4F46E5)..style = PaintingStyle.stroke..strokeWidth = 3..strokeCap = StrokeCap.round;
+    
+    canvas.drawLine(Offset(0, size.height / 2), Offset(size.width, size.height / 2), bgPaint);
+    
+    final progressWidth = size.width * progress;
+    final path = Path();
+    path.moveTo(0, size.height / 2);
+    for (double x = 0; x < progressWidth; x += 5) {
+      final y = size.height / 2 + (x * 0.02).sin() * 2;
+      path.lineTo(x, y);
+    }
+    canvas.drawPath(path, progressPaint);
+    
+    if (progress > 0.05) {
+      canvas.drawCircle(Offset(progressWidth, size.height / 2 + (progressWidth * 0.02).sin() * 2), 4, Paint()..color = const Color(0xFF4F46E5));
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant DoodleProgressPainter oldDelegate) => oldDelegate.progress != progress;
+}
+
+extension on double {
+  double sin() {
+    double x = this, result = x, term = x;
+    for (int i = 1; i <= 5; i++) { term *= -x * x / ((2 * i) * (2 * i + 1)); result += term; }
+    return result;
   }
 }
