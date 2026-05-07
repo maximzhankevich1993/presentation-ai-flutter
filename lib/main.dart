@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'providers/theme_provider.dart';
 import 'providers/user_provider.dart';
 import 'screens/home_screen.dart';
-import 'themes/app_theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,9 +26,17 @@ class MyApp extends StatelessWidget {
           return MaterialApp(
             title: 'Презентатор ИИ',
             debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
-            darkTheme: AppTheme.darkTheme,
-            themeMode: ThemeMode.system,
+            theme: ThemeData(
+              brightness: Brightness.dark,
+              scaffoldBackgroundColor: const Color(0xFF121212),
+              primaryColor: const Color(0xFF1DB954),
+              appBarTheme: const AppBarTheme(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                centerTitle: true,
+                titleTextStyle: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700),
+              ),
+            ),
             home: const HomeScreen(),
           );
         },
