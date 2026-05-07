@@ -1,264 +1,50 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
-import '../models/features.dart';
-import '../providers/user_provider.dart';
-import 'premium_screen.dart';
 
 class FeaturesScreen extends StatelessWidget {
   const FeaturesScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    const green = Color(0xFF1DB954);
+    const card = Color(0xFF1A1A1A);
+
+    final features = [
+      {'icon': '🎨', 'title': 'Анти-шаблоны', 'desc': 'Каждый слайд в уникальном стиле'},
+      {'icon': '📱', 'title': 'Story Mode', 'desc': 'Скроллящаяся история вместо слайдов'},
+      {'icon': '🏷', 'title': 'Бренд-кит', 'desc': 'Цвета и шрифты из логотипа'},
+      {'icon': '🤖', 'title': 'AI-улучшение', 'desc': 'Рерайт текста нейросетью'},
+      {'icon': '🎬', 'title': 'Анимации', 'desc': '4 перехода между слайдами'},
+      {'icon': '📤', 'title': 'Экспорт', 'desc': 'PPTX, PDF, PNG'},
+      {'icon': '🌍', 'title': 'Авто-страна', 'desc': 'Стандарты и валюта по IP'},
+      {'icon': '👑', 'title': 'VIP', 'desc': 'Первые 50 — Premium навсегда'},
+    ];
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF1E1E2A) : const Color(0xFFFAFAFA),
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: const Text('Все возможности'),
+        backgroundColor: const Color(0xFF121212),
+        title: const Text('Возможности', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 17)),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeroSection(context, userProvider),
-
-            ...FeaturesCatalog.categories.entries.map(
-              (entry) => _buildCategorySection(
-                context: context,
-                categoryName: entry.value,
-                features: FeaturesCatalog.getByCategory(entry.key),
-                userProvider: userProvider,
-              ),
-            ),
-
-            SizedBox(height: 40.h),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// ================= HERO =================
-
-  Widget _buildHeroSection(
-    BuildContext context,
-    UserProvider userProvider,
-  ) {
-    return Container(
-      margin: EdgeInsets.all(16.w),
-      padding: EdgeInsets.all(24.w),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF4F46E5), Color(0xFF7C3AED)],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF4F46E5).withOpacity(0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(
-            '🚀 30+ уникальных функций',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24.sp,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 8.h),
-
-          Text(
-            '${FeaturesCatalog.getFreeFeatures().length} бесплатно • '
-            '${FeaturesCatalog.getPremiumFeatures().length} в Premium',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
-              fontSize: 16.sp,
-            ),
-          ),
-
-          if (!userProvider.isPremium) ...[
-            SizedBox(height: 16.h),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const PremiumScreen(),
-                  ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF4F46E5),
-              ),
-              child: const Text('Разблокировать всё'),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  /// ================= CATEGORY =================
-
-  Widget _buildCategorySection({
-    required BuildContext context,
-    required String categoryName,
-    required List<AppFeature> features,
-    required UserProvider userProvider,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.fromLTRB(24.w, 32.h, 24.w, 16.h),
-          child: Text(
-            categoryName,
-            style: TextStyle(
-              fontSize: 20.sp,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-
-        ...features.map(
-          (f) => _buildFeatureTile(context, f, userProvider),
-        ),
-      ],
-    );
-  }
-
-  /// ================= TILE =================
-
-  Widget _buildFeatureTile(
-    BuildContext context,
-    AppFeature feature,
-    UserProvider userProvider,
-  ) {
-    final isLocked =
-        feature.tier == FeatureTier.premium && !userProvider.isPremium;
-
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: feature.isHighlighted
-              ? const Color(0xFF4F46E5).withOpacity(0.3)
-              : Colors.grey.withOpacity(0.1),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 48.w,
-            height: 48.w,
-            decoration: BoxDecoration(
-              color: isLocked
-                  ? Colors.grey.withOpacity(0.1)
-                  : const Color(0xFF4F46E5).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Center(
-              child: Text(
-                feature.icon,
-                style: TextStyle(fontSize: 24.sp),
-              ),
-            ),
-          ),
-
-          SizedBox(width: 16.w),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        feature.name,
-                        style: TextStyle(
-                          fontSize: 16.sp,
-                          fontWeight: FontWeight.w600,
-                          color: isLocked ? Colors.grey : null,
-                        ),
-                      ),
-                    ),
-
-                    if (isLocked)
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 8.w,
-                          vertical: 2.h,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [
-                              Color(0xFFF59E0B),
-                              Color(0xFFD97706),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'PREMIUM',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-
-                    if (feature.tier == FeatureTier.enterprise)
-                      Container(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 8.w,
-                          vertical: 2.h,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1E3A5F),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          'БИЗНЕС',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 10.sp,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-
-                SizedBox(height: 4.h),
-
-                Text(
-                  feature.description,
-                  style: TextStyle(
-                    fontSize: 13.sp,
-                    color: Colors.grey[600],
-                    height: 1.4,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+      body: GridView.builder(
+        padding: EdgeInsets.all(16.w),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 1.1, crossAxisSpacing: 10.w, mainAxisSpacing: 10.h),
+        itemCount: features.length,
+        itemBuilder: (_, i) {
+          final f = features[i];
+          return Container(
+            padding: EdgeInsets.all(14.w),
+            decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(14)),
+            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Text(f['icon']!, style: const TextStyle(fontSize: 28)),
+              SizedBox(height: 8.h),
+              Text(f['title']!, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white)),
+              SizedBox(height: 4.h),
+              Text(f['desc']!, textAlign: TextAlign.center, style: TextStyle(fontSize: 10, color: const Color(0xFFB3B3B3))),
+            ]),
+          );
+        },
       ),
     );
   }
