@@ -2,151 +2,119 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
-import '../services/payment_service.dart';
-import '../services/auth_service.dart';
-import '../services/security_service.dart';
 
 class PremiumScreen extends StatelessWidget {
   const PremiumScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
+    const green = Color(0xFF1DB954);
+    const card = Color(0xFF1A1A1A);
+
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF1E1E2A) : const Color(0xFFFAFAFA),
-      appBar: AppBar(title: const Text('Premium'), centerTitle: true, leading: IconButton(icon: const Icon(Icons.close), onPressed: () => Navigator.pop(context))),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(24.w),
-        child: Column(
-          children: [
-            Center(
-              child: Container(
-                width: 80.w, height: 80.w,
-                decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFFF59E0B), Color(0xFFD97706)]), shape: BoxShape.circle, boxShadow: [BoxShadow(color: const Color(0xFFF59E0B).withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8))]),
-                child: Icon(Icons.star, color: Colors.white, size: 40.sp),
-              ),
+      backgroundColor: const Color(0xFF121212),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF121212),
+        title: const Text('Premium', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 17)),
+        centerTitle: true,
+        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white70), onPressed: () => Navigator.pop(context)),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.all(20.w),
+          child: Column(children: [
+            Container(
+              width: 64.w, height: 64.w,
+              decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFFFFD60A), Color(0xFFF5A623)]), shape: BoxShape.circle),
+              child: const Center(child: Text('👑', style: TextStyle(fontSize: 28))),
+            ),
+            SizedBox(height: 14.h),
+            Text('Разблокируй всё', style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
+            SizedBox(height: 4.h),
+            Text('Безлимитные презентации и все функции', style: TextStyle(fontSize: 12, color: const Color(0xFFB3B3B3))),
+            SizedBox(height: 24.h),
+
+            // Сравнение
+            Container(
+              padding: EdgeInsets.all(16.w),
+              decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(16)),
+              child: Column(children: [
+                _row('Презентаций', '5', '∞'),
+                _divider(),
+                _row('Слайдов', '10', '50'),
+                _divider(),
+                _row('Фоны', '2', '6'),
+                _divider(),
+                _row('Шрифты', '2', '3+'),
+                _divider(),
+                _row('Анимации', '1', '4'),
+                _divider(),
+                _row('PDF без знака', '❌', '✅'),
+                _divider(),
+                _row('AI-улучшение', '❌', '✅'),
+              ]),
             ),
             SizedBox(height: 24.h),
-            Text('Разблокируй всё', style: TextStyle(fontSize: 32.sp, fontWeight: FontWeight.bold)),
-            SizedBox(height: 8.h),
-            Text('Создавай профессиональные презентации\nбез ограничений', textAlign: TextAlign.center, style: TextStyle(fontSize: 16.sp, color: Colors.grey[600])),
-            SizedBox(height: 40.h),
-            _buildComparisonTable(context),
-            SizedBox(height: 40.h),
-            Text('Выбери план', style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold)),
-            SizedBox(height: 20.h),
-            _buildPlanCard(context, plan: 'monthly', title: 'Месяц', price: '299 ₽', period: 'мес', onTap: () => _showPaymentOptions(context, 'monthly')),
-            SizedBox(height: 12.h),
-            _buildPlanCard(context, plan: 'halfyear', title: 'Полгода', price: '199 ₽', period: 'мес', total: '1 194 ₽ за 6 мес', discount: '33%', isPopular: true, onTap: () => _showPaymentOptions(context, 'halfyear')),
-            SizedBox(height: 12.h),
-            _buildPlanCard(context, plan: 'yearly', title: 'Год', price: '149 ₽', period: 'мес', total: '1 788 ₽ за год', discount: '50%', onTap: () => _showPaymentOptions(context, 'yearly')),
-            SizedBox(height: 24.h),
-            Center(child: TextButton.icon(onPressed: () => _showTrialDialog(context), icon: const Icon(Icons.card_giftcard), label: const Text('🎁 Попробовать 3 дня бесплатно'), style: TextButton.styleFrom(foregroundColor: const Color(0xFFF59E0B)))),
+
+            // Планы
+            _plan('Месяц', '\$4.99', '/мес', false, () {}),
+            SizedBox(height: 10.h),
+            _plan('Полгода', '\$3.99', '/мес', true, () {}),
+            SizedBox(height: 10.h),
+            _plan('Год', '\$2.99', '/мес', false, () {}),
+
             SizedBox(height: 16.h),
-            Center(child: TextButton(onPressed: () => _restorePurchases(context), child: Text('Восстановить покупки', style: TextStyle(color: Colors.grey[600])))),
-            SizedBox(height: 24.h),
-            _buildTrustBadges(),
-            SizedBox(height: 40.h),
-          ],
+            TextButton.icon(
+              onPressed: () {},
+              icon: const Icon(Icons.card_giftcard, color: Color(0xFFFFD60A), size: 18),
+              label: const Text('Попробовать 3 дня бесплатно', style: TextStyle(color: Color(0xFFFFD60A), fontSize: 12)),
+            ),
+            SizedBox(height: 12.h),
+            Text('🔒 Безопасная оплата', style: TextStyle(fontSize: 10, color: Colors.white38)),
+          ]),
         ),
       ),
     );
   }
 
-  Widget _buildComparisonTable(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(20.w), decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.grey.withOpacity(0.1))),
-      child: Column(children: [
-        _buildCompareRow('Генерации презентаций', '5', '∞'), _buildDivider(),
-        _buildCompareRow('Слайдов в презентации', '10', '50'), _buildDivider(),
-        _buildCompareRow('Автоматические картинки', '10', '50'), _buildDivider(),
-        _buildCompareRow('Свой фон', '❌', '✅'), _buildDivider(),
-        _buildCompareRow('Цветовые схемы', '2', '8+'), _buildDivider(),
-        _buildCompareRow('Шрифтовые пары', '2', '6+'), _buildDivider(),
-        _buildCompareRow('Анимированные переходы', '2', '10+'), _buildDivider(),
-        _buildCompareRow('ИИ-улучшение текста', '❌', '✅'), _buildDivider(),
-        _buildCompareRow('Экспорт в PDF', '❌', '✅'), _buildDivider(),
-        _buildCompareRow('Водяной знак', 'Есть', 'Нет'),
-      ]),
-    );
-  }
-
-  Widget _buildCompareRow(String feature, String free, String premium) => Padding(
-    padding: EdgeInsets.symmetric(vertical: 12.h),
+  Widget _row(String f, String free, String prem) => Padding(
+    padding: EdgeInsets.symmetric(vertical: 10.h),
     child: Row(children: [
-      Expanded(flex: 2, child: Text(feature, style: TextStyle(fontSize: 14.sp))),
-      Expanded(flex: 1, child: Text(free, textAlign: TextAlign.center, style: TextStyle(fontSize: 14.sp, color: Colors.grey[600]))),
-      Expanded(flex: 1, child: Text(premium, textAlign: TextAlign.center, style: TextStyle(fontSize: 14.sp, fontWeight: FontWeight.bold, color: const Color(0xFF4F46E5)))),
+      Expanded(flex: 2, child: Text(f, style: TextStyle(fontSize: 13, color: Colors.white70))),
+      Expanded(child: Text(free, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: const Color(0xFFB3B3B3)))),
+      Expanded(child: Text(prem, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: green))),
     ]),
   );
 
-  Widget _buildDivider() => Divider(color: Colors.grey.withOpacity(0.15), height: 1);
+  Widget _divider() => Divider(color: Colors.white.withOpacity(0.06), height: 1);
 
-  Widget _buildPlanCard(BuildContext context, {required String plan, required String title, required String price, required String period, String? total, String? discount, bool isPopular = false, required VoidCallback onTap}) {
+  Widget _plan(String name, String price, String period, bool popular, VoidCallback onTap) {
+    const green = Color(0xFF1DB954);
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: EdgeInsets.all(20.w), decoration: BoxDecoration(color: isPopular ? const Color(0xFF4F46E5).withOpacity(0.05) : Theme.of(context).cardColor, borderRadius: BorderRadius.circular(20), border: Border.all(color: isPopular ? const Color(0xFF4F46E5) : Colors.grey.withOpacity(0.2), width: isPopular ? 2 : 1)),
+        padding: EdgeInsets.all(16.w),
+        decoration: BoxDecoration(
+          color: popular ? green.withOpacity(0.1) : const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: popular ? green.withOpacity(0.4) : Colors.white.withOpacity(0.08), width: popular ? 1.5 : 1),
+        ),
         child: Row(children: [
-          if (isPopular) Container(margin: EdgeInsets.only(right: 12.w), padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h), decoration: BoxDecoration(color: const Color(0xFF4F46E5), borderRadius: BorderRadius.circular(12)), child: Text('ПОПУЛЯРНЫЙ', style: TextStyle(color: Colors.white, fontSize: 10.sp, fontWeight: FontWeight.bold))),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold)), if (total != null) Text(total, style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]))])),
-          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            Row(children: [Text(price, style: TextStyle(fontSize: 24.sp, fontWeight: FontWeight.bold)), Text(' /$period', style: TextStyle(fontSize: 14.sp, color: Colors.grey[600]))]),
-            if (discount != null) Container(margin: EdgeInsets.only(top: 4.h), padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h), decoration: BoxDecoration(color: Colors.green.withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: Text('Экономия $discount', style: TextStyle(color: Colors.green, fontSize: 12.sp, fontWeight: FontWeight.w600))),
-          ]),
+          if (popular) Container(
+            margin: EdgeInsets.only(right: 10.w),
+            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
+            decoration: BoxDecoration(color: green, borderRadius: BorderRadius.circular(10)),
+            child: const Text('ЛУЧШИЙ', style: TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.w700)),
+          ),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(name, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+            Text('Полный доступ', style: TextStyle(fontSize: 11, color: const Color(0xFFB3B3B3))),
+          ])),
+          Text(price, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: green)),
+          SizedBox(width: 2.w),
+          Text(period, style: TextStyle(fontSize: 11, color: const Color(0xFFB3B3B3))),
         ]),
       ),
     );
   }
-
-  void _showPaymentOptions(BuildContext context, String plan) {
-    showModalBottomSheet(
-      context: context, shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24.r))),
-      builder: (context) => SafeArea(child: Padding(padding: EdgeInsets.all(24.w), child: Column(mainAxisSize: MainAxisSize.min, children: [
-        Container(width: 40.w, height: 4.h, decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2))), SizedBox(height: 24.h),
-        Text('Способ оплаты', style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold)), SizedBox(height: 24.h),
-        ListTile(leading: Container(width: 48.w, height: 48.w, decoration: BoxDecoration(color: const Color(0xFF635BFF), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.credit_card, color: Colors.white)), title: const Text('Stripe'), subtitle: const Text('Visa, Mastercard, Apple Pay'), trailing: const Icon(Icons.chevron_right), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), onTap: () { Navigator.pop(context); _processPayment(context, plan, 'stripe'); }),
-        SizedBox(height: 12.h),
-        ListTile(leading: Container(width: 48.w, height: 48.w, decoration: BoxDecoration(color: const Color(0xFF009CDE), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.paypal, color: Colors.white)), title: const Text('PayPal'), subtitle: const Text('Оплата через PayPal'), trailing: const Icon(Icons.chevron_right), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), onTap: () { Navigator.pop(context); _processPayment(context, plan, 'paypal'); }),
-        SizedBox(height: 24.h),
-      ]))),
-    );
-  }
-
-  void _processPayment(BuildContext context, String plan, String method) async {
-    showDialog(context: context, barrierDismissible: false, builder: (context) => Center(child: Container(padding: EdgeInsets.all(32.w), decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(20)), child: const CircularProgressIndicator())));
-    try {
-      await Future.delayed(const Duration(seconds: 2));
-      if (context.mounted) {
-        Navigator.pop(context);
-        final userProvider = Provider.of<UserProvider>(context, listen: false);
-        userProvider.activatePremium();
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Row(children: [const Icon(Icons.check_circle, color: Colors.white), SizedBox(width: 12.w), const Text('Premium активирован! 🎉')]), backgroundColor: Colors.green, behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))));
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      if (context.mounted) { Navigator.pop(context); }
-    }
-  }
-
-  void _showTrialDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(children: [const Icon(Icons.card_giftcard, color: Color(0xFFF59E0B)), SizedBox(width: 12.w), const Text('Бесплатный триал')]),
-        content: const Text('Получи 3 дня Premium бесплатно!\n\n• Безлимитные презентации\n• Все фоны и шрифты\n• Экспорт без водяного знака'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Позже')),
-          ElevatedButton(onPressed: () async { Navigator.pop(context); if (context.mounted) { final userProvider = Provider.of<UserProvider>(context, listen: false); userProvider.activatePremium(); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Триал активирован! 🎉'), backgroundColor: Colors.green)); } }, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF59E0B)), child: const Text('Активировать')),
-        ],
-      ),
-    );
-  }
-
-  void _restorePurchases(BuildContext context) {
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Покупки восстановлены')));
-  }
-
-  Widget _buildTrustBadges() => Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.lock, size: 16, color: Colors.grey[400]), SizedBox(width: 8.w), Text('Безопасная оплата через Stripe и PayPal', style: TextStyle(fontSize: 12.sp, color: Colors.grey[400]))]);
 }
