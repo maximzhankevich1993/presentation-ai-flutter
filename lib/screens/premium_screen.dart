@@ -82,7 +82,7 @@ class PremiumScreen extends StatelessWidget {
     child: Row(children: [
       Expanded(flex: 2, child: Text(f, style: TextStyle(fontSize: 13, color: Colors.white70))),
       Expanded(child: Text(free, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: const Color(0xFFB3B3B3)))),
-      Expanded(child: Text(prem, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: green))),
+      Expanded(child: Text(prem, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.green))),
     ]),
   );
 
