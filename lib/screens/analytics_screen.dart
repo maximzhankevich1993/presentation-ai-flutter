@@ -1,294 +1,75 @@
-import '../services/analytics_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../services/analytics_service.dart';
 
-class AnalyticsScreen extends StatefulWidget {
+class AnalyticsScreen extends StatelessWidget {
   final String presentationTitle;
   final int slideCount;
 
-  const AnalyticsScreen({
-    super.key,
-    required this.presentationTitle,
-    required this.slideCount,
-  });
-
-  @override
-  State<AnalyticsScreen> createState() => _AnalyticsScreenState();
-}
-
-class _AnalyticsScreenState extends State<AnalyticsScreen> {
-  PresentationStats? _stats;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadStats();
-  }
-
-  void _loadStats() {
-    // Если потом будет API → легко заменишь на async
-    _stats = AnalyticsService.getDemoStats(widget.slideCount);
-  }
+  const AnalyticsScreen({super.key, required this.presentationTitle, required this.slideCount});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    if (_stats == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
+    const green = Color(0xFF1DB954);
+    const card = Color(0xFF1A1A1A);
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF1E1E2A) : const Color(0xFFFAFAFA),
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: const Text('Аналитика'),
+        backgroundColor: const Color(0xFF121212),
+        title: const Text('Аналитика', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 17)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(24.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.presentationTitle,
-              style: TextStyle(
-                fontSize: 20.sp,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 24.h),
-
-            /// ===== МЕТРИКИ =====
-            _buildMetricsGrid(theme),
-            SizedBox(height: 32.h),
-
-            /// ===== СЛАЙДЫ =====
-            Text(
-              'По слайдам',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 16.h),
-
-            ..._stats!.slideAnalytics
-                .map((slide) => _buildSlideAnalyticsCard(slide, theme))
-                .toList(),
-
-            SizedBox(height: 32.h),
-
-            /// ===== РЕКОМЕНДАЦИИ =====
-            Text(
-              'Рекомендации',
-              style: TextStyle(
-                fontSize: 18.sp,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 16.h),
-
-            ...AnalyticsService.getRecommendations(_stats!)
-                .map((rec) => _buildRecommendationCard(rec))
-                .toList(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// =========================
-  /// МЕТРИКИ
-  /// =========================
-
-  Widget _buildMetricsGrid(ThemeData theme) {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      childAspectRatio: 1.3,
-      crossAxisSpacing: 12.w,
-      mainAxisSpacing: 12.h,
-      children: [
-        _buildMetricCard('👁', 'Просмотров', _stats!.totalViews.toString(), theme),
-        _buildMetricCard('👥', 'Уникальных', _stats!.uniqueViewers.toString(), theme),
-        _buildMetricCard(
-          '⏱',
-          'Среднее время',
-          '${_stats!.avgTimePerSlide.toStringAsFixed(1)}с',
-          theme,
-        ),
-        _buildMetricCard(
-          '✅',
-          'Досмотрели',
-          '${_stats!.completionRate.clamp(0, 100).toInt()}%',
-          theme,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMetricCard(
-    String emoji,
-    String label,
-    String value,
-    ThemeData theme,
-  ) {
-    return Container(
-      padding: EdgeInsets.all(20.w),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(emoji, style: TextStyle(fontSize: 28.sp)),
+        padding: EdgeInsets.all(20.w),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(presentationTitle, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+          SizedBox(height: 16.h),
+          Row(children: [
+            _stat('👁', '245', 'Просмотров'),
+            SizedBox(width: 8.w),
+            _stat('👥', '87', 'Уникальных'),
+            SizedBox(width: 8.w),
+            _stat('✅', '64%', 'Досмотрели'),
+          ]),
+          SizedBox(height: 20.h),
+          Text('По слайдам', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFFB3B3B3))),
           SizedBox(height: 8.h),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 24.sp,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 4.h),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12.sp,
-              color: theme.textTheme.bodySmall?.color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// =========================
-  /// СЛАЙДЫ
-  /// =========================
-
-  Widget _buildSlideAnalyticsCard(
-    SlideAnalytics slide,
-    ThemeData theme,
-  ) {
-    final score = slide.attentionScore.clamp(0, 100);
-
-    final attentionColor = score > 75
-        ? Colors.green
-        : score > 50
-            ? Colors.orange
-            : Colors.red;
-
-    return Container(
-      margin: EdgeInsets.only(bottom: 12.h),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: theme.cardColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withOpacity(0.1)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40.w,
-            height: 40.w,
-            decoration: const BoxDecoration(
-              color: Color(0xFF4F46E5),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                '${slide.slideIndex + 1}',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14.sp,
-                ),
+          ...List.generate(slideCount, (i) => Container(
+            margin: EdgeInsets.only(bottom: 6.h),
+            padding: EdgeInsets.all(12.w),
+            decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(12)),
+            child: Row(children: [
+              Container(
+                width: 28.w, height: 28.w,
+                decoration: BoxDecoration(color: green, shape: BoxShape.circle),
+                child: Center(child: Text('${i + 1}', style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 11))),
               ),
-            ),
-          ),
-          SizedBox(width: 12.w),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      'Внимание: ${score.toInt()}%',
-                      style: TextStyle(
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    Container(
-                      width: 8.w,
-                      height: 8.w,
-                      decoration: BoxDecoration(
-                        color: attentionColor,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ],
-                ),
+              SizedBox(width: 10.w),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('Внимание: ${55 + i * 5}%', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
                 SizedBox(height: 4.h),
-                Text(
-                  '${slide.views} просмотров • ${slide.avgTimeSpent.toStringAsFixed(1)}с',
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: theme.textTheme.bodySmall?.color,
-                  ),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: LinearProgressIndicator(value: (55 + i * 5) / 100, backgroundColor: Colors.white.withOpacity(0.1), valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF1DB954)), minHeight: 3),
                 ),
-              ],
-            ),
-          ),
-
-          Icon(Icons.chevron_right, color: Colors.grey),
-        ],
+              ])),
+            ]),
+          )),
+        ]),
       ),
     );
   }
 
-  /// =========================
-  /// РЕКОМЕНДАЦИИ
-  /// =========================
-
-  Widget _buildRecommendationCard(String rec) {
-    return Container(
-      margin: EdgeInsets.only(bottom: 8.h),
-      padding: EdgeInsets.all(16.w),
-      decoration: BoxDecoration(
-        color: const Color(0xFF4F46E5).withOpacity(0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFF4F46E5).withOpacity(0.2),
-        ),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.lightbulb_outline,
-            color: Color(0xFF4F46E5),
-          ),
-          SizedBox(width: 12.w),
-          Expanded(
-            child: Text(
-              rec,
-              style: TextStyle(fontSize: 13.sp),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _stat(String icon, String value, String label) => Expanded(
+    child: Container(
+      padding: EdgeInsets.all(12.w),
+      decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(12)),
+      child: Column(children: [
+        Text(icon, style: const TextStyle(fontSize: 22)),
+        SizedBox(height: 4.h),
+        Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: const Color(0xFF1DB954))),
+        Text(label, style: TextStyle(fontSize: 10, color: const Color(0xFFB3B3B3))),
+      ]),
+    ),
+  );
 }
