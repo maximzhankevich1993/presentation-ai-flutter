@@ -12,6 +12,7 @@ import 'corporate_screen.dart';
 import 'referral_screen.dart';
 import 'vip_screen.dart';
 import 'login_screen.dart';
+import 'quiz_screen.dart';
 import '../services/surprise_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -47,6 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showReferral() => Navigator.push(context, MaterialPageRoute(builder: (_) => const ReferralScreen()));
   void _showVip() => Navigator.push(context, MaterialPageRoute(builder: (_) => const VipScreen()));
   void _showLogin() => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+  void _showQuiz() => Navigator.push(context, MaterialPageRoute(builder: (_) => const QuizScreen()));
 
   void _showTextInput() {
     showDialog(
@@ -133,7 +135,6 @@ class _HomeScreenState extends State<HomeScreen> {
             padding: EdgeInsets.symmetric(horizontal: 20.w),
             child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
               SizedBox(height: 20.h),
-              // VIP
               GestureDetector(
                 onTap: _showVip,
                 child: Container(
@@ -147,7 +148,6 @@ class _HomeScreenState extends State<HomeScreen> {
               SizedBox(height: 4.h),
               Text('с помощью ИИ за 1 минуту', style: TextStyle(fontSize: 13.sp, color: const Color(0xFFB3B3B3))),
               SizedBox(height: 24.h),
-              // Поле ввода
               Container(
                 width: 280.w, height: 44.h,
                 decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(14), border: Border.all(color: Colors.white.withOpacity(0.08))),
@@ -165,7 +165,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               SizedBox(height: 10.h),
-              // Кнопка Создать
               GestureDetector(
                 onTap: _generate,
                 child: Container(
@@ -175,20 +174,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               SizedBox(height: 14.h),
-              // Примеры
               Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.center, children: _examples.map((e) => GestureDetector(
                 onTap: () { _topicController.text = e; },
                 child: Container(padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h), decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(14)), child: Text(e, style: TextStyle(fontSize: 11, color: const Color(0xFFB3B3B3)))),
               )).toList()),
               SizedBox(height: 10.h),
-              // Дополнительные кнопки
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 _extraBtn('📄', 'Из текста', _showTextInput),
                 SizedBox(width: 12.w),
                 _extraBtn('🏷', 'Из логотипа', _showLogoUpload),
               ]),
               SizedBox(height: 18.h),
-              // Счётчик
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
                 decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(12)),
@@ -200,13 +196,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 ]),
               ),
               SizedBox(height: 20.h),
-              // Навигация
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 _nav('🏫', 'Учителям', _showTeacher),
                 SizedBox(width: 20.w),
                 _nav('💼', 'Бизнесу', _showCorporate),
                 SizedBox(width: 20.w),
                 _nav('👥', 'Команда', _showWorkspace),
+                SizedBox(width: 20.w),
+                _nav('📝', 'Тесты', _showQuiz),
                 SizedBox(width: 20.w),
                 _nav('🎁', 'Друзья', _showReferral),
                 SizedBox(width: 20.w),
