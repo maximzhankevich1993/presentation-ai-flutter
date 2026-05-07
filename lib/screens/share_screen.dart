@@ -1,315 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import '../services/workspace_service.dart';
 
 class ShareScreen extends StatefulWidget {
   final String presentationId;
   final String presentationTitle;
 
-  const ShareScreen({
-    super.key,
-    required this.presentationId,
-    required this.presentationTitle,
-  });
+  const ShareScreen({super.key, required this.presentationId, required this.presentationTitle});
 
   @override
   State<ShareScreen> createState() => _ShareScreenState();
 }
 
 class _ShareScreenState extends State<ShareScreen> {
-  String _accessLevel = 'view';
-  String _shareLink = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _generateLink();
-  }
-
-  void _generateLink() {
-    _shareLink = WorkspaceService.generateShareLink(
-      widget.presentationId,
-      _accessLevel,
-    );
-
-    if (mounted) {
-      setState(() {});
-    }
-  }
+  String _level = 'view';
+  final String _link = 'https://prezentator-ai.com/share/abc123';
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    const green = Color(0xFF1DB954);
+    const card = Color(0xFF1A1A1A);
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF1E1E2A) : const Color(0xFFFAFAFA),
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: const Text('Поделиться'),
+        backgroundColor: const Color(0xFF121212),
+        title: const Text('Поделиться', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 17)),
         centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(24.w),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Поделиться презентацией',
-              style: TextStyle(
-                fontSize: 24.sp,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: 8.h),
-            Text(
-              widget.presentationTitle,
-              style: TextStyle(
-                fontSize: 16.sp,
-                color: Colors.grey[600],
-              ),
-            ),
-            SizedBox(height: 32.h),
-
-            Text(
-              'Уровень доступа',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            SizedBox(height: 12.h),
-
-            _buildAccessOption(
-              'view',
-              'Просмотр',
-              'Могут только смотреть',
-              Icons.visibility_outlined,
-            ),
-            _buildAccessOption(
-              'comment',
-              'Комментирование',
-              'Могут оставлять комментарии',
-              Icons.comment_outlined,
-            ),
-            _buildAccessOption(
-              'edit',
-              'Редактирование',
-              'Могут изменять презентацию',
-              Icons.edit_outlined,
-            ),
-
-            SizedBox(height: 32.h),
-
-            Text(
-              'Ссылка для шаринга',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            SizedBox(height: 12.h),
-
-            Container(
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey.withOpacity(0.2)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      _shareLink,
-                      style: TextStyle(fontSize: 13.sp),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Ссылка скопирована!'),
-                        ),
-                      );
-                    },
-                    icon: const Icon(
-                      Icons.copy,
-                      color: Color(0xFF4F46E5),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            SizedBox(height: 32.h),
-
-            Text(
-              'Пригласить людей',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            SizedBox(height: 12.h),
-
-            TextField(
-              decoration: InputDecoration(
-                hintText: 'Введите email',
-                prefixIcon: const Icon(Icons.email_outlined),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                suffixIcon: SizedBox(
-                  width: 100,
-                  child: ElevatedButton(
-                    onPressed: () {},
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4F46E5),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text('Отправить'),
-                  ),
-                ),
-              ),
-            ),
-
-            SizedBox(height: 32.h),
-
-            Text(
-              'Люди с доступом',
-              style: TextStyle(
-                fontSize: 16.sp,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            SizedBox(height: 12.h),
-
-            ...WorkspaceService.getTeamMembers().map(
-              (user) => ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: _parseColor(user.avatarColor),
-                  child: Text(
-                    user.name.isNotEmpty ? user.name[0] : '?',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                ),
-                title: Text(
-                  user.name,
-                  style: TextStyle(fontSize: 14.sp),
-                ),
-                subtitle: Text(
-                  _roleText(user.role),
-                  style: TextStyle(
-                    fontSize: 12.sp,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAccessOption(
-    String value,
-    String title,
-    String subtitle,
-    IconData icon,
-  ) {
-    final isSelected = _accessLevel == value;
-
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _accessLevel = value;
-          _generateLink();
-        });
-      },
-      child: Container(
-        margin: EdgeInsets.only(bottom: 8.h),
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? const Color(0xFF4F46E5).withOpacity(0.1)
-              : Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected
-                ? const Color(0xFF4F46E5)
-                : Colors.grey.withOpacity(0.2),
-            width: isSelected ? 2 : 1,
+        padding: EdgeInsets.all(20.w),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(widget.presentationTitle, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
+          SizedBox(height: 20.h),
+          Text('Уровень доступа', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFFB3B3B3))),
+          SizedBox(height: 8.h),
+          _option('view', 'Просмотр', 'Могут только смотреть', Icons.visibility_outlined),
+          _option('comment', 'Комментирование', 'Могут оставлять комментарии', Icons.comment_outlined),
+          _option('edit', 'Редактирование', 'Могут изменять презентацию', Icons.edit_outlined),
+          SizedBox(height: 20.h),
+          Text('Ссылка', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFFB3B3B3))),
+          SizedBox(height: 8.h),
+          Container(
+            padding: EdgeInsets.all(14.w),
+            decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(14)),
+            child: Row(children: [
+              Expanded(child: Text(_link, style: TextStyle(fontSize: 12, color: Colors.white), maxLines: 2, overflow: TextOverflow.ellipsis)),
+              IconButton(onPressed: () {}, icon: const Icon(Icons.copy, color: Color(0xFF1DB954))),
+            ]),
           ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: isSelected
-                  ? const Color(0xFF4F46E5)
-                  : Colors.grey,
-            ),
-            SizedBox(width: 12.w),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 14.sp,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 12.sp,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (isSelected)
-              const Icon(
-                Icons.check_circle,
-                color: Color(0xFF4F46E5),
-              ),
-          ],
-        ),
+        ]),
       ),
     );
   }
 
-  String _roleText(String role) {
-    switch (role) {
-      case 'owner':
-        return 'Владелец';
-      case 'editor':
-        return 'Редактор';
-      case 'viewer':
-        return 'Зритель';
-      default:
-        return role;
-    }
-  }
-
-  Color _parseColor(String color) {
-    try {
-      return Color(int.parse(color.replaceFirst('#', '0xFF')));
-    } catch (_) {
-      return Colors.grey;
-    }
+  Widget _option(String value, String title, String subtitle, IconData icon) {
+    final selected = _level == value;
+    return GestureDetector(
+      onTap: () => setState(() => _level = value),
+      child: Container(
+        margin: EdgeInsets.only(bottom: 6.h),
+        padding: EdgeInsets.all(14.w),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFF1DB954).withOpacity(0.1) : const Color(0xFF1A1A1A),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: selected ? const Color(0xFF1DB954).withOpacity(0.4) : Colors.white.withOpacity(0.06)),
+        ),
+        child: Row(children: [
+          Icon(icon, color: selected ? const Color(0xFF1DB954) : Colors.white54, size: 20),
+          SizedBox(width: 10.w),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
+            Text(subtitle, style: TextStyle(fontSize: 10, color: const Color(0xFFB3B3B3))),
+          ])),
+          if (selected) const Icon(Icons.check_circle, color: Color(0xFF1DB954), size: 20),
+        ]),
+      ),
+    );
   }
 }
