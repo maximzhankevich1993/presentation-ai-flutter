@@ -78,7 +78,7 @@ class WorkspaceScreen extends StatelessWidget {
   Widget _pres(String title, String subtitle) => ListTile(
     leading: Container(
       width: 36.w, height: 36.w,
-      decoration: BoxDecoration(color: green.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
+      decoration: BoxDecoration(color: Colors.green.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
       child: const Icon(Icons.insert_drive_file, color: Color(0xFF1DB954), size: 18),
     ),
     title: Text(title, style: const TextStyle(color: Colors.white, fontSize: 14)),
