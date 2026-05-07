@@ -2,122 +2,87 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
-import '../services/workspace_service.dart';
 
 class WorkspaceScreen extends StatelessWidget {
   const WorkspaceScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final up = Provider.of<UserProvider>(context);
+    const green = Color(0xFF1DB954);
+    const card = Color(0xFF1A1A1A);
 
     return Scaffold(
-      backgroundColor: isDark ? const Color(0xFF1E1E2A) : const Color(0xFFFAFAFA),
+      backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
-        title: const Text('Команда'),
+        backgroundColor: const Color(0xFF121212),
+        title: const Text('Команда', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 17)),
         centerTitle: true,
         actions: [
-          IconButton(onPressed: () => _showInviteDialog(context), icon: const Icon(Icons.person_add), tooltip: 'Пригласить'),
+          IconButton(onPressed: () {}, icon: const Icon(Icons.person_add, color: green, size: 20)),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(24.w),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('Участники', style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold)),
-          SizedBox(height: 16.h),
-          ...WorkspaceService.getTeamMembers().map((user) {
-            final color = Color(int.parse(user.avatarColor.replaceFirst('#', '0xFF')));
-            return Container(
-              margin: EdgeInsets.only(bottom: 12.h),
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey.withOpacity(0.1))),
-              child: Row(children: [
-                CircleAvatar(backgroundColor: color, radius: 24.r, child: Text(user.name[0], style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold))),
-                SizedBox(width: 16.w),
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(user.name, style: TextStyle(fontSize: 16.sp, fontWeight: FontWeight.w600)),
-                  Text(user.email, style: TextStyle(fontSize: 13.sp, color: Colors.grey[600])),
-                ])),
-                Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
-                  decoration: BoxDecoration(color: _roleColor(user.role).withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                  child: Text(_roleText(user.role), style: TextStyle(color: _roleColor(user.role), fontSize: 12.sp, fontWeight: FontWeight.w600)),
-                ),
-              ]),
-            );
-          }),
-          SizedBox(height: 32.h),
-          Text('Общие презентации', style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold)),
-          SizedBox(height: 16.h),
-          ...WorkspaceService.getSharedPresentations().map((p) => Container(
-            margin: EdgeInsets.only(bottom: 12.h),
-            padding: EdgeInsets.all(16.w),
-            decoration: BoxDecoration(color: Theme.of(context).cardColor, borderRadius: BorderRadius.circular(16), border: Border.all(color: Colors.grey.withOpacity(0.1))),
-            child: Row(children: [
-              Container(width: 48.w, height: 48.w, decoration: BoxDecoration(color: const Color(0xFF4F46E5).withOpacity(0.1), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.insert_drive_file, color: Color(0xFF4F46E5))),
-              SizedBox(width: 16.w),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(p.title, style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.w600)),
-                SizedBox(height: 4.h),
-                Text('${p.ownerName} • ${p.slideCount} слайдов', style: TextStyle(fontSize: 12.sp, color: Colors.grey[600])),
-              ])),
-              Icon(Icons.chevron_right, color: Colors.grey),
+      body: ListView(
+        padding: EdgeInsets.all(20.w),
+        children: [
+          Text('Участники', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFFB3B3B3))),
+          SizedBox(height: 8.h),
+          Container(
+            decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(14)),
+            child: Column(children: [
+              _member('Анна М.', 'anna@email.com', 'Владелец', green),
+              _member('Дмитрий К.', 'dima@email.com', 'Редактор', const Color(0xFF007AFF)),
+              _member('Елена С.', 'elena@email.com', 'Зритель', const Color(0xFFFFD60A)),
             ]),
-          )),
-          if (!userProvider.isPremium) ...[
-            SizedBox(height: 32.h),
+          ),
+          SizedBox(height: 20.h),
+          Text('Общие презентации', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFFB3B3B3))),
+          SizedBox(height: 8.h),
+          Container(
+            decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(14)),
+            child: Column(children: [
+              _pres('Стратегия 2026', 'Максим Ж. • 15 слайдов'),
+              _pres('Отчёт Q1', 'Анна М. • 10 слайдов'),
+              _pres('Питч-дек', 'Дмитрий К. • 12 слайдов'),
+            ]),
+          ),
+          if (!up.isPremium) ...[
+            SizedBox(height: 16.h),
             Container(
-              padding: EdgeInsets.all(20.w),
-              decoration: BoxDecoration(gradient: LinearGradient(colors: [const Color(0xFFF59E0B).withOpacity(0.1), const Color(0xFFD97706).withOpacity(0.05)]), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3))),
+              padding: EdgeInsets.all(14.w),
+              decoration: BoxDecoration(color: green.withOpacity(0.1), borderRadius: BorderRadius.circular(14)),
               child: Row(children: [
-                Container(width: 48.w, height: 48.w, decoration: BoxDecoration(color: const Color(0xFFF59E0B).withOpacity(0.2), shape: BoxShape.circle), child: const Icon(Icons.star, color: Color(0xFFF59E0B))),
-                SizedBox(width: 16.w),
-                Expanded(child: Text('Командная работа доступна в Premium', style: TextStyle(fontSize: 14.sp))),
-                ElevatedButton(onPressed: () {}, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFF59E0B)), child: const Text('Premium')),
+                const Icon(Icons.star, color: Color(0xFFFFD60A), size: 20),
+                SizedBox(width: 10.w),
+                Expanded(child: Text('Команда доступна в Premium', style: TextStyle(fontSize: 13, color: Colors.white))),
+                const Icon(Icons.chevron_right, color: green),
               ]),
             ),
           ],
-        ]),
-      ),
-    );
-  }
-
-  Color _roleColor(String role) {
-    switch (role) {
-      case 'owner': return const Color(0xFF6366f1);
-      case 'editor': return const Color(0xFF10b981);
-      case 'viewer': return const Color(0xFFf59e0b);
-      default: return Colors.grey;
-    }
-  }
-
-  String _roleText(String role) {
-    switch (role) {
-      case 'owner': return 'Владелец';
-      case 'editor': return 'Редактор';
-      case 'viewer': return 'Зритель';
-      default: return role;
-    }
-  }
-
-  void _showInviteDialog(BuildContext context) {
-    final inviteLink = WorkspaceService.generateInviteLink('workspace-1');
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Пригласить в команду'),
-        content: Column(mainAxisSize: MainAxisSize.min, children: [
-          Text('Отправьте эту ссылку коллегам:', style: TextStyle(color: Colors.grey[600])),
-          SizedBox(height: 12.h),
-          Container(padding: EdgeInsets.all(12.w), decoration: BoxDecoration(color: Colors.grey[100], borderRadius: BorderRadius.circular(12)), child: Text(inviteLink, style: TextStyle(fontSize: 12.sp))),
-        ]),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Закрыть')),
-          ElevatedButton(onPressed: () { Navigator.pop(context); }, child: const Text('Копировать')),
         ],
       ),
     );
   }
+
+  Widget _member(String name, String email, String role, Color color) => ListTile(
+    leading: CircleAvatar(backgroundColor: color, radius: 18.r, child: Text(name[0], style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w700))),
+    title: Text(name, style: const TextStyle(color: Colors.white, fontSize: 14)),
+    subtitle: Text(email, style: const TextStyle(color: Color(0xFFB3B3B3), fontSize: 11)),
+    trailing: Container(
+      padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
+      decoration: BoxDecoration(color: color.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
+      child: Text(role, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w600)),
+    ),
+  );
+
+  Widget _pres(String title, String subtitle) => ListTile(
+    leading: Container(
+      width: 36.w, height: 36.w,
+      decoration: BoxDecoration(color: green.withOpacity(0.15), borderRadius: BorderRadius.circular(8)),
+      child: const Icon(Icons.insert_drive_file, color: Color(0xFF1DB954), size: 18),
+    ),
+    title: Text(title, style: const TextStyle(color: Colors.white, fontSize: 14)),
+    subtitle: Text(subtitle, style: const TextStyle(color: Color(0xFFB3B3B3), fontSize: 11)),
+    trailing: const Icon(Icons.chevron_right, color: Colors.white38),
+  );
 }
