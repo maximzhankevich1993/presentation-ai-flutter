@@ -48,6 +48,68 @@ class _HomeScreenState extends State<HomeScreen> {
   void _showVip() => Navigator.push(context, MaterialPageRoute(builder: (_) => const VipScreen()));
   void _showLogin() => Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
 
+  void _showTextInput() {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final ctrl = TextEditingController();
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1A1A1A),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Загрузите текст', style: TextStyle(color: Colors.white, fontSize: 16)),
+          content: TextField(
+            controller: ctrl,
+            maxLines: 6,
+            style: const TextStyle(fontSize: 13, color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'Введите текст диплома, статьи...',
+              hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
+              filled: true, fillColor: const Color(0xFF282828),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Отмена', style: TextStyle(color: Color(0xFFB3B3B3)))),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                final text = ctrl.text.trim();
+                if (text.isNotEmpty) {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => LoadingScreen(topic: text.substring(0, 50))));
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
+              child: const Text('Создать', style: TextStyle(color: Colors.black)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showLogoUpload() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Загрузите логотип', style: TextStyle(color: Colors.white, fontSize: 16)),
+        content: const Text('Выберите файл логотипа (PNG, JPG)\n\nБренд-кит будет создан автоматически.', style: TextStyle(color: Color(0xFFB3B3B3), fontSize: 13)),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Отмена', style: TextStyle(color: Color(0xFFB3B3B3)))),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Бренд-кит создан!'), backgroundColor: Color(0xFF1DB954)));
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
+            child: const Text('Загрузить', style: TextStyle(color: Colors.black)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final up = Provider.of<UserProvider>(context);
@@ -118,6 +180,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () { _topicController.text = e; },
                 child: Container(padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 5.h), decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(14)), child: Text(e, style: TextStyle(fontSize: 11, color: const Color(0xFFB3B3B3)))),
               )).toList()),
+              SizedBox(height: 10.h),
+              // Дополнительные кнопки
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                _extraBtn('📄', 'Из текста', _showTextInput),
+                SizedBox(width: 12.w),
+                _extraBtn('🏷', 'Из логотипа', _showLogoUpload),
+              ]),
               SizedBox(height: 18.h),
               // Счётчик
               Container(
@@ -150,6 +219,19 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
+  Widget _extraBtn(String icon, String label, VoidCallback onTap) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+      decoration: BoxDecoration(color: const Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(12)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Text(icon, style: const TextStyle(fontSize: 16)),
+        SizedBox(width: 6.w),
+        Text(label, style: TextStyle(fontSize: 11, color: const Color(0xFFB3B3B3))),
+      ]),
+    ),
+  );
 
   Widget _nav(String icon, String label, VoidCallback onTap) => GestureDetector(
     onTap: onTap,
