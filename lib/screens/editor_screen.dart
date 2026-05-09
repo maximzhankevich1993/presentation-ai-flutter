@@ -23,12 +23,10 @@ class _EditorScreenState extends State<EditorScreen> {
 
   String _fontPair = 'Inter';
   int _selectedBgIndex = 0;
-  
-  // Кэш картинок по слайдам
-  final Map<int, String> _slideImages = {};
+
+  final Map<int, String?> _slideImages = {};
   bool _imagesLoading = false;
 
-  // Базовые фоны
   final List<Map<String, dynamic>> _basicBackgrounds = [
     {'type': 'solid', 'color': Colors.white, 'label': 'Белый'},
     {'type': 'gradient', 'colors': [const Color(0xFF667eea), const Color(0xFF764ba2)], 'label': 'Фиолетовый'},
@@ -74,29 +72,20 @@ class _EditorScreenState extends State<EditorScreen> {
 
   Future<void> _loadImages() async {
     setState(() => _imagesLoading = true);
-    
     for (int i = 0; i < _presentation.slides.length; i++) {
-      try {
-        final query = _presentation.slides[i].title.isNotEmpty
-            ? _presentation.slides[i].title
-            : _presentation.title;
-        final imageUrl = await ImageService.searchImage(query);
-        if (imageUrl != null) {
-          _slideImages[i] = imageUrl;
-        }
-      } catch (e) {
-        // Игнорируем ошибки загрузки картинок
-      }
+      final query = _titleControllers[i].text.isNotEmpty
+          ? _titleControllers[i].text
+          : _presentation.title;
+      final imageUrl = await ImageService.searchImage(query);
+      _slideImages[i] = imageUrl;
     }
-    
     setState(() => _imagesLoading = false);
   }
 
   void _saveAll() {
     for (int i = 0; i < _presentation.slides.length; i++) {
       _presentation.slides[i].title = _titleControllers[i].text;
-      _presentation.slides[i].content =
-          _contentControllers[i].map((c) => c.text).toList();
+      _presentation.slides[i].content = _contentControllers[i].map((c) => c.text).toList();
     }
   }
 
@@ -185,47 +174,36 @@ class _EditorScreenState extends State<EditorScreen> {
 
   Decoration _getSlideDecoration() {
     final bg = _basicBackgrounds[_selectedBgIndex];
-
     if (bg['type'] == 'gradient') {
       final colors = bg['colors'] as List<Color>;
       return BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: colors,
-        ),
-        borderRadius: BorderRadius.circular(12),
+        gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: colors),
+        borderRadius: BorderRadius.circular(8),
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 8, offset: const Offset(0, 3))],
       );
     }
-
     return BoxDecoration(
       color: bg['color'] as Color,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(8),
+      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 6, offset: const Offset(0, 2))],
     );
   }
 
   bool get _isDark {
     final bg = _basicBackgrounds[_selectedBgIndex];
-    if (bg['type'] == 'solid') {
-      final color = bg['color'] as Color;
-      return color.computeLuminance() < 0.5;
-    }
+    if (bg['type'] == 'solid') return (bg['color'] as Color).computeLuminance() < 0.5;
     return true;
   }
 
   void _showBgPicker() {
     final isPremium = Provider.of<UserProvider>(context, listen: false).isPremium;
-
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1A1A1A),
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.5,
-        maxChildSize: 0.8,
-        minChildSize: 0.3,
-        expand: false,
+        initialChildSize: 0.5, maxChildSize: 0.8, minChildSize: 0.3, expand: false,
         builder: (_, scrollController) => SingleChildScrollView(
           controller: scrollController,
           padding: const EdgeInsets.all(16),
@@ -237,84 +215,44 @@ class _EditorScreenState extends State<EditorScreen> {
             const Text('Бесплатные', style: TextStyle(fontSize: 11, color: Colors.white38)),
             const SizedBox(height: 6),
             GridView.count(
-              crossAxisCount: 4,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 6,
-              crossAxisSpacing: 6,
-              childAspectRatio: 1,
+              crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 6, crossAxisSpacing: 6, childAspectRatio: 1,
               children: _basicBackgrounds.asMap().entries.map((entry) {
                 final i = entry.key;
                 final bg = entry.value;
                 return GestureDetector(
-                  onTap: () {
-                    setState(() => _selectedBgIndex = i);
-                    Navigator.pop(ctx);
-                  },
+                  onTap: () { setState(() => _selectedBgIndex = i); Navigator.pop(ctx); },
                   child: Container(
                     decoration: BoxDecoration(
-                      gradient: bg['type'] == 'gradient'
-                          ? LinearGradient(colors: bg['colors'] as List<Color>)
-                          : null,
+                      gradient: bg['type'] == 'gradient' ? LinearGradient(colors: bg['colors'] as List<Color>) : null,
                       color: bg['type'] == 'solid' ? bg['color'] as Color : null,
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: i == _selectedBgIndex ? const Color(0xFF1DB954) : Colors.white10,
-                        width: 2,
-                      ),
+                      border: Border.all(color: i == _selectedBgIndex ? const Color(0xFF1DB954) : Colors.white10, width: 2),
                     ),
-                    child: i == _selectedBgIndex
-                        ? const Center(child: Icon(Icons.check, color: Color(0xFF1DB954)))
-                        : null,
+                    child: i == _selectedBgIndex ? const Center(child: Icon(Icons.check, color: Color(0xFF1DB954))) : null,
                   ),
                 );
               }).toList(),
             ),
             const SizedBox(height: 12),
-            const Row(children: [
-              Icon(Icons.star, color: Color(0xFFFFD700), size: 14),
-              SizedBox(width: 4),
-              Text('Premium', style: TextStyle(fontSize: 11, color: Color(0xFFFFD700))),
-            ]),
+            const Row(children: [Icon(Icons.star, color: Color(0xFFFFD700), size: 14), SizedBox(width: 4), Text('Premium', style: TextStyle(fontSize: 11, color: Color(0xFFFFD700)))]),
             const SizedBox(height: 6),
             GridView.count(
-              crossAxisCount: 4,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 6,
-              crossAxisSpacing: 6,
-              childAspectRatio: 1,
+              crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+              mainAxisSpacing: 6, crossAxisSpacing: 6, childAspectRatio: 1,
               children: _premiumBackgrounds.map((bg) {
                 return GestureDetector(
-                  onTap: isPremium
-                      ? () {
-                          setState(() {
-                            _selectedBgIndex = _basicBackgrounds.length;
-                            _basicBackgrounds.add(bg);
-                          });
-                          Navigator.pop(ctx);
-                        }
-                      : () {
-                          Navigator.pop(ctx);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Доступно в Premium'), backgroundColor: Color(0xFFFFD700)),
-                          );
-                        },
+                  onTap: isPremium ? () { setState(() { _selectedBgIndex = _basicBackgrounds.length; _basicBackgrounds.add(bg); }); Navigator.pop(ctx); }
+                      : () { Navigator.pop(ctx); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Доступно в Premium'), backgroundColor: Color(0xFFFFD700))); },
                   child: Stack(children: [
                     Container(
                       decoration: BoxDecoration(
-                        gradient: bg['type'] == 'gradient'
-                            ? LinearGradient(colors: bg['colors'] as List<Color>)
-                            : null,
+                        gradient: bg['type'] == 'gradient' ? LinearGradient(colors: bg['colors'] as List<Color>) : null,
                         color: bg['type'] == 'solid' ? bg['color'] as Color : null,
                         borderRadius: BorderRadius.circular(8),
                       ),
                     ),
-                    if (!isPremium)
-                      Container(
-                        decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(8)),
-                        child: const Center(child: Icon(Icons.lock, color: Colors.white38, size: 14)),
-                      ),
+                    if (!isPremium) Container(decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(8)), child: const Center(child: Icon(Icons.lock, color: Colors.white38, size: 14))),
                   ]),
                 );
               }).toList(),
@@ -327,8 +265,7 @@ class _EditorScreenState extends State<EditorScreen> {
 
   void _showFontPicker() {
     showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1A1A1A),
+      context: context, backgroundColor: const Color(0xFF1A1A1A),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -341,10 +278,7 @@ class _EditorScreenState extends State<EditorScreen> {
             ..._fontOptions.map((f) => ListTile(
               title: Text(f['label']!, style: TextStyle(fontFamily: f['name'], color: Colors.white, fontSize: 16)),
               trailing: _fontPair == f['name'] ? const Icon(Icons.check, color: Color(0xFF1DB954)) : null,
-              onTap: () {
-                setState(() => _fontPair = f['name']!);
-                Navigator.pop(ctx);
-              },
+              onTap: () { setState(() => _fontPair = f['name']!); Navigator.pop(ctx); },
             )),
           ]),
         ),
@@ -356,8 +290,7 @@ class _EditorScreenState extends State<EditorScreen> {
     _saveAll();
     final isPremium = Provider.of<UserProvider>(context, listen: false).isPremium;
     showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1A1A1A),
+      context: context, backgroundColor: const Color(0xFF1A1A1A),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -367,26 +300,8 @@ class _EditorScreenState extends State<EditorScreen> {
             const SizedBox(height: 16),
             const Text('Экспорт', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
             const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.insert_drive_file, color: Color(0xFF1DB954)),
-              title: const Text('PPTX', style: TextStyle(color: Colors.white)),
-              subtitle: Text(isPremium ? 'Без знака' : 'С водяным знаком', style: const TextStyle(color: Colors.grey)),
-              onTap: () {
-                Navigator.pop(ctx);
-                ExportService.exportToPPTX(presentation: _presentation, isPremium: isPremium);
-              },
-            ),
-            ListTile(
-              leading: Icon(Icons.picture_as_pdf, color: isPremium ? Colors.red : Colors.grey),
-              title: const Text('PDF', style: TextStyle(color: Colors.white)),
-              subtitle: Text(isPremium ? 'Доступно' : 'Premium', style: const TextStyle(color: Colors.grey)),
-              onTap: isPremium
-                  ? () {
-                      Navigator.pop(ctx);
-                      ExportService.exportToPDF(presentation: _presentation, isPremium: true);
-                    }
-                  : null,
-            ),
+            ListTile(leading: const Icon(Icons.insert_drive_file, color: Color(0xFF1DB954)), title: const Text('PPTX', style: TextStyle(color: Colors.white)), subtitle: Text(isPremium ? 'Без знака' : 'С водяным знаком', style: const TextStyle(color: Colors.grey)), onTap: () { Navigator.pop(ctx); ExportService.exportToPPTX(presentation: _presentation, isPremium: isPremium); }),
+            ListTile(leading: Icon(Icons.picture_as_pdf, color: isPremium ? Colors.red : Colors.grey), title: const Text('PDF', style: TextStyle(color: Colors.white)), subtitle: Text(isPremium ? 'Доступно' : 'Premium', style: const TextStyle(color: Colors.grey)), onTap: isPremium ? () { Navigator.pop(ctx); ExportService.exportToPDF(presentation: _presentation, isPremium: true); } : null),
           ]),
         ),
       ),
@@ -397,9 +312,7 @@ class _EditorScreenState extends State<EditorScreen> {
   void dispose() {
     _saveAll();
     for (var c in _titleControllers) { c.dispose(); }
-    for (var list in _contentControllers) {
-      for (var c in list) { c.dispose(); }
-    }
+    for (var list in _contentControllers) { for (var c in list) { c.dispose(); } }
     super.dispose();
   }
 
@@ -415,12 +328,12 @@ class _EditorScreenState extends State<EditorScreen> {
         actions: [
           IconButton(onPressed: _showFontPicker, icon: const Icon(Icons.text_fields, color: Color(0xFF1DB954), size: 18), tooltip: 'Шрифт'),
           IconButton(onPressed: _showBgPicker, icon: const Icon(Icons.palette, color: Color(0xFF1DB954), size: 18), tooltip: 'Фон'),
-          IconButton(onPressed: _addSlide, icon: const Icon(Icons.add_circle_outline, color: Color(0xFF1DB954), size: 22), tooltip: 'Добавить слайд'),
+          IconButton(onPressed: _addSlide, icon: const Icon(Icons.add_circle_outline, color: Color(0xFF1DB954), size: 22), tooltip: 'Добавить'),
           IconButton(onPressed: _export, icon: const Icon(Icons.download, color: Colors.white70, size: 20), tooltip: 'Экспорт'),
         ],
       ),
       body: ListView.builder(
-        padding: EdgeInsets.all(10.w),
+        padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
         itemCount: _presentation.slides.length,
         itemBuilder: (context, index) => _buildSlideCard(index),
       ),
@@ -429,190 +342,143 @@ class _EditorScreenState extends State<EditorScreen> {
 
   Widget _buildSlideCard(int index) {
     final dark = _isDark;
-    final hasImage = _slideImages.containsKey(index);
+    final hasImage = _slideImages.containsKey(index) && _slideImages[index] != null;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cardWidth = screenWidth * 0.75; // 75% ширины экрана
 
-    return Card(
-      color: const Color(0xFF1E1E1E),
-      margin: EdgeInsets.only(bottom: 12.h),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      elevation: 4,
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        // Превью слайда
-        AspectRatio(
-          aspectRatio: 16 / 9,
-          child: Container(
-            decoration: _getSlideDecoration(),
-            clipBehavior: Clip.antiAlias,
-            child: Stack(children: [
-              // Фоновое изображение
-              if (hasImage)
-                Positioned.fill(
-                  child: Opacity(
-                    opacity: 0.25,
-                    child: Image.network(
-                      _slideImages[index]!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const SizedBox(),
-                    ),
-                  ),
-                ),
-
-              // Контент
-              Padding(
-                padding: EdgeInsets.all(14.w),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Номер слайда
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 7.w, vertical: 2.h),
-                      decoration: BoxDecoration(
-                        color: dark ? Colors.white.withOpacity(0.12) : Colors.black.withOpacity(0.06),
-                        borderRadius: BorderRadius.circular(3),
-                      ),
-                      child: Text(
-                        '${index + 1}/${_presentation.slides.length}',
-                        style: TextStyle(fontSize: 9, color: dark ? Colors.white38 : Colors.black38, fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                    const Spacer(),
-                    // Заголовок
-                    Text(
-                      _titleControllers[index].text.isEmpty ? 'Заголовок' : _titleControllers[index].text,
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: _fontPair,
-                        color: dark ? Colors.white : const Color(0xFF1A1A2E),
-                        height: 1.2,
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    SizedBox(height: 6.h),
-                    // Пункты
-                    ..._contentControllers[index].take(3).map((ctrl) => Padding(
-                      padding: EdgeInsets.only(bottom: 3.h),
-                      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Padding(
-                          padding: EdgeInsets.only(top: 5.h, right: 6.w),
-                          child: Container(
-                            width: 4.w, height: 4.w,
-                            decoration: BoxDecoration(
-                              color: dark ? const Color(0xFF1DB954) : const Color(0xFF169C46),
-                              shape: BoxShape.circle,
-                            ),
+    return Center(
+      child: SizedBox(
+        width: cardWidth,
+        child: Card(
+          color: const Color(0xFF1E1E1E),
+          margin: EdgeInsets.only(bottom: 10.h),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          elevation: 3,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Превью слайда — уменьшенный (8:4.5 вместо 16:9)
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Container(
+                  decoration: _getSlideDecoration(),
+                  clipBehavior: Clip.antiAlias,
+                  child: Stack(children: [
+                    // Картинка в углу контента
+                    if (hasImage)
+                      Positioned(
+                        right: 8.w,
+                        bottom: 8.h,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(6),
+                          child: Image.network(
+                            _slideImages[index]!,
+                            width: cardWidth * 0.35,
+                            height: (cardWidth * 0.35) * 0.65,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const SizedBox(),
                           ),
                         ),
-                        Expanded(
-                          child: Text(
-                            ctrl.text.isEmpty ? 'Пункт...' : ctrl.text,
+                      ),
+                    // Контент
+                    Padding(
+                      padding: EdgeInsets.all(10.w),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Номер
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.h),
+                            decoration: BoxDecoration(
+                              color: dark ? Colors.white.withOpacity(0.12) : Colors.black.withOpacity(0.06),
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                            child: Text(
+                              '${index + 1}/${_presentation.slides.length}',
+                              style: TextStyle(fontSize: 8, color: dark ? Colors.white38 : Colors.black38, fontWeight: FontWeight.w500),
+                            ),
+                          ),
+                          SizedBox(height: 6.h),
+                          // Заголовок
+                          Text(
+                            _titleControllers[index].text.isEmpty ? 'Заголовок' : _titleControllers[index].text,
                             style: TextStyle(
-                              fontSize: 11.sp,
+                              fontSize: 13.sp,
+                              fontWeight: FontWeight.w700,
                               fontFamily: _fontPair,
-                              color: dark ? Colors.white.withOpacity(0.8) : const Color(0xFF444444),
-                              height: 1.3,
+                              color: dark ? Colors.white : const Color(0xFF1A1A2E),
+                              height: 1.2,
                             ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ]),
-                    )),
-                  ],
+                          SizedBox(height: 4.h),
+                          // Пункты — обтекают картинку справа
+                          ..._contentControllers[index].take(3).map((ctrl) => Padding(
+                            padding: EdgeInsets.only(bottom: 2.h, right: hasImage ? cardWidth * 0.35 + 12.w : 0),
+                            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Padding(
+                                padding: EdgeInsets.only(top: 4.h, right: 4.w),
+                                child: Container(width: 3.w, height: 3.w, decoration: BoxDecoration(color: dark ? const Color(0xFF1DB954) : const Color(0xFF169C46), shape: BoxShape.circle)),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  ctrl.text.isEmpty ? 'Пункт...' : ctrl.text,
+                                  style: TextStyle(fontSize: 9.sp, fontFamily: _fontPair, color: dark ? Colors.white.withOpacity(0.8) : const Color(0xFF444444), height: 1.3),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ]),
+                          )),
+                        ],
+                      ),
+                    ),
+                  ]),
                 ),
               ),
-            ]),
+              // Редактор — компактный
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
+                child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(children: [
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                      decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF169C46)]), borderRadius: BorderRadius.circular(4)),
+                      child: Text('Слайд ${index + 1}', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 9)),
+                    ),
+                    const Spacer(),
+                    IconButton(onPressed: () => _improveSlide(index), icon: const Icon(Icons.auto_awesome, size: 14, color: Color(0xFF1DB954)), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+                    IconButton(onPressed: () => _duplicateSlide(index), icon: const Icon(Icons.copy, size: 14, color: Colors.white54), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+                    IconButton(onPressed: () => _deleteSlide(index), icon: const Icon(Icons.delete_outline, size: 14, color: Color(0xFFFF3B30)), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+                  ]),
+                  TextField(
+                    controller: _titleControllers[index],
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
+                    decoration: InputDecoration(hintText: 'Заголовок', hintStyle: TextStyle(color: Colors.white24, fontSize: 11), border: InputBorder.none, contentPadding: EdgeInsets.zero, isDense: true),
+                  ),
+                  ..._contentControllers[index].asMap().entries.map((entry) {
+                    final i = entry.key;
+                    final ctrl = entry.value;
+                    return Row(children: [
+                      Padding(padding: EdgeInsets.only(right: 4.w), child: Container(width: 3.w, height: 3.w, decoration: const BoxDecoration(color: Color(0xFF1DB954), shape: BoxShape.circle))),
+                      Expanded(child: TextField(controller: ctrl, style: TextStyle(fontSize: 10, color: Colors.white70), decoration: InputDecoration(hintText: 'Пункт ${i + 1}', hintStyle: TextStyle(color: Colors.white12, fontSize: 10), border: InputBorder.none, contentPadding: EdgeInsets.zero, isDense: true))),
+                      IconButton(onPressed: () => _removeContentItem(index, i), icon: const Icon(Icons.close, size: 10, color: Color(0xFFFF3B30)), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+                    ]);
+                  }),
+                  TextButton.icon(
+                    onPressed: () => _addContentItem(index),
+                    icon: const Icon(Icons.add, size: 10, color: Color(0xFF1DB954)),
+                    label: const Text('Пункт', style: TextStyle(color: Color(0xFF1DB954), fontSize: 9)),
+                    style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                  ),
+                ]),
+              ),
+            ],
           ),
         ),
-
-        // Редактор
-        Padding(
-          padding: EdgeInsets.all(10.w),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Row(children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 3.h),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF169C46)]),
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: Text('Слайд ${index + 1}', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 10)),
-              ),
-              const Spacer(),
-              IconButton(
-                onPressed: () => _improveSlide(index),
-                icon: const Icon(Icons.auto_awesome, size: 16, color: Color(0xFF1DB954)),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                tooltip: 'AI',
-              ),
-              IconButton(
-                onPressed: () => _duplicateSlide(index),
-                icon: const Icon(Icons.copy, size: 16, color: Colors.white54),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-              IconButton(
-                onPressed: () => _deleteSlide(index),
-                icon: const Icon(Icons.delete_outline, size: 16, color: Color(0xFFFF3B30)),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-            ]),
-            SizedBox(height: 6.h),
-            TextField(
-              controller: _titleControllers[index],
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.white),
-              decoration: InputDecoration(
-                hintText: 'Заголовок слайда',
-                hintStyle: TextStyle(color: Colors.white24, fontSize: 13),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
-                isDense: true,
-              ),
-            ),
-            SizedBox(height: 4.h),
-            ..._contentControllers[index].asMap().entries.map((entry) {
-              final i = entry.key;
-              final ctrl = entry.value;
-              return Row(children: [
-                Padding(
-                  padding: EdgeInsets.only(right: 6.w),
-                  child: Container(width: 4.w, height: 4.w, decoration: const BoxDecoration(color: Color(0xFF1DB954), shape: BoxShape.circle)),
-                ),
-                Expanded(
-                  child: TextField(
-                    controller: ctrl,
-                    style: TextStyle(fontSize: 11, color: Colors.white70),
-                    decoration: InputDecoration(
-                      hintText: 'Пункт ${i + 1}',
-                      hintStyle: TextStyle(color: Colors.white12, fontSize: 11),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.zero,
-                      isDense: true,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => _removeContentItem(index, i),
-                  icon: const Icon(Icons.close, size: 12, color: Color(0xFFFF3B30)),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                ),
-              ]);
-            }),
-            SizedBox(height: 2.h),
-            TextButton.icon(
-              onPressed: () => _addContentItem(index),
-              icon: const Icon(Icons.add, size: 12, color: Color(0xFF1DB954)),
-              label: const Text('Добавить пункт', style: TextStyle(color: Color(0xFF1DB954), fontSize: 10)),
-              style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-            ),
-          ]),
-        ),
-      ]),
+      ),
     );
   }
 }
