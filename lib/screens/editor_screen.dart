@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
@@ -6,7 +7,6 @@ import '../providers/user_provider.dart';
 import '../services/export_service.dart';
 import '../services/ai_improve_service.dart';
 import '../services/image_service.dart';
-import 'share_screen.dart';
 
 class EditorScreen extends StatefulWidget {
   final Presentation presentation;
@@ -27,7 +27,6 @@ class _EditorScreenState extends State<EditorScreen> {
   final Map<int, String?> _slideImages = {};
   final Map<int, Offset> _imagePositions = {};
   final Map<int, double> _imageSizes = {};
-  bool _imagesLoading = false;
 
   final List<Map<String, dynamic>> _basicBackgrounds = [
     {'type': 'solid', 'color': Colors.white, 'label': 'Белый'},
@@ -64,27 +63,18 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   void _initControllers() {
-    _titleControllers = _presentation.slides
-        .map((s) => TextEditingController(text: s.title))
-        .toList();
-    _contentControllers = _presentation.slides
-        .map((s) => s.content.map((c) => TextEditingController(text: c)).toList())
-        .toList();
+    _titleControllers = _presentation.slides.map((s) => TextEditingController(text: s.title)).toList();
+    _contentControllers = _presentation.slides.map((s) => s.content.map((c) => TextEditingController(text: c)).toList()).toList();
   }
 
   Future<void> _loadImages() async {
-    setState(() => _imagesLoading = true);
     for (int i = 0; i < _presentation.slides.length; i++) {
-      final query = _titleControllers[i].text.isNotEmpty
-          ? _titleControllers[i].text
-          : _presentation.title;
-      final imageUrl = await ImageService.searchImage(query);
-      _slideImages[i] = imageUrl;
-      // Начальная позиция — правый верхний угол
-      _imagePositions[i] = const Offset(0.6, 0.08);
-      _imageSizes[i] = 0.3;
+      final query = _titleControllers[i].text.isNotEmpty ? _titleControllers[i].text : _presentation.title;
+      _slideImages[i] = await ImageService.searchImage(query);
+      _imagePositions[i] = const Offset(0.55, 0.1);
+      _imageSizes[i] = 0.32;
     }
-    setState(() => _imagesLoading = false);
+    if (mounted) setState(() {});
   }
 
   void _saveAll() {
@@ -97,9 +87,7 @@ class _EditorScreenState extends State<EditorScreen> {
   void _addSlide() {
     final up = Provider.of<UserProvider>(context, listen: false);
     if (_presentation.slides.length >= up.maxSlidesPerPresentation) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Максимум ${up.maxSlidesPerPresentation} слайдов')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Максимум ${up.maxSlidesPerPresentation} слайдов')));
       return;
     }
     setState(() {
@@ -125,72 +113,46 @@ class _EditorScreenState extends State<EditorScreen> {
 
   void _duplicateSlide(int index) {
     setState(() {
-      final slide = _presentation.slides[index];
-      _presentation.slides.insert(index + 1, Slide(title: '${slide.title} (копия)', content: List.from(slide.content)));
-      _titleControllers.insert(index + 1, TextEditingController(text: '${slide.title} (копия)'));
-      _contentControllers.insert(index + 1, slide.content.map((c) => TextEditingController(text: c)).toList());
+      _presentation.slides.insert(index + 1, Slide(title: '${_presentation.slides[index].title} (копия)', content: List.from(_presentation.slides[index].content)));
+      _titleControllers.insert(index + 1, TextEditingController(text: '${_titleControllers[index].text} (копия)'));
+      _contentControllers.insert(index + 1, _contentControllers[index].map((c) => TextEditingController(text: c.text)).toList());
     });
   }
 
-  void _addContentItem(int slideIndex) {
-    setState(() {
-      _contentControllers[slideIndex].add(TextEditingController(text: 'Новый пункт'));
-    });
-  }
-
-  void _removeContentItem(int slideIndex, int itemIndex) {
-    if (_contentControllers[slideIndex].length <= 1) return;
-    setState(() {
-      _contentControllers[slideIndex][itemIndex].dispose();
-      _contentControllers[slideIndex].removeAt(itemIndex);
-    });
+  void _addContentItem(int i) => setState(() => _contentControllers[i].add(TextEditingController(text: 'Новый пункт')));
+  
+  void _removeContentItem(int slide, int item) {
+    if (_contentControllers[slide].length <= 1) return;
+    setState(() { _contentControllers[slide][item].dispose(); _contentControllers[slide].removeAt(item); });
   }
 
   Future<void> _improveSlide(int index) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator(color: Color(0xFF1DB954))),
-    );
+    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator(color: Color(0xFF1DB954))));
     try {
-      final improvedTitle = await AiImproveService.improveText(_titleControllers[index].text);
-      final improvedContent = <String>[];
-      for (final c in _contentControllers[index]) {
-        improvedContent.add(await AiImproveService.improveText(c.text));
-      }
+      final t = await AiImproveService.improveText(_titleControllers[index].text);
+      final c = <String>[];
+      for (final cc in _contentControllers[index]) { c.add(await AiImproveService.improveText(cc.text)); }
+      if (!mounted) return;
       Navigator.pop(context);
       setState(() {
-        _titleControllers[index].text = improvedTitle;
-        for (int i = 0; i < improvedContent.length && i < _contentControllers[index].length; i++) {
-          _contentControllers[index][i].text = improvedContent[i];
-        }
+        _titleControllers[index].text = t;
+        for (int i = 0; i < c.length && i < _contentControllers[index].length; i++) { _contentControllers[index][i].text = c[i]; }
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Текст улучшен!'), backgroundColor: Color(0xFF1DB954)),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Текст улучшен!'), backgroundColor: Color(0xFF1DB954)));
     } catch (e) {
+      if (!mounted) return;
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка: $e'), backgroundColor: Colors.red),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Ошибка: $e'), backgroundColor: Colors.red));
     }
   }
 
-  Decoration _getSlideDecoration() {
+  Decoration _getDecoration() {
     final bg = _basicBackgrounds[_selectedBgIndex];
+    final r = BorderRadius.circular(8);
     if (bg['type'] == 'gradient') {
-      final colors = bg['colors'] as List<Color>;
-      return BoxDecoration(
-        gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: colors),
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 8, offset: const Offset(0, 3))],
-      );
+      return BoxDecoration(gradient: LinearGradient(colors: bg['colors'] as List<Color>), borderRadius: r, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6)]);
     }
-    return BoxDecoration(
-      color: bg['color'] as Color,
-      borderRadius: BorderRadius.circular(8),
-      boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 6, offset: const Offset(0, 2))],
-    );
+    return BoxDecoration(color: bg['color'] as Color, borderRadius: r, boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)]);
   }
 
   bool get _isDark {
@@ -200,94 +162,67 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   void _showBgPicker() {
-    final isPremium = Provider.of<UserProvider>(context, listen: false).isPremium;
+    final p = Provider.of<UserProvider>(context, listen: false).isPremium;
     showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1A1A1A),
-      isScrollControlled: true,
+      context: context, backgroundColor: const Color(0xFF1A1A1A), isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => DraggableScrollableSheet(
-        initialChildSize: 0.5, maxChildSize: 0.8, minChildSize: 0.3, expand: false,
-        builder: (_, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          padding: const EdgeInsets.all(16),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 12),
-            const Text('Выбор фона', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
-            const SizedBox(height: 12),
-            const Text('Бесплатные', style: TextStyle(fontSize: 11, color: Colors.white38)),
-            const SizedBox(height: 6),
-            GridView.count(
-              crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 6, crossAxisSpacing: 6, childAspectRatio: 1,
-              children: _basicBackgrounds.asMap().entries.map((entry) {
-                final i = entry.key;
-                final bg = entry.value;
-                return GestureDetector(
-                  onTap: () { setState(() => _selectedBgIndex = i); Navigator.pop(ctx); },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: bg['type'] == 'gradient' ? LinearGradient(colors: bg['colors'] as List<Color>) : null,
-                      color: bg['type'] == 'solid' ? bg['color'] as Color : null,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: i == _selectedBgIndex ? const Color(0xFF1DB954) : Colors.white10, width: 2),
-                    ),
-                    child: i == _selectedBgIndex ? const Center(child: Icon(Icons.check, color: Color(0xFF1DB954))) : null,
+      builder: (ctx) => DraggableScrollableSheet(initialChildSize: 0.5, maxChildSize: 0.8, expand: false,
+        builder: (_, sc) => ListView(controller: sc, padding: const EdgeInsets.all(16), children: [
+          Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)))),
+          const SizedBox(height: 12),
+          const Text('Выбор фона', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white), textAlign: TextAlign.center),
+          const SizedBox(height: 12),
+          const Text('Бесплатные', style: TextStyle(fontSize: 11, color: Colors.white38)),
+          const SizedBox(height: 6),
+          GridView.count(crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), mainAxisSpacing: 6, crossAxisSpacing: 6, childAspectRatio: 1,
+            children: _basicBackgrounds.asMap().entries.map((e) {
+              final i = e.key; final bg = e.value;
+              return GestureDetector(
+                onTap: () => _pickBg(i, ctx),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: bg['type'] == 'gradient' ? LinearGradient(colors: bg['colors'] as List<Color>) : null,
+                    color: bg['type'] == 'solid' ? bg['color'] as Color : null,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: i == _selectedBgIndex ? const Color(0xFF1DB954) : Colors.white10, width: 2),
                   ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 12),
-            const Row(children: [Icon(Icons.star, color: Color(0xFFFFD700), size: 14), SizedBox(width: 4), Text('Premium', style: TextStyle(fontSize: 11, color: Color(0xFFFFD700)))]),
-            const SizedBox(height: 6),
-            GridView.count(
-              crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 6, crossAxisSpacing: 6, childAspectRatio: 1,
-              children: _premiumBackgrounds.map((bg) {
-                return GestureDetector(
-                  onTap: isPremium
-                      ? () { setState(() { _selectedBgIndex = _basicBackgrounds.length; _basicBackgrounds.add(bg); }); Navigator.pop(ctx); }
-                      : () { Navigator.pop(ctx); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Доступно в Premium'), backgroundColor: Color(0xFFFFD700))); },
-                  child: Stack(children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: bg['type'] == 'gradient' ? LinearGradient(colors: bg['colors'] as List<Color>) : null,
-                        color: bg['type'] == 'solid' ? bg['color'] as Color : null,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    if (!isPremium) Container(decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(8)), child: const Center(child: Icon(Icons.lock, color: Colors.white38, size: 14))),
-                  ]),
-                );
-              }).toList(),
-            ),
-          ]),
-        ),
+                  child: i == _selectedBgIndex ? const Center(child: Icon(Icons.check, color: Color(0xFF1DB954))) : null,
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: 12),
+          const Row(children: [Icon(Icons.star, color: Color(0xFFFFD700), size: 14), SizedBox(width: 4), Text('Premium', style: TextStyle(fontSize: 11, color: Color(0xFFFFD700)))]),
+          const SizedBox(height: 6),
+          GridView.count(crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), mainAxisSpacing: 6, crossAxisSpacing: 6, childAspectRatio: 1,
+            children: _premiumBackgrounds.map((bg) => GestureDetector(
+              onTap: p ? () => _addPremiumBg(bg, ctx) : () => _showPremiumLock(ctx),
+              child: Stack(children: [
+                Container(decoration: BoxDecoration(gradient: bg['type'] == 'gradient' ? LinearGradient(colors: bg['colors'] as List<Color>) : null, color: bg['type'] == 'solid' ? bg['color'] as Color : null, borderRadius: BorderRadius.circular(8))),
+                if (!p) Container(decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(8)), child: const Center(child: Icon(Icons.lock, color: Colors.white38, size: 14))),
+              ]),
+            )).toList(),
+          ),
+        ]),
       ),
     );
   }
+
+  void _pickBg(int i, BuildContext ctx) { setState(() => _selectedBgIndex = i); Navigator.pop(ctx); }
+  void _addPremiumBg(Map<String, dynamic> bg, BuildContext ctx) { setState(() { _selectedBgIndex = _basicBackgrounds.length; _basicBackgrounds.add(bg); }); Navigator.pop(ctx); }
+  void _showPremiumLock(BuildContext ctx) { Navigator.pop(ctx); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Доступно в Premium'), backgroundColor: Color(0xFFFFD700))); }
 
   void _showFontPicker() {
     showModalBottomSheet(
       context: context, backgroundColor: const Color(0xFF1A1A1A),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 16),
-            const Text('Шрифт', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
-            const SizedBox(height: 12),
-            ..._fontOptions.map((f) => ListTile(
-              title: Text(f['label']!, style: TextStyle(fontFamily: f['name'], color: Colors.white, fontSize: 16)),
-              trailing: _fontPair == f['name'] ? const Icon(Icons.check, color: Color(0xFF1DB954)) : null,
-              onTap: () { setState(() => _fontPair = f['name']!); Navigator.pop(ctx); },
-            )),
-          ]),
-        ),
-      ),
+      builder: (ctx) => Padding(padding: const EdgeInsets.all(20), child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)))),
+        const SizedBox(height: 16),
+        const Text('Шрифт', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+        const SizedBox(height: 12),
+        ..._fontOptions.map((f) => ListTile(title: Text(f['label']!, style: TextStyle(fontFamily: f['name'], color: Colors.white, fontSize: 16)), trailing: _fontPair == f['name'] ? const Icon(Icons.check, color: Color(0xFF1DB954)) : null, onTap: () { setState(() => _fontPair = f['name']!); Navigator.pop(ctx); })),
+      ])),
     );
   }
 
@@ -297,19 +232,14 @@ class _EditorScreenState extends State<EditorScreen> {
     showModalBottomSheet(
       context: context, backgroundColor: const Color(0xFF1A1A1A),
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2))),
-            const SizedBox(height: 16),
-            const Text('Экспорт', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
-            const SizedBox(height: 16),
-            ListTile(leading: const Icon(Icons.insert_drive_file, color: Color(0xFF1DB954)), title: const Text('PPTX', style: TextStyle(color: Colors.white)), subtitle: Text(isPremium ? 'Без знака' : 'С водяным знаком', style: const TextStyle(color: Colors.grey)), onTap: () { Navigator.pop(ctx); ExportService.exportToPPTX(presentation: _presentation, isPremium: isPremium); }),
-            ListTile(leading: Icon(Icons.picture_as_pdf, color: isPremium ? Colors.red : Colors.grey), title: const Text('PDF', style: TextStyle(color: Colors.white)), subtitle: Text(isPremium ? 'Доступно' : 'Premium', style: const TextStyle(color: Colors.grey)), onTap: isPremium ? () { Navigator.pop(ctx); ExportService.exportToPDF(presentation: _presentation, isPremium: true); } : null),
-          ]),
-        ),
-      ),
+      builder: (ctx) => Padding(padding: const EdgeInsets.all(20), child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Center(child: Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(2)))),
+        const SizedBox(height: 16),
+        const Text('Экспорт', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: Colors.white)),
+        const SizedBox(height: 16),
+        ListTile(leading: const Icon(Icons.insert_drive_file, color: Color(0xFF1DB954)), title: const Text('PPTX', style: TextStyle(color: Colors.white)), subtitle: Text(isPremium ? 'Без знака' : 'С водяным знаком', style: const TextStyle(color: Colors.grey)), onTap: () { Navigator.pop(ctx); ExportService.exportToPPTX(context: context, presentation: _presentation, isPremium: isPremium); }),
+        ListTile(leading: Icon(Icons.picture_as_pdf, color: isPremium ? Colors.red : Colors.grey), title: const Text('PDF', style: TextStyle(color: Colors.white)), subtitle: Text(isPremium ? 'Доступно' : 'Premium', style: const TextStyle(color: Colors.grey)), onTap: isPremium ? () { Navigator.pop(ctx); ExportService.exportToPDF(context: context, presentation: _presentation, isPremium: true); } : null),
+      ])),
     );
   }
 
@@ -317,7 +247,7 @@ class _EditorScreenState extends State<EditorScreen> {
   void dispose() {
     _saveAll();
     for (var c in _titleControllers) { c.dispose(); }
-    for (var list in _contentControllers) { for (var c in list) { c.dispose(); } }
+    for (var l in _contentControllers) { for (var c in l) { c.dispose(); } }
     super.dispose();
   }
 
@@ -331,215 +261,141 @@ class _EditorScreenState extends State<EditorScreen> {
         centerTitle: true,
         leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white70), onPressed: () => Navigator.pop(context)),
         actions: [
-          IconButton(onPressed: _showFontPicker, icon: const Icon(Icons.text_fields, color: Color(0xFF1DB954), size: 18), tooltip: 'Шрифт'),
-          IconButton(onPressed: _showBgPicker, icon: const Icon(Icons.palette, color: Color(0xFF1DB954), size: 18), tooltip: 'Фон'),
-          IconButton(onPressed: _addSlide, icon: const Icon(Icons.add_circle_outline, color: Color(0xFF1DB954), size: 22), tooltip: 'Добавить'),
-          IconButton(onPressed: _export, icon: const Icon(Icons.download, color: Colors.white70, size: 20), tooltip: 'Экспорт'),
+          IconButton(onPressed: _showFontPicker, icon: const Icon(Icons.text_fields, color: Color(0xFF1DB954), size: 18)),
+          IconButton(onPressed: _showBgPicker, icon: const Icon(Icons.palette, color: Color(0xFF1DB954), size: 18)),
+          IconButton(onPressed: _addSlide, icon: const Icon(Icons.add_circle_outline, color: Color(0xFF1DB954), size: 22)),
+          IconButton(onPressed: _export, icon: const Icon(Icons.download, color: Colors.white70, size: 20)),
         ],
       ),
       body: ListView.builder(
         padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 10.h),
         itemCount: _presentation.slides.length,
-        itemBuilder: (context, index) => _buildSlideCard(index),
+        itemBuilder: (_, index) => _slideCard(index),
       ),
     );
   }
 
-  Widget _buildSlideCard(int index) {
+  Widget _slideCard(int index) {
     final dark = _isDark;
-    final hasImage = _slideImages.containsKey(index) && _slideImages[index] != null;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = screenWidth * 0.75;
+    final hasImage = _slideImages[index] != null;
+    final sw = MediaQuery.of(context).size.width;
+    final cw = sw * 0.78;
+    final imgSize = (_imageSizes[index] ?? 0.3) * cw;
+    final imgPos = _imagePositions[index] ?? const Offset(0.55, 0.1);
+    final maxDx = max(0.0, 1.0 - (_imageSizes[index] ?? 0.3));
+    final aspectRatio = 9 / 16;
+    final maxDy = max(0.0, 1.0 - (_imageSizes[index] ?? 0.3) * aspectRatio);
+    final cx = imgPos.dx.clamp(0.0, maxDx);
+    final cy = imgPos.dy.clamp(0.0, maxDy);
 
     return Center(
       child: SizedBox(
-        width: cardWidth,
+        width: cw,
         child: Card(
           color: const Color(0xFF1E1E1E),
           margin: EdgeInsets.only(bottom: 10.h),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           elevation: 3,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Превью слайда
-              AspectRatio(
-                aspectRatio: 16 / 9,
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final slideWidth = constraints.maxWidth;
-                    final slideHeight = constraints.maxHeight;
-                    final imgSize = (_imageSizes[index] ?? 0.3) * slideWidth;
-                    final imgPos = _imagePositions[index] ?? const Offset(0.6, 0.08);
-                    // Границы чтобы картинка не выходила за слайд
-                    final clampedX = imgPos.dx.clamp(0.0, 1.0 - (_imageSizes[index] ?? 0.3));
-                    final clampedY = imgPos.dy.clamp(0.0, 1.0 - (_imageSizes[index] ?? 0.3) * (16 / 9));
-                    final imgLeft = clampedX * slideWidth;
-                    final imgTop = clampedY * slideHeight;
-
-                    return Container(
-                      decoration: _getSlideDecoration(),
-                      clipBehavior: Clip.antiAlias,
-                      child: Stack(children: [
-                        // Контент
-                        Padding(
-                          padding: EdgeInsets.all(10.w),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Container(
-                                padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.h),
-                                decoration: BoxDecoration(
-                                  color: dark ? Colors.white.withOpacity(0.12) : Colors.black.withOpacity(0.06),
-                                  borderRadius: BorderRadius.circular(3),
-                                ),
-                                child: Text('${index + 1}/${_presentation.slides.length}', style: TextStyle(fontSize: 8, color: dark ? Colors.white38 : Colors.black38, fontWeight: FontWeight.w500)),
-                              ),
-                              SizedBox(height: 6.h),
-                              Text(
-                                _titleControllers[index].text.isEmpty ? 'Заголовок' : _titleControllers[index].text,
-                                style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700, fontFamily: _fontPair, color: dark ? Colors.white : const Color(0xFF1A1A2E), height: 1.2),
-                                maxLines: 2, overflow: TextOverflow.ellipsis,
-                              ),
-                              SizedBox(height: 4.h),
-                              ..._contentControllers[index].take(3).map((ctrl) {
-                                return Padding(
-                                  padding: EdgeInsets.only(bottom: 2.h),
-                                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                    Padding(
-                                      padding: EdgeInsets.only(top: 4.h, right: 4.w),
-                                      child: Container(width: 3.w, height: 3.w, decoration: BoxDecoration(color: dark ? const Color(0xFF1DB954) : const Color(0xFF169C46), shape: BoxShape.circle)),
-                                    ),
-                                    Expanded(
-                                      child: Text(
-                                        ctrl.text.isEmpty ? 'Пункт...' : ctrl.text,
-                                        style: TextStyle(fontSize: 9.sp, fontFamily: _fontPair, color: dark ? Colors.white.withOpacity(0.8) : const Color(0xFF444444), height: 1.3),
-                                        maxLines: 2, overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                  ]),
-                                );
-                              }),
-                            ],
-                          ),
-                        ),
-                        // Перетаскиваемая картинка
-                        if (hasImage)
-                          Positioned(
-                            left: imgLeft,
-                            top: imgTop,
-                            child: GestureDetector(
-                              onPanUpdate: (details) {
-                                setState(() {
-                                  final newDx = (imgLeft + details.delta.dx) / slideWidth;
-                                  final newDy = (imgTop + details.delta.dy) / slideHeight;
-                                  final maxDx = 1.0 - _imageSizes[index]!;
-                                  final maxDy = 1.0 - _imageSizes[index]! * (16 / 9);
-                                  _imagePositions[index] = Offset(
-                                    newDx.clamp(0.0, maxDx),
-                                    newDy.clamp(0.0, maxDy),
-                                  );
-                                });
-                              },
-                              child: Stack(children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(4),
-                                  child: Image.network(
-                                    _slideImages[index]!,
-                                    width: imgSize,
-                                    height: imgSize * 0.7,
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => const SizedBox(),
-                                  ),
-                                ),
-                                // Рамка при перетаскивании
-                                Container(
-                                  width: imgSize,
-                                  height: imgSize * 0.7,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.6), width: 1),
-                                  ),
-                                ),
-                                // Маркер изменения размера (тянуть за правый нижний угол)
-                                Positioned(
-                                  right: 0, bottom: 0,
-                                  child: GestureDetector(
-                                    onPanUpdate: (details) {
-                                      setState(() {
-                                        final newSize = (_imageSizes[index]! * slideWidth + details.delta.dx) / slideWidth;
-                                        _imageSizes[index] = newSize.clamp(0.15, 0.55);
-                                        // Проверяем границы после изменения размера
-                                        final pos = _imagePositions[index]!;
-                                        final maxDx = 1.0 - _imageSizes[index]!;
-                                        final maxDy = 1.0 - _imageSizes[index]! * (16 / 9);
-                                        _imagePositions[index] = Offset(
-                                          pos.dx.clamp(0.0, maxDx),
-                                          pos.dy.clamp(0.0, maxDy),
-                                        );
-                                      });
-                                    },
-                                    child: Container(
-                                      width: 14.w, height: 14.w,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFF1DB954),
-                                        borderRadius: BorderRadius.circular(3),
-                                        border: Border.all(color: Colors.white, width: 1.5),
-                                      ),
-                                      child: const Icon(Icons.drag_indicator, size: 10, color: Colors.white),
-                                    ),
-                                  ),
-                                ),
-                              ]),
-                            ),
-                          ),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            // Превью
+            AspectRatio(
+              aspectRatio: 16 / 9,
+              child: LayoutBuilder(builder: (_, constraints) {
+                final sh = constraints.maxHeight;
+                return Container(
+                  decoration: _getDecoration(),
+                  clipBehavior: Clip.antiAlias,
+                  child: Stack(children: [
+                    // Текст
+                    Padding(
+                      padding: EdgeInsets.all(10.w),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                        Text('${index + 1}/${_presentation.slides.length}', style: TextStyle(fontSize: 8, color: dark ? Colors.white38 : Colors.black38)),
+                        SizedBox(height: 6.h),
+                        Text(_titleControllers[index].text.isEmpty ? 'Заголовок' : _titleControllers[index].text,
+                          style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700, fontFamily: _fontPair, color: dark ? Colors.white : const Color(0xFF1A1A2E)),
+                          maxLines: 2, overflow: TextOverflow.ellipsis),
+                        SizedBox(height: 4.h),
+                        ..._contentControllers[index].take(4).map((c) => Padding(
+                          padding: EdgeInsets.only(bottom: 2.h),
+                          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Padding(padding: EdgeInsets.only(top: 4.h, right: 4.w), child: Container(width: 3.w, height: 3.w, decoration: BoxDecoration(color: const Color(0xFF1DB954), shape: BoxShape.circle))),
+                            Expanded(child: Text(c.text.isEmpty ? 'Пункт' : c.text, style: TextStyle(fontSize: 9.sp, fontFamily: _fontPair, color: dark ? Colors.white70 : const Color(0xFF444444)), maxLines: 3, overflow: TextOverflow.ellipsis)),
+                          ]),
+                        )),
                       ]),
-                    );
-                  },
-                ),
-              ),
-              // Редактор
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
-                child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Row(children: [
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-                      decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF169C46)]), borderRadius: BorderRadius.circular(4)),
-                      child: Text('Слайд ${index + 1}', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 9)),
                     ),
-                    const Spacer(),
-                    IconButton(onPressed: () => _improveSlide(index), icon: const Icon(Icons.auto_awesome, size: 14, color: Color(0xFF1DB954)), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
-                    IconButton(onPressed: () => _duplicateSlide(index), icon: const Icon(Icons.copy, size: 14, color: Colors.white54), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
-                    IconButton(onPressed: () => _deleteSlide(index), icon: const Icon(Icons.delete_outline, size: 14, color: Color(0xFFFF3B30)), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+                    // Картинка
+                    if (hasImage)
+                      Positioned(
+                        left: cx * cw * (cw / constraints.maxWidth),
+                        top: cy * sh,
+                        child: GestureDetector(
+                          onPanUpdate: (d) => setState(() {
+                            final nx = (cx * cw + d.delta.dx) / cw;
+                            final ny = (cy * sh + d.delta.dy) / sh;
+                            _imagePositions[index] = Offset(nx.clamp(0.0, maxDx), ny.clamp(0.0, maxDy));
+                          }),
+                          child: Column(mainAxisSize: MainAxisSize.min, children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Image.network(_slideImages[index]!, width: imgSize, height: imgSize * 0.65, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox()),
+                            ),
+                            // Ползунок размера
+                            SizedBox(
+                              width: imgSize,
+                              child: SliderTheme(
+                                data: SliderThemeData(trackHeight: 3, thumbRadius: 7, overlayRadius: 10, thumbColor: const Color(0xFF1DB954), activeTrackColor: const Color(0xFF1DB954), inactiveTrackColor: Colors.white24),
+                                child: Slider(
+                                  value: _imageSizes[index] ?? 0.3,
+                                  min: 0.15, max: 0.5,
+                                  onChanged: (v) => setState(() {
+                                    _imageSizes[index] = v;
+                                    final ndx = max(0.0, 1.0 - v);
+                                    final ndy = max(0.0, 1.0 - v * aspectRatio);
+                                    _imagePositions[index] = Offset(_imagePositions[index]!.dx.clamp(0.0, ndx), _imagePositions[index]!.dy.clamp(0.0, ndy));
+                                  }),
+                                ),
+                              ),
+                            ),
+                          ]),
+                        ),
+                      ),
                   ]),
-                  TextField(
-                    controller: _titleControllers[index],
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
-                    decoration: InputDecoration(hintText: 'Заголовок', hintStyle: TextStyle(color: Colors.white24, fontSize: 11), border: InputBorder.none, contentPadding: EdgeInsets.zero, isDense: true),
-                  ),
-                  ..._contentControllers[index].asMap().entries.map((entry) {
-                    final i = entry.key;
-                    final ctrl = entry.value;
-                    return Row(children: [
-                      Padding(padding: EdgeInsets.only(right: 4.w), child: Container(width: 3.w, height: 3.w, decoration: const BoxDecoration(color: Color(0xFF1DB954), shape: BoxShape.circle))),
-                      Expanded(child: TextField(controller: ctrl, style: TextStyle(fontSize: 10, color: Colors.white70), decoration: InputDecoration(hintText: 'Пункт ${i + 1}', hintStyle: TextStyle(color: Colors.white12, fontSize: 10), border: InputBorder.none, contentPadding: EdgeInsets.zero, isDense: true))),
-                      IconButton(onPressed: () => _removeContentItem(index, i), icon: const Icon(Icons.close, size: 10, color: Color(0xFFFF3B30)), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
-                    ]);
-                  }),
-                  TextButton.icon(
-                    onPressed: () => _addContentItem(index),
-                    icon: const Icon(Icons.add, size: 10, color: Color(0xFF1DB954)),
-                    label: const Text('Пункт', style: TextStyle(color: Color(0xFF1DB954), fontSize: 9)),
-                    style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
-                  ),
+                );
+              }),
+            ),
+            // Редактор
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
+              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Row(children: [
+                  Container(padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF169C46)]), borderRadius: BorderRadius.circular(4)), child: Text('Слайд ${index + 1}', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 9))),
+                  const Spacer(),
+                  _btn(Icons.auto_awesome, () => _improveSlide(index)),
+                  _btn(Icons.copy, () => _duplicateSlide(index)),
+                  _btn(Icons.delete_outline, () => _deleteSlide(index), red: true),
                 ]),
-              ),
-            ],
-          ),
+                _tf(_titleControllers[index], 'Заголовок', bold: true),
+                ..._contentControllers[index].asMap().entries.map((e) => Row(children: [
+                  Padding(padding: EdgeInsets.only(right: 4.w), child: Container(width: 3.w, height: 3.w, decoration: const BoxDecoration(color: Color(0xFF1DB954), shape: BoxShape.circle))),
+                  Expanded(child: _tf(e.value, 'Пункт ${e.key + 1}')),
+                  IconButton(onPressed: () => _removeContentItem(index, e.key), icon: const Icon(Icons.close, size: 10, color: Color(0xFFFF3B30)), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
+                ])),
+                TextButton.icon(onPressed: () => _addContentItem(index), icon: const Icon(Icons.add, size: 10, color: Color(0xFF1DB954)), label: const Text('Пункт', style: TextStyle(color: Color(0xFF1DB954), fontSize: 9)), style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap)),
+              ]),
+            ),
+          ]),
         ),
       ),
     );
   }
+
+  Widget _btn(IconData icon, VoidCallback onTap, {bool red = false}) => IconButton(icon: Icon(icon, size: 14, color: red ? const Color(0xFFFF3B30) : const Color(0xFF1DB954)), onPressed: onTap, padding: EdgeInsets.zero, constraints: const BoxConstraints());
+
+  Widget _tf(TextEditingController ctrl, String hint, {bool bold = false}) => TextField(
+    controller: ctrl,
+    style: TextStyle(fontSize: bold ? 12 : 10, fontWeight: bold ? FontWeight.w600 : FontWeight.normal, color: Colors.white),
+    decoration: InputDecoration(hintText: hint, hintStyle: TextStyle(color: Colors.white24, fontSize: 10), border: InputBorder.none, contentPadding: EdgeInsets.zero, isDense: true),
+  );
 }
