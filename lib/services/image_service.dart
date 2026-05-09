@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ImageService {
-  static const String _unsplashAccessKey = Zkb4SABqCLoQgrs8cqy1iPZYqlOgCeXNJRKfrBReVAM;
+  static const String _unsplashAccessKey = 'Zkb4SABqCLoQgrs8cqy1iPZYqlOgCeXNJRKfrBReVAM';
   static const String _baseUrl = 'https://api.unsplash.com';
 
   static Future<String?> searchImage(String query) async {
