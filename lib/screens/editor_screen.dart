@@ -280,13 +280,8 @@ class _EditorScreenState extends State<EditorScreen> {
     final hasImage = _slideImages[index] != null;
     final sw = MediaQuery.of(context).size.width;
     final cw = sw * 0.78;
-    final imgSize = (_imageSizes[index] ?? 0.3) * cw;
+    final imgScale = _imageSizes[index] ?? 0.32;
     final imgPos = _imagePositions[index] ?? const Offset(0.55, 0.1);
-    final maxDx = max(0.0, 1.0 - (_imageSizes[index] ?? 0.3));
-    final aspectRatio = 9 / 16;
-    final maxDy = max(0.0, 1.0 - (_imageSizes[index] ?? 0.3) * aspectRatio);
-    final cx = imgPos.dx.clamp(0.0, maxDx);
-    final cy = imgPos.dy.clamp(0.0, maxDy);
 
     return Center(
       child: SizedBox(
@@ -300,67 +295,96 @@ class _EditorScreenState extends State<EditorScreen> {
             AspectRatio(
               aspectRatio: 16 / 9,
               child: LayoutBuilder(builder: (_, constraints) {
-                final sh = constraints.maxHeight;
+                final slideW = constraints.maxWidth;
+                final slideH = constraints.maxHeight;
+                final imgW = imgScale * slideW;
+                final imgH = imgW * 0.65;
+                final imgLeft = imgPos.dx * slideW;
+                final imgTop = imgPos.dy * slideH;
+
+                // Определяем сторону для текста (слева или справа от картинки)
+                final imgCenterX = imgLeft + imgW / 2;
+                final isImageOnRight = imgCenterX > slideW * 0.5;
+
                 return Container(
                   decoration: _getDecoration(),
                   clipBehavior: Clip.antiAlias,
                   child: Stack(children: [
+                    // Контент
                     Padding(
                       padding: EdgeInsets.all(10.w),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                        Text('${index + 1}/${_presentation.slides.length}', style: TextStyle(fontSize: 8, color: dark ? Colors.white38 : Colors.black38)),
+                        Text('${index + 1}/${_presentation.slides.length}',
+                          style: TextStyle(fontSize: 8, color: dark ? Colors.white38 : Colors.black38)),
                         SizedBox(height: 6.h),
                         Text(_titleControllers[index].text.isEmpty ? 'Заголовок' : _titleControllers[index].text,
-                          style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700, fontFamily: _fontPair, color: dark ? Colors.white : const Color(0xFF1A1A2E)),
+                          style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700, fontFamily: _fontPair,
+                            color: dark ? Colors.white : const Color(0xFF1A1A2E)),
                           maxLines: 2, overflow: TextOverflow.ellipsis),
                         SizedBox(height: 4.h),
-                        ..._contentControllers[index].take(4).map((c) => Padding(
-                          padding: EdgeInsets.only(bottom: 2.h),
-                          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                            Padding(padding: EdgeInsets.only(top: 4.h, right: 4.w), child: Container(width: 3.w, height: 3.w, decoration: BoxDecoration(color: const Color(0xFF1DB954), shape: BoxShape.circle))),
-                            Expanded(child: Text(c.text.isEmpty ? 'Пункт' : c.text, style: TextStyle(fontSize: 9.sp, fontFamily: _fontPair, color: dark ? Colors.white70 : const Color(0xFF444444)), maxLines: 3, overflow: TextOverflow.ellipsis)),
-                          ]),
-                        )),
+                        ..._contentControllers[index].take(4).map((c) {
+                          // Обтекание: если картинка на слайде, ограничиваем ширину текста
+                          final textMaxWidth = hasImage
+                              ? (isImageOnRight ? imgLeft - 16 : slideW - (imgLeft + imgW) - 16)
+                              : slideW - 20;
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: 2.h),
+                            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Padding(padding: EdgeInsets.only(top: 4.h, right: 4.w),
+                                child: Container(width: 3.w, height: 3.w,
+                                  decoration: BoxDecoration(color: const Color(0xFF1DB954), shape: BoxShape.circle))),
+                              SizedBox(
+                                width: max(0, textMaxWidth),
+                                child: Text(c.text.isEmpty ? 'Пункт' : c.text,
+                                  style: TextStyle(fontSize: 9.sp, fontFamily: _fontPair,
+                                    color: dark ? Colors.white70 : const Color(0xFF444444)),
+                                  maxLines: 3, overflow: TextOverflow.ellipsis),
+                              ),
+                            ]),
+                          );
+                        }),
                       ]),
                     ),
+                    // Картинка — свободное перемещение, без ограничений
                     if (hasImage)
                       Positioned(
-                        left: cx * cw * (cw / constraints.maxWidth),
-                        top: cy * sh,
+                        left: imgLeft.clamp(0.0, slideW - imgW),
+                        top: imgTop.clamp(0.0, slideH - imgH),
                         child: GestureDetector(
-                          onPanUpdate: (d) => setState(() {
-                            final nx = (cx * cw + d.delta.dx) / cw;
-                            final ny = (cy * sh + d.delta.dy) / sh;
-                            _imagePositions[index] = Offset(nx.clamp(0.0, maxDx), ny.clamp(0.0, maxDy));
-                          }),
+                          behavior: HitTestBehavior.opaque,
+                          onPanUpdate: (d) {
+                            final newLeft = imgLeft + d.delta.dx;
+                            final newTop = imgTop + d.delta.dy;
+                            setState(() {
+                              _imagePositions[index] = Offset(
+                                (newLeft / slideW).clamp(0.0, 1.0 - imgScale),
+                                (newTop / slideH).clamp(0.0, 1.0 - imgScale * 0.65),
+                              );
+                            });
+                          },
                           child: Column(mainAxisSize: MainAxisSize.min, children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(6),
-                              child: Image.network(_slideImages[index]!, width: imgSize, height: imgSize * 0.65, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox()),
+                              child: Image.network(_slideImages[index]!,
+                                width: imgW, height: imgH,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const SizedBox()),
                             ),
                             SizedBox(
-                              width: imgSize,
+                              width: imgW,
                               child: SliderTheme(
                                 data: const SliderThemeData(
-                                  trackHeight: 3,
-                                  thumbShape: RoundSliderThumbShape(enabledThumbRadius: 7),
-                                  overlayShape: RoundSliderOverlayShape(overlayRadius: 10),
+                                  trackHeight: 2,
+                                  thumbShape: RoundSliderThumbShape(enabledThumbRadius: 6),
+                                  overlayShape: RoundSliderOverlayShape(overlayRadius: 8),
                                   thumbColor: Color(0xFF1DB954),
                                   activeTrackColor: Color(0xFF1DB954),
                                   inactiveTrackColor: Colors.white24,
                                 ),
                                 child: Slider(
-                                  value: _imageSizes[index] ?? 0.3,
+                                  value: imgScale,
                                   min: 0.15, max: 0.5,
-                                  onChanged: (v) => setState(() {
-                                    _imageSizes[index] = v;
-                                    final ndx = max(0.0, 1.0 - v);
-                                    final ndy = max(0.0, 1.0 - v * aspectRatio);
-                                    _imagePositions[index] = Offset(
-                                      (_imagePositions[index]?.dx ?? 0.5).clamp(0.0, ndx),
-                                      (_imagePositions[index]?.dy ?? 0.1).clamp(0.0, ndy),
-                                    );
-                                  }),
+                                  onChanged: (v) => setState(() => _imageSizes[index] = v),
                                 ),
                               ),
                             ),
@@ -376,17 +400,17 @@ class _EditorScreenState extends State<EditorScreen> {
               padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
               child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
-                  Container(padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF169C46)]), borderRadius: BorderRadius.circular(4)), child: Text('Слайд ${index + 1}', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 9))),
+                  Container(padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
+                    decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF169C46)]), borderRadius: BorderRadius.circular(4)),
+                    child: Text('Слайд ${index + 1}', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 9))),
                   const Spacer(),
                   _iconBtn(Icons.auto_awesome, () => _improveSlide(index)),
                   _iconBtn(Icons.copy, () => _duplicateSlide(index)),
                   _iconBtn(Icons.delete_outline, () => _deleteSlide(index), red: true),
                 ]),
-                TextField(
-                  controller: _titleControllers[index],
+                TextField(controller: _titleControllers[index],
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
-                  decoration: const InputDecoration(hintText: 'Заголовок', hintStyle: TextStyle(color: Colors.white24, fontSize: 10), border: InputBorder.none, contentPadding: EdgeInsets.zero, isDense: true),
-                ),
+                  decoration: const InputDecoration(hintText: 'Заголовок', hintStyle: TextStyle(color: Colors.white24, fontSize: 10), border: InputBorder.none, contentPadding: EdgeInsets.zero, isDense: true)),
                 ..._contentControllers[index].asMap().entries.map((e) => Row(children: [
                   Padding(padding: EdgeInsets.only(right: 4.w), child: Container(width: 3.w, height: 3.w, decoration: const BoxDecoration(color: Color(0xFF1DB954), shape: BoxShape.circle))),
                   Expanded(child: TextField(controller: e.value, style: TextStyle(fontSize: 10, color: Colors.white70), decoration: InputDecoration(hintText: 'Пункт ${e.key + 1}', hintStyle: const TextStyle(color: Colors.white12, fontSize: 10), border: InputBorder.none, contentPadding: EdgeInsets.zero, isDense: true))),
