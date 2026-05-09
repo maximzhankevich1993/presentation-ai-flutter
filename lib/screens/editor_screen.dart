@@ -25,6 +25,8 @@ class _EditorScreenState extends State<EditorScreen> {
   int _selectedBgIndex = 0;
 
   final Map<int, String?> _slideImages = {};
+  final Map<int, Offset> _imagePositions = {};
+  final Map<int, double> _imageSizes = {};
   bool _imagesLoading = false;
 
   final List<Map<String, dynamic>> _basicBackgrounds = [
@@ -78,6 +80,9 @@ class _EditorScreenState extends State<EditorScreen> {
           : _presentation.title;
       final imageUrl = await ImageService.searchImage(query);
       _slideImages[i] = imageUrl;
+      // Начальная позиция — правый верхний угол
+      _imagePositions[i] = const Offset(0.6, 0.08);
+      _imageSizes[i] = 0.3;
     }
     setState(() => _imagesLoading = false);
   }
@@ -113,16 +118,15 @@ class _EditorScreenState extends State<EditorScreen> {
       _titleControllers.removeAt(index);
       _contentControllers.removeAt(index);
       _slideImages.remove(index);
+      _imagePositions.remove(index);
+      _imageSizes.remove(index);
     });
   }
 
   void _duplicateSlide(int index) {
     setState(() {
       final slide = _presentation.slides[index];
-      _presentation.slides.insert(
-        index + 1,
-        Slide(title: '${slide.title} (копия)', content: List.from(slide.content)),
-      );
+      _presentation.slides.insert(index + 1, Slide(title: '${slide.title} (копия)', content: List.from(slide.content)));
       _titleControllers.insert(index + 1, TextEditingController(text: '${slide.title} (копия)'));
       _contentControllers.insert(index + 1, slide.content.map((c) => TextEditingController(text: c)).toList());
     });
@@ -242,7 +246,8 @@ class _EditorScreenState extends State<EditorScreen> {
               mainAxisSpacing: 6, crossAxisSpacing: 6, childAspectRatio: 1,
               children: _premiumBackgrounds.map((bg) {
                 return GestureDetector(
-                  onTap: isPremium ? () { setState(() { _selectedBgIndex = _basicBackgrounds.length; _basicBackgrounds.add(bg); }); Navigator.pop(ctx); }
+                  onTap: isPremium
+                      ? () { setState(() { _selectedBgIndex = _basicBackgrounds.length; _basicBackgrounds.add(bg); }); Navigator.pop(ctx); }
                       : () { Navigator.pop(ctx); ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Доступно в Premium'), backgroundColor: Color(0xFFFFD700))); },
                   child: Stack(children: [
                     Container(
@@ -344,7 +349,7 @@ class _EditorScreenState extends State<EditorScreen> {
     final dark = _isDark;
     final hasImage = _slideImages.containsKey(index) && _slideImages[index] != null;
     final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = screenWidth * 0.75; // 75% ширины экрана
+    final cardWidth = screenWidth * 0.75;
 
     return Center(
       child: SizedBox(
@@ -358,87 +363,143 @@ class _EditorScreenState extends State<EditorScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Превью слайда — уменьшенный (8:4.5 вместо 16:9)
+              // Превью слайда
               AspectRatio(
                 aspectRatio: 16 / 9,
-                child: Container(
-                  decoration: _getSlideDecoration(),
-                  clipBehavior: Clip.antiAlias,
-                  child: Stack(children: [
-                    // Картинка в углу контента
-                    if (hasImage)
-                      Positioned(
-                        right: 8.w,
-                        bottom: 8.h,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: Image.network(
-                            _slideImages[index]!,
-                            width: cardWidth * 0.35,
-                            height: (cardWidth * 0.35) * 0.65,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const SizedBox(),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final slideWidth = constraints.maxWidth;
+                    final slideHeight = constraints.maxHeight;
+                    final imgSize = (_imageSizes[index] ?? 0.3) * slideWidth;
+                    final imgPos = _imagePositions[index] ?? const Offset(0.6, 0.08);
+                    // Границы чтобы картинка не выходила за слайд
+                    final clampedX = imgPos.dx.clamp(0.0, 1.0 - (_imageSizes[index] ?? 0.3));
+                    final clampedY = imgPos.dy.clamp(0.0, 1.0 - (_imageSizes[index] ?? 0.3) * (16 / 9));
+                    final imgLeft = clampedX * slideWidth;
+                    final imgTop = clampedY * slideHeight;
+
+                    return Container(
+                      decoration: _getSlideDecoration(),
+                      clipBehavior: Clip.antiAlias,
+                      child: Stack(children: [
+                        // Контент
+                        Padding(
+                          padding: EdgeInsets.all(10.w),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.h),
+                                decoration: BoxDecoration(
+                                  color: dark ? Colors.white.withOpacity(0.12) : Colors.black.withOpacity(0.06),
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                                child: Text('${index + 1}/${_presentation.slides.length}', style: TextStyle(fontSize: 8, color: dark ? Colors.white38 : Colors.black38, fontWeight: FontWeight.w500)),
+                              ),
+                              SizedBox(height: 6.h),
+                              Text(
+                                _titleControllers[index].text.isEmpty ? 'Заголовок' : _titleControllers[index].text,
+                                style: TextStyle(fontSize: 13.sp, fontWeight: FontWeight.w700, fontFamily: _fontPair, color: dark ? Colors.white : const Color(0xFF1A1A2E), height: 1.2),
+                                maxLines: 2, overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: 4.h),
+                              ..._contentControllers[index].take(3).map((ctrl) {
+                                return Padding(
+                                  padding: EdgeInsets.only(bottom: 2.h),
+                                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                    Padding(
+                                      padding: EdgeInsets.only(top: 4.h, right: 4.w),
+                                      child: Container(width: 3.w, height: 3.w, decoration: BoxDecoration(color: dark ? const Color(0xFF1DB954) : const Color(0xFF169C46), shape: BoxShape.circle)),
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        ctrl.text.isEmpty ? 'Пункт...' : ctrl.text,
+                                        style: TextStyle(fontSize: 9.sp, fontFamily: _fontPair, color: dark ? Colors.white.withOpacity(0.8) : const Color(0xFF444444), height: 1.3),
+                                        maxLines: 2, overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ]),
+                                );
+                              }),
+                            ],
                           ),
                         ),
-                      ),
-                    // Контент
-                    Padding(
-                      padding: EdgeInsets.all(10.w),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Номер
-                          Container(
-                            padding: EdgeInsets.symmetric(horizontal: 5.w, vertical: 1.h),
-                            decoration: BoxDecoration(
-                              color: dark ? Colors.white.withOpacity(0.12) : Colors.black.withOpacity(0.06),
-                              borderRadius: BorderRadius.circular(3),
-                            ),
-                            child: Text(
-                              '${index + 1}/${_presentation.slides.length}',
-                              style: TextStyle(fontSize: 8, color: dark ? Colors.white38 : Colors.black38, fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                          SizedBox(height: 6.h),
-                          // Заголовок
-                          Text(
-                            _titleControllers[index].text.isEmpty ? 'Заголовок' : _titleControllers[index].text,
-                            style: TextStyle(
-                              fontSize: 13.sp,
-                              fontWeight: FontWeight.w700,
-                              fontFamily: _fontPair,
-                              color: dark ? Colors.white : const Color(0xFF1A1A2E),
-                              height: 1.2,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          SizedBox(height: 4.h),
-                          // Пункты — обтекают картинку справа
-                          ..._contentControllers[index].take(3).map((ctrl) => Padding(
-                            padding: EdgeInsets.only(bottom: 2.h, right: hasImage ? cardWidth * 0.35 + 12.w : 0),
-                            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Padding(
-                                padding: EdgeInsets.only(top: 4.h, right: 4.w),
-                                child: Container(width: 3.w, height: 3.w, decoration: BoxDecoration(color: dark ? const Color(0xFF1DB954) : const Color(0xFF169C46), shape: BoxShape.circle)),
-                              ),
-                              Expanded(
-                                child: Text(
-                                  ctrl.text.isEmpty ? 'Пункт...' : ctrl.text,
-                                  style: TextStyle(fontSize: 9.sp, fontFamily: _fontPair, color: dark ? Colors.white.withOpacity(0.8) : const Color(0xFF444444), height: 1.3),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
+                        // Перетаскиваемая картинка
+                        if (hasImage)
+                          Positioned(
+                            left: imgLeft,
+                            top: imgTop,
+                            child: GestureDetector(
+                              onPanUpdate: (details) {
+                                setState(() {
+                                  final newDx = (imgLeft + details.delta.dx) / slideWidth;
+                                  final newDy = (imgTop + details.delta.dy) / slideHeight;
+                                  final maxDx = 1.0 - _imageSizes[index]!;
+                                  final maxDy = 1.0 - _imageSizes[index]! * (16 / 9);
+                                  _imagePositions[index] = Offset(
+                                    newDx.clamp(0.0, maxDx),
+                                    newDy.clamp(0.0, maxDy),
+                                  );
+                                });
+                              },
+                              child: Stack(children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: Image.network(
+                                    _slideImages[index]!,
+                                    width: imgSize,
+                                    height: imgSize * 0.7,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const SizedBox(),
+                                  ),
                                 ),
-                              ),
-                            ]),
-                          )),
-                        ],
-                      ),
-                    ),
-                  ]),
+                                // Рамка при перетаскивании
+                                Container(
+                                  width: imgSize,
+                                  height: imgSize * 0.7,
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.6), width: 1),
+                                  ),
+                                ),
+                                // Маркер изменения размера (тянуть за правый нижний угол)
+                                Positioned(
+                                  right: 0, bottom: 0,
+                                  child: GestureDetector(
+                                    onPanUpdate: (details) {
+                                      setState(() {
+                                        final newSize = (_imageSizes[index]! * slideWidth + details.delta.dx) / slideWidth;
+                                        _imageSizes[index] = newSize.clamp(0.15, 0.55);
+                                        // Проверяем границы после изменения размера
+                                        final pos = _imagePositions[index]!;
+                                        final maxDx = 1.0 - _imageSizes[index]!;
+                                        final maxDy = 1.0 - _imageSizes[index]! * (16 / 9);
+                                        _imagePositions[index] = Offset(
+                                          pos.dx.clamp(0.0, maxDx),
+                                          pos.dy.clamp(0.0, maxDy),
+                                        );
+                                      });
+                                    },
+                                    child: Container(
+                                      width: 14.w, height: 14.w,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF1DB954),
+                                        borderRadius: BorderRadius.circular(3),
+                                        border: Border.all(color: Colors.white, width: 1.5),
+                                      ),
+                                      child: const Icon(Icons.drag_indicator, size: 10, color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                              ]),
+                            ),
+                          ),
+                      ]),
+                    );
+                  },
                 ),
               ),
-              // Редактор — компактный
+              // Редактор
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 6.h),
                 child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
