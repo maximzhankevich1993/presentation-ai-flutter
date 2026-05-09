@@ -26,7 +26,6 @@ class _EditorScreenState extends State<EditorScreen> {
   late List<String> _customFonts;
 
   String _fontPair = 'Inter';
-  double _fontSize = 9.0;
   int _selectedBgIndex = 0;
   int _imageUploadsUsed = 0;
 
@@ -185,7 +184,7 @@ class _EditorScreenState extends State<EditorScreen> {
         reader.onLoad.listen((_) {
           setState(() {
             _customImages[index] = reader.result as String;
-            if (!isPremium && _customImages[index] != null) _imageUploadsUsed++;
+            if (!isPremium) _imageUploadsUsed++;
           });
         });
       }
@@ -294,7 +293,7 @@ class _EditorScreenState extends State<EditorScreen> {
         ..._fontOptions.map((f) => ListTile(
           title: Text(f['label']!, style: TextStyle(fontFamily: f['name'], color: Colors.white, fontSize: 16)),
           trailing: _fontPair == f['name'] ? const Icon(Icons.check, color: Color(0xFF1DB954)) : null,
-          onTap: () { setState(() { _fontPair = f['name']!; for (int i = 0; i < (_customFonts.length); i++) { _customFonts[i] = f['name']!; } }); Navigator.pop(ctx); },
+          onTap: () { setState(() { _fontPair = f['name']!; for (int i = 0; i < _customFonts.length; i++) { _customFonts[i] = f['name']!; } }); Navigator.pop(ctx); },
         )),
       ])),
     );
@@ -312,14 +311,11 @@ class _EditorScreenState extends State<EditorScreen> {
         Slider(
           value: _customFontSizes[index],
           min: 6, max: 18, divisions: 12,
-          activeColor: const Color(0xFF1DB954),
-          inactiveColor: Colors.white24,
+          activeColor: const Color(0xFF1DB954), inactiveColor: Colors.white24,
           onChanged: (v) => setState(() => _customFontSizes[index] = v),
         ),
-        if (!isPremium) Padding(
-          padding: const EdgeInsets.only(top: 4),
-          child: Text('10 слайдов бесплатно, дальше Premium', style: TextStyle(fontSize: 9, color: Colors.white38)),
-        ),
+        if (!isPremium)
+          Padding(padding: const EdgeInsets.only(top: 4), child: Text('10 слайдов бесплатно, дальше Premium', style: TextStyle(fontSize: 9, color: Colors.white38))),
         SizedBox(height: 8.h),
         TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Готово', style: TextStyle(color: Color(0xFF1DB954)))),
       ])),
@@ -411,38 +407,37 @@ class _EditorScreenState extends State<EditorScreen> {
               child: Container(
                 decoration: _getDecoration(index),
                 clipBehavior: Clip.antiAlias,
-                child: Stack(children: [
-                  Padding(
-                    padding: EdgeInsets.all(10.w),
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Row(children: [
+                child: Padding(
+                  padding: EdgeInsets.all(10.w),
+                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    // Текст
+                    Expanded(
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Text('${index + 1}/${_presentation.slides.length}', style: TextStyle(fontSize: 8, color: dark ? Colors.white38 : Colors.black38)),
-                        if (hasImage) ...[
-                          const Spacer(),
-                          // Картинка статичная, в правом верхнем углу
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: (currentImage!.startsWith('http') || currentImage.startsWith('data:'))
-                                ? Image.network(currentImage, width: cw * 0.3, height: cw * 0.2, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox())
-                                : const SizedBox(),
-                          ),
-                        ],
+                        SizedBox(height: 6.h),
+                        Text(_titleControllers[index].text.isEmpty ? 'Заголовок' : _titleControllers[index].text,
+                            style: TextStyle(fontSize: (usedSize + 4).sp, fontWeight: FontWeight.w700, fontFamily: usedFont, color: dark ? Colors.white : const Color(0xFF1A1A2E)),
+                            maxLines: 2, overflow: TextOverflow.ellipsis),
+                        SizedBox(height: 4.h),
+                        ..._contentControllers[index].take(4).map((c) => Padding(
+                          padding: EdgeInsets.only(bottom: 1.h),
+                          child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                            Padding(padding: EdgeInsets.only(top: usedSize.sp * 0.4, right: 4.w), child: Container(width: 3.w, height: 3.w, decoration: const BoxDecoration(color: Color(0xFF1DB954), shape: BoxShape.circle))),
+                            Expanded(child: Text(c.text.isEmpty ? 'Пункт' : c.text, style: TextStyle(fontSize: usedSize.sp, fontFamily: usedFont, color: dark ? Colors.white70 : const Color(0xFF444444)), maxLines: 3, overflow: TextOverflow.ellipsis)),
+                          ]),
+                        )),
                       ]),
-                      SizedBox(height: 4.h),
-                      Text(_titleControllers[index].text.isEmpty ? 'Заголовок' : _titleControllers[index].text,
-                        style: TextStyle(fontSize: (usedSize + 4).sp, fontWeight: FontWeight.w700, fontFamily: usedFont, color: dark ? Colors.white : const Color(0xFF1A1A2E)),
-                        maxLines: 2, overflow: TextOverflow.ellipsis),
-                      SizedBox(height: 3.h),
-                      ..._contentControllers[index].take(4).map((c) => Padding(
-                        padding: EdgeInsets.only(bottom: 1.h),
-                        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          Padding(padding: EdgeInsets.only(top: usedSize.sp * 0.4, right: 4.w), child: Container(width: 3.w, height: 3.w, decoration: BoxDecoration(color: const Color(0xFF1DB954), shape: BoxShape.circle))),
-                          Expanded(child: Text(c.text.isEmpty ? 'Пункт' : c.text, style: TextStyle(fontSize: usedSize.sp, fontFamily: usedFont, color: dark ? Colors.white70 : const Color(0xFF444444)), maxLines: 3, overflow: TextOverflow.ellipsis)),
-                        ]),
-                      )),
-                    ]),
-                  ),
-                ]),
+                    ),
+                    // Картинка
+                    if (hasImage) ...[
+                      SizedBox(width: 8.w),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: Image.network(currentImage!, width: cw * 0.28, height: cw * 0.19, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox()),
+                      ),
+                    ],
+                  ]),
+                ),
               ),
             ),
             // Редактор
