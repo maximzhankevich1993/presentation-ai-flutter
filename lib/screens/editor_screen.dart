@@ -120,7 +120,7 @@ class _EditorScreenState extends State<EditorScreen> {
   }
 
   void _addContentItem(int i) => setState(() => _contentControllers[i].add(TextEditingController(text: 'Новый пункт')));
-  
+
   void _removeContentItem(int slide, int item) {
     if (_contentControllers[slide].length <= 1) return;
     setState(() { _contentControllers[slide][item].dispose(); _contentControllers[slide].removeAt(item); });
@@ -297,7 +297,6 @@ class _EditorScreenState extends State<EditorScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           elevation: 3,
           child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            // Превью
             AspectRatio(
               aspectRatio: 16 / 9,
               child: LayoutBuilder(builder: (_, constraints) {
@@ -306,7 +305,6 @@ class _EditorScreenState extends State<EditorScreen> {
                   decoration: _getDecoration(),
                   clipBehavior: Clip.antiAlias,
                   child: Stack(children: [
-                    // Текст
                     Padding(
                       padding: EdgeInsets.all(10.w),
                       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -325,7 +323,6 @@ class _EditorScreenState extends State<EditorScreen> {
                         )),
                       ]),
                     ),
-                    // Картинка
                     if (hasImage)
                       Positioned(
                         left: cx * cw * (cw / constraints.maxWidth),
@@ -341,11 +338,17 @@ class _EditorScreenState extends State<EditorScreen> {
                               borderRadius: BorderRadius.circular(6),
                               child: Image.network(_slideImages[index]!, width: imgSize, height: imgSize * 0.65, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox()),
                             ),
-                            // Ползунок размера
                             SizedBox(
                               width: imgSize,
                               child: SliderTheme(
-                                data: SliderThemeData(trackHeight: 3, thumbRadius: 7, overlayRadius: 10, thumbColor: const Color(0xFF1DB954), activeTrackColor: const Color(0xFF1DB954), inactiveTrackColor: Colors.white24),
+                                data: const SliderThemeData(
+                                  trackHeight: 3,
+                                  thumbShape: RoundSliderThumbShape(enabledThumbRadius: 7),
+                                  overlayShape: RoundSliderOverlayShape(overlayRadius: 10),
+                                  thumbColor: Color(0xFF1DB954),
+                                  activeTrackColor: Color(0xFF1DB954),
+                                  inactiveTrackColor: Colors.white24,
+                                ),
                                 child: Slider(
                                   value: _imageSizes[index] ?? 0.3,
                                   min: 0.15, max: 0.5,
@@ -353,7 +356,10 @@ class _EditorScreenState extends State<EditorScreen> {
                                     _imageSizes[index] = v;
                                     final ndx = max(0.0, 1.0 - v);
                                     final ndy = max(0.0, 1.0 - v * aspectRatio);
-                                    _imagePositions[index] = Offset(_imagePositions[index]!.dx.clamp(0.0, ndx), _imagePositions[index]!.dy.clamp(0.0, ndy));
+                                    _imagePositions[index] = Offset(
+                                      (_imagePositions[index]?.dx ?? 0.5).clamp(0.0, ndx),
+                                      (_imagePositions[index]?.dy ?? 0.1).clamp(0.0, ndy),
+                                    );
                                   }),
                                 ),
                               ),
@@ -372,17 +378,26 @@ class _EditorScreenState extends State<EditorScreen> {
                 Row(children: [
                   Container(padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF169C46)]), borderRadius: BorderRadius.circular(4)), child: Text('Слайд ${index + 1}', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 9))),
                   const Spacer(),
-                  _btn(Icons.auto_awesome, () => _improveSlide(index)),
-                  _btn(Icons.copy, () => _duplicateSlide(index)),
-                  _btn(Icons.delete_outline, () => _deleteSlide(index), red: true),
+                  _iconBtn(Icons.auto_awesome, () => _improveSlide(index)),
+                  _iconBtn(Icons.copy, () => _duplicateSlide(index)),
+                  _iconBtn(Icons.delete_outline, () => _deleteSlide(index), red: true),
                 ]),
-                _tf(_titleControllers[index], 'Заголовок', bold: true),
+                TextField(
+                  controller: _titleControllers[index],
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
+                  decoration: const InputDecoration(hintText: 'Заголовок', hintStyle: TextStyle(color: Colors.white24, fontSize: 10), border: InputBorder.none, contentPadding: EdgeInsets.zero, isDense: true),
+                ),
                 ..._contentControllers[index].asMap().entries.map((e) => Row(children: [
                   Padding(padding: EdgeInsets.only(right: 4.w), child: Container(width: 3.w, height: 3.w, decoration: const BoxDecoration(color: Color(0xFF1DB954), shape: BoxShape.circle))),
-                  Expanded(child: _tf(e.value, 'Пункт ${e.key + 1}')),
+                  Expanded(child: TextField(controller: e.value, style: TextStyle(fontSize: 10, color: Colors.white70), decoration: InputDecoration(hintText: 'Пункт ${e.key + 1}', hintStyle: const TextStyle(color: Colors.white12, fontSize: 10), border: InputBorder.none, contentPadding: EdgeInsets.zero, isDense: true))),
                   IconButton(onPressed: () => _removeContentItem(index, e.key), icon: const Icon(Icons.close, size: 10, color: Color(0xFFFF3B30)), padding: EdgeInsets.zero, constraints: const BoxConstraints()),
                 ])),
-                TextButton.icon(onPressed: () => _addContentItem(index), icon: const Icon(Icons.add, size: 10, color: Color(0xFF1DB954)), label: const Text('Пункт', style: TextStyle(color: Color(0xFF1DB954), fontSize: 9)), style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap)),
+                TextButton.icon(
+                  onPressed: () => _addContentItem(index),
+                  icon: const Icon(Icons.add, size: 10, color: Color(0xFF1DB954)),
+                  label: const Text('Пункт', style: TextStyle(color: Color(0xFF1DB954), fontSize: 9)),
+                  style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero, tapTargetSize: MaterialTapTargetSize.shrinkWrap),
+                ),
               ]),
             ),
           ]),
@@ -391,11 +406,6 @@ class _EditorScreenState extends State<EditorScreen> {
     );
   }
 
-  Widget _btn(IconData icon, VoidCallback onTap, {bool red = false}) => IconButton(icon: Icon(icon, size: 14, color: red ? const Color(0xFFFF3B30) : const Color(0xFF1DB954)), onPressed: onTap, padding: EdgeInsets.zero, constraints: const BoxConstraints());
-
-  Widget _tf(TextEditingController ctrl, String hint, {bool bold = false}) => TextField(
-    controller: ctrl,
-    style: TextStyle(fontSize: bold ? 12 : 10, fontWeight: bold ? FontWeight.w600 : FontWeight.normal, color: Colors.white),
-    decoration: InputDecoration(hintText: hint, hintStyle: TextStyle(color: Colors.white24, fontSize: 10), border: InputBorder.none, contentPadding: EdgeInsets.zero, isDense: true),
-  );
+  Widget _iconBtn(IconData icon, VoidCallback onTap, {bool red = false}) =>
+      IconButton(icon: Icon(icon, size: 14, color: red ? const Color(0xFFFF3B30) : const Color(0xFF1DB954)), onPressed: onTap, padding: EdgeInsets.zero, constraints: const BoxConstraints());
 }
