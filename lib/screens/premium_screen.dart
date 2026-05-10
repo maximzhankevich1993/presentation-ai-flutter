@@ -1,7 +1,9 @@
+import 'dart:convert';
+import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 import '../providers/user_provider.dart';
 
 // ═══════════════════════════════════════════════════════════════
@@ -23,12 +25,119 @@ class _T {
   static const goldLight    = Color(0xFFFFD60A);
 }
 
-class PremiumScreen extends StatelessWidget {
+// Фиксированные USD цены
+const Map<String, double> _usdPrices = {
+  'month': 4.99,
+  'half': 29.99,
+  'year': 49.99,
+};
+
+class PremiumScreen extends StatefulWidget {
   const PremiumScreen({super.key});
 
   @override
+  State<PremiumScreen> createState() => _PremiumScreenState();
+}
+
+class _PremiumScreenState extends State<PremiumScreen> {
+  String _currency = 'USD';
+  String _currencySymbol = '\$';
+  double _rate = 1.0;
+  bool _loadingRates = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _detectCurrency();
+  }
+
+  Future<void> _detectCurrency() async {
+    try {
+      // Определяем страну по IP (бесплатный сервис)
+      final response = await http.get(
+        Uri.parse('https://ipapi.co/json/'),
+      ).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final country = data['country_code'] ?? 'US';
+        final currency = data['currency'] ?? 'USD';
+
+        // Валюты стран СНГ
+        final localCurrencies = {
+          'BY': {'code': 'BYN', 'symbol': 'Br', 'rate': 3.25},
+          'RU': {'code': 'RUB', 'symbol': '₽', 'rate': 95.0},
+          'KZ': {'code': 'KZT', 'symbol': '₸', 'rate': 460.0},
+          'UA': {'code': 'UAH', 'symbol': '₴', 'rate': 41.0},
+          'EU': {'code': 'EUR', 'symbol': '€', 'rate': 0.92},
+          'GB': {'code': 'GBP', 'symbol': '£', 'rate': 0.79},
+        };
+
+        if (localCurrencies.containsKey(country)) {
+          final c = localCurrencies[country]!;
+          setState(() {
+            _currency = c['code'] as String;
+            _currencySymbol = c['symbol'] as String;
+            _rate = (c['rate'] as num).toDouble();
+          });
+        } else if (currency != 'USD') {
+          setState(() {
+            _currency = currency;
+            _currencySymbol = _getSymbol(currency);
+            _rate = _getApproxRate(currency);
+          });
+        }
+      }
+    } catch (_) {
+      // Fallback: USD
+    }
+    if (mounted) setState(() => _loadingRates = false);
+  }
+
+  String _getSymbol(String code) {
+    switch (code) {
+      case 'EUR': return '€';
+      case 'RUB': return '₽';
+      case 'BYN': return 'Br';
+      case 'KZT': return '₸';
+      case 'UAH': return '₴';
+      case 'GBP': return '£';
+      default: return '\$';
+    }
+  }
+
+  double _getApproxRate(String code) {
+    switch (code) {
+      case 'EUR': return 0.92;
+      case 'RUB': return 95.0;
+      case 'BYN': return 3.25;
+      case 'KZT': return 460.0;
+      case 'UAH': return 41.0;
+      case 'GBP': return 0.79;
+      default: return 1.0;
+    }
+  }
+
+  String _formatPrice(double usdPrice) {
+    final converted = (usdPrice * _rate).ceil();
+    if (_currency == 'USD' || _currency == 'EUR' || _currency == 'GBP') {
+      return '$_currencySymbol${(usdPrice * _rate).toStringAsFixed(2)}';
+    }
+    return '$converted $_currencySymbol';
+  }
+
+  String _periodPrice(double usdPrice, String period) {
+    final monthlyEquivalent = usdPrice / 12;
+    final converted = (monthlyEquivalent * _rate).ceil();
+    if (_currency == 'USD' || _currency == 'EUR' || _currency == 'GBP') {
+      return '$_currencySymbol${(monthlyEquivalent).toStringAsFixed(2)}/мес';
+    }
+    return '$converted $_currencySymbol/мес';
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isPremium = Provider.of<UserProvider>(context).isPremium;
+    final isPremium = Provider.of<UserProvider>(context, listen: false).isPremium;
 
     return Scaffold(
       backgroundColor: _T.bgBase,
@@ -62,35 +171,28 @@ class PremiumScreen extends StatelessWidget {
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 500),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            // ── Crown ──────────────────────────────────────────
+            // Crown
             Container(
-              width: 72,
-              height: 72,
+              width: 72, height: 72,
               decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [_T.goldLight, _T.gold],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                gradient: const LinearGradient(colors: [_T.goldLight, _T.gold], begin: Alignment.topLeft, end: Alignment.bottomRight),
                 borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(color: _T.gold.withOpacity(0.35), blurRadius: 24, offset: const Offset(0, 10)),
-                ],
+                boxShadow: [BoxShadow(color: _T.gold.withOpacity(0.35), blurRadius: 24, offset: const Offset(0, 10))],
               ),
               child: const Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 36),
             ),
             const SizedBox(height: 20),
 
-            // ── Title ──────────────────────────────────────────
             const Text('Разблокируй всё',
               style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w800, fontSize: 26, letterSpacing: -0.5)),
             const SizedBox(height: 6),
-            const Text('Безлимитные презентации, все функции и фоны',
-              style: TextStyle(color: _T.txtSecondary, fontSize: 13, height: 1.4),
-              textAlign: TextAlign.center),
+            Text(
+              _loadingRates ? 'Загрузка...' : 'Цены в $_currency',
+              style: const TextStyle(color: _T.txtSecondary, fontSize: 13),
+            ),
             const SizedBox(height: 28),
 
-            // ── Comparison Table ───────────────────────────────
+            // Comparison Table
             Container(
               decoration: BoxDecoration(
                 color: _T.bgSurface,
@@ -98,7 +200,6 @@ class PremiumScreen extends StatelessWidget {
                 border: Border.all(color: _T.border),
               ),
               child: Column(children: [
-                // Header
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
@@ -115,7 +216,6 @@ class PremiumScreen extends StatelessWidget {
                     ])),
                   ]),
                 ),
-
                 _ComparisonRow('Презентаций', '5', '∞'),
                 _ComparisonRow('Слайдов', '10', '50'),
                 _ComparisonRow('Фоны', '8', '16'),
@@ -129,10 +229,10 @@ class PremiumScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // ── Plans ──────────────────────────────────────────
+            // Plans
             _PlanCard(
               name: 'Месяц',
-              price: '\$4.99',
+              price: _formatPrice(_usdPrices['month']!),
               period: '/мес',
               popular: false,
               onTap: () {},
@@ -140,8 +240,8 @@ class PremiumScreen extends StatelessWidget {
             const SizedBox(height: 10),
             _PlanCard(
               name: 'Полгода',
-              price: '\$3.99',
-              period: '/мес',
+              price: _formatPrice(_usdPrices['half']!),
+              period: _periodPrice(_usdPrices['half']!, '6m'),
               popular: true,
               badge: 'ЛУЧШИЙ ВЫБОР',
               onTap: () {},
@@ -149,16 +249,14 @@ class PremiumScreen extends StatelessWidget {
             const SizedBox(height: 10),
             _PlanCard(
               name: 'Год',
-              price: '\$2.99',
-              period: '/мес',
+              price: _formatPrice(_usdPrices['year']!),
+              period: _periodPrice(_usdPrices['year']!, '12m'),
               popular: false,
-              badge: 'ЭКОНОМИЯ 40%',
+              badge: 'ЭКОНОМИЯ 33%',
               onTap: () {},
             ),
 
             const SizedBox(height: 20),
-
-            // ── Trial ──────────────────────────────────────────
             MouseRegion(
               cursor: SystemMouseCursors.click,
               child: GestureDetector(
@@ -179,8 +277,6 @@ class PremiumScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-
-            // ── Secure ─────────────────────────────────────────
             Row(mainAxisAlignment: MainAxisAlignment.center, children: [
               const Icon(Icons.lock_rounded, color: _T.txtMuted, size: 11),
               const SizedBox(width: 4),
@@ -274,12 +370,10 @@ class _PlanCard extends StatelessWidget {
                   ),
                 Text(name, style: const TextStyle(color: _T.txtPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
-                const Text('Полный доступ', style: TextStyle(color: _T.txtSecondary, fontSize: 11)),
+                Text(period, style: const TextStyle(color: _T.txtSecondary, fontSize: 11)),
               ]),
             ),
-            Text(price, style: const TextStyle(color: _T.accentLight, fontSize: 26, fontWeight: FontWeight.w900)),
-            const SizedBox(width: 2),
-            Text(period, style: const TextStyle(color: _T.txtSecondary, fontSize: 11)),
+            Text(price, style: const TextStyle(color: _T.accentLight, fontSize: 22, fontWeight: FontWeight.w900)),
             const SizedBox(width: 8),
             AnimatedContainer(
               duration: const Duration(milliseconds: 150),
