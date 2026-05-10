@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
 import 'premium_screen.dart';
-import 'login_screen.dart';
+import 'home_screen.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // DESIGN TOKENS
@@ -303,7 +303,7 @@ class SettingsScreen extends StatelessWidget {
 
                       Navigator.pushAndRemoveUntil(
                         context,
-                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        MaterialPageRoute(builder: (_) => const HomeScreen()),
                         (route) => false,
                       );
                     },
