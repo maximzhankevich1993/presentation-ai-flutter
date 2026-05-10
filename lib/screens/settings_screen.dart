@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
+import '../services/api_service.dart';
 import 'premium_screen.dart';
+import 'login_screen.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // DESIGN TOKENS
@@ -107,7 +109,7 @@ class SettingsScreen extends StatelessWidget {
               _ThemeTile(
                 icon: Icons.dark_mode_rounded,
                 title: 'Тёмная',
-                selected: true, // Always dark for this design
+                selected: true,
                 onTap: () {},
               ),
               if (!isPremium)
@@ -275,7 +277,8 @@ class SettingsScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: _T.border),
                       ),
-                      child: const Center(child: Text('Отмена', style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w600)))),
+                      child: const Center(child: Text('Отмена', style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w600))),
+                    ),
                   ),
                 ),
               ),
@@ -284,9 +287,25 @@ class SettingsScreen extends StatelessWidget {
                 child: MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
-                    onTap: () {
+                    onTap: () async {
                       Navigator.pop(ctx);
-                      // TODO: actual logout
+
+                      final api = ApiService();
+                      await api.logout();
+
+                      if (!context.mounted) return;
+
+                      final up = Provider.of<UserProvider>(context, listen: false);
+                      await up.setUserEmail('');
+                      await up.setUserName('');
+
+                      if (!context.mounted) return;
+
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        (route) => false,
+                      );
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -294,7 +313,8 @@ class SettingsScreen extends StatelessWidget {
                         color: _T.danger,
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Center(child: Text('Выйти', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)))),
+                      child: const Center(child: Text('Выйти', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
+                    ),
                   ),
                 ),
               ),
@@ -452,7 +472,7 @@ class _ThemeTileState extends State<_ThemeTile> {
               if (widget.selected)
                 Container(
                   width: 22, height: 22,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: _T.accent,
                     shape: BoxShape.circle,
                   ),
