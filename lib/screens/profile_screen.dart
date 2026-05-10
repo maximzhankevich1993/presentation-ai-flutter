@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
+import '../services/api_service.dart';
 import 'login_screen.dart';
 import 'premium_screen.dart';
 import 'settings_screen.dart';
+import 'home_screen.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // DESIGN TOKENS
@@ -54,12 +56,97 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _logout() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: _T.bgSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              width: 48, height: 48,
+              decoration: BoxDecoration(
+                color: _T.danger.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.logout_rounded, color: _T.danger, size: 24),
+            ),
+            const SizedBox(height: 16),
+            const Text('Выйти?',
+              style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w700, fontSize: 18)),
+            const SizedBox(height: 6),
+            const Text('Вы уверены что хотите выйти из аккаунта?',
+              style: TextStyle(color: _T.txtSecondary, fontSize: 13),
+              textAlign: TextAlign.center),
+            const SizedBox(height: 20),
+            Row(children: [
+              Expanded(
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(ctx, false),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _T.bgCard,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: _T.border),
+                      ),
+                      child: const Center(child: Text('Отмена', style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w600))),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(ctx, true),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: _T.danger,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Center(child: Text('Выйти', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
+                    ),
+                  ),
+                ),
+              ),
+            ]),
+          ]),
+        ),
+      ),
+    );
+
+    if (confirmed == true) {
+      final api = ApiService();
+      await api.logout();
+
+      if (!mounted) return;
+
+      final up = Provider.of<UserProvider>(context, listen: false);
+      await up.setUserEmail('');
+      await up.setUserName('');
+
+      if (!mounted) return;
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        (route) => false,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final up = Provider.of<UserProvider>(context);
     final isLoggedIn = up.userEmail != null && up.userEmail!.isNotEmpty;
 
-    // Заглушка пока перебрасывает на логин
     if (!isLoggedIn) {
       return const Scaffold(
         backgroundColor: _T.bgBase,
@@ -219,7 +306,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               if (!isPremium) ...[
                 const SizedBox(height: 24),
-                // ── Upgrade ──────────────────────────────────────
                 MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
@@ -255,6 +341,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ],
+
+              const SizedBox(height: 24),
+
+              // ── Выйти ─────────────────────────────────────────
+              _SectionLabel(''),
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: _logout,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: _T.danger.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: _T.danger.withOpacity(0.2)),
+                    ),
+                    child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(Icons.logout_rounded, color: _T.danger, size: 16),
+                      SizedBox(width: 8),
+                      Text('Выйти из профиля',
+                        style: TextStyle(color: _T.danger, fontWeight: FontWeight.w600, fontSize: 13)),
+                    ]),
+                  ),
+                ),
+              ),
 
               const SizedBox(height: 24),
             ]),
