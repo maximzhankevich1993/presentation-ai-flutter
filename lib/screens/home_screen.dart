@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:html' as html;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import 'loading_screen.dart';
@@ -70,6 +72,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   bool _isFocused = false;
   String? _logoUrl;
 
+  // Валюта
+  String _currency = 'USD';
+  String _currencySymbol = '\$';
+  double _rate = 1.0;
+  bool _loadingRates = true;
+
   final List<String> _examples = ['ИИ', 'Бизнес', 'Экология', 'Космос', 'IT', 'Маркетинг'];
 
   String get _countryCode => PlatformDispatcher.instance.locale.countryCode ?? 'RU';
@@ -80,6 +88,42 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500))..repeat(reverse: true);
     _pulseAnimation = Tween<double>(begin: 1.0, end: 1.03).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
     _focusNode.addListener(() => setState(() => _isFocused = _focusNode.hasFocus));
+    _detectCurrency();
+  }
+
+  Future<void> _detectCurrency() async {
+    try {
+      final response = await http.get(Uri.parse('https://ipapi.co/json/')).timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final country = data['country_code'] ?? 'US';
+        final localCurrencies = {
+          'BY': {'code': 'BYN', 'symbol': 'Br', 'rate': 3.25},
+          'RU': {'code': 'RUB', 'symbol': '₽', 'rate': 95.0},
+          'KZ': {'code': 'KZT', 'symbol': '₸', 'rate': 460.0},
+          'UA': {'code': 'UAH', 'symbol': '₴', 'rate': 41.0},
+          'EU': {'code': 'EUR', 'symbol': '€', 'rate': 0.92},
+          'GB': {'code': 'GBP', 'symbol': '£', 'rate': 0.79},
+        };
+        if (localCurrencies.containsKey(country)) {
+          final c = localCurrencies[country]!;
+          setState(() {
+            _currency = c['code'] as String;
+            _currencySymbol = c['symbol'] as String;
+            _rate = (c['rate'] as num).toDouble();
+          });
+        }
+      }
+    } catch (_) {}
+    if (mounted) setState(() => _loadingRates = false);
+  }
+
+  String _formatPrice(double usd) {
+    final converted = usd * _rate;
+    if (_currency == 'USD' || _currency == 'EUR' || _currency == 'GBP') {
+      return '$_currencySymbol${converted.toStringAsFixed(2)}';
+    }
+    return '${converted.ceil()} $_currencySymbol';
   }
 
   @override
@@ -92,23 +136,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   void _push(Widget screen) => Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
 
-  Future<void> _generate({String? overrideTopic}) async {
+  // ГЛАВНОЕ ИСПРАВЛЕНИЕ: прямая генерация без проверок
+  void _generate({String? overrideTopic}) {
     final topic = (overrideTopic ?? _topicController.text).trim();
     if (topic.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: const Text('Введите тему презентации'), backgroundColor: _T.gold.withOpacity(0.9), behavior: SnackBarBehavior.floating),
+        SnackBar(content: const Text('Введите тему презентации'), backgroundColor: _T.gold.withOpacity(0.9), behavior: SnackBarBehavior.floating, margin: const EdgeInsets.fromLTRB(16, 0, 16, 24)),
       );
       return;
     }
 
-    final up = Provider.of<UserProvider>(context, listen: false);
-    if (!up.canGenerate) {
-      _push(const PremiumScreen());
-      return;
-    }
+    // Сохраняем в историю
+    try {
+      Provider.of<HistoryProvider>(context, listen: false).add(topic, slideCount: _maxSlides);
+    } catch (_) {}
 
-    Provider.of<HistoryProvider>(context, listen: false).add(topic, slideCount: _maxSlides);
-    _push(LoadingScreen(topic: topic));
+    // Переходим на экран загрузки
+    Navigator.push(context, MaterialPageRoute(builder: (_) => LoadingScreen(topic: topic)));
   }
 
   void _showTextInput() {
@@ -130,10 +174,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               maxLines: 6,
               style: const TextStyle(fontSize: 13, color: _T.txtPrimary),
               decoration: InputDecoration(
-                hintText: 'Ваш текст...',
-                hintStyle: const TextStyle(color: _T.txtMuted),
-                filled: true,
-                fillColor: _T.bgCard,
+                hintText: 'Ваш текст...', hintStyle: const TextStyle(color: _T.txtMuted),
+                filled: true, fillColor: _T.bgCard,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _T.border)),
                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _T.accent)),
               ),
@@ -141,38 +183,24 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             const SizedBox(height: 20),
             Row(children: [
               Expanded(
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: _T.border)),
-                      child: const Center(child: Text('Отмена', style: TextStyle(color: _T.txtSecondary, fontWeight: FontWeight.w600))),
-                    ),
-                  ),
-                ),
+                child: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: Container(padding: const EdgeInsets.symmetric(vertical: 12), decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: _T.border)), child: const Center(child: Text('Отмена', style: TextStyle(color: _T.txtSecondary, fontWeight: FontWeight.w600)))),
+                )),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      final text = ctrl.text.trim();
-                      if (text.isNotEmpty) {
-                        final short = text.length > 50 ? '${text.substring(0, 50)}...' : text;
-                        _generate(overrideTopic: short);
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(12)),
-                      child: const Center(child: Text('Создать', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
-                    ),
-                  ),
-                ),
+                child: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    final text = ctrl.text.trim();
+                    if (text.isNotEmpty) {
+                      final short = text.length > 50 ? '${text.substring(0, 50)}...' : text;
+                      _generate(overrideTopic: short);
+                    }
+                  },
+                  child: Container(padding: const EdgeInsets.symmetric(vertical: 12), decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(12)), child: const Center(child: Text('Создать', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)))),
+                )),
               ),
             ]),
           ]),
@@ -181,7 +209,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  void _uploadLogoAndGenerate() {
+  void _uploadLogo() {
     final input = html.FileUploadInputElement()..accept = 'image/*';
     input.click();
     input.onChange.listen((e) {
@@ -198,10 +226,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               const SizedBox(width: 10),
               const Text('Логотип загружен! Введите тему и нажмите Создать', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
             ]),
-            backgroundColor: _T.accent.withOpacity(0.9),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            backgroundColor: _T.accent.withOpacity(0.9), behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           ),
         );
       });
@@ -225,10 +251,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           else
             ConstrainedBox(
               constraints: BoxConstraints(maxHeight: 320.h),
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: records.length,
-                separatorBuilder: (_, __) => const Divider(color: _T.border, height: 1),
+              child: ListView.separated(shrinkWrap: true, itemCount: records.length, separatorBuilder: (_, __) => const Divider(color: _T.border, height: 1),
                 itemBuilder: (_, i) {
                   final r = records[i];
                   return ListTile(
@@ -236,17 +259,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     leading: Container(width: 36, height: 36, decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.slideshow_outlined, color: _T.accent, size: 18)),
                     title: Text(r.topic, style: const TextStyle(color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
                     subtitle: Text('${r.slideCount} слайдов', style: const TextStyle(color: _T.txtMuted, fontSize: 11)),
-                    trailing: MouseRegion(
-                      cursor: SystemMouseCursors.click,
-                      child: GestureDetector(
-                        onTap: () { Navigator.pop(ctx); _generate(overrideTopic: r.topic); },
-                        child: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
-                          decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(8)),
-                          child: const Text('Повторить', style: TextStyle(color: _T.accent, fontSize: 11, fontWeight: FontWeight.w600)),
-                        ),
-                      ),
-                    ),
+                    trailing: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
+                      onTap: () { Navigator.pop(ctx); _generate(overrideTopic: r.topic); },
+                      child: Container(padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h), decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(8)), child: const Text('Повторить', style: TextStyle(color: _T.accent, fontSize: 11, fontWeight: FontWeight.w600))),
+                    )),
                   );
                 },
               ),
@@ -285,49 +301,33 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             constraints: const BoxConstraints(maxWidth: 700),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               // VIP Banner
-              MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: GestureDetector(
-                  onTap: () => _push(const VipScreen()),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(color: _T.goldLight.withOpacity(0.12), borderRadius: BorderRadius.circular(24), border: Border.all(color: _T.goldLight.withOpacity(0.35))),
-                    child: const Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.workspace_premium, color: _T.goldLight, size: 15),
-                      SizedBox(width: 6),
-                      Text('Первые 50 — Premium навсегда!', style: TextStyle(color: _T.goldLight, fontWeight: FontWeight.w700, fontSize: 11)),
-                    ]),
-                  ),
+              MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
+                onTap: () => _push(const VipScreen()),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(color: _T.goldLight.withOpacity(0.12), borderRadius: BorderRadius.circular(24), border: Border.all(color: _T.goldLight.withOpacity(0.35))),
+                  child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                    Icon(Icons.workspace_premium, color: _T.goldLight, size: 15), SizedBox(width: 6),
+                    Text('Первые 50 — Premium навсегда!', style: TextStyle(color: _T.goldLight, fontWeight: FontWeight.w700, fontSize: 11)),
+                  ]),
                 ),
-              ),
+              )),
               const SizedBox(height: 32),
 
-              // Hero
               const Text('Создай презентацию', style: TextStyle(color: _T.txtPrimary, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.8)),
               const SizedBox(height: 6),
               const Text('с помощью ИИ за 1 минуту', style: TextStyle(color: _T.txtSecondary, fontSize: 14)),
               const SizedBox(height: 28),
 
-              // Input + Generate
+              // Input
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 width: double.infinity,
-                decoration: BoxDecoration(
-                  color: _T.bgSurface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: _isFocused ? _T.accent.withOpacity(0.6) : _T.border, width: _isFocused ? 1.5 : 1),
-                ),
+                decoration: BoxDecoration(color: _T.bgSurface, borderRadius: BorderRadius.circular(16), border: Border.all(color: _isFocused ? _T.accent.withOpacity(0.6) : _T.border, width: _isFocused ? 1.5 : 1)),
                 child: TextField(
-                  controller: _topicController,
-                  focusNode: _focusNode,
-                  style: const TextStyle(fontSize: 14, color: _T.txtPrimary),
-                  textAlign: TextAlign.center,
-                  decoration: const InputDecoration(
-                    hintText: 'О чём презентация?',
-                    hintStyle: TextStyle(color: _T.txtMuted, fontSize: 14),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  ),
+                  controller: _topicController, focusNode: _focusNode,
+                  style: const TextStyle(fontSize: 14, color: _T.txtPrimary), textAlign: TextAlign.center,
+                  decoration: const InputDecoration(hintText: 'О чём презентация?', hintStyle: TextStyle(color: _T.txtMuted, fontSize: 14), border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14)),
                   onSubmitted: (_) => _generate(),
                 ),
               ),
@@ -335,8 +335,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
               // Slider
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                width: double.infinity, padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(color: _T.bgSurface, borderRadius: BorderRadius.circular(14), border: Border.all(color: _T.border)),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -344,10 +343,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3), decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(8)), child: Text('$_maxSlides', style: const TextStyle(color: _T.accent, fontWeight: FontWeight.w700, fontSize: 12))),
                   ]),
                   const SizedBox(height: 4),
-                  SliderTheme(
-                    data: SliderThemeData(activeTrackColor: _T.accent, inactiveTrackColor: _T.border, thumbColor: _T.accent, overlayColor: _T.accentDim, trackHeight: 3, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7)),
-                    child: Slider(value: _maxSlides.toDouble(), min: 3, max: 10, divisions: 7, onChanged: (v) => setState(() => _maxSlides = v.round())),
-                  ),
+                  SliderTheme(data: SliderThemeData(activeTrackColor: _T.accent, inactiveTrackColor: _T.border, thumbColor: _T.accent, overlayColor: _T.accentDim, trackHeight: 3, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7)),
+                    child: Slider(value: _maxSlides.toDouble(), min: 3, max: 10, divisions: 7, onChanged: (v) => setState(() => _maxSlides = v.round()))),
                 ]),
               ),
               const SizedBox(height: 10),
@@ -355,25 +352,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               // Generate button
               ScaleTransition(
                 scale: _pulseAnimation,
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: _generate,
-                    child: Container(
-                      width: double.infinity, height: 48,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [Color(0xFF169C46), _T.accent, _T.accentLight]),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [BoxShadow(color: _T.accent.withOpacity(0.25), blurRadius: 16, offset: const Offset(0, 4))],
-                      ),
-                      child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                        Icon(Icons.auto_awesome, color: Colors.white, size: 16),
-                        SizedBox(width: 8),
-                        Text('Создать', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
-                      ]),
-                    ),
+                child: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
+                  onTap: _generate,
+                  child: Container(
+                    width: double.infinity, height: 48,
+                    decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF169C46), _T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: _T.accent.withOpacity(0.25), blurRadius: 16, offset: const Offset(0, 4))]),
+                    child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(Icons.auto_awesome, color: Colors.white, size: 16), SizedBox(width: 8),
+                      Text('Создать', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                    ]),
                   ),
-                ),
+                )),
               ),
               const SizedBox(height: 16),
 
@@ -381,22 +370,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.center,
                 children: _examples.map((e) {
                   final selected = _topicController.text == e;
-                  return MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: GestureDetector(
-                      onTap: () => setState(() => _topicController.text = e),
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                        decoration: BoxDecoration(
-                          color: selected ? _T.accentDim : _T.bgSurface,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(color: selected ? _T.accent.withOpacity(0.5) : _T.border),
-                        ),
-                        child: Text(e, style: TextStyle(fontSize: 12, color: selected ? _T.accent : _T.txtSecondary, fontWeight: selected ? FontWeight.w600 : FontWeight.w400)),
-                      ),
-                    ),
-                  );
+                  return MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
+                    onTap: () => setState(() => _topicController.text = e),
+                    child: AnimatedContainer(duration: const Duration(milliseconds: 150), padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7), decoration: BoxDecoration(color: selected ? _T.accentDim : _T.bgSurface, borderRadius: BorderRadius.circular(20), border: Border.all(color: selected ? _T.accent.withOpacity(0.5) : _T.border)), child: Text(e, style: TextStyle(fontSize: 12, color: selected ? _T.accent : _T.txtSecondary, fontWeight: selected ? FontWeight.w600 : FontWeight.w400))),
+                  ));
                 }).toList(),
               ),
               const SizedBox(height: 16),
@@ -405,19 +382,21 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 _ExtraBtn(Icons.article_outlined, 'Из текста', _showTextInput),
                 const SizedBox(width: 10),
-                _ExtraBtn(Icons.image_outlined, 'Из логотипа', _uploadLogoAndGenerate),
+                _ExtraBtn(Icons.image_outlined, 'Из логотипа', _uploadLogo),
               ]),
+              if (_logoUrl != null) ...[
+                const SizedBox(height: 12),
+                Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: _T.bgSurface, borderRadius: BorderRadius.circular(12), border: Border.all(color: _T.border)), child: Row(children: [ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(_logoUrl!, width: 40, height: 40, fit: BoxFit.cover)), const SizedBox(width: 12), const Text('Логотип загружен', style: TextStyle(color: _T.accentLight, fontSize: 12, fontWeight: FontWeight.w500))])),
+              ],
               const SizedBox(height: 20),
 
               // Counter
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                width: double.infinity, padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 decoration: BoxDecoration(color: _T.bgSurface, borderRadius: BorderRadius.circular(14), border: Border.all(color: _T.border)),
                 child: Column(children: [
                   Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    const Icon(Icons.bolt, color: _T.accent, size: 14),
-                    const SizedBox(width: 4),
+                    const Icon(Icons.bolt, color: _T.accent, size: 14), const SizedBox(width: 4),
                     const Text('Осталось генераций: ', style: TextStyle(color: _T.txtSecondary, fontSize: 11)),
                     Text('$left из 5', style: const TextStyle(color: _T.accent, fontWeight: FontWeight.w700, fontSize: 12)),
                   ]),
@@ -430,14 +409,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               // ── ТАРИФЫ ───────────────────────────────────────
               const Text('Выберите план', style: TextStyle(color: _T.txtPrimary, fontSize: 20, fontWeight: FontWeight.w800)),
               const SizedBox(height: 4),
-              const Text('Начните бесплатно, обновитесь когда захотите', style: TextStyle(color: _T.txtSecondary, fontSize: 12)),
+              Text(_loadingRates ? 'Загрузка...' : 'Цены в $_currency', style: const TextStyle(color: _T.txtSecondary, fontSize: 12)),
               const SizedBox(height: 20),
               Row(children: [
-                Expanded(child: _TariffCard(title: 'Бесплатно', price: '\$0', period: 'навсегда', features: ['5 генераций', '10 слайдов', '8 фонов', 'Базовый экспорт'], popular: false, onTap: () {})),
+                Expanded(child: _TariffCard(title: 'Бесплатно', price: _formatPrice(0), period: '', features: ['5 генераций', '10 слайдов', '8 фонов', 'Базовый экспорт'], popular: false, onTap: () {})),
                 const SizedBox(width: 12),
-                Expanded(child: _TariffCard(title: 'Premium', price: '\$4.99', period: '/мес', features: ['∞ генераций', '50 слайдов', '16 фонов', 'PDF без знака', 'AI-улучшение', 'Свои картинки'], popular: true, onTap: () => _push(const PremiumScreen()))),
+                Expanded(child: _TariffCard(title: 'Premium', price: _formatPrice(4.99), period: '/мес', features: ['∞ генераций', '50 слайдов', '16 фонов', 'PDF без знака', 'AI-улучшение', 'Свои картинки'], popular: true, onTap: () => _push(const PremiumScreen()))),
                 const SizedBox(width: 12),
-                Expanded(child: _TariffCard(title: 'VIP', price: '\$9.99', period: '/мес', features: ['Всё из Premium', 'Бренд-кит', 'Командный доступ', 'Приоритетная поддержка', 'Эксклюзивные фоны'], popular: false, onTap: () => _push(const VipScreen()))),
+                Expanded(child: _TariffCard(title: 'VIP', price: _formatPrice(9.99), period: '/мес', features: ['Всё из Premium', 'Бренд-кит', 'Командный доступ', 'Приоритетная поддержка', 'Эксклюзивные фоны'], popular: false, onTap: () => _push(const VipScreen()))),
               ]),
               const SizedBox(height: 28),
 
@@ -455,18 +434,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ]),
               ),
               const SizedBox(height: 28),
-
-              // Logo preview
-              if (_logoUrl != null)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(color: _T.bgSurface, borderRadius: BorderRadius.circular(12), border: Border.all(color: _T.border)),
-                  child: Row(children: [
-                    ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(_logoUrl!, width: 40, height: 40, fit: BoxFit.cover)),
-                    const SizedBox(width: 12),
-                    const Text('Логотип загружен', style: TextStyle(color: _T.accentLight, fontSize: 12, fontWeight: FontWeight.w500)),
-                  ]),
-                ),
             ]),
           ),
         ),
@@ -505,28 +472,15 @@ class _TariffCard extends StatelessWidget {
           ),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             if (popular)
-              Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(5)),
-                child: const Text('ПОПУЛЯРНЫЙ', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
-              ),
+              Container(margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(5)), child: const Text('ПОПУЛЯРНЫЙ', style: TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.5))),
             Text(title, style: const TextStyle(color: _T.txtPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
             Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text(price, style: const TextStyle(color: _T.accentLight, fontSize: 24, fontWeight: FontWeight.w900)),
-              const SizedBox(width: 2),
-              Padding(padding: const EdgeInsets.only(bottom: 4), child: Text(period, style: const TextStyle(color: _T.txtSecondary, fontSize: 11))),
+              Text(price == '\$0.00' || price == '0 Br' || price == '0 ₽' ? 'Бесплатно' : price, style: const TextStyle(color: _T.accentLight, fontSize: 24, fontWeight: FontWeight.w900)),
+              if (period.isNotEmpty) ...[const SizedBox(width: 2), Padding(padding: const EdgeInsets.only(bottom: 4), child: Text(period, style: const TextStyle(color: _T.txtSecondary, fontSize: 11)))],
             ]),
             const SizedBox(height: 12),
-            ...features.map((f) => Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: Row(children: [
-                const Icon(Icons.check_rounded, color: _T.accent, size: 14),
-                const SizedBox(width: 6),
-                Expanded(child: Text(f, style: const TextStyle(color: _T.txtSecondary, fontSize: 11))),
-              ]),
-            )),
+            ...features.map((f) => Padding(padding: const EdgeInsets.only(bottom: 6), child: Row(children: [const Icon(Icons.check_rounded, color: _T.accent, size: 14), const SizedBox(width: 6), Expanded(child: Text(f, style: const TextStyle(color: _T.txtSecondary, fontSize: 11)))]))),
           ]),
         ),
       ),
@@ -542,38 +496,23 @@ class _AppBarBtn extends StatefulWidget {
   final Color color;
   final VoidCallback onTap;
   final String tooltip;
-
   const _AppBarBtn(this.icon, this.color, this.onTap, {required this.tooltip});
-
   @override
   State<_AppBarBtn> createState() => _AppBarBtnState();
 }
 
 class _AppBarBtnState extends State<_AppBarBtn> {
   bool _hovered = false;
-
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: Tooltip(
-        message: widget.tooltip,
-        child: GestureDetector(
-          onTap: widget.onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 120),
-            width: 34, height: 34,
-            margin: const EdgeInsets.symmetric(horizontal: 2),
-            decoration: BoxDecoration(
-              color: _hovered ? _T.bgHover : Colors.white.withOpacity(0.04),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(widget.icon, color: widget.color, size: 17),
-          ),
-        ),
-      ),
+      child: Tooltip(message: widget.tooltip, child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(duration: const Duration(milliseconds: 120), width: 34, height: 34, margin: const EdgeInsets.symmetric(horizontal: 2), decoration: BoxDecoration(color: _hovered ? _T.bgHover : Colors.white.withOpacity(0.04), borderRadius: BorderRadius.circular(10)), child: Icon(widget.icon, color: widget.color, size: 17)),
+      )),
     );
   }
 }
@@ -582,26 +521,13 @@ class _ExtraBtn extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-
   const _ExtraBtn(this.icon, this.label, this.onTap);
-
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-          decoration: BoxDecoration(color: _T.bgSurface, borderRadius: BorderRadius.circular(14), border: Border.all(color: _T.border)),
-          child: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, size: 16, color: _T.txtSecondary),
-            const SizedBox(width: 7),
-            Text(label, style: const TextStyle(fontSize: 12, color: _T.txtSecondary, fontWeight: FontWeight.w500)),
-          ]),
-        ),
-      ),
-    );
+    return MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
+      onTap: onTap,
+      child: Container(padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12), decoration: BoxDecoration(color: _T.bgSurface, borderRadius: BorderRadius.circular(14), border: Border.all(color: _T.border)), child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon, size: 16, color: _T.txtSecondary), const SizedBox(width: 7), Text(label, style: const TextStyle(fontSize: 12, color: _T.txtSecondary, fontWeight: FontWeight.w500))])),
+    ));
   }
 }
 
@@ -609,24 +535,12 @@ class _NavItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final VoidCallback onTap;
-
   const _NavItem(this.icon, this.label, this.onTap);
-
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, size: 20, color: _T.txtSecondary),
-            const SizedBox(height: 4),
-            Text(label, style: const TextStyle(fontSize: 9, color: _T.txtSecondary, fontWeight: FontWeight.w500)),
-          ]),
-        ),
-      ),
-    );
+    return MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(
+      onTap: onTap,
+      child: Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(icon, size: 20, color: _T.txtSecondary), const SizedBox(height: 4), Text(label, style: const TextStyle(fontSize: 9, color: _T.txtSecondary, fontWeight: FontWeight.w500))])),
+    ));
   }
 }
