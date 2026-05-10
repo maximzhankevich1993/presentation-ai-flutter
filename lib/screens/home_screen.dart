@@ -1,5 +1,7 @@
+import 'dart:html' as html;
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
@@ -15,84 +17,69 @@ import 'vip_screen.dart';
 import 'login_screen.dart';
 import 'quiz_screen.dart';
 
-// ─── Модель одной записи истории ─────────────────────────────────────────────
-class GenerationRecord {
-  final String topic;
-  final int slideCount;
-  final DateTime createdAt;
-
-  const GenerationRecord({
-    required this.topic,
-    required this.slideCount,
-    required this.createdAt,
-  });
+// ═══════════════════════════════════════════════════════════════
+// DESIGN TOKENS
+// ═══════════════════════════════════════════════════════════════
+class _T {
+  static const bgBase    = Color(0xFF121212);
+  static const bgSurface = Color(0xFF1A1A1A);
+  static const bgCard    = Color(0xFF1E1E1E);
+  static const bgHover   = Color(0xFF252525);
+  static const border    = Color(0xFF2A2A2A);
+  static const txtPrimary   = Colors.white;
+  static const txtSecondary = Color(0xFF9A9A9A);
+  static const txtMuted     = Color(0xFF4A4A4A);
+  static const accent       = Color(0xFF1DB954);
+  static const accentLight  = Color(0xFF1ED760);
+  static const accentDim    = Color(0xFF1DB95420);
+  static const danger       = Color(0xFFFF3B30);
+  static const gold         = Color(0xFFFFD700);
+  static const goldLight    = Color(0xFFFFD60A);
 }
 
-// ─── ChangeNotifier для истории генераций ────────────────────────────────────
-// Зарегистрируйте его в MultiProvider на уровне MaterialApp:
-//   ChangeNotifierProvider(create: (_) => HistoryProvider()),
 class HistoryProvider extends ChangeNotifier {
   final List<GenerationRecord> _records = [];
-
   List<GenerationRecord> get records => List.unmodifiable(_records);
 
   void add(String topic, {int slideCount = 5}) {
-    _records.insert(
-      0,
-      GenerationRecord(
-        topic: topic,
-        slideCount: slideCount,
-        createdAt: DateTime.now(),
-      ),
-    );
+    _records.insert(0, GenerationRecord(topic: topic, slideCount: slideCount, createdAt: DateTime.now()));
     if (_records.length > 20) _records.removeLast();
     notifyListeners();
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// HomeScreen
-// ─────────────────────────────────────────────────────────────────────────────
+class GenerationRecord {
+  final String topic;
+  final int slideCount;
+  final DateTime createdAt;
+  const GenerationRecord({required this.topic, required this.slideCount, required this.createdAt});
+}
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
-
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>
-    with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   final _topicController = TextEditingController();
   final FocusNode _focusNode = FocusNode();
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
-
   int _maxSlides = 5;
   bool _isFocused = false;
+  String? _logoUrl;
 
-  final List<String> _examples = ['ИИ', 'Бизнес', 'Экология', 'Космос', 'IT'];
+  final List<String> _examples = ['ИИ', 'Бизнес', 'Экология', 'Космос', 'IT', 'Маркетинг'];
 
-  // FIX: безопасный substring — не падает если строка короче max
-  static String _safeSubstring(String s, int max) =>
-      s.substring(0, s.length.clamp(0, max));
-
-  // FIX: countryCode из локали устройства вместо хардкода 'RU'
-  String get _countryCode =>
-      PlatformDispatcher.instance.locale.countryCode ?? 'RU';
+  String get _countryCode => PlatformDispatcher.instance.locale.countryCode ?? 'RU';
 
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1500),
-    )..repeat(reverse: true);
-    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.03).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-    _focusNode.addListener(() {
-      setState(() => _isFocused = _focusNode.hasFocus);
-    });
+    _pulseController = AnimationController(vsync: this, duration: const Duration(milliseconds: 1500))..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.03).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut));
+    _focusNode.addListener(() => setState(() => _isFocused = _focusNode.hasFocus));
   }
 
   @override
@@ -103,843 +90,487 @@ class _HomeScreenState extends State<HomeScreen>
     super.dispose();
   }
 
-  // ─── Навигация ────────────────────────────────────────────────
-  void _push(Widget screen) =>
-      Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+  void _push(Widget screen) => Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
 
-  void _showPremium()   => _push(const PremiumScreen());
-  void _showSettings()  => _push(const SettingsScreen());
-  void _showProfile()   => _push(const ProfileScreen());
-  void _showWorkspace() => _push(const WorkspaceScreen());
-  void _showTeacher()   => _push(TeacherScreen(countryCode: _countryCode));
-  void _showCorporate() => _push(CorporateScreen(countryCode: _countryCode));
-  void _showReferral()  => _push(const ReferralScreen());
-  void _showVip()       => _push(const VipScreen());
-  void _showLogin()     => _push(const LoginScreen());
-  void _showQuiz()      => _push(const QuizScreen());
-
-  // ─── Генерация ────────────────────────────────────────────────
   Future<void> _generate({String? overrideTopic}) async {
     final topic = (overrideTopic ?? _topicController.text).trim();
     if (topic.isEmpty) return;
 
     final up = Provider.of<UserProvider>(context, listen: false);
-
     if (!up.canGenerate) {
-      _showPremium();
+      _push(const PremiumScreen());
       return;
     }
 
-    // Сохраняем в историю
-    Provider.of<HistoryProvider>(context, listen: false)
-        .add(topic, slideCount: _maxSlides);
-
+    Provider.of<HistoryProvider>(context, listen: false).add(topic, slideCount: _maxSlides);
     _push(LoadingScreen(topic: topic));
   }
 
-  // ─── Диалог: из текста ────────────────────────────────────────
   void _showTextInput() {
+    final ctrl = TextEditingController();
     showDialog(
       context: context,
-      builder: (ctx) {
-        final ctrl = TextEditingController();
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1A1A1A),
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20)),
-          title: const Text('Загрузите текст',
-              style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600)),
-          content: TextField(
-            controller: ctrl,
-            maxLines: 6,
-            style: const TextStyle(fontSize: 13, color: Colors.white),
-            decoration: InputDecoration(
-              hintText: 'Введите текст диплома, статьи...',
-              hintStyle:
-                  TextStyle(color: Colors.white.withOpacity(0.3)),
-              filled: true,
-              fillColor: const Color(0xFF282828),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+      builder: (ctx) => Dialog(
+        backgroundColor: _T.bgSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Text('Загрузите текст', style: TextStyle(color: _T.txtPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+            const Text('Вставьте текст диплома, статьи...', style: TextStyle(color: _T.txtSecondary, fontSize: 13)),
+            const SizedBox(height: 20),
+            TextField(
+              controller: ctrl,
+              maxLines: 6,
+              style: const TextStyle(fontSize: 13, color: _T.txtPrimary),
+              decoration: InputDecoration(
+                hintText: 'Ваш текст...',
+                hintStyle: const TextStyle(color: _T.txtMuted),
+                filled: true,
+                fillColor: _T.bgCard,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _T.border)),
+                focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: _T.accent)),
               ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Отмена',
-                  style: TextStyle(color: Color(0xFFB3B3B3))),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(ctx);
-                final text = ctrl.text.trim();
-                if (text.isNotEmpty) {
-                  // FIX: _safeSubstring вместо text.substring(0, 50)
-                  _generate(overrideTopic: _safeSubstring(text, 50));
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF1DB954)),
-              child: const Text('Создать',
-                  style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w700)),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // ─── Диалог: загрузка логотипа ────────────────────────────────
-  void _showLogoUpload() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20)),
-        title: const Text('Загрузите логотип',
-            style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.w600)),
-        content: const Text(
-          'Выберите файл логотипа (PNG, JPG)\n\nБренд-кит будет создан автоматически.',
-          style: TextStyle(color: Color(0xFFB3B3B3), fontSize: 13),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Отмена',
-                style: TextStyle(color: Color(0xFFB3B3B3))),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                content: Text('Бренд-кит создан!'),
-                backgroundColor: Color(0xFF1DB954),
-              ));
-            },
-            style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1DB954)),
-            child: const Text('Загрузить',
-                style: TextStyle(
-                    color: Colors.black,
-                    fontWeight: FontWeight.w700)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ─── История генераций (bottom sheet) ─────────────────────────
-  void _showHistory() {
-    final records =
-        Provider.of<HistoryProvider>(context, listen: false).records;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1A1A1A),
-      shape: const RoundedRectangleBorder(
-        borderRadius:
-            BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.symmetric(
-              horizontal: 20.w, vertical: 16.h),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Handle
-              Center(
-                child: Container(
-                  width: 36.w,
-                  height: 4.h,
-                  margin: EdgeInsets.only(bottom: 16.h),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              Row(
-                children: [
-                  const Icon(Icons.history,
-                      color: Color(0xFF1DB954), size: 18),
-                  SizedBox(width: 8.w),
-                  const Text('История',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700)),
-                ],
-              ),
-              SizedBox(height: 12.h),
-              if (records.isEmpty)
-                Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24.h),
-                  child: Center(
-                    child: Text(
-                      'Пока нет генераций',
-                      style: TextStyle(
-                          color: Colors.white.withOpacity(0.3),
-                          fontSize: 13),
+            const SizedBox(height: 20),
+            Row(children: [
+              Expanded(
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(ctx),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: _T.border)),
+                      child: const Center(child: Text('Отмена', style: TextStyle(color: _T.txtSecondary, fontWeight: FontWeight.w600))),
                     ),
                   ),
-                )
-              else
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxHeight: 320.h),
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    itemCount: records.length,
-                    separatorBuilder: (_, __) => Divider(
-                        color: Colors.white.withOpacity(0.06),
-                        height: 1),
-                    itemBuilder: (_, i) {
-                      final r = records[i];
-                      return ListTile(
-                        contentPadding: EdgeInsets.symmetric(
-                            horizontal: 4.w, vertical: 2.h),
-                        leading: Container(
-                          width: 36.w,
-                          height: 36.w,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1DB954)
-                                .withOpacity(0.12),
-                            borderRadius:
-                                BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                              Icons.slideshow_outlined,
-                              color: Color(0xFF1DB954),
-                              size: 18),
-                        ),
-                        title: Text(
-                          r.topic,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Text(
-                          '${r.slideCount} слайдов • ${_formatTime(r.createdAt)}',
-                          style: TextStyle(
-                              color: Colors.white.withOpacity(0.4),
-                              fontSize: 11),
-                        ),
-                        trailing: GestureDetector(
-                          onTap: () {
-                            Navigator.pop(ctx);
-                            _generate(overrideTopic: r.topic);
-                          },
-                          child: Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 10.w, vertical: 5.h),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1DB954)
-                                  .withOpacity(0.15),
-                              borderRadius:
-                                  BorderRadius.circular(8),
-                            ),
-                            child: const Text('Повторить',
-                                style: TextStyle(
-                                    color: Color(0xFF1DB954),
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600)),
-                          ),
-                        ),
-                      );
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.pop(ctx);
+                      final text = ctrl.text.trim();
+                      if (text.isNotEmpty) {
+                        final short = text.length > 50 ? '${text.substring(0, 50)}...' : text;
+                        _generate(overrideTopic: short);
+                      }
                     },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(12)),
+                      child: const Center(child: Text('Создать', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
+                    ),
                   ),
                 ),
-              SizedBox(height: 8.h),
-            ],
-          ),
-        );
-      },
+              ),
+            ]),
+          ]),
+        ),
+      ),
     );
   }
 
-  String _formatTime(DateTime dt) {
-    final diff = DateTime.now().difference(dt);
-    if (diff.inMinutes < 1) return 'только что';
-    if (diff.inHours < 1) return '${diff.inMinutes} мин назад';
-    if (diff.inDays < 1) return '${diff.inHours} ч назад';
-    return '${diff.inDays} д назад';
+  void _uploadLogoAndGenerate() {
+    final input = html.FileUploadInputElement()..accept = 'image/*';
+    input.click();
+    input.onChange.listen((e) {
+      final file = input.files?.first;
+      if (file == null) return;
+      final reader = html.FileReader();
+      reader.readAsDataUrl(file);
+      reader.onLoad.listen((_) {
+        setState(() => _logoUrl = reader.result as String);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(children: [
+              Container(
+                width: 24, height: 24,
+                decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(6)),
+                child: const Icon(Icons.check_rounded, color: Colors.white, size: 14),
+              ),
+              const SizedBox(width: 10),
+              const Text('Логотип загружен! Создаём презентацию...', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
+            ]),
+            backgroundColor: _T.accent.withOpacity(0.9),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          ),
+        );
+        
+        // Автоматически генерируем презентацию
+        final topic = _topicController.text.trim().isNotEmpty ? _topicController.text.trim() : 'Презентация компании';
+        _generate(overrideTopic: topic);
+      });
+    });
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // BUILD
-  // ─────────────────────────────────────────────────────────────
+  void _showHistory() {
+    final records = Provider.of<HistoryProvider>(context, listen: false).records;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _T.bgSurface,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Center(child: Container(width: 36, height: 4, margin: const EdgeInsets.only(bottom: 16), decoration: BoxDecoration(color: _T.border, borderRadius: BorderRadius.circular(2)))),
+          const Text('История', style: TextStyle(color: _T.txtPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 12),
+          if (records.isEmpty)
+            const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 24), child: Text('Пока нет генераций', style: TextStyle(color: _T.txtMuted, fontSize: 13))))
+          else
+            ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: 320.h),
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: records.length,
+                separatorBuilder: (_, __) => const Divider(color: _T.border, height: 1),
+                itemBuilder: (_, i) {
+                  final r = records[i];
+                  return ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      width: 36, height: 36,
+                      decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(10)),
+                      child: const Icon(Icons.slideshow_outlined, color: _T.accent, size: 18),
+                    ),
+                    title: Text(r.topic, style: const TextStyle(color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+                    subtitle: Text('${r.slideCount} слайдов', style: const TextStyle(color: _T.txtMuted, fontSize: 11)),
+                    trailing: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () { Navigator.pop(ctx); _generate(overrideTopic: r.topic); },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                          decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(8)),
+                          child: const Text('Повторить', style: TextStyle(color: _T.accent, fontSize: 11, fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+        ]),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final up = Provider.of<UserProvider>(context);
     final left = up.freeGenerationsLeft;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
-      appBar: _buildAppBar(),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: 20.w),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(height: 16.h),
-              _buildVipBanner(),
-              SizedBox(height: 32.h),
-              _buildHero(),
-              SizedBox(height: 28.h),
-              _buildInputSection(),
-              SizedBox(height: 16.h),
-              _buildExampleChips(),
-              SizedBox(height: 16.h),
-              _buildExtraActions(),
-              SizedBox(height: 20.h),
-              _buildCounter(left),
-              SizedBox(height: 28.h),
-              _buildBottomNav(),
-              SizedBox(height: 28.h),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // AppBar
-  // ─────────────────────────────────────────────────────────────
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: const Color(0xFF121212),
-      elevation: 0,
-      title: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
+      backgroundColor: _T.bgBase,
+      appBar: AppBar(
+        backgroundColor: _T.bgBase,
+        title: Row(mainAxisSize: MainAxisSize.min, children: [
           Container(
-            width: 28.w,
-            height: 28.w,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1DB954),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.auto_awesome,
-                color: Colors.black, size: 16),
+            width: 28, height: 28,
+            decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(8)),
+            child: const Icon(Icons.auto_awesome, color: Colors.white, size: 16),
           ),
-          SizedBox(width: 8.w),
-          const Text(
-            'Презентатор ИИ',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-              fontSize: 17,
-              letterSpacing: -0.3,
-            ),
-          ),
+          const SizedBox(width: 8),
+          const Text('Презентатор ИИ', style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w700, fontSize: 17, letterSpacing: -0.3)),
+        ]),
+        centerTitle: true,
+        actions: [
+          _AppBarBtn(Icons.diamond_rounded, _T.goldLight, () => _push(const VipScreen()), tooltip: 'VIP'),
+          _AppBarBtn(Icons.history_rounded, _T.txtSecondary, _showHistory, tooltip: 'История'),
+          _AppBarBtn(Icons.person_outline_rounded, _T.txtSecondary, () => _push(const ProfileScreen()), tooltip: 'Профиль'),
+          _AppBarBtn(Icons.settings_outlined, _T.txtSecondary, () => _push(const SettingsScreen()), tooltip: 'Настройки'),
         ],
       ),
-      centerTitle: true,
-      actions: [
-        _appBarBtn(
-            Icons.diamond, const Color(0xFFFFD60A), _showVip),
-        _appBarBtn(
-            Icons.history, const Color(0xFFB3B3B3), _showHistory),
-        _appBarBtn(Icons.person_outline,
-            const Color(0xFFB3B3B3), _showLogin),
-        _appBarBtn(Icons.settings_outlined,
-            const Color(0xFFB3B3B3), _showSettings),
-        SizedBox(width: 4.w),
-      ],
-    );
-  }
-
-  Widget _appBarBtn(IconData icon, Color color, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 34.w,
-        height: 34.w,
-        margin: EdgeInsets.symmetric(horizontal: 2.w),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.04),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, color: color, size: 17),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // VIP Banner
-  // ─────────────────────────────────────────────────────────────
-  Widget _buildVipBanner() {
-    return GestureDetector(
-      onTap: _showVip,
-      child: Container(
-        padding:
-            EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFD60A).withOpacity(0.12),
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-              color: const Color(0xFFFFD60A).withOpacity(0.35),
-              width: 1),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.workspace_premium,
-                color: Color(0xFFFFD60A), size: 15),
-            SizedBox(width: 6.w),
-            const Text(
-              'Первые 50 — Premium навсегда!',
-              style: TextStyle(
-                  color: Color(0xFFFFD60A),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 11,
-                  letterSpacing: 0.2),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // Hero
-  // ─────────────────────────────────────────────────────────────
-  Widget _buildHero() {
-    return Column(
-      children: [
-        Text(
-          'Создай презентацию',
-          style: TextStyle(
-            fontSize: 26.sp,
-            fontWeight: FontWeight.w900,
-            color: Colors.white,
-            letterSpacing: -0.8,
-            height: 1.1,
-          ),
-        ),
-        SizedBox(height: 6.h),
-        Text(
-          'с помощью ИИ за 1 минуту',
-          style: TextStyle(
-              fontSize: 14.sp,
-              color: const Color(0xFFB3B3B3),
-              letterSpacing: 0.1),
-        ),
-      ],
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // Input + Slider + Button
-  // ─────────────────────────────────────────────────────────────
-  Widget _buildInputSection() {
-    return SizedBox(
-      width: 300.w,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Поле ввода
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: _isFocused
-                    ? const Color(0xFF1DB954).withOpacity(0.6)
-                    : Colors.white.withOpacity(0.08),
-                width: _isFocused ? 1.5 : 1,
-              ),
-            ),
-            child: TextField(
-              controller: _topicController,
-              focusNode: _focusNode,
-              style:
-                  const TextStyle(fontSize: 14, color: Colors.white),
-              textAlign: TextAlign.center,
-              decoration: InputDecoration(
-                hintText: 'О чём презентация?',
-                hintStyle: TextStyle(
-                    color:
-                        const Color(0xFFB3B3B3).withOpacity(0.5),
-                    fontSize: 14),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.symmetric(
-                    horizontal: 16.w, vertical: 14.h),
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: _isFocused
-                      ? const Color(0xFF1DB954).withOpacity(0.7)
-                      : const Color(0xFFB3B3B3).withOpacity(0.3),
-                  size: 18,
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              // VIP Banner
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => _push(const VipScreen()),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(color: _T.goldLight.withOpacity(0.12), borderRadius: BorderRadius.circular(24), border: Border.all(color: _T.goldLight.withOpacity(0.35))),
+                    child: const Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.workspace_premium, color: _T.goldLight, size: 15),
+                      SizedBox(width: 6),
+                      Text('Первые 50 — Premium навсегда!', style: TextStyle(color: _T.goldLight, fontWeight: FontWeight.w700, fontSize: 11)),
+                    ]),
+                  ),
                 ),
               ),
-              onSubmitted: (_) => _generate(),
-            ),
-          ),
-          SizedBox(height: 12.h),
+              const SizedBox(height: 32),
 
-          // Слайдер количества слайдов
-          Container(
-            padding: EdgeInsets.symmetric(
-                horizontal: 14.w, vertical: 10.h),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A1A1A),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                  color: Colors.white.withOpacity(0.06), width: 1),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Количество слайдов',
-                      style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.white.withOpacity(0.5)),
-                    ),
-                    Container(
-                      padding: EdgeInsets.symmetric(
-                          horizontal: 10.w, vertical: 3.h),
+              // Hero
+              const Text('Создай презентацию', style: TextStyle(color: _T.txtPrimary, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.8)),
+              const SizedBox(height: 6),
+              const Text('с помощью ИИ за 1 минуту', style: TextStyle(color: _T.txtSecondary, fontSize: 14)),
+              const SizedBox(height: 28),
+
+              // Input
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: _T.bgSurface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: _isFocused ? _T.accent.withOpacity(0.6) : _T.border, width: _isFocused ? 1.5 : 1),
+                ),
+                child: TextField(
+                  controller: _topicController,
+                  focusNode: _focusNode,
+                  style: const TextStyle(fontSize: 14, color: _T.txtPrimary),
+                  textAlign: TextAlign.center,
+                  decoration: const InputDecoration(
+                    hintText: 'О чём презентация?',
+                    hintStyle: TextStyle(color: _T.txtMuted, fontSize: 14),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                  onSubmitted: (_) => _generate(),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // Slider
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(color: _T.bgSurface, borderRadius: BorderRadius.circular(14), border: Border.all(color: _T.border)),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                    const Text('Количество слайдов', style: TextStyle(color: _T.txtMuted, fontSize: 11)),
+                    Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3), decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(8)), child: Text('$_maxSlides', style: const TextStyle(color: _T.accent, fontWeight: FontWeight.w700, fontSize: 12))),
+                  ]),
+                  const SizedBox(height: 4),
+                  SliderTheme(
+                    data: SliderThemeData(activeTrackColor: _T.accent, inactiveTrackColor: _T.border, thumbColor: _T.accent, overlayColor: _T.accentDim, trackHeight: 3, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7)),
+                    child: Slider(value: _maxSlides.toDouble(), min: 3, max: 10, divisions: 7, onChanged: (v) => setState(() => _maxSlides = v.round())),
+                  ),
+                ]),
+              ),
+              const SizedBox(height: 10),
+
+              // Generate button
+              ScaleTransition(
+                scale: _pulseAnimation,
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: _generate,
+                    child: Container(
+                      width: double.infinity, height: 48,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1DB954)
-                            .withOpacity(0.15),
-                        borderRadius: BorderRadius.circular(8),
+                        gradient: const LinearGradient(colors: [Color(0xFF169C46), _T.accent, _T.accentLight]),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [BoxShadow(color: _T.accent.withOpacity(0.25), blurRadius: 16, offset: const Offset(0, 4))],
                       ),
-                      child: Text(
-                        '$_maxSlides',
-                        style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF1DB954)),
+                      child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Icon(Icons.auto_awesome, color: Colors.white, size: 16),
+                        SizedBox(width: 8),
+                        Text('Создать', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                      ]),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Example chips
+              Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.center,
+                children: _examples.map((e) {
+                  final selected = _topicController.text == e;
+                  return MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => setState(() => _topicController.text = e),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: selected ? _T.accentDim : _T.bgSurface,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: selected ? _T.accent.withOpacity(0.5) : _T.border),
+                        ),
+                        child: Text(e, style: TextStyle(fontSize: 12, color: selected ? _T.accent : _T.txtSecondary, fontWeight: selected ? FontWeight.w600 : FontWeight.w400)),
                       ),
                     ),
-                  ],
-                ),
-                SizedBox(height: 4.h),
-                SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    activeTrackColor: const Color(0xFF1DB954),
-                    inactiveTrackColor:
-                        Colors.white.withOpacity(0.08),
-                    thumbColor: const Color(0xFF1DB954),
-                    overlayColor:
-                        const Color(0xFF1DB954).withOpacity(0.12),
-                    trackHeight: 3,
-                    thumbShape: const RoundSliderThumbShape(
-                        enabledThumbRadius: 7),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 16),
+
+              // Extra actions
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                _ExtraBtn(Icons.article_outlined, 'Из текста', _showTextInput),
+                const SizedBox(width: 10),
+                _ExtraBtn(Icons.image_outlined, 'Из логотипа', _uploadLogoAndGenerate),
+              ]),
+              const SizedBox(height: 20),
+
+              // Counter
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                decoration: BoxDecoration(color: _T.bgSurface, borderRadius: BorderRadius.circular(14), border: Border.all(color: _T.border)),
+                child: Column(children: [
+                  Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    const Icon(Icons.bolt, color: _T.accent, size: 14),
+                    const SizedBox(width: 4),
+                    const Text('Осталось генераций: ', style: TextStyle(color: _T.txtSecondary, fontSize: 11)),
+                    Text('$left из 5', style: const TextStyle(color: _T.accent, fontWeight: FontWeight.w700, fontSize: 12)),
+                  ]),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: 160, height: 4,
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: LinearProgressIndicator(value: left / 5.0, backgroundColor: _T.border, valueColor: const AlwaysStoppedAnimation<Color>(_T.accent)),
+                    ),
                   ),
-                  child: Slider(
-                    value: _maxSlides.toDouble(),
-                    min: 3,
-                    max: 10,
-                    divisions: 7,
-                    onChanged: (v) =>
-                        setState(() => _maxSlides = v.round()),
-                  ),
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('3',
-                        style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.white.withOpacity(0.3))),
-                    Text('10',
-                        style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.white.withOpacity(0.3))),
-                  ],
+                ]),
+              ),
+              const SizedBox(height: 28),
+
+              // Bottom nav
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+                decoration: BoxDecoration(color: _T.bgSurface, borderRadius: BorderRadius.circular(20), border: Border.all(color: _T.border)),
+                child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                  _NavItem(Icons.school_outlined, 'Учителям', () => _push(TeacherScreen(countryCode: _countryCode))),
+                  _NavItem(Icons.business_center_outlined, 'Бизнесу', () => _push(CorporateScreen(countryCode: _countryCode))),
+                  _NavItem(Icons.group_outlined, 'Команда', () => _push(const WorkspaceScreen())),
+                  _NavItem(Icons.quiz_outlined, 'Тесты', () => _push(const QuizScreen())),
+                  _NavItem(Icons.card_giftcard_outlined, 'Друзья', () => _push(const ReferralScreen())),
+                  _NavItem(Icons.person_outline, 'Профиль', () => _push(const ProfileScreen())),
+                ]),
+              ),
+              const SizedBox(height: 28),
+
+              if (_logoUrl != null) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: _T.bgSurface, borderRadius: BorderRadius.circular(12), border: Border.all(color: _T.border)),
+                  child: Row(children: [
+                    ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(_logoUrl!, width: 40, height: 40, fit: BoxFit.cover)),
+                    const SizedBox(width: 12),
+                    const Text('Логотип загружен', style: TextStyle(color: _T.accentLight, fontSize: 12, fontWeight: FontWeight.w500)),
+                  ]),
                 ),
               ],
-            ),
+            ]),
           ),
-          SizedBox(height: 10.h),
-
-          // Кнопка «Создать»
-          ScaleTransition(
-            scale: _pulseAnimation,
-            child: GestureDetector(
-              onTap: _generate,
-              child: Container(
-                width: double.infinity,
-                height: 48.h,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1DB954),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF1DB954).withOpacity(0.25),
-                      blurRadius: 16,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.auto_awesome,
-                        color: Colors.black, size: 16),
-                    SizedBox(width: 8.w),
-                    const Text(
-                      'Создать',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 15,
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
+}
 
-  // ─────────────────────────────────────────────────────────────
-  // Example chips
-  // ─────────────────────────────────────────────────────────────
-  Widget _buildExampleChips() {
-    return Wrap(
-      spacing: 6,
-      runSpacing: 6,
-      alignment: WrapAlignment.center,
-      children: _examples.map((e) {
-        final selected = _topicController.text == e;
-        return GestureDetector(
-          onTap: () => setState(() => _topicController.text = e),
+// ═══════════════════════════════════════════════════════════════
+// WIDGETS
+// ═══════════════════════════════════════════════════════════════
+class _AppBarBtn extends StatefulWidget {
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+  final String tooltip;
+
+  const _AppBarBtn(this.icon, this.color, this.onTap, {required this.tooltip});
+
+  @override
+  State<_AppBarBtn> createState() => _AppBarBtnState();
+}
+
+class _AppBarBtnState extends State<_AppBarBtn> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: Tooltip(
+        message: widget.tooltip,
+        child: GestureDetector(
+          onTap: widget.onTap,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            padding: EdgeInsets.symmetric(
-                horizontal: 14.w, vertical: 7.h),
+            duration: const Duration(milliseconds: 120),
+            width: 34, height: 34,
+            margin: const EdgeInsets.symmetric(horizontal: 2),
             decoration: BoxDecoration(
-              color: selected
-                  ? const Color(0xFF1DB954).withOpacity(0.15)
-                  : const Color(0xFF1A1A1A),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: selected
-                    ? const Color(0xFF1DB954).withOpacity(0.5)
-                    : Colors.white.withOpacity(0.06),
-                width: 1,
-              ),
+              color: _hovered ? _T.bgHover : Colors.white.withOpacity(0.04),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Text(
-              e,
-              style: TextStyle(
-                fontSize: 12,
-                color: selected
-                    ? const Color(0xFF1DB954)
-                    : const Color(0xFFB3B3B3),
-                fontWeight: selected
-                    ? FontWeight.w600
-                    : FontWeight.w400,
-              ),
-            ),
+            child: Icon(widget.icon, color: widget.color, size: 17),
           ),
-        );
-      }).toList(),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────
-  // Extra actions
-  // ─────────────────────────────────────────────────────────────
-  Widget _buildExtraActions() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _extraBtn(
-            Icons.article_outlined, 'Из текста', _showTextInput),
-        SizedBox(width: 10.w),
-        _extraBtn(
-            Icons.image_outlined, 'Из логотипа', _showLogoUpload),
-      ],
-    );
-  }
-
-  Widget _extraBtn(
-      IconData icon, String label, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.symmetric(
-            horizontal: 18.w, vertical: 12.h),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1A1A),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-              color: Colors.white.withOpacity(0.06), width: 1),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: const Color(0xFFB3B3B3)),
-            SizedBox(width: 7.w),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFFB3B3B3),
-                    fontWeight: FontWeight.w500)),
-          ],
         ),
       ),
     );
   }
+}
 
-  // ─────────────────────────────────────────────────────────────
-  // Generation counter
-  // ─────────────────────────────────────────────────────────────
-  Widget _buildCounter(int left) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-          horizontal: 18.w, vertical: 12.h),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-            color: Colors.white.withOpacity(0.06), width: 1),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.bolt,
-                  color: Color(0xFF1DB954), size: 14),
-              SizedBox(width: 4.w),
-              const Text('Осталось генераций: ',
-                  style: TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFFB3B3B3))),
-              Text(
-                '$left из 5',
-                style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1DB954)),
-              ),
-            ],
-          ),
-          SizedBox(height: 8.h),
-          SizedBox(
-            width: 160.w,
-            height: 4.h,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(2),
-              child: LinearProgressIndicator(
-                value: left / 5.0,
-                backgroundColor: Colors.white.withOpacity(0.08),
-                valueColor: const AlwaysStoppedAnimation<Color>(
-                    Color(0xFF1DB954)),
-              ),
-            ),
-          ),
-        ],
+class _ExtraBtn extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ExtraBtn(this.icon, this.label, this.onTap);
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          decoration: BoxDecoration(color: _T.bgSurface, borderRadius: BorderRadius.circular(14), border: Border.all(color: _T.border)),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 16, color: _T.txtSecondary),
+            const SizedBox(width: 7),
+            Text(label, style: const TextStyle(fontSize: 12, color: _T.txtSecondary, fontWeight: FontWeight.w500)),
+          ]),
+        ),
       ),
     );
   }
+}
 
-  // ─────────────────────────────────────────────────────────────
-  // Bottom navigation
-  // ─────────────────────────────────────────────────────────────
-  Widget _buildBottomNav() {
-    final navItems = [
-      {
-        'icon': Icons.school_outlined,
-        'label': 'Учителям',
-        'fn': _showTeacher
-      },
-      {
-        'icon': Icons.business_center_outlined,
-        'label': 'Бизнесу',
-        'fn': _showCorporate
-      },
-      {
-        'icon': Icons.group_outlined,
-        'label': 'Команда',
-        'fn': _showWorkspace
-      },
-      {
-        'icon': Icons.quiz_outlined,
-        'label': 'Тесты',
-        'fn': _showQuiz
-      },
-      {
-        'icon': Icons.card_giftcard_outlined,
-        'label': 'Друзья',
-        'fn': _showReferral
-      },
-      {
-        'icon': Icons.person_outline,
-        'label': 'Профиль',
-        'fn': _showProfile
-      },
-    ];
+class _NavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
 
-    return Container(
-      padding:
-          EdgeInsets.symmetric(horizontal: 6.w, vertical: 10.h),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-            color: Colors.white.withOpacity(0.06), width: 1),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: navItems
-            .map((item) => _navItem(
-                  item['icon'] as IconData,
-                  item['label'] as String,
-                  item['fn'] as VoidCallback,
-                ))
-            .toList(),
-      ),
-    );
-  }
+  const _NavItem(this.icon, this.label, this.onTap);
 
-  Widget _navItem(
-      IconData icon, String label, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 4.w),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 20, color: const Color(0xFFB3B3B3)),
-            SizedBox(height: 4.h),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 9,
-                    color: Color(0xFFB3B3B3),
-                    fontWeight: FontWeight.w500)),
-          ],
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 20, color: _T.txtSecondary),
+            const SizedBox(height: 4),
+            Text(label, style: const TextStyle(fontSize: 9, color: _T.txtSecondary, fontWeight: FontWeight.w500)),
+          ]),
         ),
       ),
     );
