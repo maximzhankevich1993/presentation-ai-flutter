@@ -26,23 +26,41 @@ class _T {
   static const gold         = Color(0xFFFFD700);
 }
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final up = Provider.of<UserProvider>(context);
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
+
+  void _checkAuth() {
+    final up = Provider.of<UserProvider>(context, listen: false);
     final isLoggedIn = up.userEmail != null && up.userEmail!.isNotEmpty;
 
-    // Если не залогинен — показываем LoginScreen
     if (!isLoggedIn) {
-      // Возвращаем LoginScreen как основной экран
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (_) => const LoginScreen()),
         );
       });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final up = Provider.of<UserProvider>(context);
+    final isLoggedIn = up.userEmail != null && up.userEmail!.isNotEmpty;
+
+    // Заглушка пока перебрасывает на логин
+    if (!isLoggedIn) {
       return const Scaffold(
         backgroundColor: _T.bgBase,
         body: Center(
@@ -77,172 +95,170 @@ class ProfileScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 500),
-          child: Column(children: [
-            // ── Avatar ─────────────────────────────────────────
-            Center(
-              child: Column(children: [
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              // ── Avatar ─────────────────────────────────────────
+              Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [_T.accent, _T.accentLight],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _T.accent.withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    (up.userName ?? 'U').substring(0, 1).toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 30,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                up.userName ?? 'Пользователь',
+                style: const TextStyle(
+                  color: _T.txtPrimary,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                up.userEmail ?? '',
+                style: const TextStyle(color: _T.txtSecondary, fontSize: 13),
+                textAlign: TextAlign.center,
+              ),
+              if (isPremium) ...[
+                const SizedBox(height: 8),
                 Container(
-                  width: 80,
-                  height: 80,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [_T.accent, _T.accentLight],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(22),
-                    boxShadow: [
-                      BoxShadow(
-                        color: _T.accent.withOpacity(0.3),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
+                    gradient: const LinearGradient(colors: [_T.gold, Color(0xFFFFD60A)]),
+                    borderRadius: BorderRadius.circular(6),
                   ),
-                  child: Center(
-                    child: Text(
-                      (up.userName ?? 'U').substring(0, 1).toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 30,
-                        fontWeight: FontWeight.w800,
-                      ),
+                  child: const Text('PREMIUM',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
                     ),
                   ),
                 ),
-                const SizedBox(height: 14),
-                Text(
-                  up.userName ?? 'Пользователь',
-                  style: const TextStyle(
-                    color: _T.txtPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  up.userEmail ?? '',
-                  style: const TextStyle(color: _T.txtSecondary, fontSize: 13),
-                ),
-                if (isPremium) ...[
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [_T.gold, Color(0xFFFFD60A)]),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: const Text('PREMIUM',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                ],
-              ]),
-            ),
-            const SizedBox(height: 28),
+              ],
+              const SizedBox(height: 28),
 
-            // ── Stats ──────────────────────────────────────────
-            Row(children: [
-              _StatCard(
-                value: '${up.totalGenerationsMade}',
-                label: 'Презентаций',
-                icon: Icons.slideshow_rounded,
-              ),
-              const SizedBox(width: 8),
-              _StatCard(
-                value: isPremium ? '∞' : '${up.freeGenerationsLeft}',
-                label: 'Осталось',
-                icon: Icons.auto_awesome_rounded,
-                accent: !isPremium && up.freeGenerationsLeft <= 2,
-              ),
-              const SizedBox(width: 8),
-              _StatCard(
-                value: isPremium ? 'PRO' : 'Free',
-                label: 'План',
-                icon: Icons.workspace_premium_rounded,
-              ),
-            ]),
-            const SizedBox(height: 24),
-
-            // ── Info ───────────────────────────────────────────
-            _SectionLabel('ИНФОРМАЦИЯ'),
-            const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: _T.bgSurface,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: _T.border),
-              ),
-              child: Column(children: [
-                _Tile(
-                  icon: Icons.email_outlined,
-                  title: 'Email',
-                  subtitle: up.userEmail ?? 'Не указан',
-                  onTap: () {},
+              // ── Stats ──────────────────────────────────────────
+              Row(children: [
+                _StatCard(
+                  value: '0',
+                  label: 'Презентаций',
+                  icon: Icons.slideshow_rounded,
                 ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Divider(color: _T.border, height: 1),
+                const SizedBox(width: 10),
+                _StatCard(
+                  value: isPremium ? '∞' : '5',
+                  label: 'Осталось',
+                  icon: Icons.auto_awesome_rounded,
                 ),
-                _Tile(
-                  icon: Icons.calendar_today_rounded,
-                  title: 'Дата регистрации',
-                  subtitle: 'Сегодня',
-                  onTap: () {},
+                const SizedBox(width: 10),
+                _StatCard(
+                  value: isPremium ? 'PRO' : 'Free',
+                  label: 'План',
+                  icon: Icons.workspace_premium_rounded,
                 ),
               ]),
-            ),
-
-            if (!isPremium) ...[
               const SizedBox(height: 24),
-              // ── Upgrade ──────────────────────────────────────
-              MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: GestureDetector(
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const PremiumScreen()),
+
+              // ── Info ───────────────────────────────────────────
+              _SectionLabel('ИНФОРМАЦИЯ'),
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: _T.bgSurface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: _T.border),
+                ),
+                child: Column(children: [
+                  _Tile(
+                    icon: Icons.email_outlined,
+                    title: 'Email',
+                    subtitle: up.userEmail ?? 'Не указан',
                   ),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [_T.accent, _T.accentLight],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: _T.accent.withOpacity(0.35),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: Divider(color: _T.border, height: 1),
+                  ),
+                  _Tile(
+                    icon: Icons.calendar_today_rounded,
+                    title: 'Дата регистрации',
+                    subtitle: 'Сегодня',
+                  ),
+                ]),
+              ),
+
+              if (!isPremium) ...[
+                const SizedBox(height: 24),
+                // ── Upgrade ──────────────────────────────────────
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const PremiumScreen()),
                     ),
-                    child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 20),
-                      SizedBox(width: 8),
-                      Text('Перейти на Premium',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15)),
-                    ]),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [_T.accent, _T.accentLight],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _T.accent.withOpacity(0.35),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 20),
+                        SizedBox(width: 8),
+                        Text('Перейти на Premium',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15)),
+                      ]),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
 
-            const SizedBox(height: 24),
-          ]),
+              const SizedBox(height: 24),
+            ]),
+          ),
         ),
       ),
     );
@@ -257,14 +273,17 @@ class _SectionLabel extends StatelessWidget {
   const _SectionLabel(this.text);
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(left: 4, bottom: 4),
-    child: Text(text,
-      style: const TextStyle(
-        color: _T.txtMuted,
-        fontSize: 10,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 0.8,
+  Widget build(BuildContext context) => SizedBox(
+    width: double.infinity,
+    child: Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 4),
+      child: Text(text,
+        style: const TextStyle(
+          color: _T.txtMuted,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+        ),
       ),
     ),
   );
@@ -277,13 +296,11 @@ class _StatCard extends StatelessWidget {
   final String value;
   final String label;
   final IconData icon;
-  final bool accent;
 
   const _StatCard({
     required this.value,
     required this.label,
     required this.icon,
-    this.accent = false,
   });
 
   @override
@@ -301,16 +318,14 @@ class _StatCard extends StatelessWidget {
             width: 32, height: 32,
             margin: const EdgeInsets.only(bottom: 8),
             decoration: BoxDecoration(
-              color: accent ? _T.danger.withOpacity(0.1) : _T.accentDim,
+              color: _T.accentDim,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon,
-              color: accent ? _T.danger : _T.accentLight,
-              size: 16),
+            child: Icon(icon, color: _T.accentLight, size: 16),
           ),
           Text(value,
-            style: TextStyle(
-              color: accent ? _T.danger : _T.txtPrimary,
+            style: const TextStyle(
+              color: _T.txtPrimary,
               fontSize: 20,
               fontWeight: FontWeight.w800,
             ),
@@ -331,47 +346,37 @@ class _Tile extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
-  final VoidCallback? onTap;
 
   const _Tile({
     required this.icon,
     required this.title,
     required this.subtitle,
-    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(children: [
-            Container(
-              width: 36, height: 36,
-              decoration: BoxDecoration(
-                color: _T.txtSecondary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: _T.txtSecondary, size: 18),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(title,
-                  style: const TextStyle(color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 2),
-                Text(subtitle,
-                  style: const TextStyle(color: _T.txtSecondary, fontSize: 11)),
-              ]),
-            ),
-            if (onTap != null)
-              const Icon(Icons.chevron_right_rounded, color: _T.txtMuted, size: 18),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      child: Row(children: [
+        Container(
+          width: 36, height: 36,
+          decoration: BoxDecoration(
+            color: _T.txtSecondary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: _T.txtSecondary, size: 18),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title,
+              style: const TextStyle(color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 2),
+            Text(subtitle,
+              style: const TextStyle(color: _T.txtSecondary, fontSize: 11)),
           ]),
         ),
-      ),
+      ]),
     );
   }
 }
