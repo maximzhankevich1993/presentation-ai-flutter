@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import 'register_screen.dart';
@@ -53,7 +53,6 @@ class _LoginScreenState extends State<LoginScreen> {
     final email = _emailCtrl.text.trim();
     final password = _passwordCtrl.text.trim();
 
-    // Валидация
     if (email.isEmpty || !email.contains('@')) {
       setState(() => _error = 'Введите корректный email');
       return;
@@ -67,52 +66,38 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    setState(() { _loading = true; _error = null; });
 
     try {
-      // Имитация входа (заменить на реальный API-запрос)
       await Future.delayed(const Duration(seconds: 2));
-
       if (!mounted) return;
 
-      // Сохраняем пользователя
       final up = Provider.of<UserProvider>(context, listen: false);
       await up.setUserEmail(email);
       await up.setUserName(email.split('@').first);
 
-      // Показываем успех
-      _showSuccess();
-
-      // Задержка чтобы снекбар был виден
+      _showSuccess('С возвращением! 🎉');
       await Future.delayed(const Duration(milliseconds: 500));
-
       if (!mounted) return;
 
-      // Переход на главный экран
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const HomeScreen()),
         (route) => false,
       );
     } catch (e) {
-      if (mounted) {
-        setState(() => _error = 'Неверный email или пароль');
-      }
+      if (mounted) setState(() => _error = 'Неверный email или пароль');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
   }
 
-  void _showSuccess() {
+  void _showSuccess(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Row(children: [
           Container(
-            width: 24,
-            height: 24,
+            width: 24, height: 24,
             decoration: BoxDecoration(
               gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]),
               borderRadius: BorderRadius.circular(6),
@@ -120,15 +105,151 @@ class _LoginScreenState extends State<LoginScreen> {
             child: const Icon(Icons.check_rounded, color: Colors.white, size: 14),
           ),
           const SizedBox(width: 10),
-          const Text(
-            'С возвращением! 🎉',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
-          ),
+          Text(msg, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
         ]),
         backgroundColor: _T.accent.withOpacity(0.9),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      ),
+    );
+  }
+
+  void _showForgotPassword() {
+    final emailCtrl = TextEditingController();
+    final emailNode = FocusNode();
+    bool sent = false;
+    bool sending = false;
+    String? msg;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) => Container(
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+          decoration: BoxDecoration(
+            color: _T.bgSurface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: _T.border),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            // Handle
+            Container(
+              width: 40, height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(color: _T.border, borderRadius: BorderRadius.circular(2)),
+            ),
+
+            if (!sent) ...[
+              Container(
+                width: 56, height: 56,
+                decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(14)),
+                child: const Icon(Icons.lock_reset_rounded, color: _T.accent, size: 26),
+              ),
+              const SizedBox(height: 16),
+              const Text('Восстановление пароля',
+                style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w700, fontSize: 18)),
+              const SizedBox(height: 6),
+              const Text('Введите email, и мы отправим ссылку для сброса пароля',
+                style: TextStyle(color: _T.txtSecondary, fontSize: 12, height: 1.4),
+                textAlign: TextAlign.center),
+              const SizedBox(height: 20),
+
+              // Email field
+              _FormField(
+                controller: emailCtrl,
+                focusNode: emailNode,
+                hint: 'Email',
+                icon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 16),
+
+              // Send button
+              SizedBox(
+                width: double.infinity,
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: sending ? null : () async {
+                      final email = emailCtrl.text.trim();
+                      if (email.isEmpty || !email.contains('@')) {
+                        setModalState(() => msg = 'Введите корректный email');
+                        return;
+                      }
+                      setModalState(() { sending = true; msg = null; });
+                      await Future.delayed(const Duration(seconds: 2));
+                      setModalState(() { sending = false; sent = true; });
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      height: 48,
+                      decoration: BoxDecoration(
+                        gradient: sending ? null : const LinearGradient(
+                          colors: [Color(0xFF169C46), _T.accent, _T.accentLight],
+                          begin: Alignment.centerLeft, end: Alignment.centerRight,
+                        ),
+                        color: sending ? _T.bgHover : null,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: sending ? null : [
+                          BoxShadow(color: _T.accent.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4)),
+                        ],
+                      ),
+                      child: Center(
+                        child: sending
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: _T.accent, strokeWidth: 2))
+                            : const Text('Отправить ссылку', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              if (msg != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Text(msg!, style: const TextStyle(color: _T.danger, fontSize: 12)),
+                ),
+            ] else ...[
+              // Success state
+              Container(
+                width: 72, height: 72,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(Icons.check_rounded, color: Colors.white, size: 36),
+              ),
+              const SizedBox(height: 16),
+              const Text('Письмо отправлено!',
+                style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w700, fontSize: 18)),
+              const SizedBox(height: 6),
+              const Text('Проверьте почту и перейдите по ссылке для сброса пароля',
+                style: TextStyle(color: _T.txtSecondary, fontSize: 12, height: 1.4),
+                textAlign: TextAlign.center),
+              const SizedBox(height: 20),
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: Container(
+                    width: double.infinity, height: 48,
+                    decoration: BoxDecoration(
+                      color: _T.bgCard,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: _T.border),
+                    ),
+                    child: const Center(
+                      child: Text('Понятно', style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ]),
+        ),
       ),
     );
   }
@@ -139,14 +260,15 @@ class _LoginScreenState extends State<LoginScreen> {
       backgroundColor: _T.bgBase,
       appBar: AppBar(
         backgroundColor: _T.bgBase,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: _T.txtSecondary, size: 17),
-          onPressed: () => Navigator.pop(context),
+        leading: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_rounded, color: _T.txtSecondary, size: 17),
+            onPressed: () => Navigator.pop(context),
+          ),
         ),
-        title: const Text(
-          'Войти',
-          style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w600, fontSize: 15),
-        ),
+        title: const Text('Войти',
+          style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w600, fontSize: 15)),
         centerTitle: true,
       ),
       body: Center(
@@ -155,44 +277,28 @@ class _LoginScreenState extends State<LoginScreen> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 420),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              // ── Лого ──────────────────────────────────────────
+              // Logo
               Container(
-                width: 64,
-                height: 64,
+                width: 64, height: 64,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]),
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _T.accent.withOpacity(0.3),
-                      blurRadius: 20,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
+                  boxShadow: [BoxShadow(color: _T.accent.withOpacity(0.3), blurRadius: 20, offset: const Offset(0, 8))],
                 ),
                 child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 28),
               ),
               const SizedBox(height: 20),
 
-              // ── Заголовок ─────────────────────────────────────
-              const Text(
-                'С возвращением!',
-                style: TextStyle(
-                  color: _T.txtPrimary,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 24,
-                  letterSpacing: -0.5,
-                ),
-              ),
+              // Title
+              const Text('С возвращением!',
+                style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w800, fontSize: 24, letterSpacing: -0.5)),
               const SizedBox(height: 6),
-              const Text(
-                'Войдите чтобы продолжить работу',
+              const Text('Войдите чтобы продолжить работу',
                 style: TextStyle(color: _T.txtSecondary, fontSize: 13, height: 1.4),
-                textAlign: TextAlign.center,
-              ),
+                textAlign: TextAlign.center),
               const SizedBox(height: 28),
 
-              // ── Ошибка ────────────────────────────────────────
+              // Error
               if (_error != null)
                 Container(
                   width: double.infinity,
@@ -206,20 +312,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Row(children: [
                     const Icon(Icons.error_outline_rounded, color: _T.danger, size: 16),
                     const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _error!,
-                        style: const TextStyle(color: _T.danger, fontSize: 12, fontWeight: FontWeight.w500),
+                    Expanded(child: Text(_error!, style: const TextStyle(color: _T.danger, fontSize: 12, fontWeight: FontWeight.w500))),
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () => setState(() => _error = null),
+                        child: const Icon(Icons.close_rounded, color: _T.danger, size: 14),
                       ),
-                    ),
-                    GestureDetector(
-                      onTap: () => setState(() => _error = null),
-                      child: const Icon(Icons.close_rounded, color: _T.danger, size: 14),
                     ),
                   ]),
                 ),
 
-              // ── Поле Email ────────────────────────────────────
+              // Email
               _FormField(
                 controller: _emailCtrl,
                 focusNode: _emailNode,
@@ -230,7 +334,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 12),
 
-              // ── Поле Пароль ──────────────────────────────────
+              // Password
               _FormField(
                 controller: _passwordCtrl,
                 focusNode: _passwordNode,
@@ -238,113 +342,78 @@ class _LoginScreenState extends State<LoginScreen> {
                 icon: Icons.lock_outline_rounded,
                 obscure: _obscure,
                 onSubmit: _login,
-                suffix: IconButton(
-                  onPressed: () => setState(() => _obscure = !_obscure),
-                  icon: Icon(
-                    _obscure ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                    color: _T.txtMuted,
-                    size: 18,
+                suffix: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: IconButton(
+                    onPressed: () => setState(() => _obscure = !_obscure),
+                    icon: Icon(_obscure ? Icons.visibility_off_rounded : Icons.visibility_rounded, color: _T.txtMuted, size: 18),
+                    splashRadius: 16,
                   ),
-                  splashRadius: 16,
                 ),
               ),
 
-              // ── Забыли пароль ────────────────────────────────
+              // Forgot password
               Align(
                 alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {
-                    // TODO: forgot password
-                  },
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.only(top: 8),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: const Text(
-                    'Забыли пароль?',
-                    style: TextStyle(color: _T.txtSecondary, fontSize: 11, fontWeight: FontWeight.w500),
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: _showForgotPassword,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8, bottom: 4),
+                      child: Text('Забыли пароль?',
+                        style: TextStyle(color: _T.txtSecondary, fontSize: 11, fontWeight: FontWeight.w500)),
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-              // ── Кнопка ────────────────────────────────────────
+              // Login button
               SizedBox(
                 width: double.infinity,
-                child: GestureDetector(
-                  onTap: _loading ? null : _login,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
-                    height: 50,
-                    decoration: BoxDecoration(
-                      gradient: _loading
-                          ? null
-                          : const LinearGradient(
-                              colors: [Color(0xFF169C46), _T.accent, _T.accentLight],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
-                      color: _loading ? _T.bgHover : null,
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: _loading
-                          ? null
-                          : [
-                              BoxShadow(
-                                color: _T.accent.withOpacity(0.35),
-                                blurRadius: 14,
-                                offset: const Offset(0, 6),
-                              ),
-                            ],
-                    ),
-                    child: Center(
-                      child: _loading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(color: _T.accent, strokeWidth: 2),
-                            )
-                          : const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Войти',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 15,
-                                  ),
-                                ),
+                child: MouseRegion(
+                  cursor: _loading ? SystemMouseCursors.basic : SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: _loading ? null : _login,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      height: 50,
+                      decoration: BoxDecoration(
+                        gradient: _loading ? null : const LinearGradient(
+                          colors: [Color(0xFF169C46), _T.accent, _T.accentLight],
+                          begin: Alignment.centerLeft, end: Alignment.centerRight,
+                        ),
+                        color: _loading ? _T.bgHover : null,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: _loading ? null : [
+                          BoxShadow(color: _T.accent.withOpacity(0.35), blurRadius: 14, offset: const Offset(0, 6)),
+                        ],
+                      ),
+                      child: Center(
+                        child: _loading
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: _T.accent, strokeWidth: 2))
+                            : const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                                Text('Войти', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15)),
                                 SizedBox(width: 8),
                                 Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
-                              ],
-                            ),
+                              ]),
+                      ),
                     ),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
 
-              // ── Нет аккаунта ─────────────────────────────────
+              // Register link
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                const Text(
-                  'Нет аккаунта? ',
-                  style: TextStyle(color: _T.txtSecondary, fontSize: 13),
-                ),
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                    );
-                  },
-                  child: const Text(
-                    'Зарегистрироваться',
-                    style: TextStyle(
-                      color: _T.accentLight,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                    ),
+                const Text('Нет аккаунта? ', style: TextStyle(color: _T.txtSecondary, fontSize: 13)),
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen())),
+                    child: const Text('Зарегистрироваться',
+                      style: TextStyle(color: _T.accentLight, fontWeight: FontWeight.w700, fontSize: 13)),
                   ),
                 ),
               ]),
@@ -404,22 +473,13 @@ class _FormFieldState extends State<_FormField> {
       decoration: BoxDecoration(
         color: _T.bgCard,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _focused ? _T.accent.withOpacity(0.5) : _T.border,
-          width: _focused ? 1.5 : 1,
-        ),
-        boxShadow: _focused
-            ? [BoxShadow(color: _T.accent.withOpacity(0.1), blurRadius: 8)]
-            : null,
+        border: Border.all(color: _focused ? _T.accent.withOpacity(0.5) : _T.border, width: _focused ? 1.5 : 1),
+        boxShadow: _focused ? [BoxShadow(color: _T.accent.withOpacity(0.1), blurRadius: 8)] : null,
       ),
       child: Row(children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 10, 14),
-          child: Icon(
-            widget.icon,
-            color: _focused ? _T.accentLight : _T.txtMuted,
-            size: 18,
-          ),
+          child: Icon(widget.icon, color: _focused ? _T.accentLight : _T.txtMuted, size: 18),
         ),
         Expanded(
           child: TextField(
