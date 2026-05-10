@@ -79,7 +79,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       // Сохраняем пользователя
       final up = Provider.of<UserProvider>(context, listen: false);
-      up.setUser(name: name, email: email);
+      await up.setUserName(name);
+      await up.setUserEmail(email);
 
       // Показываем успех
       _showSuccess();
@@ -443,11 +444,11 @@ class _FormFieldState extends State<_FormField> {
                 widget.onSubmit?.call();
               }
             },
-            decoration: const InputDecoration(
-              hintText: '',
-              hintStyle: TextStyle(color: _T.txtMuted, fontSize: 14),
+            decoration: InputDecoration(
+              hintText: widget.hint,
+              hintStyle: const TextStyle(color: _T.txtMuted, fontSize: 14),
               border: InputBorder.none,
-              contentPadding: EdgeInsets.only(right: 16, top: 14, bottom: 14),
+              contentPadding: const EdgeInsets.only(right: 16, top: 14, bottom: 14),
               isDense: true,
             ),
           ),
