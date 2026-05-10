@@ -1,7 +1,8 @@
 import 'package:dio/dio.dart';
+import 'api_service.dart';
 
 class AiImproveService {
-  static const String _baseUrl = 'http://localhost:3000/api';
+  static const String _baseUrl = 'https://presentation-ai-backend.onrender.com/api';
 
   static final Dio _dio = Dio(
     BaseOptions(
@@ -14,11 +15,20 @@ class AiImproveService {
     ),
   );
 
+  static Map<String, dynamic> get _headers {
+    final token = ApiService().token;
+    if (token != null) {
+      return {'Authorization': 'Bearer $token'};
+    }
+    return {};
+  }
+
   static Future<String> improveText(String text) async {
     try {
       final response = await _dio.post(
         '$_baseUrl/improve',
         data: {'text': text},
+        options: Options(headers: _headers),
       );
 
       final data = _normalize(response.data);
@@ -33,6 +43,7 @@ class AiImproveService {
       final response = await _dio.post(
         '$_baseUrl/rephrase',
         data: {'text': text},
+        options: Options(headers: _headers),
       );
 
       final data = _normalize(response.data);
@@ -53,11 +64,11 @@ class AiImproveService {
           'text': text,
           'max_length': maxLength,
         },
+        options: Options(headers: _headers),
       );
 
       final data = _normalize(response.data);
-      return data['shortened'] ??
-          _safeShort(text, maxLength);
+      return data['shortened'] ?? _safeShort(text, maxLength);
     } catch (e) {
       return _safeShort(text, maxLength);
     }
@@ -74,6 +85,7 @@ class AiImproveService {
           'title': originalTitle,
           'count': count,
         },
+        options: Options(headers: _headers),
       );
 
       final data = _normalize(response.data);
@@ -112,10 +124,7 @@ class AiImproveService {
     return text;
   }
 
-  static List<String> _localTitleVariants(
-    String title,
-    int count,
-  ) {
+  static List<String> _localTitleVariants(String title, int count) {
     return [
       title,
       '$title — ключевые аспекты',
