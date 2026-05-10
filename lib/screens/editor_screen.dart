@@ -77,46 +77,66 @@ class _EditorScreenState extends State<EditorScreen>
   String _globalFont = 'Inter';
   bool _navCollapsed = false;
   bool _propsPanelOpen = true;
-  String _activePropTab = 'design';   // design | content | ai
+  String _activePropTab = 'design';
   bool _isImproving = false;
   int _imageUploadsUsed = 0;
+
+  // Цвет шрифта
+  Color _globalFontColor = Colors.white;
+  late List<Color?> _slideFontColors; // null = использовать глобальный
+
+  // Переходы
+  late List<String> _transitions;
 
   final Map<int, String?> _autoImages = {};
   final _scrollCtrl = ScrollController();
   final _canvasKey = GlobalKey();
 
-  // ── Slide backgrounds ──────────────────────────────────────────────────────
-  final List<Map<String, dynamic>> _backgrounds = [
-    {'type': 'solid',    'color': Colors.white,                                                  'label': 'Чистый'},
-    {'type': 'gradient', 'colors': [Color(0xFF0F0C29), Color(0xFF302B63), Color(0xFF24243E)],    'label': 'Cosmos'},
-    {'type': 'gradient', 'colors': [Color(0xFF1a1a2e), Color(0xFF16213e)],                       'label': 'Midnight'},
-    {'type': 'gradient', 'colors': [Color(0xFF7C5CFC), Color(0xFF3B82F6)],                       'label': 'Aurora'},
-    {'type': 'gradient', 'colors': [Color(0xFFf093fb), Color(0xFFf5576c)],                       'label': 'Розовый'},
-    {'type': 'gradient', 'colors': [Color(0xFF4facfe), Color(0xFF00f2fe)],                       'label': 'Голубой'},
-    {'type': 'solid',    'color': Color(0xFF0F0F0F),                                             'label': 'Чёрный'},
-    {'type': 'solid',    'color': Color(0xFFFFF8E7),                                             'label': 'Кремовый'},
-    {'type': 'gradient', 'colors': [Color(0xFF11998e), Color(0xFF38ef7d)],                       'label': 'Mint'},
-    {'type': 'gradient', 'colors': [Color(0xFFFF416C), Color(0xFFFF4B2B)],                       'label': 'Закат'},
-    {'type': 'gradient', 'colors': [Color(0xFF434343), Color(0xFF000000)],                       'label': 'Уголь'},
-    {'type': 'gradient', 'colors': [Color(0xFFFFE000), Color(0xFF799F0C)],                       'label': 'Лимон'},
+  // ── 8 бесплатных фонов ────────────────────────────────────────────────────
+  final List<Map<String, dynamic>> _freeBgs = [
+    {'type': 'solid',    'color': Colors.white,                                               'label': 'Белый'},
+    {'type': 'solid',    'color': const Color(0xFF0F0F0F),                                    'label': 'Чёрный'},
+    {'type': 'solid',    'color': const Color(0xFFFFF8E7),                                    'label': 'Кремовый'},
+    {'type': 'gradient', 'colors': [const Color(0xFF1a1a2e), const Color(0xFF16213e)],        'label': 'Midnight'},
+    {'type': 'gradient', 'colors': [const Color(0xFF667eea), const Color(0xFF764ba2)],        'label': 'Фиолет'},
+    {'type': 'gradient', 'colors': [const Color(0xFF4facfe), const Color(0xFF00f2fe)],        'label': 'Голубой'},
+    {'type': 'gradient', 'colors': [const Color(0xFFf093fb), const Color(0xFFf5576c)],        'label': 'Розовый'},
+    {'type': 'gradient', 'colors': [const Color(0xFF434343), const Color(0xFF000000)],        'label': 'Уголь'},
   ];
 
+  // ── Premium фоны ──────────────────────────────────────────────────────────
   final List<Map<String, dynamic>> _premiumBgs = [
-    {'type': 'gradient', 'colors': [Color(0xFF1DB954), Color(0xFF191414)], 'label': 'Spotify'},
-    {'type': 'gradient', 'colors': [Color(0xFF8E2DE2), Color(0xFF4A00E0)], 'label': 'Неон'},
-    {'type': 'solid',    'color':  Color(0xFF1A1A2E),                      'label': 'Navy'},
-    {'type': 'gradient', 'colors': [Color(0xFF00b4db), Color(0xFF0083B0)], 'label': 'Океан'},
+    {'type': 'gradient', 'colors': [const Color(0xFF1DB954), const Color(0xFF191414)],                                   'label': 'Spotify'},
+    {'type': 'gradient', 'colors': [const Color(0xFF8E2DE2), const Color(0xFF4A00E0)],                                   'label': 'Неон'},
+    {'type': 'gradient', 'colors': [const Color(0xFF0F0C29), const Color(0xFF302B63), const Color(0xFF24243E)],           'label': 'Cosmos'},
+    {'type': 'gradient', 'colors': [const Color(0xFF11998e), const Color(0xFF38ef7d)],                                   'label': 'Mint'},
+    {'type': 'gradient', 'colors': [const Color(0xFFFF416C), const Color(0xFFFF4B2B)],                                   'label': 'Закат'},
+    {'type': 'gradient', 'colors': [const Color(0xFFFFE000), const Color(0xFF799F0C)],                                   'label': 'Лимон'},
+    {'type': 'gradient', 'colors': [const Color(0xFF00b4db), const Color(0xFF0083B0)],                                   'label': 'Океан'},
+    {'type': 'solid',    'color':  const Color(0xFF1A1A2E),                                                               'label': 'Navy'},
+  ];
+
+  // ── Переходы: 2 бесплатных, 4 premium ─────────────────────────────────────
+  static const List<Map<String, dynamic>> _allTransitions = [
+    {'id': 'none',   'label': 'Нет',       'icon': Icons.block_rounded,         'premium': false},
+    {'id': 'fade',   'label': 'Затухание', 'icon': Icons.blur_on_rounded,        'premium': false},
+    {'id': 'slide',  'label': 'Слайд',     'icon': Icons.swap_horiz_rounded,     'premium': true},
+    {'id': 'zoom',   'label': 'Зум',       'icon': Icons.zoom_in_rounded,        'premium': true},
+    {'id': 'flip',   'label': 'Флип',      'icon': Icons.flip_rounded,           'premium': true},
+    {'id': 'cube',   'label': 'Куб',       'icon': Icons.view_in_ar_rounded,     'premium': true},
   ];
 
   // ── Init ───────────────────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
-    _presentation = widget.presentation;
-    _customImages = List.filled(_presentation.slides.length, null);
-    _customBgs    = List.filled(_presentation.slides.length, null);
-    _fontSizes    = List.filled(_presentation.slides.length, 9.0);
-    _fonts        = List.filled(_presentation.slides.length, 'Inter');
+    _presentation     = widget.presentation;
+    _customImages     = List.filled(_presentation.slides.length, null);
+    _customBgs        = List.filled(_presentation.slides.length, null);
+    _fontSizes        = List.filled(_presentation.slides.length, 9.0);
+    _fonts            = List.filled(_presentation.slides.length, 'Inter');
+    _slideFontColors  = List.filled(_presentation.slides.length, null);
+    _transitions      = List.filled(_presentation.slides.length, 'none');
     _initControllers();
     _loadAutoImages();
     _countUploads();
@@ -161,6 +181,8 @@ class _EditorScreenState extends State<EditorScreen>
       _customBgs.insert(idx, null);
       _fontSizes.insert(idx, 9.0);
       _fonts.insert(idx, _globalFont);
+      _slideFontColors.insert(idx, null);
+      _transitions.insert(idx, 'none');
       _activeSlide = idx;
     });
   }
@@ -178,6 +200,8 @@ class _EditorScreenState extends State<EditorScreen>
       _fontSizes.removeAt(i);
       _fonts.removeAt(i);
       _autoImages.remove(i);
+      _slideFontColors.removeAt(i);
+      _transitions.removeAt(i);
       if (_activeSlide >= _presentation.slides.length) {
         _activeSlide = _presentation.slides.length - 1;
       }
@@ -198,6 +222,8 @@ class _EditorScreenState extends State<EditorScreen>
       _customBgs.insert(idx, _customBgs[i]);
       _fontSizes.insert(idx, _fontSizes[i]);
       _fonts.insert(idx, _fonts[i]);
+      _slideFontColors.insert(idx, _slideFontColors[i]);
+      _transitions.insert(idx, _transitions[i]);
       _activeSlide = idx;
     });
     _countUploads();
@@ -216,6 +242,8 @@ class _EditorScreenState extends State<EditorScreen>
       swap(_customBgs);
       swap(_fontSizes);
       swap(_fonts);
+      swap(_slideFontColors);
+      swap(_transitions);
       _activeSlide = to;
     });
   }
@@ -256,8 +284,8 @@ class _EditorScreenState extends State<EditorScreen>
   // ── Upload ─────────────────────────────────────────────────────────────────
   Future<void> _uploadImage(int index) async {
     final p = Provider.of<UserProvider>(context, listen: false).isPremium;
-    if (!p && _imageUploadsUsed >= 10 && _customImages[index] == null) {
-      _toast('10 бесплатных загрузок исчерпано', warning: true);
+    if (!p) {
+      _toast('Замена картинок — только в Premium', warning: true);
       return;
     }
     final input = html.FileUploadInputElement()..accept = 'image/*';
@@ -269,7 +297,6 @@ class _EditorScreenState extends State<EditorScreen>
       reader.readAsDataUrl(file);
       reader.onLoad.listen((_) => setState(() {
         _customImages[index] = reader.result as String;
-        if (!p) _imageUploadsUsed++;
       }));
     });
   }
@@ -300,7 +327,7 @@ class _EditorScreenState extends State<EditorScreen>
         borderRadius: _T.r12,
       );
     }
-    final bg = _backgrounds[_selectedBgIndex];
+    final bg = _freeBgs[_selectedBgIndex.clamp(0, _freeBgs.length - 1)];
     if (bg['type'] == 'gradient') {
       final colors = bg['colors'] as List<Color>;
       return BoxDecoration(
@@ -313,7 +340,7 @@ class _EditorScreenState extends State<EditorScreen>
 
   bool _isDark(int index) {
     if (_customBgs[index] != null) return true;
-    final bg = _backgrounds[_selectedBgIndex];
+    final bg = _freeBgs[_selectedBgIndex.clamp(0, _freeBgs.length - 1)];
     if (bg['type'] == 'solid') return (bg['color'] as Color).computeLuminance() < 0.5;
     return true;
   }
@@ -378,7 +405,7 @@ class _EditorScreenState extends State<EditorScreen>
                 activeIndex: _activeSlide,
                 collapsed: _navCollapsed,
                 customBgs: _customBgs,
-                backgrounds: _backgrounds,
+                backgrounds: _freeBgs,
                 selectedBgIndex: _selectedBgIndex,
                 onSelect: (i) => setState(() => _activeSlide = i),
                 onAdd: _addSlide,
@@ -403,6 +430,7 @@ class _EditorScreenState extends State<EditorScreen>
                 image: _customImages[_activeSlide] ?? _autoImages[_activeSlide],
                 font: _fonts[_activeSlide] != 'Inter' ? _fonts[_activeSlide] : _globalFont,
                 fontSize: _fontSizes[_activeSlide],
+                fontColor: _slideFontColors[_activeSlide] ?? _globalFontColor,
                 slideCount: _presentation.slides.length,
                 onAddItem: () => _addContentItem(_activeSlide),
                 onRemoveItem: (i) => _removeContentItem(_activeSlide, i),
@@ -423,10 +451,13 @@ class _EditorScreenState extends State<EditorScreen>
                       activeTab: _activePropTab,
                       globalFont: _globalFont,
                       selectedBgIndex: _selectedBgIndex,
-                      backgrounds: _backgrounds,
+                      freeBgs: _freeBgs,
                       premiumBgs: _premiumBgs,
                       customBg: _customBgs[_activeSlide],
                       fontSize: _fontSizes[_activeSlide],
+                      fontColor: _slideFontColors[_activeSlide] ?? _globalFontColor,
+                      transition: _transitions[_activeSlide],
+                      allTransitions: _allTransitions,
                       isImproving: _isImproving,
                       onTabChange: (t) => setState(() => _activePropTab = t),
                       onBgSelect: (i) => setState(() {
@@ -440,7 +471,11 @@ class _EditorScreenState extends State<EditorScreen>
                         for (int i = 0; i < _fonts.length; i++) _fonts[i] = f;
                       }),
                       onFontSizeChange: (v) => setState(() => _fontSizes[_activeSlide] = v),
-                      onImprove: () => _improveSlide(_activeSlide),
+                      onFontColorChange: (c) => setState(() {
+                        _slideFontColors[_activeSlide] = c;
+                        _globalFontColor = c;
+                      }),
+                      onTransitionChange: (t) => setState(() => _transitions[_activeSlide] = t),
                       uploadsUsed: _imageUploadsUsed,
                     )
                   : const SizedBox.shrink(),
@@ -549,7 +584,9 @@ class _TopBar extends StatelessWidget {
           ),
 
         // Export CTA
-        GestureDetector(
+        MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
           onTap: onExport,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
@@ -564,6 +601,7 @@ class _TopBar extends StatelessWidget {
               Text('Экспорт', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
             ]),
           ),
+        ),
         ),
       ]),
     );
@@ -721,6 +759,7 @@ class _SlideThumbnailState extends State<_SlideThumbnail> {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
@@ -830,6 +869,7 @@ class _Canvas extends StatelessWidget {
   final String? image;
   final String font;
   final double fontSize;
+  final Color fontColor;
   final int slideCount;
   final VoidCallback onAddItem;
   final ValueChanged<int> onRemoveItem;
@@ -846,6 +886,7 @@ class _Canvas extends StatelessWidget {
     required this.image,
     required this.font,
     required this.fontSize,
+    required this.fontColor,
     required this.slideCount,
     required this.onAddItem,
     required this.onRemoveItem,
@@ -903,7 +944,7 @@ class _Canvas extends StatelessWidget {
                               fontSize: fontSize * 2.2,
                               fontWeight: FontWeight.w800,
                               fontFamily: font,
-                              color: isDark ? Colors.white : const Color(0xFF1A1A2E),
+                              color: fontColor,
                               height: 1.15,
                               letterSpacing: -0.5,
                             ),
@@ -931,7 +972,7 @@ class _Canvas extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: fontSize * 1.4,
                                     fontFamily: font,
-                                    color: isDark ? Colors.white70 : const Color(0xFF444444),
+                                    color: fontColor.withOpacity(0.8),
                                     height: 1.4,
                                   ),
                                   cursorColor: _T.accent,
@@ -1081,10 +1122,13 @@ class _PropertiesPanel extends StatelessWidget {
   final String activeTab;
   final String globalFont;
   final int selectedBgIndex;
-  final List<Map<String, dynamic>> backgrounds;
+  final List<Map<String, dynamic>> freeBgs;
   final List<Map<String, dynamic>> premiumBgs;
   final String? customBg;
   final double fontSize;
+  final Color fontColor;
+  final String transition;
+  final List<Map<String, dynamic>> allTransitions;
   final bool isImproving;
   final ValueChanged<String> onTabChange;
   final ValueChanged<int> onBgSelect;
@@ -1092,7 +1136,8 @@ class _PropertiesPanel extends StatelessWidget {
   final VoidCallback onImageUpload;
   final ValueChanged<String> onFontChange;
   final ValueChanged<double> onFontSizeChange;
-  final VoidCallback onImprove;
+  final ValueChanged<Color> onFontColorChange;
+  final ValueChanged<String> onTransitionChange;
   final int uploadsUsed;
 
   const _PropertiesPanel({
@@ -1101,10 +1146,13 @@ class _PropertiesPanel extends StatelessWidget {
     required this.activeTab,
     required this.globalFont,
     required this.selectedBgIndex,
-    required this.backgrounds,
+    required this.freeBgs,
     required this.premiumBgs,
     required this.customBg,
     required this.fontSize,
+    required this.fontColor,
+    required this.transition,
+    required this.allTransitions,
     required this.isImproving,
     required this.onTabChange,
     required this.onBgSelect,
@@ -1112,7 +1160,8 @@ class _PropertiesPanel extends StatelessWidget {
     required this.onImageUpload,
     required this.onFontChange,
     required this.onFontSizeChange,
-    required this.onImprove,
+    required this.onFontColorChange,
+    required this.onTransitionChange,
     required this.uploadsUsed,
   });
 
@@ -1126,9 +1175,9 @@ class _PropertiesPanel extends StatelessWidget {
           height: 40,
           padding: const EdgeInsets.symmetric(horizontal: 6),
           child: Row(children: [
-            _Tab('design', 'Дизайн', Icons.palette_rounded, activeTab, onTabChange),
-            _Tab('image',  'Медиа',  Icons.image_rounded,   activeTab, onTabChange),
-            _Tab('ai',     'ИИ',     Icons.auto_awesome_rounded, activeTab, onTabChange),
+            _Tab('design', 'Дизайн',    Icons.palette_rounded,        activeTab, onTabChange),
+            _Tab('image',  'Медиа',     Icons.image_rounded,          activeTab, onTabChange),
+            _Tab('ai',     'ИИ',        Icons.auto_awesome_rounded,   activeTab, onTabChange),
           ]),
         ),
         const Divider(color: _T.border, height: 1),
@@ -1137,20 +1186,25 @@ class _PropertiesPanel extends StatelessWidget {
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(14),
             child: switch (activeTab) {
-              'image'  => _ImageTab(onUpload: onImageUpload, uploadsUsed: uploadsUsed, isPremium: isPremium),
-              'ai'     => _AiTab(isImproving: isImproving, onImprove: onImprove),
-              _        => _DesignTab(
+              'image' => _ImageTab(onUpload: onImageUpload, isPremium: isPremium),
+              'ai'    => _AiTab(isImproving: isImproving, onImprove: () {}),
+              _       => _DesignTab(
                   globalFont: globalFont,
                   selectedBgIndex: selectedBgIndex,
-                  backgrounds: backgrounds,
+                  freeBgs: freeBgs,
                   premiumBgs: premiumBgs,
                   customBg: customBg,
                   fontSize: fontSize,
+                  fontColor: fontColor,
+                  transition: transition,
+                  allTransitions: allTransitions,
                   isPremium: isPremium,
                   onBgSelect: onBgSelect,
                   onBgUpload: onBgUpload,
                   onFontChange: onFontChange,
                   onFontSizeChange: onFontSizeChange,
+                  onFontColorChange: onFontColorChange,
+                  onTransitionChange: onTransitionChange,
                 ),
             },
           ),
@@ -1159,6 +1213,7 @@ class _PropertiesPanel extends StatelessWidget {
     );
   }
 }
+
 
 class _Tab extends StatelessWidget {
   final String id, label;
@@ -1198,65 +1253,93 @@ class _Tab extends StatelessWidget {
 class _DesignTab extends StatelessWidget {
   final String globalFont;
   final int selectedBgIndex;
-  final List<Map<String, dynamic>> backgrounds;
+  final List<Map<String, dynamic>> freeBgs;
   final List<Map<String, dynamic>> premiumBgs;
   final String? customBg;
   final double fontSize;
+  final Color fontColor;
+  final String transition;
+  final List<Map<String, dynamic>> allTransitions;
   final bool isPremium;
   final ValueChanged<int> onBgSelect;
   final VoidCallback onBgUpload;
   final ValueChanged<String> onFontChange;
   final ValueChanged<double> onFontSizeChange;
+  final ValueChanged<Color> onFontColorChange;
+  final ValueChanged<String> onTransitionChange;
 
   const _DesignTab({
     required this.globalFont,
     required this.selectedBgIndex,
-    required this.backgrounds,
+    required this.freeBgs,
     required this.premiumBgs,
     required this.customBg,
     required this.fontSize,
+    required this.fontColor,
+    required this.transition,
+    required this.allTransitions,
     required this.isPremium,
     required this.onBgSelect,
     required this.onBgUpload,
     required this.onFontChange,
     required this.onFontSizeChange,
+    required this.onFontColorChange,
+    required this.onTransitionChange,
   });
+
+  // Предустановленные цвета шрифта
+  static const List<Color> _fontColors = [
+    Colors.white,
+    Color(0xFFF2F2F2),
+    Color(0xFF1A1A2E),
+    Color(0xFF000000),
+    Color(0xFF1DB954),
+    Color(0xFF4facfe),
+    Color(0xFFf5576c),
+    Color(0xFFFFD700),
+    Color(0xFFf093fb),
+    Color(0xFFFF6B35),
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      // ── FONT ────────────────────────────────────────────────────────────────
+
+      // ── ШРИФТ ───────────────────────────────────────────────────────────────
       _SectionLabel('ШРИФТ'),
       const SizedBox(height: 8),
       ...([
         {'name': 'Inter',   'label': 'Inter',   'sub': 'Современный'},
         {'name': 'Georgia', 'label': 'Georgia', 'sub': 'Элегантный'},
         {'name': 'Courier', 'label': 'Courier', 'sub': 'Моноширинный'},
-      ].map((f) => GestureDetector(
-        onTap: () => onFontChange(f['name']!),
-        child: AnimatedContainer(
-          duration: _T.fast,
-          margin: const EdgeInsets.only(bottom: 6),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          decoration: BoxDecoration(
-            color: globalFont == f['name'] ? _T.accentDim : _T.bgCard,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: globalFont == f['name'] ? _T.accent.withOpacity(0.4) : _T.border),
+      ].map((f) => MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () => onFontChange(f['name']!),
+          child: AnimatedContainer(
+            duration: _T.fast,
+            margin: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              color: globalFont == f['name'] ? _T.accentDim : _T.bgCard,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: globalFont == f['name'] ? _T.accent.withOpacity(0.4) : _T.border),
+            ),
+            child: Row(children: [
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(f['label']!, style: TextStyle(fontFamily: f['name'], color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
+                Text(f['sub']!, style: const TextStyle(color: _T.txtMuted, fontSize: 10)),
+              ])),
+              if (globalFont == f['name'])
+                const Icon(Icons.check_circle_rounded, color: _T.accent, size: 16),
+            ]),
           ),
-          child: Row(children: [
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(f['label']!, style: TextStyle(fontFamily: f['name'], color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
-              Text(f['sub']!, style: const TextStyle(color: _T.txtMuted, fontSize: 10)),
-            ])),
-            if (globalFont == f['name'])
-              const Icon(Icons.check_circle_rounded, color: _T.accent, size: 16),
-          ]),
         ),
       ))),
 
       const SizedBox(height: 18),
 
-      // ── FONT SIZE ────────────────────────────────────────────────────────────
+      // ── РАЗМЕР ШРИФТА ────────────────────────────────────────────────────────
       _SectionLabel('РАЗМЕР ТЕКСТА'),
       const SizedBox(height: 10),
       Row(children: [
@@ -1270,11 +1353,7 @@ class _DesignTab extends StatelessWidget {
               trackHeight: 3,
               thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
             ),
-            child: Slider(
-              value: fontSize,
-              min: 6, max: 18, divisions: 12,
-              onChanged: onFontSizeChange,
-            ),
+            child: Slider(value: fontSize, min: 6, max: 18, divisions: 12, onChanged: onFontSizeChange),
           ),
         ),
         Container(
@@ -1287,86 +1366,187 @@ class _DesignTab extends StatelessWidget {
 
       const SizedBox(height: 18),
 
-      // ── BACKGROUND ──────────────────────────────────────────────────────────
+      // ── ЦВЕТ ШРИФТА ─────────────────────────────────────────────────────────
+      _SectionLabel('ЦВЕТ ТЕКСТА'),
+      const SizedBox(height: 10),
+      Wrap(
+        spacing: 7,
+        runSpacing: 7,
+        children: _fontColors.map((c) {
+          final selected = fontColor.value == c.value;
+          return MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () => onFontColorChange(c),
+              child: AnimatedContainer(
+                duration: _T.fast,
+                width: 28, height: 28,
+                decoration: BoxDecoration(
+                  color: c,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: selected ? _T.accent : Colors.white12,
+                    width: selected ? 2.5 : 1,
+                  ),
+                  boxShadow: selected ? [BoxShadow(color: _T.accent.withOpacity(0.4), blurRadius: 6)] : null,
+                ),
+                child: selected ? const Icon(Icons.check_rounded, size: 14, color: Colors.white) : null,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+
+      const SizedBox(height: 18),
+
+      // ── ФОН ─────────────────────────────────────────────────────────────────
       _SectionLabel('ФОН'),
       const SizedBox(height: 8),
       GridView.count(
         crossAxisCount: 4,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 6,
-        crossAxisSpacing: 6,
-        childAspectRatio: 1.4,
-        children: backgrounds.asMap().entries.map((e) {
-          final i = e.key;
-          final bg = e.value;
+        mainAxisSpacing: 6, crossAxisSpacing: 6, childAspectRatio: 1.4,
+        children: freeBgs.asMap().entries.map((e) {
+          final i = e.key; final bg = e.value;
           final selected = i == selectedBgIndex && customBg == null;
-          return GestureDetector(
-            onTap: () => onBgSelect(i),
-            child: AnimatedContainer(
-              duration: _T.fast,
-              decoration: BoxDecoration(
-                gradient: bg['type'] == 'gradient'
-                    ? LinearGradient(colors: bg['colors'] as List<Color>, begin: Alignment.topLeft, end: Alignment.bottomRight)
-                    : null,
-                color: bg['type'] == 'solid' ? bg['color'] as Color : null,
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: selected ? _T.accent : Colors.transparent, width: 2),
-                boxShadow: selected ? [BoxShadow(color: _T.accent.withOpacity(0.35), blurRadius: 6)] : null,
+          return MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () => onBgSelect(i),
+              child: AnimatedContainer(
+                duration: _T.fast,
+                decoration: BoxDecoration(
+                  gradient: bg['type'] == 'gradient'
+                      ? LinearGradient(colors: bg['colors'] as List<Color>, begin: Alignment.topLeft, end: Alignment.bottomRight)
+                      : null,
+                  color: bg['type'] == 'solid' ? bg['color'] as Color : null,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: selected ? _T.accent : Colors.transparent, width: 2),
+                  boxShadow: selected ? [BoxShadow(color: _T.accent.withOpacity(0.35), blurRadius: 6)] : null,
+                ),
+                child: selected ? const Center(child: Icon(Icons.check_rounded, color: Colors.white, size: 12)) : null,
               ),
-              child: selected ? const Center(child: Icon(Icons.check_rounded, color: Colors.white, size: 12)) : null,
             ),
           );
         }).toList(),
       ),
 
       const SizedBox(height: 8),
-
-      // Upload own bg
-      GestureDetector(
-        onTap: onBgUpload,
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 9),
-          decoration: BoxDecoration(
-            color: _T.bgCard,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: _T.border, style: BorderStyle.solid),
+      MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: onBgUpload,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(8), border: Border.all(color: _T.border)),
+            child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              Icon(Icons.upload_rounded, color: _T.txtSecondary, size: 13),
+              SizedBox(width: 6),
+              Text('Загрузить фон', style: TextStyle(color: _T.txtSecondary, fontSize: 12, fontWeight: FontWeight.w500)),
+            ]),
           ),
-          child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(Icons.upload_rounded, color: _T.txtSecondary, size: 13),
-            SizedBox(width: 6),
-            Text('Загрузить фон', style: TextStyle(color: _T.txtSecondary, fontSize: 12, fontWeight: FontWeight.w500)),
-          ]),
         ),
       ),
 
-      if (!isPremium) ...[
-        const SizedBox(height: 12),
-        _SectionLabel('PREMIUM'),
-        const SizedBox(height: 8),
-        GridView.count(
-          crossAxisCount: 4,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 6,
-          crossAxisSpacing: 6,
-          childAspectRatio: 1.4,
-          children: premiumBgs.map((bg) => Stack(children: [
-            Container(
-              decoration: BoxDecoration(
-                gradient: bg['type'] == 'gradient' ? LinearGradient(colors: bg['colors'] as List<Color>) : null,
-                color: bg['type'] == 'solid' ? bg['color'] as Color : null,
-                borderRadius: BorderRadius.circular(6),
+      const SizedBox(height: 12),
+      // Premium фоны
+      Row(children: [
+        _SectionLabel('PREMIUM ФОНЫ'),
+        const Spacer(),
+        if (!isPremium)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(color: _T.gold.withOpacity(0.12), borderRadius: BorderRadius.circular(4)),
+            child: const Text('PRO', style: TextStyle(color: _T.gold, fontSize: 9, fontWeight: FontWeight.w800)),
+          ),
+      ]),
+      const SizedBox(height: 8),
+      GridView.count(
+        crossAxisCount: 4,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 6, crossAxisSpacing: 6, childAspectRatio: 1.4,
+        children: premiumBgs.asMap().entries.map((e) {
+          final i = e.key; final bg = e.value;
+          return MouseRegion(
+            cursor: isPremium ? SystemMouseCursors.click : SystemMouseCursors.forbidden,
+            child: GestureDetector(
+              onTap: isPremium ? () => onBgSelect(freeBgs.length + i) : null,
+              child: Stack(children: [
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: bg['type'] == 'gradient' ? LinearGradient(colors: bg['colors'] as List<Color>) : null,
+                    color: bg['type'] == 'solid' ? bg['color'] as Color : null,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                ),
+                if (!isPremium)
+                  Container(
+                    decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(6)),
+                    child: const Center(child: Icon(Icons.lock_rounded, color: Colors.white54, size: 13)),
+                  ),
+              ]),
+            ),
+          );
+        }).toList(),
+      ),
+
+      const SizedBox(height: 18),
+
+      // ── ПЕРЕХОДЫ ────────────────────────────────────────────────────────────
+      Row(children: [
+        _SectionLabel('ПЕРЕХОД'),
+        const Spacer(),
+        if (!isPremium)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(color: _T.gold.withOpacity(0.12), borderRadius: BorderRadius.circular(4)),
+            child: const Text('2 бесплатно', style: TextStyle(color: _T.gold, fontSize: 9, fontWeight: FontWeight.w700)),
+          ),
+      ]),
+      const SizedBox(height: 8),
+      GridView.count(
+        crossAxisCount: 3,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 6, crossAxisSpacing: 6, childAspectRatio: 2.0,
+        children: allTransitions.map((t) {
+          final isPrem = t['premium'] as bool;
+          final locked = isPrem && !isPremium;
+          final selected = transition == t['id'];
+          return MouseRegion(
+            cursor: locked ? SystemMouseCursors.forbidden : SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: locked ? null : () => onTransitionChange(t['id'] as String),
+              child: AnimatedContainer(
+                duration: _T.fast,
+                decoration: BoxDecoration(
+                  color: selected ? _T.accentDim : _T.bgCard,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: selected ? _T.accent.withOpacity(0.5) : _T.border),
+                ),
+                child: Stack(alignment: Alignment.center, children: [
+                  Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    Icon(t['icon'] as IconData,
+                      size: 16,
+                      color: locked ? _T.txtMuted : selected ? _T.accent : _T.txtSecondary),
+                    const SizedBox(height: 3),
+                    Text(t['label'] as String,
+                      style: TextStyle(
+                        fontSize: 9, fontWeight: FontWeight.w600,
+                        color: locked ? _T.txtMuted : selected ? _T.accent : _T.txtSecondary)),
+                  ]),
+                  if (locked)
+                    Positioned(top: 4, right: 4,
+                      child: Icon(Icons.lock_rounded, size: 9, color: _T.gold.withOpacity(0.7))),
+                ]),
               ),
             ),
-            Container(
-              decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(6)),
-              child: const Center(child: Icon(Icons.lock_rounded, color: Colors.white54, size: 13)),
-            ),
-          ])).toList(),
-        ),
-      ],
+          );
+        }).toList(),
+      ),
     ]);
   }
 }
@@ -1374,62 +1554,75 @@ class _DesignTab extends StatelessWidget {
 // ── Image Tab ─────────────────────────────────────────────────────────────────
 class _ImageTab extends StatelessWidget {
   final VoidCallback onUpload;
-  final int uploadsUsed;
   final bool isPremium;
 
-  const _ImageTab({required this.onUpload, required this.uploadsUsed, required this.isPremium});
+  const _ImageTab({required this.onUpload, required this.isPremium});
 
   @override
   Widget build(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _SectionLabel('СВОЁ ИЗОБРАЖЕНИЕ'),
+      _SectionLabel('ИЗОБРАЖЕНИЕ НА СЛАЙДЕ'),
       const SizedBox(height: 8),
 
-      // Usage indicator
-      if (!isPremium) ...[
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          const Text('Использовано', style: TextStyle(color: _T.txtSecondary, fontSize: 11)),
-          Text('$uploadsUsed / 10', style: TextStyle(
-            color: uploadsUsed >= 10 ? _T.danger : _T.accent,
-            fontSize: 11, fontWeight: FontWeight.w700)),
-        ]),
-        const SizedBox(height: 6),
-        LinearProgressIndicator(
-          value: uploadsUsed / 10,
-          backgroundColor: _T.border,
-          color: uploadsUsed >= 10 ? _T.danger : _T.accent,
-          borderRadius: BorderRadius.circular(4),
-          minHeight: 4,
-        ),
-        const SizedBox(height: 12),
-      ],
-
-      GestureDetector(
-        onTap: onUpload,
-        child: Container(
+      // Premium badge
+      if (!isPremium)
+        Container(
           width: double.infinity,
-          height: 90,
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            color: _T.bgCard,
+            color: _T.gold.withOpacity(0.07),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: _T.border, style: BorderStyle.solid),
+            border: Border.all(color: _T.gold.withOpacity(0.2)),
           ),
-          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Container(
-              width: 34, height: 34,
-              decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(8)),
-              child: const Icon(Icons.image_rounded, color: _T.accent, size: 17),
-            ),
-            const SizedBox(height: 8),
-            const Text('Нажмите для загрузки', style: TextStyle(color: _T.txtSecondary, fontSize: 11)),
-            const Text('PNG, JPG до 10 МБ', style: TextStyle(color: _T.txtMuted, fontSize: 10)),
+          child: Row(children: const [
+            Icon(Icons.star_rounded, color: _T.gold, size: 14),
+            SizedBox(width: 8),
+            Expanded(child: Text('Замена изображений — функция Premium.',
+              style: TextStyle(color: _T.gold, fontSize: 11, fontWeight: FontWeight.w500))),
           ]),
+        ),
+
+      MouseRegion(
+        cursor: isPremium ? SystemMouseCursors.click : SystemMouseCursors.forbidden,
+        child: GestureDetector(
+          onTap: isPremium ? onUpload : null,
+          child: AnimatedContainer(
+            duration: _T.fast,
+            width: double.infinity, height: 90,
+            decoration: BoxDecoration(
+              color: _T.bgCard,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: isPremium ? _T.border : _T.border.withOpacity(0.4)),
+            ),
+            child: Opacity(
+              opacity: isPremium ? 1.0 : 0.4,
+              child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Container(
+                  width: 34, height: 34,
+                  decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(8)),
+                  child: const Icon(Icons.image_rounded, color: _T.accent, size: 17),
+                ),
+                const SizedBox(height: 8),
+                const Text('Нажмите для загрузки', style: TextStyle(color: _T.txtSecondary, fontSize: 11)),
+                const Text('PNG, JPG до 10 МБ', style: TextStyle(color: _T.txtMuted, fontSize: 10)),
+              ]),
+            ),
+          ),
         ),
       ),
 
       const SizedBox(height: 16),
-      const Text('Изображения подбираются автоматически через Unsplash на основе заголовка слайда.',
-        style: TextStyle(color: _T.txtMuted, fontSize: 11, height: 1.5)),
+      Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(10), border: Border.all(color: _T.border)),
+        child: const Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Icon(Icons.info_outline_rounded, color: _T.txtMuted, size: 13),
+          SizedBox(width: 8),
+          Expanded(child: Text('Unsplash автоматически подбирает изображение по заголовку слайда.',
+            style: TextStyle(color: _T.txtMuted, fontSize: 11, height: 1.5))),
+        ]),
+      ),
     ]);
   }
 }
@@ -1762,6 +1955,7 @@ class _IconBtnState extends State<_IconBtn> {
         : _T.txtSecondary;
 
     return MouseRegion(
+      cursor: widget.disabled ? SystemMouseCursors.forbidden : SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: Tooltip(
