@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -24,9 +23,9 @@ class _T {
   static const accentDim    = Color(0xFF1DB95420);
   static const gold         = Color(0xFFFFD700);
   static const goldLight    = Color(0xFFFFD60A);
+  static const danger       = Color(0xFFFF3B30);
 }
 
-// Фиксированные USD цены
 const Map<String, double> _usdPrices = {
   'month': 4.99,
   'half': 29.99,
@@ -45,6 +44,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
   String _currencySymbol = '\$';
   double _rate = 1.0;
   bool _loadingRates = true;
+  String? _selectedPlan;
 
   @override
   void initState() {
@@ -54,7 +54,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
 
   Future<void> _detectCurrency() async {
     try {
-      // Определяем страну по IP (бесплатный сервис)
       final response = await http.get(
         Uri.parse('https://ipapi.co/json/'),
       ).timeout(const Duration(seconds: 5));
@@ -62,9 +61,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final country = data['country_code'] ?? 'US';
-        final currency = data['currency'] ?? 'USD';
 
-        // Валюты стран СНГ
         final localCurrencies = {
           'BY': {'code': 'BYN', 'symbol': 'Br', 'rate': 3.25},
           'RU': {'code': 'RUB', 'symbol': '₽', 'rate': 95.0},
@@ -81,59 +78,42 @@ class _PremiumScreenState extends State<PremiumScreen> {
             _currencySymbol = c['symbol'] as String;
             _rate = (c['rate'] as num).toDouble();
           });
-        } else if (currency != 'USD') {
-          setState(() {
-            _currency = currency;
-            _currencySymbol = _getSymbol(currency);
-            _rate = _getApproxRate(currency);
-          });
         }
       }
-    } catch (_) {
-      // Fallback: USD
-    }
+    } catch (_) {}
     if (mounted) setState(() => _loadingRates = false);
   }
 
-  String _getSymbol(String code) {
-    switch (code) {
-      case 'EUR': return '€';
-      case 'RUB': return '₽';
-      case 'BYN': return 'Br';
-      case 'KZT': return '₸';
-      case 'UAH': return '₴';
-      case 'GBP': return '£';
-      default: return '\$';
-    }
-  }
-
-  double _getApproxRate(String code) {
-    switch (code) {
-      case 'EUR': return 0.92;
-      case 'RUB': return 95.0;
-      case 'BYN': return 3.25;
-      case 'KZT': return 460.0;
-      case 'UAH': return 41.0;
-      case 'GBP': return 0.79;
-      default: return 1.0;
-    }
-  }
-
   String _formatPrice(double usdPrice) {
-    final converted = (usdPrice * _rate).ceil();
+    final converted = (usdPrice * _rate);
     if (_currency == 'USD' || _currency == 'EUR' || _currency == 'GBP') {
-      return '$_currencySymbol${(usdPrice * _rate).toStringAsFixed(2)}';
+      return '$_currencySymbol${converted.toStringAsFixed(2)}';
     }
-    return '$converted $_currencySymbol';
+    return '${converted.ceil()} $_currencySymbol';
   }
 
-  String _periodPrice(double usdPrice, String period) {
-    final monthlyEquivalent = usdPrice / 12;
-    final converted = (monthlyEquivalent * _rate).ceil();
+  String _periodPrice(double usdPrice, int months) {
+    final monthly = usdPrice / months;
+    final converted = (monthly * _rate);
     if (_currency == 'USD' || _currency == 'EUR' || _currency == 'GBP') {
-      return '$_currencySymbol${(monthlyEquivalent).toStringAsFixed(2)}/мес';
+      return '$_currencySymbol${converted.toStringAsFixed(2)}/мес';
     }
-    return '$converted $_currencySymbol/мес';
+    return '${converted.ceil()} $_currencySymbol/мес';
+  }
+
+  void _selectPlan(String plan) {
+    setState(() => _selectedPlan = plan);
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Выбран план: $plan. Оплата будет доступна в ближайшее время.'),
+        backgroundColor: _T.accent.withOpacity(0.9),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   @override
@@ -167,128 +147,136 @@ class _PremiumScreenState extends State<PremiumScreen> {
             ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 500),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            // Crown
-            Container(
-              width: 72, height: 72,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(colors: [_T.goldLight, _T.gold], begin: Alignment.topLeft, end: Alignment.bottomRight),
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [BoxShadow(color: _T.gold.withOpacity(0.35), blurRadius: 24, offset: const Offset(0, 10))],
-              ),
-              child: const Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 36),
-            ),
-            const SizedBox(height: 20),
-
-            const Text('Разблокируй всё',
-              style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w800, fontSize: 26, letterSpacing: -0.5)),
-            const SizedBox(height: 6),
-            Text(
-              _loadingRates ? 'Загрузка...' : 'Цены в $_currency',
-              style: const TextStyle(color: _T.txtSecondary, fontSize: 13),
-            ),
-            const SizedBox(height: 28),
-
-            // Comparison Table
-            Container(
-              decoration: BoxDecoration(
-                color: _T.bgSurface,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: _T.border),
-              ),
-              child: Column(children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: _T.border.withOpacity(0.3),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                  ),
-                  child: Row(children: [
-                    const Expanded(flex: 3, child: Text('Функция', style: TextStyle(color: _T.txtSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5))),
-                    const Expanded(flex: 2, child: Text('Бесплатно', textAlign: TextAlign.center, style: TextStyle(color: _T.txtMuted, fontSize: 11, fontWeight: FontWeight.w600))),
-                    Expanded(flex: 2, child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      const Icon(Icons.star_rounded, color: _T.gold, size: 13),
-                      const SizedBox(width: 4),
-                      const Text('Premium', style: TextStyle(color: _T.gold, fontSize: 11, fontWeight: FontWeight.w700)),
-                    ])),
-                  ]),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              // Crown
+              Container(
+                width: 72, height: 72,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [_T.goldLight, _T.gold], begin: Alignment.topLeft, end: Alignment.bottomRight),
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [BoxShadow(color: _T.gold.withOpacity(0.35), blurRadius: 24, offset: const Offset(0, 10))],
                 ),
-                _ComparisonRow('Презентаций', '5', '∞'),
-                _ComparisonRow('Слайдов', '10', '50'),
-                _ComparisonRow('Фоны', '8', '16'),
-                _ComparisonRow('Шрифты', 'Inter', '3 стиля'),
-                _ComparisonRow('Анимации', '2', '6'),
-                _ComparisonRow('PDF', '❌', '✅'),
-                _ComparisonRow('AI-улучшение', '❌', '✅'),
-                _ComparisonRow('Свои картинки', '❌', '✅'),
-                _ComparisonRow('Водяной знак', 'Есть', 'Нет'),
+                child: const Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 36),
+              ),
+              const SizedBox(height: 20),
+
+              const Text('Разблокируй всё',
+                style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w800, fontSize: 26, letterSpacing: -0.5),
+                textAlign: TextAlign.center),
+              const SizedBox(height: 6),
+              Text(
+                _loadingRates ? 'Загрузка...' : 'Цены в $_currency',
+                style: const TextStyle(color: _T.txtSecondary, fontSize: 13),
+              ),
+              const SizedBox(height: 28),
+
+              // Comparison Table
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: _T.bgSurface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: _T.border),
+                ),
+                child: Column(children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: _T.border.withOpacity(0.3),
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    ),
+                    child: Row(children: [
+                      const Expanded(flex: 3, child: Text('Функция', style: TextStyle(color: _T.txtSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5))),
+                      const Expanded(flex: 2, child: Text('Бесплатно', textAlign: TextAlign.center, style: TextStyle(color: _T.txtMuted, fontSize: 11, fontWeight: FontWeight.w600))),
+                      Expanded(flex: 2, child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        const Icon(Icons.star_rounded, color: _T.gold, size: 13),
+                        const SizedBox(width: 4),
+                        const Text('Premium', style: TextStyle(color: _T.gold, fontSize: 11, fontWeight: FontWeight.w700)),
+                      ])),
+                    ]),
+                  ),
+                  _ComparisonRow('Презентаций', '5', '∞'),
+                  _ComparisonRow('Слайдов', '10', '50'),
+                  _ComparisonRow('Фоны', '8', '16'),
+                  _ComparisonRow('Шрифты', 'Inter', '3 стиля'),
+                  _ComparisonRow('Анимации', '2', '6'),
+                  _ComparisonRow('PDF', '❌', '✅'),
+                  _ComparisonRow('AI-улучшение', '❌', '✅'),
+                  _ComparisonRow('Свои картинки', '❌', '✅'),
+                  _ComparisonRow('Водяной знак', 'Есть', 'Нет'),
+                ]),
+              ),
+              const SizedBox(height: 24),
+
+              // Plans
+              _PlanCard(
+                name: 'Месяц',
+                price: _formatPrice(_usdPrices['month']!),
+                period: '/мес',
+                popular: false,
+                selected: _selectedPlan == 'month',
+                onTap: () => _selectPlan('month'),
+              ),
+              const SizedBox(height: 10),
+              _PlanCard(
+                name: 'Полгода',
+                price: _formatPrice(_usdPrices['half']!),
+                period: _periodPrice(_usdPrices['half']!, 6),
+                popular: true,
+                badge: 'ЛУЧШИЙ ВЫБОР',
+                selected: _selectedPlan == 'half',
+                onTap: () => _selectPlan('half'),
+              ),
+              const SizedBox(height: 10),
+              _PlanCard(
+                name: 'Год',
+                price: _formatPrice(_usdPrices['year']!),
+                period: _periodPrice(_usdPrices['year']!, 12),
+                popular: false,
+                badge: 'ЭКОНОМИЯ 33%',
+                selected: _selectedPlan == 'year',
+                onTap: () => _selectPlan('year'),
+              ),
+
+              const SizedBox(height: 20),
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => _selectPlan('trial'),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [_T.goldLight, _T.gold]),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [BoxShadow(color: _T.gold.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
+                    ),
+                    child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 18),
+                      SizedBox(width: 8),
+                      Text('3 дня бесплатно', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                    ]),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                const Icon(Icons.lock_rounded, color: _T.txtMuted, size: 11),
+                const SizedBox(width: 4),
+                const Text('Безопасная оплата', style: TextStyle(color: _T.txtMuted, fontSize: 10)),
+                const SizedBox(width: 12),
+                const Icon(Icons.autorenew_rounded, color: _T.txtMuted, size: 11),
+                const SizedBox(width: 4),
+                const Text('Отмена в любое время', style: TextStyle(color: _T.txtMuted, fontSize: 10)),
               ]),
-            ),
-            const SizedBox(height: 24),
-
-            // Plans
-            _PlanCard(
-              name: 'Месяц',
-              price: _formatPrice(_usdPrices['month']!),
-              period: '/мес',
-              popular: false,
-              onTap: () {},
-            ),
-            const SizedBox(height: 10),
-            _PlanCard(
-              name: 'Полгода',
-              price: _formatPrice(_usdPrices['half']!),
-              period: _periodPrice(_usdPrices['half']!, '6m'),
-              popular: true,
-              badge: 'ЛУЧШИЙ ВЫБОР',
-              onTap: () {},
-            ),
-            const SizedBox(height: 10),
-            _PlanCard(
-              name: 'Год',
-              price: _formatPrice(_usdPrices['year']!),
-              period: _periodPrice(_usdPrices['year']!, '12m'),
-              popular: false,
-              badge: 'ЭКОНОМИЯ 33%',
-              onTap: () {},
-            ),
-
-            const SizedBox(height: 20),
-            MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                onTap: () {},
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [_T.goldLight, _T.gold]),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [BoxShadow(color: _T.gold.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
-                  ),
-                  child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                    Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 18),
-                    SizedBox(width: 8),
-                    Text('3 дня бесплатно', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
-                  ]),
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              const Icon(Icons.lock_rounded, color: _T.txtMuted, size: 11),
-              const SizedBox(width: 4),
-              const Text('Безопасная оплата', style: TextStyle(color: _T.txtMuted, fontSize: 10)),
-              const SizedBox(width: 12),
-              const Icon(Icons.autorenew_rounded, color: _T.txtMuted, size: 11),
-              const SizedBox(width: 4),
-              const Text('Отмена в любое время', style: TextStyle(color: _T.txtMuted, fontSize: 10)),
+              const SizedBox(height: 20),
             ]),
-            const SizedBox(height: 20),
-          ]),
+          ),
         ),
       ),
     );
@@ -327,6 +315,7 @@ class _PlanCard extends StatelessWidget {
   final String period;
   final bool popular;
   final String? badge;
+  final bool selected;
   final VoidCallback onTap;
 
   const _PlanCard({
@@ -335,6 +324,7 @@ class _PlanCard extends StatelessWidget {
     required this.period,
     required this.popular,
     this.badge,
+    this.selected = false,
     required this.onTap,
   });
 
@@ -351,10 +341,10 @@ class _PlanCard extends StatelessWidget {
             color: popular ? _T.accentDim : _T.bgSurface,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: popular ? _T.accent.withOpacity(0.5) : _T.border,
-              width: popular ? 1.5 : 1,
+              color: selected ? _T.accent : (popular ? _T.accent.withOpacity(0.5) : _T.border),
+              width: selected ? 2 : (popular ? 1.5 : 1),
             ),
-            boxShadow: popular ? [BoxShadow(color: _T.accent.withOpacity(0.1), blurRadius: 8)] : null,
+            boxShadow: (popular || selected) ? [BoxShadow(color: _T.accent.withOpacity(0.1), blurRadius: 8)] : null,
           ),
           child: Row(children: [
             Expanded(
@@ -380,13 +370,13 @@ class _PlanCard extends StatelessWidget {
               duration: const Duration(milliseconds: 150),
               width: 28, height: 28,
               decoration: BoxDecoration(
-                color: popular ? _T.accent : _T.bgCard,
+                color: selected ? _T.accent : (popular ? _T.accent : _T.bgCard),
                 shape: BoxShape.circle,
-                border: Border.all(color: popular ? _T.accent : _T.border),
+                border: Border.all(color: selected ? _T.accent : (popular ? _T.accent : _T.border)),
               ),
               child: Icon(
-                popular ? Icons.check_rounded : Icons.arrow_forward_rounded,
-                color: popular ? Colors.white : _T.txtSecondary,
+                selected ? Icons.check_rounded : Icons.arrow_forward_rounded,
+                color: (selected || popular) ? Colors.white : _T.txtSecondary,
                 size: 14,
               ),
             ),
