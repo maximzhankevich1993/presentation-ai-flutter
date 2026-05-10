@@ -1,119 +1,302 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
+
+// ═══════════════════════════════════════════════════════════════
+// DESIGN TOKENS
+// ═══════════════════════════════════════════════════════════════
+class _T {
+  static const bgBase    = Color(0xFF121212);
+  static const bgSurface = Color(0xFF1A1A1A);
+  static const bgCard    = Color(0xFF1E1E1E);
+  static const bgHover   = Color(0xFF252525);
+  static const border    = Color(0xFF2A2A2A);
+  static const txtPrimary   = Colors.white;
+  static const txtSecondary = Color(0xFF9A9A9A);
+  static const txtMuted     = Color(0xFF4A4A4A);
+  static const accent       = Color(0xFF1DB954);
+  static const accentLight  = Color(0xFF1ED760);
+  static const accentDim    = Color(0xFF1DB95420);
+  static const gold         = Color(0xFFFFD700);
+  static const goldLight    = Color(0xFFFFD60A);
+}
 
 class PremiumScreen extends StatelessWidget {
   const PremiumScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    const green = Color(0xFF1DB954);
-    const card = Color(0xFF1A1A1A);
+    final isPremium = Provider.of<UserProvider>(context).isPremium;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: _T.bgBase,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF121212),
-        title: const Text('Premium', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 17)),
+        backgroundColor: _T.bgBase,
+        leading: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_rounded, color: _T.txtSecondary, size: 17),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        title: const Text('Premium',
+          style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w600, fontSize: 15)),
         centerTitle: true,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: Colors.white70), onPressed: () => Navigator.pop(context)),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(20.w),
-          child: Column(children: [
+        actions: [
+          if (isPremium)
             Container(
-              width: 64.w, height: 64.w,
-              decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFFFFD60A), Color(0xFFF5A623)]), shape: BoxShape.circle),
-              child: const Center(child: Text('👑', style: TextStyle(fontSize: 28))),
+              margin: const EdgeInsets.only(right: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Text('Активен', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11)),
             ),
-            SizedBox(height: 14.h),
-            Text('Разблокируй всё', style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.5)),
-            SizedBox(height: 4.h),
-            Text('Безлимитные презентации и все функции', style: TextStyle(fontSize: 12, color: const Color(0xFFB3B3B3))),
-            SizedBox(height: 24.h),
-
-            // Сравнение
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            // ── Crown ──────────────────────────────────────────
             Container(
-              padding: EdgeInsets.all(16.w),
-              decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(16)),
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [_T.goldLight, _T.gold],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(color: _T.gold.withOpacity(0.35), blurRadius: 24, offset: const Offset(0, 10)),
+                ],
+              ),
+              child: const Icon(Icons.workspace_premium_rounded, color: Colors.white, size: 36),
+            ),
+            const SizedBox(height: 20),
+
+            // ── Title ──────────────────────────────────────────
+            const Text('Разблокируй всё',
+              style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w800, fontSize: 26, letterSpacing: -0.5)),
+            const SizedBox(height: 6),
+            const Text('Безлимитные презентации, все функции и фоны',
+              style: TextStyle(color: _T.txtSecondary, fontSize: 13, height: 1.4),
+              textAlign: TextAlign.center),
+            const SizedBox(height: 28),
+
+            // ── Comparison Table ───────────────────────────────
+            Container(
+              decoration: BoxDecoration(
+                color: _T.bgSurface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: _T.border),
+              ),
               child: Column(children: [
-                _row('Презентаций', '5', '∞'),
-                _divider(),
-                _row('Слайдов', '10', '50'),
-                _divider(),
-                _row('Фоны', '2', '6'),
-                _divider(),
-                _row('Шрифты', '2', '3+'),
-                _divider(),
-                _row('Анимации', '1', '4'),
-                _divider(),
-                _row('PDF без знака', '❌', '✅'),
-                _divider(),
-                _row('AI-улучшение', '❌', '✅'),
+                // Header
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: _T.border.withOpacity(0.3),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  ),
+                  child: Row(children: [
+                    const Expanded(flex: 3, child: Text('Функция', style: TextStyle(color: _T.txtSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5))),
+                    const Expanded(flex: 2, child: Text('Бесплатно', textAlign: TextAlign.center, style: TextStyle(color: _T.txtMuted, fontSize: 11, fontWeight: FontWeight.w600))),
+                    Expanded(flex: 2, child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      const Icon(Icons.star_rounded, color: _T.gold, size: 13),
+                      const SizedBox(width: 4),
+                      const Text('Premium', style: TextStyle(color: _T.gold, fontSize: 11, fontWeight: FontWeight.w700)),
+                    ])),
+                  ]),
+                ),
+
+                _ComparisonRow('Презентаций', '5', '∞'),
+                _ComparisonRow('Слайдов', '10', '50'),
+                _ComparisonRow('Фоны', '8', '16'),
+                _ComparisonRow('Шрифты', 'Inter', '3 стиля'),
+                _ComparisonRow('Анимации', '2', '6'),
+                _ComparisonRow('PDF', '❌', '✅'),
+                _ComparisonRow('AI-улучшение', '❌', '✅'),
+                _ComparisonRow('Свои картинки', '❌', '✅'),
+                _ComparisonRow('Водяной знак', 'Есть', 'Нет'),
               ]),
             ),
-            SizedBox(height: 24.h),
+            const SizedBox(height: 24),
 
-            // Планы
-            _plan('Месяц', '\$4.99', '/мес', false, () {}),
-            SizedBox(height: 10.h),
-            _plan('Полгода', '\$3.99', '/мес', true, () {}),
-            SizedBox(height: 10.h),
-            _plan('Год', '\$2.99', '/мес', false, () {}),
-
-            SizedBox(height: 16.h),
-            TextButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.card_giftcard, color: Color(0xFFFFD60A), size: 18),
-              label: const Text('Попробовать 3 дня бесплатно', style: TextStyle(color: Color(0xFFFFD60A), fontSize: 12)),
+            // ── Plans ──────────────────────────────────────────
+            _PlanCard(
+              name: 'Месяц',
+              price: '\$4.99',
+              period: '/мес',
+              popular: false,
+              onTap: () {},
             ),
-            SizedBox(height: 12.h),
-            Text('🔒 Безопасная оплата', style: TextStyle(fontSize: 10, color: Colors.white38)),
+            const SizedBox(height: 10),
+            _PlanCard(
+              name: 'Полгода',
+              price: '\$3.99',
+              period: '/мес',
+              popular: true,
+              badge: 'ЛУЧШИЙ ВЫБОР',
+              onTap: () {},
+            ),
+            const SizedBox(height: 10),
+            _PlanCard(
+              name: 'Год',
+              price: '\$2.99',
+              period: '/мес',
+              popular: false,
+              badge: 'ЭКОНОМИЯ 40%',
+              onTap: () {},
+            ),
+
+            const SizedBox(height: 20),
+
+            // ── Trial ──────────────────────────────────────────
+            MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                onTap: () {},
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [_T.goldLight, _T.gold]),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [BoxShadow(color: _T.gold.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
+                  ),
+                  child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 18),
+                    SizedBox(width: 8),
+                    Text('3 дня бесплатно', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                  ]),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // ── Secure ─────────────────────────────────────────
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+              const Icon(Icons.lock_rounded, color: _T.txtMuted, size: 11),
+              const SizedBox(width: 4),
+              const Text('Безопасная оплата', style: TextStyle(color: _T.txtMuted, fontSize: 10)),
+              const SizedBox(width: 12),
+              const Icon(Icons.autorenew_rounded, color: _T.txtMuted, size: 11),
+              const SizedBox(width: 4),
+              const Text('Отмена в любое время', style: TextStyle(color: _T.txtMuted, fontSize: 10)),
+            ]),
+            const SizedBox(height: 20),
           ]),
         ),
       ),
     );
   }
+}
 
-  Widget _row(String f, String free, String prem) => Padding(
-    padding: EdgeInsets.symmetric(vertical: 10.h),
-    child: Row(children: [
-      Expanded(flex: 2, child: Text(f, style: TextStyle(fontSize: 13, color: Colors.white70))),
-      Expanded(child: Text(free, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: const Color(0xFFB3B3B3)))),
-      Expanded(child: Text(prem, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.green))),
-    ]),
-  );
+// ═══════════════════════════════════════════════════════════════
+// COMPARISON ROW
+// ═══════════════════════════════════════════════════════════════
+class _ComparisonRow extends StatelessWidget {
+  final String feature;
+  final String free;
+  final String premium;
 
-  Widget _divider() => Divider(color: Colors.white.withOpacity(0.06), height: 1);
+  const _ComparisonRow(this.feature, this.free, this.premium);
 
-  Widget _plan(String name, String price, String period, bool popular, VoidCallback onTap) {
-    const green = Color(0xFF1DB954);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: EdgeInsets.all(16.w),
-        decoration: BoxDecoration(
-          color: popular ? green.withOpacity(0.1) : const Color(0xFF1A1A1A),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: popular ? green.withOpacity(0.4) : Colors.white.withOpacity(0.08), width: popular ? 1.5 : 1),
-        ),
-        child: Row(children: [
-          if (popular) Container(
-            margin: EdgeInsets.only(right: 10.w),
-            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 2.h),
-            decoration: BoxDecoration(color: green, borderRadius: BorderRadius.circular(10)),
-            child: const Text('ЛУЧШИЙ', style: TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.w700)),
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      child: Row(children: [
+        Expanded(flex: 3, child: Text(feature, style: const TextStyle(color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w500))),
+        Expanded(flex: 2, child: Text(free, textAlign: TextAlign.center, style: const TextStyle(color: _T.txtSecondary, fontSize: 13))),
+        Expanded(flex: 2, child: Text(premium, textAlign: TextAlign.center, style: const TextStyle(color: _T.accentLight, fontSize: 13, fontWeight: FontWeight.w700))),
+      ]),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PLAN CARD
+// ═══════════════════════════════════════════════════════════════
+class _PlanCard extends StatelessWidget {
+  final String name;
+  final String price;
+  final String period;
+  final bool popular;
+  final String? badge;
+  final VoidCallback onTap;
+
+  const _PlanCard({
+    required this.name,
+    required this.price,
+    required this.period,
+    required this.popular,
+    this.badge,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: popular ? _T.accentDim : _T.bgSurface,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: popular ? _T.accent.withOpacity(0.5) : _T.border,
+              width: popular ? 1.5 : 1,
+            ),
+            boxShadow: popular ? [BoxShadow(color: _T.accent.withOpacity(0.1), blurRadius: 8)] : null,
           ),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(name, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
-            Text('Полный доступ', style: TextStyle(fontSize: 11, color: const Color(0xFFB3B3B3))),
-          ])),
-          Text(price, style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: green)),
-          SizedBox(width: 2.w),
-          Text(period, style: TextStyle(fontSize: 11, color: const Color(0xFFB3B3B3))),
-        ]),
+          child: Row(children: [
+            Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                if (badge != null)
+                  Container(
+                    margin: const EdgeInsets.only(bottom: 6),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Text(badge!, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
+                  ),
+                Text(name, style: const TextStyle(color: _T.txtPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 2),
+                const Text('Полный доступ', style: TextStyle(color: _T.txtSecondary, fontSize: 11)),
+              ]),
+            ),
+            Text(price, style: const TextStyle(color: _T.accentLight, fontSize: 26, fontWeight: FontWeight.w900)),
+            const SizedBox(width: 2),
+            Text(period, style: const TextStyle(color: _T.txtSecondary, fontSize: 11)),
+            const SizedBox(width: 8),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: 28, height: 28,
+              decoration: BoxDecoration(
+                color: popular ? _T.accent : _T.bgCard,
+                shape: BoxShape.circle,
+                border: Border.all(color: popular ? _T.accent : _T.border),
+              ),
+              child: Icon(
+                popular ? Icons.check_rounded : Icons.arrow_forward_rounded,
+                color: popular ? Colors.white : _T.txtSecondary,
+                size: 14,
+              ),
+            ),
+          ]),
+        ),
       ),
     );
   }
