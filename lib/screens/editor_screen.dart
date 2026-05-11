@@ -148,9 +148,21 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
       _cb.removeAt(i);
       _fs.removeAt(i);
       _fn.removeAt(i);
-      _ai.remove(i);
       _sfc.removeAt(i);
       _tr.removeAt(i);
+      // Пересобираем _ai с правильными индексами после удаления
+      final newAi = <int, String?>{};
+      for (final entry in _ai.entries) {
+        if (entry.key < i) {
+          newAi[entry.key] = entry.value;
+        } else if (entry.key > i) {
+          newAi[entry.key - 1] = entry.value;
+        }
+        // entry.key == i удаляется
+      }
+      _ai
+        ..clear()
+        ..addAll(newAi);
       if (_as >= _p.slides.length) _as = _p.slides.length - 1;
     });
     _countUp();
@@ -168,6 +180,19 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
       _fn.insert(x, _fn[i]);
       _sfc.insert(x, _sfc[i]);
       _tr.insert(x, _tr[i]);
+      // Сдвигаем ключи _ai начиная с x
+      final newAi = <int, String?>{};
+      for (final entry in _ai.entries) {
+        if (entry.key < x) {
+          newAi[entry.key] = entry.value;
+        } else {
+          newAi[entry.key + 1] = entry.value;
+        }
+      }
+      newAi[x] = _ai[i];
+      _ai
+        ..clear()
+        ..addAll(newAi);
       _as = x;
     });
     _countUp();
@@ -178,6 +203,10 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     setState(() {
       void sw<T>(List<T> l) { final x = l[f]; l[f] = l[t]; l[t] = x; }
       sw(_p.slides); sw(_tc); sw(_cc); sw(_ci); sw(_cb); sw(_fs); sw(_fn); sw(_sfc); sw(_tr);
+      // Меняем ключи в _ai
+      final tmp = _ai[f];
+      _ai[f] = _ai[t];
+      _ai[t] = tmp;
       _as = t;
     });
   }
@@ -297,7 +326,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
           const VerticalDivider(color: _T.border, width: 1),
           Expanded(child: _Canvas(index: _as, titleCtrl: _tc[_as], contentCtrl: _cc[_as], decoration: _deco(_as), isDark: d, image: _ci[_as] ?? _ai[_as], font: _fn[_as] != 'Inter' ? _fn[_as] : _gf, fontSize: _fs[_as], fontColor: _sfc[_as] ?? _gfc, slideCount: _p.slides.length, logoUrl: _logo, onAddItem: () => _addItem(_as), onRemoveItem: (i) => _remItem(_as, i), onRemoveImage: () => setState(() { _ci[_as] = null; _countUp(); }), hasCustomImage: _ci[_as] != null)),
           const VerticalDivider(color: _T.border, width: 1),
-          AnimatedContainer(duration: const Duration(milliseconds: 200), width: _ppo ? 260 : 0, child: _ppo ? _PropertiesPanel(index: _as, isPremium: Provider.of<UserProvider>(context, listen: false).isPremium, activeTab: _apt, globalFont: _gf, selectedBgIndex: _sbi, freeBgs: _fb, premiumBgs: _pb, customBg: _cb[_as], fontSize: _fs[_as], fontColor: _sfc[_as] ?? _gfc, transition: _tr[_as], allTransitions: _atr, isImproving: _ii, onTabChange: (t) => setState(() => _apt = t), onBgSelect: (i) => setState(() { _sbi = i; _cb = List.filled(_p.slides.length, null); }), onBgUpload: () => _uploadBg(_as), onImageUpload: () => _uploadImage(_as), onFontChange: (f) => setState(() { _gf = f; for (int i = 0; i < _fn.length; i++) _fn[i] = f; }), onFontSizeChange: (v) => setState(() => _fs[_as] = v), onFontColorChange: (c) => setState(() { _sfc[_as] = c; _gfc = c; }), onTransitionChange: (t) => setState(() => _tr[_as] = t), uploadsUsed: _iu) : const SizedBox.shrink()),
+          AnimatedContainer(duration: const Duration(milliseconds: 200), width: _ppo ? 260 : 0, child: _ppo ? _PropertiesPanel(index: _as, isPremium: Provider.of<UserProvider>(context, listen: false).isPremium, activeTab: _apt, globalFont: _gf, selectedBgIndex: _sbi, freeBgs: _fb, premiumBgs: _pb, customBg: _cb[_as], fontSize: _fs[_as], fontColor: _sfc[_as] ?? _gfc, transition: _tr[_as], allTransitions: _atr, isImproving: _ii, onTabChange: (t) => setState(() => _apt = t), onBgSelect: (i) => setState(() { _sbi = i; _cb = List.filled(_p.slides.length, null); }), onBgUpload: () => _uploadBg(_as), onImageUpload: () => _uploadImage(_as), onFontChange: (f) => setState(() { _gf = f; for (int i = 0; i < _fn.length; i++) _fn[i] = f; }), onFontSizeChange: (v) => setState(() => _fs[_as] = v), onFontColorChange: (c) => setState(() { _sfc[_as] = c; _gfc = c; }), onTransitionChange: (t) => setState(() => _tr[_as] = t), uploadsUsed: _iu, onImproveSlide: () => _improveSlide(_as)) : const SizedBox.shrink()),
         ])),
       ]),
     );
@@ -424,59 +453,259 @@ class _Canvas extends StatelessWidget {
   ]))));
 }
 
-class _EditorField extends StatelessWidget { final TextEditingController c; final String h; final bool t; const _EditorField({required this.c, required this.h, this.t = false}); @override Widget build(BuildContext _) => TextField(controller: c, style: TextStyle(color: _T.txtPrimary, fontSize: t ? 15 : 13, fontWeight: t ? FontWeight.w700 : FontWeight.w400), maxLines: null, decoration: InputDecoration(hintText: h, hintStyle: const TextStyle(color: _T.txtMuted, fontSize: 13), filled: true, fillColor: _T.bgCard, contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _T.border)), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _T.border)), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _T.accent, width: 1.5)), isDense: true)); }
+class _EditorField extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+  final bool isTitle;
+  const _EditorField({required this.controller, required this.hint, this.isTitle = false});
+  @override Widget build(BuildContext _) => TextField(controller: controller, style: TextStyle(color: _T.txtPrimary, fontSize: isTitle ? 15 : 13, fontWeight: isTitle ? FontWeight.w700 : FontWeight.w400), maxLines: null, decoration: InputDecoration(hintText: hint, hintStyle: const TextStyle(color: _T.txtMuted, fontSize: 13), filled: true, fillColor: _T.bgCard, contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _T.border)), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _T.border)), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _T.accent, width: 1.5)), isDense: true));
+}
 
 // ═══════════════════════════════════════════════════════════════
 // PROPERTIES PANEL
 // ═══════════════════════════════════════════════════════════════
 class _PropertiesPanel extends StatelessWidget {
-  final int index; final bool isPremium; final String activeTab, globalFont; final int selectedBgIndex; final List<Map<String, dynamic>> freeBgs, premiumBgs, allTransitions; final String? customBg; final double fontSize; final Color fontColor; final String transition; final bool isImproving; final ValueChanged<String> onTabChange, onFontChange, onTransitionChange; final ValueChanged<int> onBgSelect; final VoidCallback onBgUpload, onImageUpload; final ValueChanged<double> onFontSizeChange; final ValueChanged<Color> onFontColorChange; final int uploadsUsed;
-  const _PropertiesPanel({required this.index, required this.isPremium, required this.activeTab, required this.globalFont, required this.selectedBgIndex, required this.freeBgs, required this.premiumBgs, required this.customBg, required this.fontSize, required this.fontColor, required this.transition, required this.allTransitions, required this.isImproving, required this.onTabChange, required this.onBgSelect, required this.onBgUpload, required this.onImageUpload, required this.onFontChange, required this.onFontSizeChange, required this.onFontColorChange, required this.onTransitionChange, required this.uploadsUsed});
-  @override Widget build(BuildContext c) => Container(color: _T.bgSurface, child: Column(children: [
-    Container(height: 40, padding: const EdgeInsets.symmetric(horizontal: 6), child: Row(children: [_Tab('design', 'Дизайн', Icons.palette_rounded, activeTab, onTabChange), _Tab('image', 'Медиа', Icons.image_rounded, activeTab, onTabChange), _Tab('ai', 'ИИ', Icons.auto_awesome_rounded, activeTab, onTabChange)])),
+  final int index;
+  final bool isPremium;
+  final String activeTab, globalFont;
+  final int selectedBgIndex;
+  final List<Map<String, dynamic>> freeBgs, premiumBgs, allTransitions;
+  final String? customBg;
+  final double fontSize;
+  final Color fontColor;
+  final String transition;
+  final bool isImproving;
+  final ValueChanged<String> onTabChange, onFontChange, onTransitionChange;
+  final ValueChanged<int> onBgSelect;
+  final VoidCallback onBgUpload, onImageUpload, onImproveSlide;
+  final ValueChanged<double> onFontSizeChange;
+  final ValueChanged<Color> onFontColorChange;
+  final int uploadsUsed;
+
+  const _PropertiesPanel({
+    required this.index,
+    required this.isPremium,
+    required this.activeTab,
+    required this.globalFont,
+    required this.selectedBgIndex,
+    required this.freeBgs,
+    required this.premiumBgs,
+    required this.customBg,
+    required this.fontSize,
+    required this.fontColor,
+    required this.transition,
+    required this.allTransitions,
+    required this.isImproving,
+    required this.onTabChange,
+    required this.onBgSelect,
+    required this.onBgUpload,
+    required this.onImageUpload,
+    required this.onFontChange,
+    required this.onFontSizeChange,
+    required this.onFontColorChange,
+    required this.onTransitionChange,
+    required this.uploadsUsed,
+    required this.onImproveSlide,
+  });
+
+  @override
+  Widget build(BuildContext c) => Container(color: _T.bgSurface, child: Column(children: [
+    Container(height: 40, padding: const EdgeInsets.symmetric(horizontal: 6), child: Row(children: [
+      _Tab('design', 'Дизайн', Icons.palette_rounded, activeTab, onTabChange),
+      _Tab('image', 'Медиа', Icons.image_rounded, activeTab, onTabChange),
+      _Tab('ai', 'ИИ', Icons.auto_awesome_rounded, activeTab, onTabChange),
+    ])),
     const Divider(color: _T.border, height: 1),
-    Expanded(child: SingleChildScrollView(padding: const EdgeInsets.all(14), child: switch (activeTab) { 'image' => _ImageTab(onUpload: onImageUpload, isPremium: isPremium), 'ai' => _AiTab(isImproving: isImproving, onImprove: () {}), _ => _DesignTab(globalFont: globalFont, selectedBgIndex: selectedBgIndex, freeBgs: freeBgs, premiumBgs: premiumBgs, customBg: customBg, fontSize: fontSize, fontColor: fontColor, transition: transition, allTransitions: allTransitions, isPremium: isPremium, onBgSelect: onBgSelect, onBgUpload: onBgUpload, onFontChange: onFontChange, onFontSizeChange: onFontSizeChange, onFontColorChange: onFontColorChange, onTransitionChange: onTransitionChange) })),
+    Expanded(child: SingleChildScrollView(padding: const EdgeInsets.all(14), child: switch (activeTab) {
+      'image' => _ImageTab(onUpload: onImageUpload, isPremium: isPremium),
+      'ai'    => _AiTab(isImproving: isImproving, onImprove: onImproveSlide),
+      _       => _DesignTab(
+          globalFont: globalFont,
+          selectedBgIndex: selectedBgIndex,
+          freeBgs: freeBgs,
+          premiumBgs: premiumBgs,
+          customBg: customBg,
+          fontSize: fontSize,
+          fontColor: fontColor,
+          transition: transition,
+          allTransitions: allTransitions,
+          isPremium: isPremium,
+          onBgSelect: onBgSelect,
+          onBgUpload: onBgUpload,
+          onFontChange: onFontChange,
+          onFontSizeChange: onFontSizeChange,
+          onFontColorChange: onFontColorChange,
+          onTransitionChange: onTransitionChange,
+        ),
+    })),
   ]));
 }
 
-class _Tab extends StatelessWidget { final String id, label, active; final IconData icon; final ValueChanged<String> onTap; const _Tab(this.id, this.label, this.icon, this.active, this.onTap); @override Widget build(BuildContext c) { final a = id == active; return Expanded(child: GestureDetector(onTap: () => onTap(id), child: AnimatedContainer(duration: const Duration(milliseconds: 120), margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 6), padding: const EdgeInsets.symmetric(horizontal: 4), decoration: BoxDecoration(color: a ? _T.accentDim : Colors.transparent, borderRadius: BorderRadius.circular(6), border: Border.all(color: a ? _T.accent.withOpacity(0.3) : Colors.transparent)), child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, size: 12, color: a ? _T.accentLight : _T.txtMuted), const SizedBox(width: 4), Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: a ? _T.accentLight : _T.txtMuted))])))); } }
+class _Tab extends StatelessWidget {
+  final String id, label, active;
+  final IconData icon;
+  final ValueChanged<String> onTap;
+  const _Tab(this.id, this.label, this.icon, this.active, this.onTap);
+  @override Widget build(BuildContext c) {
+    final a = id == active;
+    return Expanded(child: GestureDetector(onTap: () => onTap(id), child: AnimatedContainer(duration: const Duration(milliseconds: 120), margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 6), padding: const EdgeInsets.symmetric(horizontal: 4), decoration: BoxDecoration(color: a ? _T.accentDim : Colors.transparent, borderRadius: BorderRadius.circular(6), border: Border.all(color: a ? _T.accent.withOpacity(0.3) : Colors.transparent)), child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(icon, size: 12, color: a ? _T.accentLight : _T.txtMuted), const SizedBox(width: 4), Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: a ? _T.accentLight : _T.txtMuted))]))));
+  }
+}
 
 class _DesignTab extends StatelessWidget {
-  final String gf; final int si; final List<Map<String, dynamic>> fb, pb, at; final String? cb; final double fs; final Color fc; final String tr; final bool ip; final ValueChanged<int> ob; final VoidCallback ou; final ValueChanged<String> of, ot; final ValueChanged<double> os; final ValueChanged<Color> oc;
-  const _DesignTab({required this.gf, required this.si, required this.fb, required this.pb, required this.cb, required this.fs, required this.fc, required this.tr, required this.at, required this.ip, required this.ob, required this.ou, required this.of, required this.os, required this.oc, required this.ot});
-  static const _fc = [Colors.white, Color(0xFFF2F2F2), Color(0xFF1A1A2E), Colors.black, Color(0xFF1DB954), Color(0xFF4facfe), Color(0xFFf5576c), Color(0xFFFFD700), Color(0xFFf093fb), Color(0xFFFF6B35)];
-  @override Widget build(BuildContext c) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+  final String globalFont;
+  final int selectedBgIndex;
+  final List<Map<String, dynamic>> freeBgs, premiumBgs, allTransitions;
+  final String? customBg;
+  final double fontSize;
+  final Color fontColor;
+  final String transition;
+  final bool isPremium;
+  final ValueChanged<int> onBgSelect;
+  final VoidCallback onBgUpload;
+  final ValueChanged<String> onFontChange, onTransitionChange;
+  final ValueChanged<double> onFontSizeChange;
+  final ValueChanged<Color> onFontColorChange;
+
+  const _DesignTab({
+    required this.globalFont,
+    required this.selectedBgIndex,
+    required this.freeBgs,
+    required this.premiumBgs,
+    required this.customBg,
+    required this.fontSize,
+    required this.fontColor,
+    required this.transition,
+    required this.allTransitions,
+    required this.isPremium,
+    required this.onBgSelect,
+    required this.onBgUpload,
+    required this.onFontChange,
+    required this.onFontSizeChange,
+    required this.onFontColorChange,
+    required this.onTransitionChange,
+  });
+
+  static const _fc = [
+    Colors.white,
+    Color(0xFFF2F2F2),
+    Color(0xFF1A1A2E),
+    Colors.black,
+    Color(0xFF1DB954),
+    Color(0xFF4facfe),
+    Color(0xFFf5576c),
+    Color(0xFFFFD700),
+    Color(0xFFf093fb),
+    Color(0xFFFF6B35),
+  ];
+
+  @override
+  Widget build(BuildContext c) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
     _SectionLabel('ШРИФТ'), const SizedBox(height: 8),
-    ...(['Inter', 'Georgia', 'Courier'].map((f) => MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(onTap: () => of(f), child: AnimatedContainer(duration: const Duration(milliseconds: 120), margin: const EdgeInsets.only(bottom: 6), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9), decoration: BoxDecoration(color: gf == f ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(8), border: Border.all(color: gf == f ? _T.accent.withOpacity(0.4) : _T.border)), child: Row(children: [Expanded(child: Text(f, style: TextStyle(fontFamily: f, color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w600))), if (gf == f) const Icon(Icons.check_circle_rounded, color: _T.accent, size: 16)])))))),
+    ...(['Inter', 'Georgia', 'Courier'].map((f) => MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(onTap: () => onFontChange(f), child: AnimatedContainer(duration: const Duration(milliseconds: 120), margin: const EdgeInsets.only(bottom: 6), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9), decoration: BoxDecoration(color: globalFont == f ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(8), border: Border.all(color: globalFont == f ? _T.accent.withOpacity(0.4) : _T.border)), child: Row(children: [Expanded(child: Text(f, style: TextStyle(fontFamily: f, color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w600))), if (globalFont == f) const Icon(Icons.check_circle_rounded, color: _T.accent, size: 16)])))))),
     const SizedBox(height: 18), _SectionLabel('РАЗМЕР ТЕКСТА'), const SizedBox(height: 10),
-    Row(children: [Expanded(child: SliderTheme(data: SliderThemeData(activeTrackColor: _T.accent, inactiveTrackColor: _T.border, thumbColor: _T.accent, overlayColor: _T.accentDim, trackHeight: 3, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6)), child: Slider(value: fs, min: 6, max: 18, divisions: 12, onChanged: os))), Container(width: 36, padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4), decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(6), border: Border.all(color: _T.border)), child: Text('${fs.toInt()}', style: const TextStyle(color: _T.txtPrimary, fontSize: 11, fontWeight: FontWeight.w600), textAlign: TextAlign.center))]),
+    Row(children: [
+      Expanded(child: SliderTheme(data: SliderThemeData(activeTrackColor: _T.accent, inactiveTrackColor: _T.border, thumbColor: _T.accent, overlayColor: _T.accentDim, trackHeight: 3, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6)), child: Slider(value: fontSize, min: 6, max: 18, divisions: 12, onChanged: onFontSizeChange))),
+      Container(width: 36, padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4), decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(6), border: Border.all(color: _T.border)), child: Text('${fontSize.toInt()}', style: const TextStyle(color: _T.txtPrimary, fontSize: 11, fontWeight: FontWeight.w600), textAlign: TextAlign.center)),
+    ]),
     const SizedBox(height: 18), _SectionLabel('ЦВЕТ ТЕКСТА'), const SizedBox(height: 10),
-    Wrap(spacing: 7, runSpacing: 7, children: _fc.map((x) { final s = fc.value == x.value; return MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(onTap: () => oc(x), child: AnimatedContainer(duration: const Duration(milliseconds: 120), width: 28, height: 28, decoration: BoxDecoration(color: x, shape: BoxShape.circle, border: Border.all(color: s ? _T.accent : Colors.white12, width: s ? 2.5 : 1), boxShadow: s ? [BoxShadow(color: _T.accent.withOpacity(0.4), blurRadius: 6)] : null), child: s ? const Icon(Icons.check_rounded, size: 14, color: Colors.white) : null))); }).toList()),
+    Wrap(spacing: 7, runSpacing: 7, children: _fc.map((x) {
+      final s = fontColor.value == x.value;
+      return MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(onTap: () => onFontColorChange(x), child: AnimatedContainer(duration: const Duration(milliseconds: 120), width: 28, height: 28, decoration: BoxDecoration(color: x, shape: BoxShape.circle, border: Border.all(color: s ? _T.accent : Colors.white12, width: s ? 2.5 : 1), boxShadow: s ? [BoxShadow(color: _T.accent.withOpacity(0.4), blurRadius: 6)] : null), child: s ? const Icon(Icons.check_rounded, size: 14, color: Colors.white) : null)));
+    }).toList()),
     const SizedBox(height: 18), _SectionLabel('ФОН'), const SizedBox(height: 8),
-    GridView.count(crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), mainAxisSpacing: 6, crossAxisSpacing: 6, childAspectRatio: 1.4, children: fb.asMap().entries.map((e) { final i = e.key; final bg = e.value; final s = i == si && cb == null; return MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(onTap: () => ob(i), child: AnimatedContainer(duration: const Duration(milliseconds: 120), decoration: BoxDecoration(gradient: bg['type'] == 'gradient' ? LinearGradient(colors: bg['colors'] as List<Color>) : null, color: bg['type'] == 'solid' ? bg['color'] as Color : null, borderRadius: BorderRadius.circular(6), border: Border.all(color: s ? _T.accent : Colors.transparent, width: 2), boxShadow: s ? [BoxShadow(color: _T.accent.withOpacity(0.35), blurRadius: 6)] : null), child: s ? const Center(child: Icon(Icons.check_rounded, color: Colors.white, size: 12)) : null))); }).toList()),
+    GridView.count(crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), mainAxisSpacing: 6, crossAxisSpacing: 6, childAspectRatio: 1.4, children: freeBgs.asMap().entries.map((e) {
+      final i = e.key; final bg = e.value; final s = i == selectedBgIndex && customBg == null;
+      return MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(onTap: () => onBgSelect(i), child: AnimatedContainer(duration: const Duration(milliseconds: 120), decoration: BoxDecoration(gradient: bg['type'] == 'gradient' ? LinearGradient(colors: bg['colors'] as List<Color>) : null, color: bg['type'] == 'solid' ? bg['color'] as Color : null, borderRadius: BorderRadius.circular(6), border: Border.all(color: s ? _T.accent : Colors.transparent, width: 2), boxShadow: s ? [BoxShadow(color: _T.accent.withOpacity(0.35), blurRadius: 6)] : null), child: s ? const Center(child: Icon(Icons.check_rounded, color: Colors.white, size: 12)) : null)));
+    }).toList()),
     const SizedBox(height: 8),
-    MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(onTap: ou, child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 9), decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(8), border: Border.all(color: _T.border)), child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.upload_rounded, color: _T.txtSecondary, size: 13), SizedBox(width: 6), Text('Загрузить фон', style: TextStyle(color: _T.txtSecondary, fontSize: 12, fontWeight: FontWeight.w500))])))),
+    MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(onTap: onBgUpload, child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 9), decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(8), border: Border.all(color: _T.border)), child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.upload_rounded, color: _T.txtSecondary, size: 13), SizedBox(width: 6), Text('Загрузить фон', style: TextStyle(color: _T.txtSecondary, fontSize: 12, fontWeight: FontWeight.w500))])))),
     const SizedBox(height: 12),
-    Row(children: [_SectionLabel('PREMIUM ФОНЫ'), const Spacer(), if (!ip) Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: _T.gold.withOpacity(0.12), borderRadius: BorderRadius.circular(4)), child: const Text('PRO', style: TextStyle(color: _T.gold, fontSize: 9, fontWeight: FontWeight.w800)))]), const SizedBox(height: 8),
-    GridView.count(crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), mainAxisSpacing: 6, crossAxisSpacing: 6, childAspectRatio: 1.4, children: pb.asMap().entries.map((e) { final i = e.key; final bg = e.value; return MouseRegion(cursor: ip ? SystemMouseCursors.click : SystemMouseCursors.forbidden, child: GestureDetector(onTap: ip ? () => ob(fb.length + i) : null, child: Stack(children: [Container(decoration: BoxDecoration(gradient: bg['type'] == 'gradient' ? LinearGradient(colors: bg['colors'] as List<Color>) : null, color: bg['type'] == 'solid' ? bg['color'] as Color : null, borderRadius: BorderRadius.circular(6))), if (!ip) Container(decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(6)), child: const Center(child: Icon(Icons.lock_rounded, color: Colors.white54, size: 13)))])),); }).toList()),
+    Row(children: [_SectionLabel('PREMIUM ФОНЫ'), const Spacer(), if (!isPremium) Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: _T.gold.withOpacity(0.12), borderRadius: BorderRadius.circular(4)), child: const Text('PRO', style: TextStyle(color: _T.gold, fontSize: 9, fontWeight: FontWeight.w800)))]),
+    const SizedBox(height: 8),
+    GridView.count(crossAxisCount: 4, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), mainAxisSpacing: 6, crossAxisSpacing: 6, childAspectRatio: 1.4, children: premiumBgs.asMap().entries.map((e) {
+      final i = e.key; final bg = e.value;
+      return MouseRegion(cursor: isPremium ? SystemMouseCursors.click : SystemMouseCursors.forbidden, child: GestureDetector(onTap: isPremium ? () => onBgSelect(freeBgs.length + i) : null, child: Stack(children: [Container(decoration: BoxDecoration(gradient: bg['type'] == 'gradient' ? LinearGradient(colors: bg['colors'] as List<Color>) : null, color: bg['type'] == 'solid' ? bg['color'] as Color : null, borderRadius: BorderRadius.circular(6))), if (!isPremium) Container(decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(6)), child: const Center(child: Icon(Icons.lock_rounded, color: Colors.white54, size: 13)))])));
+    }).toList()),
     const SizedBox(height: 18),
-    Row(children: [_SectionLabel('ПЕРЕХОД'), const Spacer(), if (!ip) Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: _T.gold.withOpacity(0.12), borderRadius: BorderRadius.circular(4)), child: const Text('2 бесплатно', style: TextStyle(color: _T.gold, fontSize: 9, fontWeight: FontWeight.w700)))]), const SizedBox(height: 8),
-    GridView.count(crossAxisCount: 3, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), mainAxisSpacing: 6, crossAxisSpacing: 6, childAspectRatio: 2.0, children: at.map((t) { final pr = t['premium'] as bool; final locked = pr && !ip; final s = tr == t['id']; return MouseRegion(cursor: locked ? SystemMouseCursors.forbidden : SystemMouseCursors.click, child: GestureDetector(onTap: locked ? null : () => ot(t['id'] as String), child: AnimatedContainer(duration: const Duration(milliseconds: 120), decoration: BoxDecoration(color: s ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(8), border: Border.all(color: s ? _T.accent.withOpacity(0.5) : _T.border)), child: Stack(alignment: Alignment.center, children: [Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(t['icon'] as IconData, size: 16, color: locked ? _T.txtMuted : s ? _T.accent : _T.txtSecondary), const SizedBox(height: 3), Text(t['label'] as String, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: locked ? _T.txtMuted : s ? _T.accent : _T.txtSecondary))]), if (locked) Positioned(top: 4, right: 4, child: Icon(Icons.lock_rounded, size: 9, color: _T.gold.withOpacity(0.7)))])))); }).toList()),
+    Row(children: [_SectionLabel('ПЕРЕХОД'), const Spacer(), if (!isPremium) Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: _T.gold.withOpacity(0.12), borderRadius: BorderRadius.circular(4)), child: const Text('2 бесплатно', style: TextStyle(color: _T.gold, fontSize: 9, fontWeight: FontWeight.w700)))]),
+    const SizedBox(height: 8),
+    GridView.count(crossAxisCount: 3, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), mainAxisSpacing: 6, crossAxisSpacing: 6, childAspectRatio: 2.0, children: allTransitions.map((t) {
+      final pr = t['premium'] as bool; final locked = pr && !isPremium; final s = transition == t['id'];
+      return MouseRegion(cursor: locked ? SystemMouseCursors.forbidden : SystemMouseCursors.click, child: GestureDetector(onTap: locked ? null : () => onTransitionChange(t['id'] as String), child: AnimatedContainer(duration: const Duration(milliseconds: 120), decoration: BoxDecoration(color: s ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(8), border: Border.all(color: s ? _T.accent.withOpacity(0.5) : _T.border)), child: Stack(alignment: Alignment.center, children: [Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(t['icon'] as IconData, size: 16, color: locked ? _T.txtMuted : s ? _T.accent : _T.txtSecondary), const SizedBox(height: 3), Text(t['label'] as String, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: locked ? _T.txtMuted : s ? _T.accent : _T.txtSecondary))]), if (locked) Positioned(top: 4, right: 4, child: Icon(Icons.lock_rounded, size: 9, color: _T.gold.withOpacity(0.7)))]))));
+    }).toList()),
   ]);
 }
 
-class _ImageTab extends StatelessWidget { final VoidCallback u; final bool p; const _ImageTab({required this.u, required this.p}); @override Widget build(BuildContext c) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_SectionLabel('ИЗОБРАЖЕНИЕ'), const SizedBox(height: 8), if (!p) Container(width: double.infinity, margin: const EdgeInsets.only(bottom: 12), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), decoration: BoxDecoration(color: _T.gold.withOpacity(0.07), borderRadius: BorderRadius.circular(10), border: Border.all(color: _T.gold.withOpacity(0.2))), child: Row(children: const [Icon(Icons.star_rounded, color: _T.gold, size: 14), SizedBox(width: 8), Expanded(child: Text('Замена — Premium.', style: TextStyle(color: _T.gold, fontSize: 11, fontWeight: FontWeight.w500)))])), MouseRegion(cursor: p ? SystemMouseCursors.click : SystemMouseCursors.forbidden, child: GestureDetector(onTap: p ? u : null, child: AnimatedContainer(duration: const Duration(milliseconds: 120), width: double.infinity, height: 90, decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(10), border: Border.all(color: p ? _T.border : _T.border.withOpacity(0.4))), child: Opacity(opacity: p ? 1.0 : 0.4, child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Container(width: 34, height: 34, decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.image_rounded, color: _T.accent, size: 17)), const SizedBox(height: 8), const Text('Нажмите для загрузки', style: TextStyle(color: _T.txtSecondary, fontSize: 11)), const Text('PNG, JPG до 10 МБ', style: TextStyle(color: _T.txtMuted, fontSize: 10))]))))), const SizedBox(height: 16), Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(10), border: Border.all(color: _T.border)), child: const Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.info_outline_rounded, color: _T.txtMuted, size: 13), SizedBox(width: 8), Expanded(child: Text('Unsplash подбирает изображение.', style: TextStyle(color: _T.txtMuted, fontSize: 11, height: 1.5)))]))]); }
+// ═══════════════════════════════════════════════════════════════
+// IMAGE TAB
+// ═══════════════════════════════════════════════════════════════
+class _ImageTab extends StatelessWidget {
+  final VoidCallback onUpload;
+  final bool isPremium;
+  const _ImageTab({required this.onUpload, required this.isPremium});
 
+  @override
+  Widget build(BuildContext c) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    _SectionLabel('ИЗОБРАЖЕНИЕ'), const SizedBox(height: 8),
+    if (!isPremium) Container(width: double.infinity, margin: const EdgeInsets.only(bottom: 12), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), decoration: BoxDecoration(color: _T.gold.withOpacity(0.07), borderRadius: BorderRadius.circular(10), border: Border.all(color: _T.gold.withOpacity(0.2))), child: const Row(children: [Icon(Icons.star_rounded, color: _T.gold, size: 14), SizedBox(width: 8), Expanded(child: Text('Замена — Premium.', style: TextStyle(color: _T.gold, fontSize: 11, fontWeight: FontWeight.w500)))])),
+    MouseRegion(cursor: isPremium ? SystemMouseCursors.click : SystemMouseCursors.forbidden, child: GestureDetector(onTap: isPremium ? onUpload : null, child: AnimatedContainer(duration: const Duration(milliseconds: 120), width: double.infinity, height: 90, decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(10), border: Border.all(color: isPremium ? _T.border : _T.border.withOpacity(0.4))), child: Opacity(opacity: isPremium ? 1.0 : 0.4, child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Container(width: 34, height: 34, decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.image_rounded, color: _T.accent, size: 17)), const SizedBox(height: 8), const Text('Нажмите для загрузки', style: TextStyle(color: _T.txtSecondary, fontSize: 11)), const Text('PNG, JPG до 10 МБ', style: TextStyle(color: _T.txtMuted, fontSize: 10))]))))),
+    const SizedBox(height: 16),
+    Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(10), border: Border.all(color: _T.border)), child: const Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.info_outline_rounded, color: _T.txtMuted, size: 13), SizedBox(width: 8), Expanded(child: Text('Unsplash подбирает изображение.', style: TextStyle(color: _T.txtMuted, fontSize: 11, height: 1.5)))])),
+  ]);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// AI TAB
+// ═══════════════════════════════════════════════════════════════
 class _AiTab extends StatelessWidget {
-  final bool i; final VoidCallback o;
-  const _AiTab({required this.i, required this.o});
-  @override Widget build(BuildContext c) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+  final bool isImproving;
+  final VoidCallback onImprove;
+  const _AiTab({required this.isImproving, required this.onImprove});
+
+  @override
+  Widget build(BuildContext c) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
     _SectionLabel('ИИ ПОМОЩНИК'), const SizedBox(height: 12),
-    Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(gradient: LinearGradient(colors: [_T.accent.withOpacity(0.08), _T.accentLight.withOpacity(0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight), borderRadius: BorderRadius.circular(12), border: Border.all(color: _T.accent.withOpacity(0.2))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [Container(width: 30, height: 30, decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 15)), const SizedBox(width: 10), const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Улучшить текст', style: TextStyle(color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w700)), Text('Текущий слайд', style: TextStyle(color: _T.txtMuted, fontSize: 10))])]),
-      const SizedBox(height: 10), const Text('ИИ перепишет заголовок и пункты.', style: TextStyle(color: _T.txtSecondary, fontSize: 11, height: 1.5)), const SizedBox(height: 12),
-      SizedBox(width: double.infinity, child: GestureDetector(onTap: i ? null : o, child: AnimatedContainer(duration: const Duration(milliseconds: 120), padding: const EdgeInsets.symmetric(vertical: 11), decoration: BoxDecoration(gradient: i ? null : const LinearGradient(colors: [Color(0xFF169C46), _T.accent, _T.accentLight], begin: Alignment.centerLeft, end: Alignment.centerRight), color: i ? _T.bgHover : null, borderRadius: BorderRadius.circular(9)), child: Center(child: i ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: _T.accent, strokeWidth: 2)) : const Text('Улучшить', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13))))),
-    ])),
+    Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [_T.accent.withOpacity(0.08), _T.accentLight.withOpacity(0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _T.accent.withOpacity(0.2)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(width: 30, height: 30, decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 15)),
+          const SizedBox(width: 10),
+          const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Улучшить текст', style: TextStyle(color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w700)),
+            Text('Текущий слайд', style: TextStyle(color: _T.txtMuted, fontSize: 10)),
+          ]),
+        ]),
+        const SizedBox(height: 10),
+        const Text('ИИ перепишет заголовок и пункты.', style: TextStyle(color: _T.txtSecondary, fontSize: 11, height: 1.5)),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: GestureDetector(
+            onTap: isImproving ? null : onImprove,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              padding: const EdgeInsets.symmetric(vertical: 11),
+              decoration: BoxDecoration(
+                gradient: isImproving ? null : const LinearGradient(colors: [Color(0xFF169C46), _T.accent, _T.accentLight], begin: Alignment.centerLeft, end: Alignment.centerRight),
+                color: isImproving ? _T.bgHover : null,
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: Center(child: isImproving
+                ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: _T.accent, strokeWidth: 2))
+                : const Text('Улучшить', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
+              ),
+            ),
+          ),
+        ),
+      ]),
+    ),
   ]);
 }
 
@@ -542,9 +771,35 @@ class _ExportOption extends StatelessWidget {
   );
 }
 
-class _SectionLabel extends StatelessWidget { final String t; const _SectionLabel(this.t); @override Widget build(BuildContext c) => Text(t, style: const TextStyle(color: _T.txtMuted, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8)); }
+// ═══════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════
+class _SectionLabel extends StatelessWidget {
+  final String t;
+  const _SectionLabel(this.t);
+  @override Widget build(BuildContext c) => Text(t, style: const TextStyle(color: _T.txtMuted, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8));
+}
 
-class _IconBtn extends StatefulWidget { final IconData i; final VoidCallback? o; final double s; final String? t; final bool d, a, dis; const _IconBtn(this.i, this.o, {this.s = 18, this.t, this.d = false, this.a = false, this.dis = false}); @override State<_IconBtn> createState() => _IconBtnState(); }
-class _IconBtnState extends State<_IconBtn> { bool _h = false; @override Widget build(BuildContext c) { final cl = widget.dis ? _T.txtMuted : widget.d ? _T.danger : widget.a ? _T.accent : _h ? _T.txtPrimary : _T.txtSecondary; return MouseRegion(cursor: widget.dis ? SystemMouseCursors.forbidden : SystemMouseCursors.click, onEnter: (_) => setState(() => _h = true), onExit: (_) => setState(() => _h = false), child: Tooltip(message: widget.t ?? '', child: GestureDetector(onTap: widget.dis ? null : widget.o, child: AnimatedContainer(duration: const Duration(milliseconds: 120), padding: const EdgeInsets.all(7), decoration: BoxDecoration(color: _h && !widget.dis ? _T.bgHover : Colors.transparent, borderRadius: BorderRadius.circular(7)), child: Icon(widget.i, size: widget.s, color: cl))))); } }
+class _IconBtn extends StatefulWidget {
+  final IconData i;
+  final VoidCallback? o;
+  final double s;
+  final String? tooltip;
+  final bool d, a, dis;
+  const _IconBtn(this.i, this.o, {this.s = 18, this.tooltip, this.d = false, this.a = false, this.dis = false});
+  @override State<_IconBtn> createState() => _IconBtnState();
+}
+class _IconBtnState extends State<_IconBtn> {
+  bool _h = false;
+  @override Widget build(BuildContext c) {
+    final cl = widget.dis ? _T.txtMuted : widget.d ? _T.danger : widget.a ? _T.accent : _h ? _T.txtPrimary : _T.txtSecondary;
+    return MouseRegion(cursor: widget.dis ? SystemMouseCursors.forbidden : SystemMouseCursors.click, onEnter: (_) => setState(() => _h = true), onExit: (_) => setState(() => _h = false), child: Tooltip(message: widget.tooltip ?? '', child: GestureDetector(onTap: widget.dis ? null : widget.o, child: AnimatedContainer(duration: const Duration(milliseconds: 120), padding: const EdgeInsets.all(7), decoration: BoxDecoration(color: _h && !widget.dis ? _T.bgHover : Colors.transparent, borderRadius: BorderRadius.circular(7)), child: Icon(widget.i, size: widget.s, color: cl)))));
+  }
+}
 
-extension _IterableMapIndexed<T> on Iterable<T> { Iterable<R> mapIndexed<R>(R Function(int, T) f) { var i = 0; return map((e) => f(i++, e)); } }
+extension _IterableMapIndexed<T> on Iterable<T> {
+  Iterable<R> mapIndexed<R>(R Function(int, T) f) {
+    var i = 0;
+    return map((e) => f(i++, e));
+  }
+}
