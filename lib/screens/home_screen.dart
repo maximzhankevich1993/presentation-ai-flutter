@@ -224,7 +224,32 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ])),
               const SizedBox(height: 10),
               // Generate button
-              ScaleTransition(scale: _pulseAnimation, child: MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(onTap: _generate, child: Container(width: double.infinity, height: 48, decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF169C46), _T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: _T.accent.withOpacity(0.25), blurRadius: 16, offset: const Offset(0, 4))]), child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.auto_awesome, color: Colors.white, size: 16), SizedBox(width: 8), Text('Создать', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15))])))),
+              ScaleTransition(
+                scale: _pulseAnimation,
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: _generate,
+                    child: Container(
+                      width: double.infinity,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(colors: [Color(0xFF169C46), _T.accent, _T.accentLight]),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [BoxShadow(color: _T.accent.withOpacity(0.25), blurRadius: 16, offset: const Offset(0, 4))],
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.auto_awesome, color: Colors.white, size: 16),
+                          SizedBox(width: 8),
+                          Text('Создать', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               const SizedBox(height: 16),
               // Chips
               Wrap(spacing: 6, runSpacing: 6, alignment: WrapAlignment.center, children: _examples.map((e) { final s = _topicController.text == e; return MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(onTap: () => setState(() => _topicController.text = e), child: AnimatedContainer(duration: const Duration(milliseconds: 150), padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7), decoration: BoxDecoration(color: s ? _T.accentDim : _T.bgSurface, borderRadius: BorderRadius.circular(20), border: Border.all(color: s ? _T.accent.withOpacity(0.5) : _T.border)), child: Text(e, style: TextStyle(fontSize: 12, color: s ? _T.accent : _T.txtSecondary, fontWeight: s ? FontWeight.w600 : FontWeight.w400))))); }).toList()),
