@@ -29,7 +29,8 @@ class _T {
 class EditorScreen extends StatefulWidget {
   final Presentation presentation;
   const EditorScreen({super.key, required this.presentation});
-  @override State<EditorScreen> createState() => _EditorScreenState();
+  @override
+  State<EditorScreen> createState() => _EditorScreenState();
 }
 
 class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMixin {
@@ -82,64 +83,163 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
 
   String? get _logo => Provider.of<LogoProvider>(context, listen: true).logoUrl;
 
-  @override void initState() {
+  @override
+  void initState() {
     super.initState();
-    _p = widget.presentation; _ci = List.filled(_p.slides.length, null); _cb = List.filled(_p.slides.length, null);
-    _fs = List.filled(_p.slides.length, 9.0); _fn = List.filled(_p.slides.length, 'Inter');
-    _sfc = List.filled(_p.slides.length, null); _tr = List.filled(_p.slides.length, 'none');
+    _p = widget.presentation;
+    _ci = List.filled(_p.slides.length, null);
+    _cb = List.filled(_p.slides.length, null);
+    _fs = List.filled(_p.slides.length, 9.0);
+    _fn = List.filled(_p.slides.length, 'Inter');
+    _sfc = List.filled(_p.slides.length, null);
+    _tr = List.filled(_p.slides.length, 'none');
     _tc = _p.slides.map((s) => TextEditingController(text: s.title)).toList();
     _cc = _p.slides.map((s) => s.content.map((c) => TextEditingController(text: c)).toList()).toList();
-    _loadImages(); _countUp();
+    _loadImages();
+    _countUp();
   }
 
   void _countUp() => _iu = _ci.where((i) => i != null).length;
 
   Future<void> _loadImages() async {
-    for (int i = 0; i < _p.slides.length; i++) { _ai[i] = await ImageService.searchImage(_tc[i].text.isNotEmpty ? _tc[i].text : _p.title); if (mounted) setState(() {}); }
+    for (int i = 0; i < _p.slides.length; i++) {
+      _ai[i] = await ImageService.searchImage(_tc[i].text.isNotEmpty ? _tc[i].text : _p.title);
+      if (mounted) setState(() {});
+    }
   }
 
-  void _save() { for (int i = 0; i < _p.slides.length; i++) { _p.slides[i].title = _tc[i].text; _p.slides[i].content = _cc[i].map((c) => c.text).toList(); } }
+  void _save() {
+    for (int i = 0; i < _p.slides.length; i++) {
+      _p.slides[i].title = _tc[i].text;
+      _p.slides[i].content = _cc[i].map((c) => c.text).toList();
+    }
+  }
 
   void _addSlide() {
     final up = Provider.of<UserProvider>(context, listen: false);
-    if (_p.slides.length >= up.maxSlidesPerPresentation) { _toast('Максимум ${up.maxSlidesPerPresentation} слайдов'); return; }
-    setState(() { final x = _as + 1; _p.slides.insert(x, Slide(title: 'Новый слайд', content: ['Введите текст'])); _tc.insert(x, TextEditingController(text: 'Новый слайд')); _cc.insert(x, [TextEditingController(text: 'Введите текст')]); _ci.insert(x, null); _cb.insert(x, null); _fs.insert(x, 9.0); _fn.insert(x, _gf); _sfc.insert(x, null); _tr.insert(x, 'none'); _as = x; });
+    if (_p.slides.length >= up.maxSlidesPerPresentation) {
+      _toast('Максимум ${up.maxSlidesPerPresentation} слайдов');
+      return;
+    }
+    setState(() {
+      final x = _as + 1;
+      _p.slides.insert(x, Slide(title: 'Новый слайд', content: ['Введите текст']));
+      _tc.insert(x, TextEditingController(text: 'Новый слайд'));
+      _cc.insert(x, [TextEditingController(text: 'Введите текст')]);
+      _ci.insert(x, null);
+      _cb.insert(x, null);
+      _fs.insert(x, 9.0);
+      _fn.insert(x, _gf);
+      _sfc.insert(x, null);
+      _tr.insert(x, 'none');
+      _as = x;
+    });
   }
 
   void _delSlide(int i) {
     if (_p.slides.length <= 1) return;
-    setState(() { _tc[i].dispose(); for (var c in _cc[i]) c.dispose(); _p.slides.removeAt(i); _tc.removeAt(i); _cc.removeAt(i); _ci.removeAt(i); _cb.removeAt(i); _fs.removeAt(i); _fn.removeAt(i); _ai.remove(i); _sfc.removeAt(i); _tr.removeAt(i); if (_as >= _p.slides.length) _as = _p.slides.length - 1; }); _countUp();
+    setState(() {
+      _tc[i].dispose();
+      for (var c in _cc[i]) c.dispose();
+      _p.slides.removeAt(i);
+      _tc.removeAt(i);
+      _cc.removeAt(i);
+      _ci.removeAt(i);
+      _cb.removeAt(i);
+      _fs.removeAt(i);
+      _fn.removeAt(i);
+      _ai.remove(i);
+      _sfc.removeAt(i);
+      _tr.removeAt(i);
+      if (_as >= _p.slides.length) _as = _p.slides.length - 1;
+    });
+    _countUp();
   }
 
   void _dupSlide(int i) {
-    setState(() { final x = i + 1; _p.slides.insert(x, Slide(title: _p.slides[i].title, content: List.from(_p.slides[i].content))); _tc.insert(x, TextEditingController(text: _tc[i].text)); _cc.insert(x, _cc[i].map((c) => TextEditingController(text: c.text)).toList()); _ci.insert(x, _ci[i]); _cb.insert(x, _cb[i]); _fs.insert(x, _fs[i]); _fn.insert(x, _fn[i]); _sfc.insert(x, _sfc[i]); _tr.insert(x, _tr[i]); _as = x; }); _countUp();
+    setState(() {
+      final x = i + 1;
+      _p.slides.insert(x, Slide(title: _p.slides[i].title, content: List.from(_p.slides[i].content)));
+      _tc.insert(x, TextEditingController(text: _tc[i].text));
+      _cc.insert(x, _cc[i].map((c) => TextEditingController(text: c.text)).toList());
+      _ci.insert(x, _ci[i]);
+      _cb.insert(x, _cb[i]);
+      _fs.insert(x, _fs[i]);
+      _fn.insert(x, _fn[i]);
+      _sfc.insert(x, _sfc[i]);
+      _tr.insert(x, _tr[i]);
+      _as = x;
+    });
+    _countUp();
   }
 
   void _moveSlide(int f, int t) {
     if (t < 0 || t >= _p.slides.length) return;
-    setState(() { void sw<T>(List<T> l) { final x = l[f]; l[f] = l[t]; l[t] = x; } sw(_p.slides); sw(_tc); sw(_cc); sw(_ci); sw(_cb); sw(_fs); sw(_fn); sw(_sfc); sw(_tr); _as = t; });
+    setState(() {
+      void sw<T>(List<T> l) { final x = l[f]; l[f] = l[t]; l[t] = x; }
+      sw(_p.slides); sw(_tc); sw(_cc); sw(_ci); sw(_cb); sw(_fs); sw(_fn); sw(_sfc); sw(_tr);
+      _as = t;
+    });
   }
 
   void _addItem(int i) => setState(() => _cc[i].add(TextEditingController(text: 'Новый пункт')));
-  void _remItem(int s, int i) { if (_cc[s].length <= 1) return; setState(() { _cc[s][i].dispose(); _cc[s].removeAt(i); }); }
+
+  void _remItem(int s, int i) {
+    if (_cc[s].length <= 1) return;
+    setState(() { _cc[s][i].dispose(); _cc[s].removeAt(i); });
+  }
 
   Future<void> _improveSlide(int i) async {
     setState(() => _ii = true);
-    try { final t = await AiImproveService.improveText(_tc[i].text); final cs = <String>[]; for (final c in _cc[i]) cs.add(await AiImproveService.improveText(c.text)); if (!mounted) return; setState(() { _tc[i].text = t; for (int j = 0; j < cs.length && j < _cc[i].length; j++) _cc[i][j].text = cs[j]; }); _toast('Текст улучшен', success: true); } catch (e) { _toast('Ошибка: $e', error: true); } finally { if (mounted) setState(() => _ii = false); }
+    try {
+      final t = await AiImproveService.improveText(_tc[i].text);
+      final cs = <String>[];
+      for (final c in _cc[i]) cs.add(await AiImproveService.improveText(c.text));
+      if (!mounted) return;
+      setState(() {
+        _tc[i].text = t;
+        for (int j = 0; j < cs.length && j < _cc[i].length; j++) _cc[i][j].text = cs[j];
+      });
+      _toast('Текст улучшен', success: true);
+    } catch (e) {
+      _toast('Ошибка: $e', error: true);
+    } finally {
+      if (mounted) setState(() => _ii = false);
+    }
   }
 
   Future<void> _uploadImage(int i) async {
-    if (!Provider.of<UserProvider>(context, listen: false).isPremium) { _toast('Замена картинок — Premium', warning: true); return; }
-    final inp = html.FileUploadInputElement()..accept = 'image/*'; inp.click();
-    inp.onChange.listen((e) { final f = inp.files?.first; if (f == null) return; final r = html.FileReader(); r.readAsDataUrl(f); r.onLoad.listen((_) => setState(() => _ci[i] = r.result as String)); });
+    if (!Provider.of<UserProvider>(context, listen: false).isPremium) {
+      _toast('Замена картинок — Premium', warning: true);
+      return;
+    }
+    final inp = html.FileUploadInputElement()..accept = 'image/*';
+    inp.click();
+    inp.onChange.listen((e) {
+      final f = inp.files?.first;
+      if (f == null) return;
+      final r = html.FileReader();
+      r.readAsDataUrl(f);
+      r.onLoad.listen((_) => setState(() => _ci[i] = r.result as String));
+    });
   }
 
   Future<void> _uploadBg(int i) async {
     final p = Provider.of<UserProvider>(context, listen: false).isPremium;
     final u = _cb.where((b) => b != null).length;
-    if (!p && u >= 10 && _cb[i] == null) { _toast('10 фонов бесплатно', warning: true); return; }
-    final inp = html.FileUploadInputElement()..accept = 'image/*'; inp.click();
-    inp.onChange.listen((e) { final f = inp.files?.first; if (f == null) return; final r = html.FileReader(); r.readAsDataUrl(f); r.onLoad.listen((_) => setState(() => _cb[i] = r.result as String)); });
+    if (!p && u >= 10 && _cb[i] == null) {
+      _toast('10 фонов бесплатно', warning: true);
+      return;
+    }
+    final inp = html.FileUploadInputElement()..accept = 'image/*';
+    inp.click();
+    inp.onChange.listen((e) {
+      final f = inp.files?.first;
+      if (f == null) return;
+      final r = html.FileReader();
+      r.readAsDataUrl(f);
+      r.onLoad.listen((_) => setState(() => _cb[i] = r.result as String));
+    });
   }
 
   Decoration _deco(int i) {
@@ -149,56 +249,128 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     return BoxDecoration(color: bg['color'] as Color, borderRadius: BorderRadius.circular(12));
   }
 
-  bool _dark(int i) { if (_cb[i] != null) return true; final bg = _fb[_sbi.clamp(0, _fb.length - 1)]; if (bg['type'] == 'solid') return (bg['color'] as Color).computeLuminance() < 0.5; return true; }
+  bool _dark(int i) {
+    if (_cb[i] != null) return true;
+    final bg = _fb[_sbi.clamp(0, _fb.length - 1)];
+    if (bg['type'] == 'solid') return (bg['color'] as Color).computeLuminance() < 0.5;
+    return true;
+  }
 
   void _toast(String m, {bool success = false, bool error = false, bool warning = false}) {
-    Color c = _T.bgCard; if (success) c = _T.accent.withOpacity(0.9); if (error) c = _T.danger.withOpacity(0.9); if (warning) c = _T.gold.withOpacity(0.9);
+    Color c = _T.bgCard;
+    if (success) c = _T.accent.withOpacity(0.9);
+    if (error) c = _T.danger.withOpacity(0.9);
+    if (warning) c = _T.gold.withOpacity(0.9);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)), backgroundColor: c, behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), margin: const EdgeInsets.fromLTRB(16, 0, 16, 24), duration: const Duration(seconds: 2)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(m, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
+      backgroundColor: c,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      duration: const Duration(seconds: 2),
+    ));
   }
 
-  void _export() { _save(); final p = Provider.of<UserProvider>(context, listen: false).isPremium; showModalBottomSheet(context: context, backgroundColor: Colors.transparent, isScrollControlled: true, builder: (_) => _ExportSheet(isPremium: p, presentation: _p)); }
-
-  @override Widget build(BuildContext context) {
-    final d = _dark(_as); if (_sfc[_as] == null) _gfc = d ? Colors.white : Colors.black;
-    return Scaffold(backgroundColor: _T.bgBase, body: Column(children: [
-      _TopBar(title: _p.title, slideCount: _p.slides.length, uploadsUsed: _iu, onBack: () { _save(); Navigator.pop(context); }, onExport: _export),
-      const Divider(color: _T.border, height: 1),
-      Expanded(child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        AnimatedContainer(duration: const Duration(milliseconds: 200), width: _nc ? 48 : 200, child: _SlideNavigator(slides: _p.slides, titleControllers: _tc, activeIndex: _as, collapsed: _nc, customBgs: _cb, backgrounds: _fb, selectedBgIndex: _sbi, onSelect: (i) => setState(() => _as = i), onAdd: _addSlide, onDelete: _delSlide, onDuplicate: _dupSlide, onMoveUp: (i) => _moveSlide(i, i - 1), onMoveDown: (i) => _moveSlide(i, i + 1), onToggleCollapse: () => setState(() => _nc = !_nc))),
-        const VerticalDivider(color: _T.border, width: 1),
-        Expanded(child: _Canvas(index: _as, titleCtrl: _tc[_as], contentCtrl: _cc[_as], decoration: _deco(_as), isDark: d, image: _ci[_as] ?? _ai[_as], font: _fn[_as] != 'Inter' ? _fn[_as] : _gf, fontSize: _fs[_as], fontColor: _sfc[_as] ?? _gfc, slideCount: _p.slides.length, logoUrl: _logo, onAddItem: () => _addItem(_as), onRemoveItem: (i) => _remItem(_as, i), onRemoveImage: () => setState(() { _ci[_as] = null; _countUp(); }), hasCustomImage: _ci[_as] != null)),
-        const VerticalDivider(color: _T.border, width: 1),
-        AnimatedContainer(duration: const Duration(milliseconds: 200), width: _ppo ? 260 : 0, child: _ppo ? _PropertiesPanel(index: _as, isPremium: Provider.of<UserProvider>(context, listen: false).isPremium, activeTab: _apt, globalFont: _gf, selectedBgIndex: _sbi, freeBgs: _fb, premiumBgs: _pb, customBg: _cb[_as], fontSize: _fs[_as], fontColor: _sfc[_as] ?? _gfc, transition: _tr[_as], allTransitions: _atr, isImproving: _ii, onTabChange: (t) => setState(() => _apt = t), onBgSelect: (i) => setState(() { _sbi = i; _cb = List.filled(_p.slides.length, null); }), onBgUpload: () => _uploadBg(_as), onImageUpload: () => _uploadImage(_as), onFontChange: (f) => setState(() { _gf = f; for (int i = 0; i < _fn.length; i++) _fn[i] = f; }), onFontSizeChange: (v) => setState(() => _fs[_as] = v), onFontColorChange: (c) => setState(() { _sfc[_as] = c; _gfc = c; }), onTransitionChange: (t) => setState(() => _tr[_as] = t), uploadsUsed: _iu) : const SizedBox.shrink()),
-      ])),
-    ]));
+  void _export() {
+    _save();
+    final p = Provider.of<UserProvider>(context, listen: false).isPremium;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => _ExportSheet(isPremium: p, presentation: _p),
+    );
   }
 
-  @override void dispose() { _save(); for (var c in _tc) c.dispose(); for (var l in _cc) for (var c in l) c.dispose(); _sc.dispose(); super.dispose(); }
+  @override
+  Widget build(BuildContext context) {
+    final d = _dark(_as);
+    if (_sfc[_as] == null) _gfc = d ? Colors.white : Colors.black;
+    return Scaffold(
+      backgroundColor: _T.bgBase,
+      body: Column(children: [
+        _TopBar(title: _p.title, slideCount: _p.slides.length, uploadsUsed: _iu, onBack: () { _save(); Navigator.pop(context); }, onExport: _export),
+        const Divider(color: _T.border, height: 1),
+        Expanded(child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          AnimatedContainer(duration: const Duration(milliseconds: 200), width: _nc ? 48 : 200, child: _SlideNavigator(slides: _p.slides, titleControllers: _tc, activeIndex: _as, collapsed: _nc, customBgs: _cb, backgrounds: _fb, selectedBgIndex: _sbi, onSelect: (i) => setState(() => _as = i), onAdd: _addSlide, onDelete: _delSlide, onDuplicate: _dupSlide, onMoveUp: (i) => _moveSlide(i, i - 1), onMoveDown: (i) => _moveSlide(i, i + 1), onToggleCollapse: () => setState(() => _nc = !_nc))),
+          const VerticalDivider(color: _T.border, width: 1),
+          Expanded(child: _Canvas(index: _as, titleCtrl: _tc[_as], contentCtrl: _cc[_as], decoration: _deco(_as), isDark: d, image: _ci[_as] ?? _ai[_as], font: _fn[_as] != 'Inter' ? _fn[_as] : _gf, fontSize: _fs[_as], fontColor: _sfc[_as] ?? _gfc, slideCount: _p.slides.length, logoUrl: _logo, onAddItem: () => _addItem(_as), onRemoveItem: (i) => _remItem(_as, i), onRemoveImage: () => setState(() { _ci[_as] = null; _countUp(); }), hasCustomImage: _ci[_as] != null)),
+          const VerticalDivider(color: _T.border, width: 1),
+          AnimatedContainer(duration: const Duration(milliseconds: 200), width: _ppo ? 260 : 0, child: _ppo ? _PropertiesPanel(index: _as, isPremium: Provider.of<UserProvider>(context, listen: false).isPremium, activeTab: _apt, globalFont: _gf, selectedBgIndex: _sbi, freeBgs: _fb, premiumBgs: _pb, customBg: _cb[_as], fontSize: _fs[_as], fontColor: _sfc[_as] ?? _gfc, transition: _tr[_as], allTransitions: _atr, isImproving: _ii, onTabChange: (t) => setState(() => _apt = t), onBgSelect: (i) => setState(() { _sbi = i; _cb = List.filled(_p.slides.length, null); }), onBgUpload: () => _uploadBg(_as), onImageUpload: () => _uploadImage(_as), onFontChange: (f) => setState(() { _gf = f; for (int i = 0; i < _fn.length; i++) _fn[i] = f; }), onFontSizeChange: (v) => setState(() => _fs[_as] = v), onFontColorChange: (c) => setState(() { _sfc[_as] = c; _gfc = c; }), onTransitionChange: (t) => setState(() => _tr[_as] = t), uploadsUsed: _iu) : const SizedBox.shrink()),
+        ])),
+      ]),
+    );
+  }
+
+  @override
+  void dispose() {
+    _save();
+    for (var c in _tc) c.dispose();
+    for (var l in _cc) for (var c in l) c.dispose();
+    _sc.dispose();
+    super.dispose();
+  }
 }
 
-// ═══════════ WIDGETS ═══════════
+// ═══════════════════════════════════════════════════════════════
+// TOP BAR
+// ═══════════════════════════════════════════════════════════════
 class _TopBar extends StatelessWidget {
-  final String title; final int slideCount, uploadsUsed; final VoidCallback onBack, onExport;
+  final String title;
+  final int slideCount, uploadsUsed;
+  final VoidCallback onBack, onExport;
   const _TopBar({required this.title, required this.slideCount, required this.uploadsUsed, required this.onBack, required this.onExport});
-  @override Widget build(BuildContext c) => Container(height: 52, color: _T.bgSurface, padding: const EdgeInsets.symmetric(horizontal: 12), child: Row(children: [
-    _IconBtn(Icons.arrow_back_ios_rounded, onBack, tooltip: 'Назад', size: 17), const SizedBox(width: 8),
-    Container(width: 26, height: 26, decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(6)), child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 14)),
-    const SizedBox(width: 10),
-    Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [Text(title, style: const TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w600, fontSize: 13), overflow: TextOverflow.ellipsis), Text('$slideCount слайдов', style: const TextStyle(color: _T.txtMuted, fontSize: 10))])),
-    if (uploadsUsed > 0) Container(margin: const EdgeInsets.only(right: 8), padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: uploadsUsed >= 10 ? _T.gold.withOpacity(0.12) : _T.accent.withOpacity(0.12), borderRadius: BorderRadius.circular(20), border: Border.all(color: uploadsUsed >= 10 ? _T.gold.withOpacity(0.3) : _T.accent.withOpacity(0.3))), child: Text('🖼 $uploadsUsed/10', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: uploadsUsed >= 10 ? _T.gold : _T.accentLight))),
-    MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(onTap: onExport, child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7), decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: _T.accent.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))]), child: const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.ios_share_rounded, color: Colors.white, size: 14), SizedBox(width: 6), Text('Экспорт', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13))])))),
-  ]));
+
+  @override
+  Widget build(BuildContext c) => Container(
+    height: 52, color: _T.bgSurface,
+    padding: const EdgeInsets.symmetric(horizontal: 12),
+    child: Row(children: [
+      _IconBtn(Icons.arrow_back_ios_rounded, onBack, tooltip: 'Назад', size: 17),
+      const SizedBox(width: 8),
+      Container(width: 26, height: 26, decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(6)), child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 14)),
+      const SizedBox(width: 10),
+      Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(title, style: const TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w600, fontSize: 13), overflow: TextOverflow.ellipsis),
+        Text('$slideCount слайдов', style: const TextStyle(color: _T.txtMuted, fontSize: 10)),
+      ])),
+      if (uploadsUsed > 0) Container(margin: const EdgeInsets.only(right: 8), padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: uploadsUsed >= 10 ? _T.gold.withOpacity(0.12) : _T.accent.withOpacity(0.12), borderRadius: BorderRadius.circular(20), border: Border.all(color: uploadsUsed >= 10 ? _T.gold.withOpacity(0.3) : _T.accent.withOpacity(0.3))), child: Text('🖼 $uploadsUsed/10', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: uploadsUsed >= 10 ? _T.gold : _T.accentLight))),
+      MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(onTap: onExport, child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7), decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: _T.accent.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))]), child: const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.ios_share_rounded, color: Colors.white, size: 14), SizedBox(width: 6), Text('Экспорт', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13))])))),
+    ]),
+  );
 }
 
+// ═══════════════════════════════════════════════════════════════
+// SLIDE NAVIGATOR
+// ═══════════════════════════════════════════════════════════════
 class _SlideNavigator extends StatelessWidget {
-  final List<Slide> slides; final List<TextEditingController> titleControllers; final int activeIndex; final bool collapsed;
-  final List<String?> customBgs; final List<Map<String, dynamic>> backgrounds; final int selectedBgIndex;
-  final ValueChanged<int> onSelect; final VoidCallback onAdd; final ValueChanged<int> onDelete, onDuplicate, onMoveUp, onMoveDown; final VoidCallback onToggleCollapse;
+  final List<Slide> slides;
+  final List<TextEditingController> titleControllers;
+  final int activeIndex;
+  final bool collapsed;
+  final List<String?> customBgs;
+  final List<Map<String, dynamic>> backgrounds;
+  final int selectedBgIndex;
+  final ValueChanged<int> onSelect;
+  final VoidCallback onAdd;
+  final ValueChanged<int> onDelete, onDuplicate, onMoveUp, onMoveDown;
+  final VoidCallback onToggleCollapse;
   const _SlideNavigator({required this.slides, required this.titleControllers, required this.activeIndex, required this.collapsed, required this.customBgs, required this.backgrounds, required this.selectedBgIndex, required this.onSelect, required this.onAdd, required this.onDelete, required this.onDuplicate, required this.onMoveUp, required this.onMoveDown, required this.onToggleCollapse});
-  Color _c(int i) { if (customBgs[i] != null) return Colors.grey.shade800; final bg = backgrounds[selectedBgIndex.clamp(0, backgrounds.length - 1)]; if (bg['type'] == 'solid') return bg['color'] as Color; return (bg['colors'] as List<Color>).first; }
-  @override Widget build(BuildContext c) => Container(color: _T.bgSurface, child: Column(children: [
-    Container(height: 40, padding: const EdgeInsets.symmetric(horizontal: 8), child: Row(children: [if (!collapsed) ...[const Text('СЛАЙДЫ', style: TextStyle(color: _T.txtMuted, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8)), const Spacer()], _IconBtn(collapsed ? Icons.chevron_right_rounded : Icons.chevron_left_rounded, onToggleCollapse, size: 16)])),
+
+  Color _c(int i) {
+    if (customBgs[i] != null) return Colors.grey.shade800;
+    final bg = backgrounds[selectedBgIndex.clamp(0, backgrounds.length - 1)];
+    if (bg['type'] == 'solid') return bg['color'] as Color;
+    return (bg['colors'] as List<Color>).first;
+  }
+
+  @override
+  Widget build(BuildContext c) => Container(color: _T.bgSurface, child: Column(children: [
+    Container(height: 40, padding: const EdgeInsets.symmetric(horizontal: 8), child: Row(children: [
+      if (!collapsed) ...[const Text('СЛАЙДЫ', style: TextStyle(color: _T.txtMuted, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8)), const Spacer()],
+      _IconBtn(collapsed ? Icons.chevron_right_rounded : Icons.chevron_left_rounded, onToggleCollapse, size: 16),
+    ])),
     const Divider(color: _T.border, height: 1),
     Expanded(child: ListView.builder(padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6), itemCount: slides.length, itemBuilder: (_, i) => _SlideThumbnail(index: i, title: titleControllers[i].text, isActive: i == activeIndex, collapsed: collapsed, bgColor: _c(i), onTap: () => onSelect(i), onDelete: slides.length > 1 ? () => onDelete(i) : null, onDuplicate: () => onDuplicate(i), onMoveUp: i > 0 ? () => onMoveUp(i) : null, onMoveDown: i < slides.length - 1 ? () => onMoveDown(i) : null))),
     const Divider(color: _T.border, height: 1),
@@ -211,14 +383,23 @@ class _SlideThumbnail extends StatefulWidget {
   const _SlideThumbnail({required this.index, required this.title, required this.isActive, required this.collapsed, required this.bgColor, required this.onTap, this.onDelete, required this.onDuplicate, this.onMoveUp, this.onMoveDown});
   @override State<_SlideThumbnail> createState() => _SlideThumbnailState();
 }
-class _SlideThumbnailState extends State<_SlideThumbnail> { bool _h = false; @override Widget build(BuildContext c) => MouseRegion(cursor: SystemMouseCursors.click, onEnter: (_) => setState(() => _h = true), onExit: (_) => setState(() => _h = false), child: GestureDetector(onTap: widget.onTap, child: AnimatedContainer(duration: const Duration(milliseconds: 120), margin: const EdgeInsets.only(bottom: 6), padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: widget.isActive ? _T.accent.withOpacity(0.12) : _h ? _T.bgHover : Colors.transparent, borderRadius: BorderRadius.circular(8), border: Border.all(color: widget.isActive ? _T.accent.withOpacity(0.5) : Colors.transparent, width: 1.5)), child: widget.collapsed ? _cv() : _ev()))); Widget _cv() => Column(children: [Container(width: 30, height: 20, decoration: BoxDecoration(color: widget.bgColor, borderRadius: BorderRadius.circular(3)), child: Center(child: Text('${widget.index + 1}', style: TextStyle(fontSize: 8, color: widget.bgColor.computeLuminance() > 0.5 ? Colors.black : Colors.white, fontWeight: FontWeight.w700))))]); Widget _ev() => Row(children: [Container(width: 52, height: 34, decoration: BoxDecoration(color: widget.bgColor, borderRadius: BorderRadius.circular(4)), child: Center(child: Text('${widget.index + 1}', style: TextStyle(fontSize: 10, color: widget.bgColor.computeLuminance() > 0.5 ? Colors.black54 : Colors.white38, fontWeight: FontWeight.w700)))), const SizedBox(width: 8), Expanded(child: Text(widget.title.isEmpty ? 'Слайд ${widget.index + 1}' : widget.title, style: TextStyle(color: widget.isActive ? _T.txtPrimary : _T.txtSecondary, fontSize: 11, fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w400), maxLines: 2, overflow: TextOverflow.ellipsis)), if (_h) PopupMenuButton<String>(padding: EdgeInsets.zero, iconSize: 14, color: _T.bgCard, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: _T.border)), icon: const Icon(Icons.more_vert_rounded, color: _T.txtSecondary, size: 14), onSelected: (v) { if (v == 'dup') widget.onDuplicate(); if (v == 'del') widget.onDelete?.call(); if (v == 'up') widget.onMoveUp?.call(); if (v == 'down') widget.onMoveDown?.call(); }, itemBuilder: (_) => [if (widget.onMoveUp != null) const PopupMenuItem(value: 'up', height: 36, child: _MenuItem(Icons.arrow_upward_rounded, 'Вверх')), if (widget.onMoveDown != null) const PopupMenuItem(value: 'down', height: 36, child: _MenuItem(Icons.arrow_downward_rounded, 'Вниз')), const PopupMenuItem(value: 'dup', height: 36, child: _MenuItem(Icons.copy_rounded, 'Дублировать')), if (widget.onDelete != null) const PopupMenuItem(value: 'del', height: 36, child: _MenuItem(Icons.delete_outline_rounded, 'Удалить', danger: true))])]); }
+class _SlideThumbnailState extends State<_SlideThumbnail> {
+  bool _h = false;
+  @override Widget build(BuildContext c) => MouseRegion(cursor: SystemMouseCursors.click, onEnter: (_) => setState(() => _h = true), onExit: (_) => setState(() => _h = false), child: GestureDetector(onTap: widget.onTap, child: AnimatedContainer(duration: const Duration(milliseconds: 120), margin: const EdgeInsets.only(bottom: 6), padding: const EdgeInsets.all(6), decoration: BoxDecoration(color: widget.isActive ? _T.accent.withOpacity(0.12) : _h ? _T.bgHover : Colors.transparent, borderRadius: BorderRadius.circular(8), border: Border.all(color: widget.isActive ? _T.accent.withOpacity(0.5) : Colors.transparent, width: 1.5)), child: widget.collapsed ? _cv() : _ev())));
+  Widget _cv() => Column(children: [Container(width: 30, height: 20, decoration: BoxDecoration(color: widget.bgColor, borderRadius: BorderRadius.circular(3)), child: Center(child: Text('${widget.index + 1}', style: TextStyle(fontSize: 8, color: widget.bgColor.computeLuminance() > 0.5 ? Colors.black : Colors.white, fontWeight: FontWeight.w700))))]);
+  Widget _ev() => Row(children: [Container(width: 52, height: 34, decoration: BoxDecoration(color: widget.bgColor, borderRadius: BorderRadius.circular(4)), child: Center(child: Text('${widget.index + 1}', style: TextStyle(fontSize: 10, color: widget.bgColor.computeLuminance() > 0.5 ? Colors.black54 : Colors.white38, fontWeight: FontWeight.w700)))), const SizedBox(width: 8), Expanded(child: Text(widget.title.isEmpty ? 'Слайд ${widget.index + 1}' : widget.title, style: TextStyle(color: widget.isActive ? _T.txtPrimary : _T.txtSecondary, fontSize: 11, fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w400), maxLines: 2, overflow: TextOverflow.ellipsis)), if (_h) PopupMenuButton<String>(padding: EdgeInsets.zero, iconSize: 14, color: _T.bgCard, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: _T.border)), icon: const Icon(Icons.more_vert_rounded, color: _T.txtSecondary, size: 14), onSelected: (v) { if (v == 'dup') widget.onDuplicate(); if (v == 'del') widget.onDelete?.call(); if (v == 'up') widget.onMoveUp?.call(); if (v == 'down') widget.onMoveDown?.call(); }, itemBuilder: (_) => [if (widget.onMoveUp != null) const PopupMenuItem(value: 'up', height: 36, child: _MenuItem(Icons.arrow_upward_rounded, 'Вверх')), if (widget.onMoveDown != null) const PopupMenuItem(value: 'down', height: 36, child: _MenuItem(Icons.arrow_downward_rounded, 'Вниз')), const PopupMenuItem(value: 'dup', height: 36, child: _MenuItem(Icons.copy_rounded, 'Дублировать')), if (widget.onDelete != null) const PopupMenuItem(value: 'del', height: 36, child: _MenuItem(Icons.delete_outline_rounded, 'Удалить', danger: true))])]);
+}
 class _MenuItem extends StatelessWidget { final IconData i; final String l; final bool d; const _MenuItem(this.i, this.l, {this.d = false}); @override Widget build(BuildContext c) => Row(children: [Icon(i, size: 14, color: d ? _T.danger : _T.txtSecondary), const SizedBox(width: 8), Text(l, style: TextStyle(color: d ? _T.danger : _T.txtPrimary, fontSize: 12))]); }
 
+// ═══════════════════════════════════════════════════════════════
+// CANVAS
+// ═══════════════════════════════════════════════════════════════
 class _Canvas extends StatelessWidget {
   final int index; final TextEditingController titleCtrl; final List<TextEditingController> contentCtrl; final Decoration decoration;
   final bool isDark; final String? image; final String font; final double fontSize; final Color fontColor; final int slideCount; final String? logoUrl;
   final VoidCallback onAddItem, onRemoveImage; final ValueChanged<int> onRemoveItem; final bool hasCustomImage;
   const _Canvas({super.key, required this.index, required this.titleCtrl, required this.contentCtrl, required this.decoration, required this.isDark, required this.image, required this.font, required this.fontSize, required this.fontColor, required this.slideCount, this.logoUrl, required this.onAddItem, required this.onRemoveItem, required this.onRemoveImage, required this.hasCustomImage});
+
   @override Widget build(BuildContext c) => Container(color: _T.bgBase, child: Center(child: SingleChildScrollView(padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24), child: Column(children: [
     Padding(padding: const EdgeInsets.only(bottom: 12), child: Text('${index + 1} / $slideCount', style: const TextStyle(color: _T.txtMuted, fontSize: 11, fontWeight: FontWeight.w500))),
     LayoutBuilder(builder: (ctx, _) { final w = (MediaQuery.of(c).size.width - 460).clamp(360.0, 900.0); final h = w * 9 / 16; return Container(width: w, height: h, decoration: decoration, clipBehavior: Clip.antiAlias, child: Stack(children: [
@@ -245,6 +426,9 @@ class _Canvas extends StatelessWidget {
 
 class _EditorField extends StatelessWidget { final TextEditingController c; final String h; final bool t; const _EditorField({required this.c, required this.h, this.t = false}); @override Widget build(BuildContext _) => TextField(controller: c, style: TextStyle(color: _T.txtPrimary, fontSize: t ? 15 : 13, fontWeight: t ? FontWeight.w700 : FontWeight.w400), maxLines: null, decoration: InputDecoration(hintText: h, hintStyle: const TextStyle(color: _T.txtMuted, fontSize: 13), filled: true, fillColor: _T.bgCard, contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _T.border)), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _T.border)), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _T.accent, width: 1.5)), isDense: true)); }
 
+// ═══════════════════════════════════════════════════════════════
+// PROPERTIES PANEL
+// ═══════════════════════════════════════════════════════════════
 class _PropertiesPanel extends StatelessWidget {
   final int index; final bool isPremium; final String activeTab, globalFont; final int selectedBgIndex; final List<Map<String, dynamic>> freeBgs, premiumBgs, allTransitions; final String? customBg; final double fontSize; final Color fontColor; final String transition; final bool isImproving; final ValueChanged<String> onTabChange, onFontChange, onTransitionChange; final ValueChanged<int> onBgSelect; final VoidCallback onBgUpload, onImageUpload; final ValueChanged<double> onFontSizeChange; final ValueChanged<Color> onFontColorChange; final int uploadsUsed;
   const _PropertiesPanel({required this.index, required this.isPremium, required this.activeTab, required this.globalFont, required this.selectedBgIndex, required this.freeBgs, required this.premiumBgs, required this.customBg, required this.fontSize, required this.fontColor, required this.transition, required this.allTransitions, required this.isImproving, required this.onTabChange, required this.onBgSelect, required this.onBgUpload, required this.onImageUpload, required this.onFontChange, required this.onFontSizeChange, required this.onFontColorChange, required this.onTransitionChange, required this.uploadsUsed});
@@ -287,55 +471,80 @@ class _AiTab extends StatelessWidget {
   final bool i; final VoidCallback o;
   const _AiTab({required this.i, required this.o});
   @override Widget build(BuildContext c) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-    _SectionLabel('ИИ ПОМОЩНИК'),
-    const SizedBox(height: 12),
-    Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [_T.accent.withOpacity(0.08), _T.accentLight.withOpacity(0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _T.accent.withOpacity(0.2)),
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Container(width: 30, height: 30, decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 15)),
-          const SizedBox(width: 10),
-          const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Улучшить текст', style: TextStyle(color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w700)),
-            Text('Текущий слайд', style: TextStyle(color: _T.txtMuted, fontSize: 10)),
-          ]),
-        ]),
-        const SizedBox(height: 10),
-        const Text('ИИ перепишет заголовок и пункты.', style: TextStyle(color: _T.txtSecondary, fontSize: 11, height: 1.5)),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: GestureDetector(
-            onTap: i ? null : o,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 120),
-              padding: const EdgeInsets.symmetric(vertical: 11),
-              decoration: BoxDecoration(
-                gradient: i ? null : const LinearGradient(colors: [Color(0xFF169C46), _T.accent, _T.accentLight], begin: Alignment.centerLeft, end: Alignment.centerRight),
-                color: i ? _T.bgHover : null,
-                borderRadius: BorderRadius.circular(9),
-              ),
-              child: Center(
-                child: i
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: _T.accent, strokeWidth: 2))
-                    : const Text('Улучшить', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
-              ),
-            ),
-          ),
-        ),
-      ]),
-    ),
+    _SectionLabel('ИИ ПОМОЩНИК'), const SizedBox(height: 12),
+    Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(gradient: LinearGradient(colors: [_T.accent.withOpacity(0.08), _T.accentLight.withOpacity(0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight), borderRadius: BorderRadius.circular(12), border: Border.all(color: _T.accent.withOpacity(0.2))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Row(children: [Container(width: 30, height: 30, decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 15)), const SizedBox(width: 10), const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Улучшить текст', style: TextStyle(color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w700)), Text('Текущий слайд', style: TextStyle(color: _T.txtMuted, fontSize: 10))])]),
+      const SizedBox(height: 10), const Text('ИИ перепишет заголовок и пункты.', style: TextStyle(color: _T.txtSecondary, fontSize: 11, height: 1.5)), const SizedBox(height: 12),
+      SizedBox(width: double.infinity, child: GestureDetector(onTap: i ? null : o, child: AnimatedContainer(duration: const Duration(milliseconds: 120), padding: const EdgeInsets.symmetric(vertical: 11), decoration: BoxDecoration(gradient: i ? null : const LinearGradient(colors: [Color(0xFF169C46), _T.accent, _T.accentLight], begin: Alignment.centerLeft, end: Alignment.centerRight), color: i ? _T.bgHover : null, borderRadius: BorderRadius.circular(9)), child: Center(child: i ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: _T.accent, strokeWidth: 2)) : const Text('Улучшить', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13))))),
+    ])),
   ]);
 }
 
-class _ExportSheet extends StatelessWidget { final bool p; final Presentation pr; const _ExportSheet({required this.p, required this.pr}); @override Widget build(BuildContext c) => Container(margin: const EdgeInsets.fromLTRB(16, 0, 16, 32), decoration: BoxDecoration(color: _T.bgSurface, borderRadius: BorderRadius.circular(16), border: Border.all(color: _T.border)), child: Column(mainAxisSize: MainAxisSize.min, children: [Padding(padding: const EdgeInsets.only(top: 12, bottom: 16), child: Container(width: 40, height: 4, decoration: BoxDecoration(color: _T.border, borderRadius: BorderRadius.circular(2)))), const Text('Экспорт', style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w700, fontSize: 17)), const SizedBox(height: 4), const Text('Скачайте вашу презентацию', style: TextStyle(color: _T.txtSecondary, fontSize: 12)), const SizedBox(height: 16), Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Column(children: [_ExportOption(icon: Icons.slideshow_rounded, color: _T.accent, title: 'PPTX', subtitle: p ? 'Без знака' : 'С водяным знаком', badge: p ? 'PRO' : null, onTap: () { Navigator.pop(c); ExportService.exportToPPTX(context: c, presentation: pr, isPremium: p); }), const SizedBox(height: 8), _ExportOption(icon: Icons.picture_as_pdf_rounded, color: p ? _T.danger : _T.txtMuted, title: 'PDF', subtitle: p ? 'Высокое качество' : 'Только Premium', locked: !p, onTap: p ? () { Navigator.pop(c); ExportService.exportToPDF(context: c, presentation: pr, isPremium: true); } : null)])), const SizedBox(height: 20)])); }
-class _ExportOption extends StatelessWidget { final IconData i; final Color cl; final String t, s; final String? b; final bool l; final VoidCallback? o; const _ExportOption({required this.i, required this.cl, required this.t, required this.s, this.b, this.l = false, this.o}); @override Widget build(BuildContext c) => GestureDetector(onTap: o, child: Opacity(opacity: l ? 0.5 : 1.0, child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12), decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: _T.border)), child: Row(children: [Container(width: 40, height: 40, decoration: BoxDecoration(color: cl.withOpacity(0.12), borderRadius: BorderRadius.circular(10)), child: Icon(i, color: cl, size: 20)), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(t, style: const TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w600, fontSize: 14)), const SizedBox(height: 2), Text(s, style: const TextStyle(color: _T.txtSecondary, fontSize: 11))])), if (b != null) Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3), decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(5)), child: Text(b!, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800))), if (l) const Icon(Icons.lock_rounded, color: _T.txtMuted, size: 16), if (!l && b == null) const Icon(Icons.arrow_forward_ios_rounded, color: _T.txtMuted, size: 12)])))); }
+// ═══════════════════════════════════════════════════════════════
+// EXPORT SHEET
+// ═══════════════════════════════════════════════════════════════
+class _ExportSheet extends StatelessWidget {
+  final bool isPremium;
+  final Presentation presentation;
+  const _ExportSheet({required this.isPremium, required this.presentation});
+
+  @override
+  Widget build(BuildContext c) => Container(
+    margin: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+    decoration: BoxDecoration(color: _T.bgSurface, borderRadius: BorderRadius.circular(16), border: Border.all(color: _T.border)),
+    child: Column(mainAxisSize: MainAxisSize.min, children: [
+      Padding(padding: const EdgeInsets.only(top: 12, bottom: 16), child: Container(width: 40, height: 4, decoration: BoxDecoration(color: _T.border, borderRadius: BorderRadius.circular(2)))),
+      const Text('Экспорт', style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w700, fontSize: 17)),
+      const SizedBox(height: 4),
+      const Text('Скачайте вашу презентацию', style: TextStyle(color: _T.txtSecondary, fontSize: 12)),
+      const SizedBox(height: 16),
+      Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Column(children: [
+        _ExportOption(icon: Icons.slideshow_rounded, color: _T.accent, title: 'PPTX', subtitle: isPremium ? 'Без знака' : 'С водяным знаком', badge: isPremium ? 'PRO' : null, onTap: () { Navigator.pop(c); ExportService.exportToPPTX(context: c, presentation: presentation, isPremium: isPremium); }),
+        const SizedBox(height: 8),
+        _ExportOption(icon: Icons.picture_as_pdf_rounded, color: isPremium ? _T.danger : _T.txtMuted, title: 'PDF', subtitle: isPremium ? 'Высокое качество' : 'Только Premium', locked: !isPremium, onTap: isPremium ? () { Navigator.pop(c); ExportService.exportToPDF(context: c, presentation: presentation, isPremium: true); } : null),
+      ])),
+      const SizedBox(height: 20),
+    ]),
+  );
+}
+
+class _ExportOption extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final String title, subtitle;
+  final String? badge;
+  final bool locked;
+  final VoidCallback? onTap;
+  const _ExportOption({required this.icon, required this.color, required this.title, required this.subtitle, this.badge, this.locked = false, this.onTap});
+
+  @override
+  Widget build(BuildContext c) => GestureDetector(
+    onTap: onTap,
+    child: Opacity(
+      opacity: locked ? 0.5 : 1.0,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: _T.border)),
+        child: Row(children: [
+          Container(width: 40, height: 40, decoration: BoxDecoration(color: color.withOpacity(0.12), borderRadius: BorderRadius.circular(10)), child: Icon(icon, color: color, size: 20)),
+          const SizedBox(width: 12),
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title, style: const TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w600, fontSize: 14)),
+            const SizedBox(height: 2),
+            Text(subtitle, style: const TextStyle(color: _T.txtSecondary, fontSize: 11)),
+          ])),
+          if (badge != null) Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3), decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(5)), child: Text(badge!, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800))),
+          if (locked) const Icon(Icons.lock_rounded, color: _T.txtMuted, size: 16),
+          if (!locked && badge == null) const Icon(Icons.arrow_forward_ios_rounded, color: _T.txtMuted, size: 12),
+        ]),
+      ),
+    ),
+  );
+}
+
 class _SectionLabel extends StatelessWidget { final String t; const _SectionLabel(this.t); @override Widget build(BuildContext c) => Text(t, style: const TextStyle(color: _T.txtMuted, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8)); }
+
 class _IconBtn extends StatefulWidget { final IconData i; final VoidCallback? o; final double s; final String? t; final bool d, a, dis; const _IconBtn(this.i, this.o, {this.s = 18, this.t, this.d = false, this.a = false, this.dis = false}); @override State<_IconBtn> createState() => _IconBtnState(); }
 class _IconBtnState extends State<_IconBtn> { bool _h = false; @override Widget build(BuildContext c) { final cl = widget.dis ? _T.txtMuted : widget.d ? _T.danger : widget.a ? _T.accent : _h ? _T.txtPrimary : _T.txtSecondary; return MouseRegion(cursor: widget.dis ? SystemMouseCursors.forbidden : SystemMouseCursors.click, onEnter: (_) => setState(() => _h = true), onExit: (_) => setState(() => _h = false), child: Tooltip(message: widget.t ?? '', child: GestureDetector(onTap: widget.dis ? null : widget.o, child: AnimatedContainer(duration: const Duration(milliseconds: 120), padding: const EdgeInsets.all(7), decoration: BoxDecoration(color: _h && !widget.dis ? _T.bgHover : Colors.transparent, borderRadius: BorderRadius.circular(7)), child: Icon(widget.i, size: widget.s, color: cl))))); } }
+
 extension _IterableMapIndexed<T> on Iterable<T> { Iterable<R> mapIndexed<R>(R Function(int, T) f) { var i = 0; return map((e) => f(i++, e)); } }
