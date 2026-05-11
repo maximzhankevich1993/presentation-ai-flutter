@@ -48,7 +48,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
   late List<String> _tr;
   final Map<int, String?> _ai = {};
   final _sc = ScrollController();
-  final _ck = GlobalKey();
 
   final List<Map<String, dynamic>> _fb = [
     {'type': 'solid', 'color': Colors.white, 'label': 'Белый'},
@@ -284,7 +283,55 @@ class _DesignTab extends StatelessWidget {
 
 class _ImageTab extends StatelessWidget { final VoidCallback u; final bool p; const _ImageTab({required this.u, required this.p}); @override Widget build(BuildContext c) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_SectionLabel('ИЗОБРАЖЕНИЕ'), const SizedBox(height: 8), if (!p) Container(width: double.infinity, margin: const EdgeInsets.only(bottom: 12), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10), decoration: BoxDecoration(color: _T.gold.withOpacity(0.07), borderRadius: BorderRadius.circular(10), border: Border.all(color: _T.gold.withOpacity(0.2))), child: Row(children: const [Icon(Icons.star_rounded, color: _T.gold, size: 14), SizedBox(width: 8), Expanded(child: Text('Замена — Premium.', style: TextStyle(color: _T.gold, fontSize: 11, fontWeight: FontWeight.w500)))])), MouseRegion(cursor: p ? SystemMouseCursors.click : SystemMouseCursors.forbidden, child: GestureDetector(onTap: p ? u : null, child: AnimatedContainer(duration: const Duration(milliseconds: 120), width: double.infinity, height: 90, decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(10), border: Border.all(color: p ? _T.border : _T.border.withOpacity(0.4))), child: Opacity(opacity: p ? 1.0 : 0.4, child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Container(width: 34, height: 34, decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.image_rounded, color: _T.accent, size: 17)), const SizedBox(height: 8), const Text('Нажмите для загрузки', style: TextStyle(color: _T.txtSecondary, fontSize: 11)), const Text('PNG, JPG до 10 МБ', style: TextStyle(color: _T.txtMuted, fontSize: 10))]))))), const SizedBox(height: 16), Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(10), border: Border.all(color: _T.border)), child: const Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Icon(Icons.info_outline_rounded, color: _T.txtMuted, size: 13), SizedBox(width: 8), Expanded(child: Text('Unsplash подбирает изображение.', style: TextStyle(color: _T.txtMuted, fontSize: 11, height: 1.5)))]))]); }
 
-class _AiTab extends StatelessWidget { final bool i; final VoidCallback o; const _AiTab({required this.i, required this.o}); @override Widget build(BuildContext c) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [_SectionLabel('ИИ ПОМОЩНИК'), const SizedBox(height: 12), Container(padding: const EdgeInsets.all(14), decoration: BoxDecoration(gradient: LinearGradient(colors: [_T.accent.withOpacity(0.08), _T.accentLight.withOpacity(0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight), borderRadius: BorderRadius.circular(12), border: Border.all(color: _T.accent.withOpacity(0.2))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [Container(width: 30, height: 30, decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 15)), const SizedBox(width: 10), const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text('Улучшить текст', style: TextStyle(color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w700)), Text('Текущий слайд', style: TextStyle(color: _T.txtMuted, fontSize: 10))])]), const SizedBox(height: 10), const Text('ИИ перепишет заголовок и пункты.', style: TextStyle(color: _T.txtSecondary, fontSize: 11, height: 1.5)), const SizedBox(height: 12), SizedBox(width: double.infinity, child: GestureDetector(onTap: i ? null : o, child: AnimatedContainer(duration: const Duration(milliseconds: 120), padding: const EdgeInsets.symmetric(vertical: 11), decoration: BoxDecoration(gradient: i ? null : const LinearGradient(colors: [Color(0xFF169C46), _T.accent, _T.accentLight], begin: Alignment.centerLeft, end: Alignment.centerRight), color: i ? _T.bgHover : null, borderRadius: BorderRadius.circular(9)), child: Center(child: i ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: _T.accent, strokeWidth: 2)) : const Text('Улучшить', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13))))))])); }
+class _AiTab extends StatelessWidget {
+  final bool i; final VoidCallback o;
+  const _AiTab({required this.i, required this.o});
+  @override Widget build(BuildContext c) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    _SectionLabel('ИИ ПОМОЩНИК'),
+    const SizedBox(height: 12),
+    Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(colors: [_T.accent.withOpacity(0.08), _T.accentLight.withOpacity(0.05)], begin: Alignment.topLeft, end: Alignment.bottomRight),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: _T.accent.withOpacity(0.2)),
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          Container(width: 30, height: 30, decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 15)),
+          const SizedBox(width: 10),
+          const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Улучшить текст', style: TextStyle(color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w700)),
+            Text('Текущий слайд', style: TextStyle(color: _T.txtMuted, fontSize: 10)),
+          ]),
+        ]),
+        const SizedBox(height: 10),
+        const Text('ИИ перепишет заголовок и пункты.', style: TextStyle(color: _T.txtSecondary, fontSize: 11, height: 1.5)),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: GestureDetector(
+            onTap: i ? null : o,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              padding: const EdgeInsets.symmetric(vertical: 11),
+              decoration: BoxDecoration(
+                gradient: i ? null : const LinearGradient(colors: [Color(0xFF169C46), _T.accent, _T.accentLight], begin: Alignment.centerLeft, end: Alignment.centerRight),
+                color: i ? _T.bgHover : null,
+                borderRadius: BorderRadius.circular(9),
+              ),
+              child: Center(
+                child: i
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: _T.accent, strokeWidth: 2))
+                    : const Text('Улучшить', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
+              ),
+            ),
+          ),
+        ),
+      ]),
+    ),
+  ]);
+}
 
 class _ExportSheet extends StatelessWidget { final bool p; final Presentation pr; const _ExportSheet({required this.p, required this.pr}); @override Widget build(BuildContext c) => Container(margin: const EdgeInsets.fromLTRB(16, 0, 16, 32), decoration: BoxDecoration(color: _T.bgSurface, borderRadius: BorderRadius.circular(16), border: Border.all(color: _T.border)), child: Column(mainAxisSize: MainAxisSize.min, children: [Padding(padding: const EdgeInsets.only(top: 12, bottom: 16), child: Container(width: 40, height: 4, decoration: BoxDecoration(color: _T.border, borderRadius: BorderRadius.circular(2)))), const Text('Экспорт', style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w700, fontSize: 17)), const SizedBox(height: 4), const Text('Скачайте вашу презентацию', style: TextStyle(color: _T.txtSecondary, fontSize: 12)), const SizedBox(height: 16), Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Column(children: [_ExportOption(icon: Icons.slideshow_rounded, color: _T.accent, title: 'PPTX', subtitle: p ? 'Без знака' : 'С водяным знаком', badge: p ? 'PRO' : null, onTap: () { Navigator.pop(c); ExportService.exportToPPTX(context: c, presentation: pr, isPremium: p); }), const SizedBox(height: 8), _ExportOption(icon: Icons.picture_as_pdf_rounded, color: p ? _T.danger : _T.txtMuted, title: 'PDF', subtitle: p ? 'Высокое качество' : 'Только Premium', locked: !p, onTap: p ? () { Navigator.pop(c); ExportService.exportToPDF(context: c, presentation: pr, isPremium: true); } : null)])), const SizedBox(height: 20)])); }
 class _ExportOption extends StatelessWidget { final IconData i; final Color cl; final String t, s; final String? b; final bool l; final VoidCallback? o; const _ExportOption({required this.i, required this.cl, required this.t, required this.s, this.b, this.l = false, this.o}); @override Widget build(BuildContext c) => GestureDetector(onTap: o, child: Opacity(opacity: l ? 0.5 : 1.0, child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12), decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: _T.border)), child: Row(children: [Container(width: 40, height: 40, decoration: BoxDecoration(color: cl.withOpacity(0.12), borderRadius: BorderRadius.circular(10)), child: Icon(i, color: cl, size: 20)), const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(t, style: const TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w600, fontSize: 14)), const SizedBox(height: 2), Text(s, style: const TextStyle(color: _T.txtSecondary, fontSize: 11))])), if (b != null) Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3), decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(5)), child: Text(b!, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800))), if (l) const Icon(Icons.lock_rounded, color: _T.txtMuted, size: 16), if (!l && b == null) const Icon(Icons.arrow_forward_ios_rounded, color: _T.txtMuted, size: 12)])))); }
