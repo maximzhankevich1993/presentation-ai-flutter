@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class LogoProvider extends ChangeNotifier {
+class BrandKitProvider extends ChangeNotifier {
   String? _logoUrl;
   String? get logoUrl => _logoUrl;
 
