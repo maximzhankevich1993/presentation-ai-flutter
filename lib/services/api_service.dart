@@ -100,8 +100,40 @@ class ApiService {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return User.fromJson(data);
+    } else if (response.statusCode == 401) {
+      throw Exception('Сессия истекла');
     } else {
       throw Exception('Ошибка загрузки профиля');
+    }
+  }
+  
+  static Future<void> updateUser(User user) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/auth/profile'),
+      headers: _getHeaders(),
+      body: json.encode(user.toJson()),
+    );
+    
+    if (response.statusCode != 200) {
+      final data = json.decode(response.body);
+      throw Exception(data['message'] ?? 'Ошибка обновления профиля');
+    }
+  }
+  
+  static Future<void> logout() async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/logout'),
+        headers: _getHeaders(),
+      );
+      if (response.statusCode != 200) {
+        // Даже если сервер вернул ошибку, очищаем локальные данные
+        debugPrint('Logout error on server: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Logout error: $e');
+    } finally {
+      _authToken = null;
     }
   }
 
@@ -129,6 +161,8 @@ class ApiService {
         return Presentation.fromJson(data);
       } else if (response.statusCode == 401) {
         throw Exception('Требуется авторизация');
+      } else if (response.statusCode == 429) {
+        throw Exception('Превышен лимит генераций');
       } else {
         final error = json.decode(response.body);
         throw Exception(error['message'] ?? 'Ошибка генерации');
@@ -147,9 +181,28 @@ class ApiService {
     
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      return data['improvedText'];
+      return data['improvedText'] ?? data['text'] ?? text;
+    } else if (response.statusCode == 401) {
+      throw Exception('Требуется авторизация');
     } else {
       throw Exception('Ошибка улучшения текста');
+    }
+  }
+  
+  // ───────────────────────────────────────────────────────────────────────────
+  // VIP STATS
+  // ───────────────────────────────────────────────────────────────────────────
+  
+  static Future<Map<String, dynamic>> getVipStats() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/vip/stats'),
+      headers: _getHeaders(),
+    );
+    
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Ошибка загрузки VIP статистики');
     }
   }
   
