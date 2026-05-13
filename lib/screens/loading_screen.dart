@@ -77,7 +77,9 @@ class _LoadingScreenState extends State<LoadingScreen>
       try {
         final userProvider = Provider.of<UserProvider>(context, listen: false);
         userProvider.useFreeGeneration();
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('Error updating user provider: $e');
+      }
 
       // Переход в редактор
       Navigator.pushReplacement(
