@@ -1,137 +1,170 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../models/presentation.dart';
+import '../models/user.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://presentation-ai-backend.onrender.com';
+  static const String baseUrl = 'https://presentation-ai-backend.onrender.com/api';
   
-  String? _token;
+  static String? _authToken;
   
-  static final ApiService _instance = ApiService._();
-  factory ApiService() => _instance;
-  ApiService._();
+  static void setAuthToken(String token) {
+    _authToken = token;
+  }
   
-  String? get token => _token;
-  bool get isLoggedIn => _token != null;
+  static void clearAuthToken() {
+    _authToken = null;
+  }
   
-  // ═══════════════════════════════════════
+  static Map<String, String> _getHeaders() {
+    final headers = {'Content-Type': 'application/json'};
+    if (_authToken != null) {
+      headers['Authorization'] = 'Bearer $_authToken';
+    }
+    return headers;
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
   // AUTH
-  // ═══════════════════════════════════════
+  // ───────────────────────────────────────────────────────────────────────────
   
-  Future<Map<String, dynamic>> register({
+  static Future<Map<String, dynamic>> register({
     required String email,
     required String password,
     required String name,
   }) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/api/auth/register'),
+      Uri.parse('$baseUrl/auth/register'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({'email': email, 'password': password, 'name': name}),
+      body: json.encode({
+        'email': email,
+        'password': password,
+        'name': name,
+      }),
     );
     
     final data = json.decode(response.body);
     if (response.statusCode == 200 || response.statusCode == 201) {
-      _token = data['token'];
+      if (data.containsKey('token')) {
+        _authToken = data['token'];
+      }
       return data;
+    } else {
+      throw Exception(data['message'] ?? 'Ошибка регистрации');
     }
-    throw Exception(data['error'] ?? 'Ошибка регистрации');
   }
   
-  Future<Map<String, dynamic>> login({
+  static Future<Map<String, dynamic>> login({
     required String email,
     required String password,
   }) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/api/auth/login'),
+      Uri.parse('$baseUrl/auth/login'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({'email': email, 'password': password}),
+      body: json.encode({
+        'email': email,
+        'password': password,
+      }),
     );
     
     final data = json.decode(response.body);
     if (response.statusCode == 200) {
-      _token = data['token'];
+      if (data.containsKey('token')) {
+        _authToken = data['token'];
+      }
       return data;
+    } else {
+      throw Exception(data['message'] ?? 'Ошибка входа');
     }
-    throw Exception(data['error'] ?? 'Ошибка входа');
   }
   
-  Future<void> logout() async {
-    if (_token == null) return;
-    try {
-      await http.post(
-        Uri.parse('$baseUrl/api/auth/logout'),
-        headers: _headers(),
-      );
-    } catch (_) {}
-    _token = null;
-  }
-  
-  Future<Map<String, dynamic>> forgotPassword(String email) async {
+  static Future<void> forgotPassword(String email) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/api/auth/forgot-password'),
+      Uri.parse('$baseUrl/auth/forgot-password'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({'email': email}),
     );
-    return json.decode(response.body);
+    
+    if (response.statusCode != 200) {
+      final data = json.decode(response.body);
+      throw Exception(data['message'] ?? 'Ошибка сброса пароля');
+    }
   }
   
-  // ═══════════════════════════════════════
-  // HEALTH
-  // ═══════════════════════════════════════
-  
-  Future<Map<String, dynamic>> healthCheck() async {
-    final response = await http.get(Uri.parse('$baseUrl/api/health'));
-    return json.decode(response.body);
-  }
-  
-  // ═══════════════════════════════════════
-  // GENERATE
-  // ═══════════════════════════════════════
-  
-  Future<Map<String, dynamic>> generatePresentation({
-    required String topic,
-    int maxSlides = 5,
-  }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/generate'),
-      headers: _headers(),
-      body: json.encode({'topic': topic, 'maxSlides': maxSlides}),
+  static Future<User> getProfile() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/auth/profile'),
+      headers: _getHeaders(),
     );
     
     if (response.statusCode == 200) {
-      return json.decode(utf8.decode(response.bodyBytes));
+      final data = json.decode(response.body);
+      return User.fromJson(data);
+    } else {
+      throw Exception('Ошибка загрузки профиля');
     }
-    
-    final error = json.decode(response.body);
-    throw Exception(error['error'] ?? 'Ошибка генерации');
+  }
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // GENERATION
+  // ───────────────────────────────────────────────────────────────────────────
+  
+  static Future<Presentation> generate({
+    required String topic,
+    required int slideCount,
+    Function(int current, int total)? onProgress,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/generate'),
+        headers: _getHeaders(),
+        body: json.encode({
+          'topic': topic,
+          'slideCount': slideCount,
+        }),
+      );
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return Presentation.fromJson(data);
+      } else if (response.statusCode == 401) {
+        throw Exception('Требуется авторизация');
+      } else {
+        final error = json.decode(response.body);
+        throw Exception(error['message'] ?? 'Ошибка генерации');
+      }
+    } catch (e) {
+      throw Exception('Ошибка соединения: $e');
+    }
   }
   
-  // ═══════════════════════════════════════
-  // IMPROVE
-  // ═══════════════════════════════════════
-  
-  Future<String> improveText(String text) async {
+  static Future<String> improveText(String text) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/api/improve'),
-      headers: _headers(),
+      Uri.parse('$baseUrl/improve'),
+      headers: _getHeaders(),
       body: json.encode({'text': text}),
     );
     
     if (response.statusCode == 200) {
-      final data = json.decode(utf8.decode(response.bodyBytes));
-      return data['improved'] ?? text;
+      final data = json.decode(response.body);
+      return data['improvedText'];
+    } else {
+      throw Exception('Ошибка улучшения текста');
     }
-    return text;
   }
   
-  // ═══════════════════════════════════════
-  // HELPERS
-  // ═══════════════════════════════════════
+  // ───────────────────────────────────────────────────────────────────────────
+  // HEALTH CHECK
+  // ───────────────────────────────────────────────────────────────────────────
   
-  Map<String, String> _headers() {
-    final headers = {'Content-Type': 'application/json'};
-    if (_token != null) {
-      headers['Authorization'] = 'Bearer $_token';
+  static Future<bool> healthCheck() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/health'),
+      ).timeout(const Duration(seconds: 5));
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
     }
-    return headers;
   }
 }
