@@ -3,28 +3,34 @@ import 'package:flutter/material.dart';
 class UserProvider extends ChangeNotifier {
   String _userName = 'User';
   String _userEmail = '';
+
   bool _isPremium = false;
   bool _isLoggedIn = true;
+
+  int _freeGenerationsLeft = 5;
 
   // GETTERS
   String get userName => _userName;
   String get userEmail => _userEmail;
+
   bool get isPremium => _isPremium;
   bool get isLoggedIn => _isLoggedIn;
 
-  // SET USERNAME
+  int get freeGenerationsLeft => _freeGenerationsLeft;
+
+  // USERNAME
   void setUserName(String name) {
     _userName = name;
     notifyListeners();
   }
 
-  // SET EMAIL
+  // EMAIL
   void setUserEmail(String email) {
     _userEmail = email;
     notifyListeners();
   }
 
-  // SET PREMIUM
+  // PREMIUM
   void setPremium(bool value) {
     _isPremium = value;
     notifyListeners();
@@ -44,23 +50,35 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // USE FREE GENERATION
+  void useFreeGeneration() {
+    if (_freeGenerationsLeft > 0) {
+      _freeGenerationsLeft--;
+      notifyListeners();
+    }
+  }
+
+  // RESET FREE GENERATIONS
+  void resetFreeGenerations() {
+    _freeGenerationsLeft = 5;
+    notifyListeners();
+  }
+
   // LOGOUT
   void logout() {
     _userName = 'User';
     _userEmail = '';
+
     _isPremium = false;
     _isLoggedIn = false;
+
+    _freeGenerationsLeft = 5;
 
     notifyListeners();
   }
 
   // RESET
   void reset() {
-    _userName = 'User';
-    _userEmail = '';
-    _isPremium = false;
-    _isLoggedIn = false;
-
-    notifyListeners();
+    logout();
   }
 }
