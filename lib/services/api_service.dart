@@ -120,14 +120,15 @@ class ApiService {
     }
   }
   
+  // ─────────── LOGOUT МЕТОД ───────────
   static Future<void> logout() async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/auth/logout'),
         headers: _getHeaders(),
       );
-      if (response.statusCode != 200) {
-        // Даже если сервер вернул ошибку, очищаем локальные данные
+      if (response.statusCode != 200 && response.statusCode != 204) {
+        // Даже если сервер вернул ошибку, всё равно очищаем локальные данные
         debugPrint('Logout error on server: ${response.statusCode}');
       }
     } catch (e) {
