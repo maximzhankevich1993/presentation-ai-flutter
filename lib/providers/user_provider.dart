@@ -2,13 +2,15 @@ import 'package:flutter/material.dart';
 
 class UserProvider extends ChangeNotifier {
   String _userName = 'User';
-  String _email = '';
+  String _userEmail = '';
   bool _isPremium = false;
+  bool _isLoggedIn = true;
 
   // GETTERS
   String get userName => _userName;
-  String get email => _email;
+  String get userEmail => _userEmail;
   bool get isPremium => _isPremium;
+  bool get isLoggedIn => _isLoggedIn;
 
   // SET USERNAME
   void setUserName(String name) {
@@ -17,8 +19,8 @@ class UserProvider extends ChangeNotifier {
   }
 
   // SET EMAIL
-  void setEmail(String value) {
-    _email = value;
+  void setUserEmail(String email) {
+    _userEmail = email;
     notifyListeners();
   }
 
@@ -28,11 +30,37 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // RESET USER
+  // LOGIN
+  void login({
+    required String name,
+    required String email,
+    bool premium = false,
+  }) {
+    _userName = name;
+    _userEmail = email;
+    _isPremium = premium;
+    _isLoggedIn = true;
+
+    notifyListeners();
+  }
+
+  // LOGOUT
+  void logout() {
+    _userName = 'User';
+    _userEmail = '';
+    _isPremium = false;
+    _isLoggedIn = false;
+
+    notifyListeners();
+  }
+
+  // RESET
   void reset() {
     _userName = 'User';
-    _email = '';
+    _userEmail = '';
     _isPremium = false;
+    _isLoggedIn = false;
+
     notifyListeners();
   }
 }
