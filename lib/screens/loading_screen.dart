@@ -1,213 +1,204 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
-import '../models/presentation.dart';
 import 'editor_screen.dart';
 
 class LoadingScreen extends StatefulWidget {
   final String topic;
-  const LoadingScreen({super.key, required this.topic});
+  final int slideCount;
+
+  const LoadingScreen({
+    super.key,
+    required this.topic,
+    required this.slideCount,
+  });
 
   @override
   State<LoadingScreen> createState() => _LoadingScreenState();
 }
 
-class _LoadingScreenState extends State<LoadingScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulseController;
-  late Animation<double> _pulseAnimation;
-  int _step = 0;
-  Timer? _messageTimer;
-  double _progress = 0.0;
-  bool _isGenerating = true;
-  String? _error;
-
-  final List<String> _messages = [
-    'Анализирую тему...',
-    'Собираю информацию...',
-    'Придумываю структуру...',
-    'Пишу текст...',
-    'Завершаю...',
-  ];
+class _LoadingScreenState extends State<LoadingScreen> {
+  String _status = 'Подготовка...';
+  int _currentSlide = 0;
+  bool _hasError = false;
+  String _errorMessage = '';
 
   @override
   void initState() {
     super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 1200),
-    );
-    _pulseAnimation = Tween<double>(begin: 0.9, end: 1.05).animate(
-      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
-    );
-    _pulseController.repeat(reverse: true);
-    _startGeneration();
-  }
-
-  void _startGeneration() {
-    _messageTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
-      if (_step < _messages.length - 1 && _isGenerating) {
-        setState(() => _step++);
-      }
-    });
     _generatePresentation();
   }
 
   Future<void> _generatePresentation() async {
     try {
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-      if (!userProvider.canGenerate) throw Exception('Нет генераций');
+      setState(() {
+        _status = 'Генерация слайда 1 из ${widget.slideCount}';
+        _currentSlide = 1;
+      });
 
-      await userProvider.useGeneration();
-
-      // ✅ Исправлено: ApiService().generatePresentation
-      final api = ApiService();
-      final response = await api.generatePresentation(
+      final response = await ApiService.generate(
         topic: widget.topic,
-        maxSlides: userProvider.maxSlidesPerPresentation.clamp(3, 10),
+        slideCount: widget.slideCount,
+        onProgress: (current, total) {
+          if (mounted) {
+            setState(() {
+              _currentSlide = current;
+              _status = 'Генерация слайда $current из $total';
+            });
+          }
+        },
       );
 
-      final presentation = Presentation.fromJson(response);
-      setState(() {
-        _isGenerating = false;
-        _progress = 1.0;
-      });
-      _messageTimer?.cancel();
-      await Future.delayed(const Duration(milliseconds: 300));
+      if (!mounted) return;
 
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => EditorScreen(presentation: presentation),
-          ),
-        );
-      }
+      // Переход в редактор
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => EditorScreen(presentation: response),
+        ),
+      );
     } catch (e) {
-      setState(() {
-        _isGenerating = false;
-        _error = e.toString().replaceAll('Exception: ', '');
-      });
-      _messageTimer?.cancel();
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _errorMessage = e.toString();
+        });
+      }
     }
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    _messageTimer?.cancel();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xCC121212),
+      backgroundColor: const Color(0xFF121212),
       body: Center(
         child: Container(
-          width: 240.w,
-          padding: EdgeInsets.all(24.w),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1A1A1A),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            AnimatedBuilder(
-              animation: _pulseAnimation,
-              builder: (_, child) => Transform.scale(
-                scale: _pulseAnimation.value,
-                child: child,
-              ),
-              child: Container(
-                width: 48.w,
-                height: 48.w,
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFF1DB954), Color(0xFF17A34A)],
-                  ),
-                  shape: BoxShape.circle,
-                ),
-                child: const Center(
-                  child: Text('✨', style: TextStyle(fontSize: 20)),
-                ),
-              ),
-            ),
-            SizedBox(height: 16.h),
-            Text(
-              widget.topic,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 12.h),
-            Text(
-              _error ?? _messages[_step],
-              style: TextStyle(
-                fontSize: 12,
-                color: _error != null
-                    ? const Color(0xFFFF3B30)
-                    : const Color(0xFFB3B3B3),
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: 12.h),
-            if (_error == null)
+          padding: const EdgeInsets.all(32),
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Анимированный логотип
               Container(
-                width: 120.w,
-                height: 3.h,
+                width: 64,
+                height: 64,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(2),
-                  color: Colors.white.withOpacity(0.1),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                child: FractionallySizedBox(
-                  alignment: Alignment.centerLeft,
-                  widthFactor: _progress,
-                  child: Container(
-                    decoration: const BoxDecoration(
-                      borderRadius: BorderRadius.all(Radius.circular(2)),
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF1DB954), Color(0xFF17A34A)],
+                child: const Icon(
+                  Icons.auto_awesome,
+                  color: Colors.white,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              // Тема
+              Text(
+                'Создаём презентацию',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '"${widget.topic}"',
+                style: const TextStyle(
+                  color: Color(0xFF9A9A9A),
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+
+              // Статус
+              if (!_hasError) ...[
+                Text(
+                  _status,
+                  style: const TextStyle(
+                    color: Color(0xFF1DB954),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Прогресс-бар
+                LinearProgressIndicator(
+                  value: _currentSlide / widget.slideCount,
+                  backgroundColor: const Color(0xFF2A2A2A),
+                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF1DB954)),
+                ),
+                const SizedBox(height: 12),
+
+                // Процент
+                Text(
+                  '${((_currentSlide / widget.slideCount) * 100).toInt()}%',
+                  style: const TextStyle(
+                    color: Color(0xFF4A4A4A),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+
+              // Ошибка
+              if (_hasError) ...[
+                const Icon(
+                  Icons.error_outline,
+                  color: Color(0xFFFF3B30),
+                  size: 48,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Ошибка генерации',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _errorMessage,
+                  style: const TextStyle(
+                    color: Color(0xFF9A9A9A),
+                    fontSize: 13,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E1E1E),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFF2A2A2A)),
+                      ),
+                      child: const Text(
+                        'Попробовать снова',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            if (_error != null) ...[
-              SizedBox(height: 12.h),
-              GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _step = 0;
-                    _progress = 0.0;
-                    _isGenerating = true;
-                    _error = null;
-                  });
-                  _startGeneration();
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 8.h),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1DB954),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Text(
-                    'Повторить',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ),
+              ],
             ],
-          ]),
+          ),
         ),
       ),
     );
