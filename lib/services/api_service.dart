@@ -60,7 +60,7 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login'),
-      headers: {'Content-Type': application/json'},
+      headers: {'Content-Type': 'application/json'},
       body: json.encode({
         'email': email,
         'password': password,
@@ -120,7 +120,6 @@ class ApiService {
     }
   }
   
-  // ─────────── LOGOUT МЕТОД (без debugPrint) ───────────
   static Future<void> logout() async {
     try {
       final response = await http.post(
