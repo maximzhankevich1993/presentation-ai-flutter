@@ -17,8 +17,8 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
-        ChangeNotifierProvider(create: (_) => LogoProvider()),
-        ChangeNotifierProvider(create: (_) => HistoryProvider()),
+        ChangeNotifierProvider(create: (_) => BrandKitProvider()),
+        ChangeNotifierProvider(create: (_) => UserHistoryProvider()),
       ],
       child: MaterialApp(
         title: 'Презентатор ИИ',
