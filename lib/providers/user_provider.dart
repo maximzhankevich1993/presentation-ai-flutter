@@ -13,6 +13,13 @@ class UserProvider extends ChangeNotifier {
   int get freeGenerationsLeft => _user?.freeGenerationsLeft ?? 5;
   int get maxSlidesPerPresentation => _user?.maxSlidesPerPresentation ?? 10;
   bool get isLoggedIn => _user != null;
+  
+  // Геттеры для settings_screen.dart
+  String get userName => _user?.name ?? 'Гость';
+  String get userEmail => _user?.email ?? '';
+  String get userId => _user?.id ?? '';
+  bool get hasAvatar => _user?.avatarUrl != null;
+  String? get avatarUrl => _user?.avatarUrl;
 
   void setUser(User user, {String? token}) {
     _user = user;
