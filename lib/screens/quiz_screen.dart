@@ -88,238 +88,216 @@ class _QuizScreenState extends State<QuizScreen> {
                 ),
               ),
             )
-          : !_quizStarted
-              ? _buildStartScreen()
-              : !_quizFinished
-                  ? _buildQuizScreen()
-                  : _buildResultScreen(),
+          : Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 700),
+                  child: !_quizStarted
+                      ? _buildStartScreen()
+                      : (!_quizFinished ? _buildQuizScreen() : _buildResultScreen()),
+                ),
+              ),
+            ),
     );
   }
 
   Widget _buildStartScreen() {
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 80,
-              height: 80,
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF1DB954).withOpacity(0.3),
+                blurRadius: 20,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.quiz_rounded,
+            color: Colors.white,
+            size: 40,
+          ),
+        ),
+        const SizedBox(height: 32),
+        const Text(
+          'Проверь свои знания',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+          ),
+        ),
+        const SizedBox(height: 12),
+        const Text(
+          'Тест из 5 вопросов о возможностях\nПрезентатор ИИ',
+          style: TextStyle(
+            color: Color(0xFF9A9A9A),
+            fontSize: 14,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 32),
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFF2A2A2A)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildInfoChip(icon: Icons.question_answer_rounded, label: '5 вопросов'),
+              _buildInfoChip(icon: Icons.timer_rounded, label: '~2 минуты'),
+              _buildInfoChip(icon: Icons.bolt_rounded, label: 'Проверка знаний'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 40),
+        MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () {
+              setState(() {
+                _quizStarted = true;
+                _currentQuestionIndex = 0;
+                _score = 0;
+              });
+            },
+            child: Container(
+              width: double.infinity,
+              height: 56,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
                 ),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
                     color: const Color(0xFF1DB954).withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 6),
+                    blurRadius: 16,
                   ),
                 ],
               ),
-              child: const Icon(
-                Icons.quiz_rounded,
-                color: Colors.white,
-                size: 40,
-              ),
-            ),
-            const SizedBox(height: 32),
-            const Text(
-              'Проверь свои знания',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Тест из 5 вопросов о возможностях\nПрезентатор ИИ',
-              style: TextStyle(
-                color: Color(0xFF9A9A9A),
-                fontSize: 14,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFF2A2A2A)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  _buildInfoChip(
-                    icon: Icons.question_answer_rounded,
-                    label: '5 вопросов',
-                  ),
-                  _buildInfoChip(
-                    icon: Icons.timer_rounded,
-                    label: '~2 минуты',
-                  ),
-                  _buildInfoChip(
-                    icon: Icons.bolt_rounded,
-                    label: 'Проверка знаний',
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 40),
-            MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _quizStarted = true;
-                    _currentQuestionIndex = 0;
-                    _score = 0;
-                  });
-                },
-                child: Container(
-                  width: double.infinity,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF1DB954).withOpacity(0.3),
-                        blurRadius: 16,
-                      ),
-                    ],
-                  ),
-                  child: const Center(
-                    child: Text(
-                      'Начать тест',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+              child: const Center(
+                child: Text(
+                  'Начать тест',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 
   Widget _buildQuizScreen() {
     final question = _questions[_currentQuestionIndex];
     
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Progress
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF2A2A2A)),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Вопрос ${_currentQuestionIndex + 1} из ${_questions.length}',
-                      style: const TextStyle(
-                        color: Color(0xFF9A9A9A),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      'Счёт: $_score',
-                      style: const TextStyle(
-                        color: Color(0xFF1DB954),
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: (_currentQuestionIndex + 1) / _questions.length,
-                    backgroundColor: const Color(0xFF2A2A2A),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF1DB954)),
-                    minHeight: 4,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFF2A2A2A)),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Вопрос ${_currentQuestionIndex + 1} из ${_questions.length}',
+                    style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13, fontWeight: FontWeight.w500),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Question
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF1DB954).withOpacity(0.1),
-                  const Color(0xFF1ED760).withOpacity(0.05),
+                  Text(
+                    'Счёт: $_score',
+                    style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13, fontWeight: FontWeight.w700),
+                  ),
                 ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.2)),
-            ),
-            child: Text(
-              question['question'],
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                height: 1.3,
+              const SizedBox(height: 8),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: (_currentQuestionIndex + 1) / _questions.length,
+                  backgroundColor: const Color(0xFF2A2A2A),
+                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF1DB954)),
+                  minHeight: 4,
+                ),
               ),
-            ),
+            ],
           ),
-          const SizedBox(height: 24),
+        ),
+        const SizedBox(height: 24),
 
-          // Options
-          const Text(
-            'ВЫБЕРИТЕ ОТВЕТ',
-            style: TextStyle(
-              color: Color(0xFF4A4A4A),
-              fontSize: 11,
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF1DB954).withOpacity(0.1),
+                const Color(0xFF1ED760).withOpacity(0.05),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.2)),
+          ),
+          child: Text(
+            question['question'],
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
               fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
+              height: 1.3,
             ),
           ),
-          const SizedBox(height: 12),
-          ...List.generate(question['options'].length, (index) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _buildOptionCard(
-                text: question['options'][index],
-                onTap: () => _answerQuestion(index),
-              ),
-            );
-          }),
-        ],
-      ),
+        ),
+        const SizedBox(height: 24),
+
+        const Text(
+          'ВЫБЕРИТЕ ОТВЕТ',
+          style: TextStyle(
+            color: Color(0xFF4A4A4A),
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...List.generate(question['options'].length, (index) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: _buildOptionCard(
+              text: question['options'][index],
+              onTap: () => _answerQuestion(index),
+            ),
+          );
+        }),
+      ],
     );
   }
 
@@ -387,163 +365,160 @@ class _QuizScreenState extends State<QuizScreen> {
       advice = 'Познакомься с платформой поближе и попробуй снова.';
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 100,
-            height: 100,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
-              ),
-              borderRadius: BorderRadius.circular(50),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF1DB954).withOpacity(0.3),
-                  blurRadius: 20,
-                ),
-              ],
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          width: 100,
+          height: 100,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
             ),
-            child: Center(
-              child: Text(
-                '${percentage.toInt()}%',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.w800,
-                ),
+            borderRadius: BorderRadius.circular(50),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF1DB954).withOpacity(0.3),
+                blurRadius: 20,
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              '${percentage.toInt()}%',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 32,
+                fontWeight: FontWeight.w800,
               ),
             ),
           ),
-          const SizedBox(height: 32),
-          Text(
-            message,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-            ),
+        ),
+        const SizedBox(height: 32),
+        Text(
+          message,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
           ),
-          const SizedBox(height: 12),
-          Text(
-            advice,
-            style: const TextStyle(
-              color: Color(0xFF9A9A9A),
-              fontSize: 14,
-            ),
-            textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 12),
+        Text(
+          advice,
+          style: const TextStyle(
+            color: Color(0xFF9A9A9A),
+            fontSize: 14,
           ),
-          const SizedBox(height: 32),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFF2A2A2A)),
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Правильных ответов:',
-                      style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
-                    ),
-                    Text(
-                      '$_score / ${_questions.length}',
-                      style: const TextStyle(
-                        color: Color(0xFF1DB954),
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: _score / _questions.length,
-                    backgroundColor: const Color(0xFF2A2A2A),
-                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF1DB954)),
-                    minHeight: 6,
-                  ),
-                ),
-              ],
-            ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 32),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFF2A2A2A)),
           ),
-          const SizedBox(height: 32),
-          Row(
+          child: Column(
             children: [
-              Expanded(
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: () {
-                      setState(() {
-                        _quizStarted = false;
-                        _quizFinished = false;
-                        _currentQuestionIndex = 0;
-                        _score = 0;
-                      });
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E1E1E),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFF2A2A2A)),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'Пройти снова',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Правильных ответов:',
+                    style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
+                  ),
+                  Text(
+                    '$_score / ${_questions.length}',
+                    style: const TextStyle(
+                      color: Color(0xFF1DB954),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                ),
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
-                        ),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Center(
-                        child: Text(
-                          'На главную',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: _score / _questions.length,
+                  backgroundColor: const Color(0xFF2A2A2A),
+                  valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF1DB954)),
+                  minHeight: 6,
                 ),
               ),
             ],
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 32),
+        Row(
+          children: [
+            Expanded(
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _quizStarted = false;
+                      _quizFinished = false;
+                      _currentQuestionIndex = 0;
+                      _score = 0;
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1E1E),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFF2A2A2A)),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Пройти снова',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
+                      ),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'На главную',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -575,16 +550,14 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _showSnackBar(String message, bool isSuccess) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isSuccess ? const Color(0xFF1DB954) : const Color(0xFFFF3B30),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        duration: const Duration(milliseconds: 700),
-      ),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(message),
+      backgroundColor: isSuccess ? const Color(0xFF1DB954) : const Color(0xFFFF3B30),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      duration: const Duration(milliseconds: 700),
+    ));
   }
 
   Widget _buildInfoChip({
