@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class CorporateScreen extends StatefulWidget {
   final String countryCode;
@@ -10,99 +9,588 @@ class CorporateScreen extends StatefulWidget {
 }
 
 class _CorporateScreenState extends State<CorporateScreen> {
-  final _company = TextEditingController();
-
-  @override
-  void dispose() {
-    _company.dispose();
-    super.dispose();
-  }
+  String _selectedTariff = 'business';
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
-    const green = Color(0xFF1DB954);
-    const card = Color(0xFF1A1A1A);
-
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         backgroundColor: const Color(0xFF121212),
-        title: const Text('Бизнесу', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 17)),
+        elevation: 0,
+        leading: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 34,
+              height: 34,
+              margin: const EdgeInsets.only(left: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFF2A2A2A)),
+              ),
+              child: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 18),
+            ),
+          ),
+        ),
+        title: const Text(
+          'Бизнесу',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.3,
+          ),
+        ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(20.w),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(
-            padding: EdgeInsets.all(16.w),
-            decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(14)),
-            child: Row(children: [
-              const Text('💼', style: TextStyle(fontSize: 28)),
-              SizedBox(width: 12.w),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('Россия', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white)),
-                Text('Валюта: RUB | Налоги: НДС', style: TextStyle(fontSize: 11, color: const Color(0xFFB3B3B3))),
-                Text('Интеграции: 1С, Битрикс24', style: TextStyle(fontSize: 11, color: const Color(0xFFB3B3B3))),
-              ])),
-            ]),
-          ),
-          SizedBox(height: 20.h),
-          Text('Создать документ', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
-          SizedBox(height: 10.h),
-          TextField(
-            controller: _company,
-            style: const TextStyle(fontSize: 14, color: Colors.white),
-            decoration: InputDecoration(
-              hintText: 'Название компании',
-              hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
-              filled: true, fillColor: card,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-              contentPadding: EdgeInsets.all(14.w),
+      body: _isLoading
+          ? const Center(
+              child: SizedBox(
+                width: 32,
+                height: 32,
+                child: CircularProgressIndicator(
+                  color: Color(0xFF1DB954),
+                  strokeWidth: 2.5,
+                ),
+              ),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Hero header
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF1DB954).withOpacity(0.3),
+                          blurRadius: 20,
+                          offset: const Offset(0, 6),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(
+                            Icons.business_center_rounded,
+                            color: Colors.white,
+                            size: 26,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Корпоративный тариф',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Для компаний от 10 человек',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Секция "Выберите план"
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      'ВЫБЕРИТЕ ПЛАН',
+                      style: TextStyle(
+                        color: Color(0xFF4A4A4A),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Тариф Бизнес
+                  _buildTariffCard(
+                    title: 'Бизнес',
+                    price: '499',
+                    period: 'месяц',
+                    originalPrice: '999',
+                    description: 'Для малого бизнеса',
+                    features: const [
+                      'До 10 пользователей',
+                      '∞ генераций',
+                      'Бренд-кит',
+                      'Приоритетная поддержка',
+                      'API доступ',
+                    ],
+                    isPopular: true,
+                    onTap: () => _selectTariff('business'),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Тариф Корпоративный
+                  _buildTariffCard(
+                    title: 'Корпоративный',
+                    price: '1499',
+                    period: 'месяц',
+                    originalPrice: '2499',
+                    description: 'Для крупных компаний',
+                    features: const [
+                      'Неограниченно пользователей',
+                      '∞ генераций',
+                      'Бренд-кит',
+                      'VIP поддержка 24/7',
+                      'API + Webhook',
+                      'Интеграция с CRM',
+                    ],
+                    isPopular: false,
+                    onTap: () => _selectTariff('corporate'),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Кнопка связи с отделом продаж
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => _contactSales(),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E1E1E),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFF2A2A2A)),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 20),
+                            SizedBox(width: 10),
+                            Text(
+                              'Связаться с отделом продаж',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Icon(Icons.arrow_forward_rounded, color: Color(0xFF1DB954), size: 16),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          SizedBox(height: 12.h),
-          SizedBox(
+    );
+  }
+
+  Widget _buildTariffCard({
+    required String title,
+    required String price,
+    required String period,
+    required String originalPrice,
+    required String description,
+    required List<String> features,
+    required bool isPopular,
+    required VoidCallback onTap,
+  }) {
+    final bool isSelected = _selectedTariff == title.toLowerCase();
+    
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
             width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(backgroundColor: green, padding: EdgeInsets.symmetric(vertical: 12.h), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
-              child: const Text('Сгенерировать КП', style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700, fontSize: 13)),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? const Color(0xFF1DB95420)
+                  : const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: isSelected
+                    ? const Color(0xFF1DB954).withOpacity(0.5)
+                    : const Color(0xFF2A2A2A),
+                width: isSelected ? 1.5 : 1,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFF1DB954).withOpacity(0.15),
+                        blurRadius: 12,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: isPopular
+                            ? const Color(0xFF1DB954)
+                            : const Color(0xFF2A2A2A),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        title == 'Бизнес'
+                            ? Icons.business_center_rounded
+                            : Icons.apartment_rounded,
+                        color: isPopular ? Colors.white : const Color(0xFF1DB954),
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            description,
+                            style: const TextStyle(
+                              color: Color(0xFF9A9A9A),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (isPopular)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'Популярный',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Price
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '$price ₽',
+                      style: const TextStyle(
+                        color: Color(0xFF1DB954),
+                        fontSize: 32,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '/$period',
+                      style: const TextStyle(
+                        color: Color(0xFF9A9A9A),
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      '$originalPrice ₽',
+                      style: const TextStyle(
+                        color: Color(0xFF4A4A4A),
+                        fontSize: 14,
+                        decoration: TextDecoration.lineThrough,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (isSelected)
+                      Container(
+                        width: 24,
+                        height: 24,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1DB954),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.check_rounded,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Divider
+                const Divider(color: Color(0xFF2A2A2A), height: 1),
+
+                const SizedBox(height: 16),
+
+                // Features
+                const Text(
+                  'Включено:',
+                  style: TextStyle(
+                    color: Color(0xFF9A9A9A),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 10,
+                  children: features.map((feature) => Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        color: Color(0xFF1DB954),
+                        size: 14,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        feature,
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  )).toList(),
+                ),
+
+                const SizedBox(height: 20),
+
+                // CTA Button
+                MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    onTap: onTap,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        gradient: isSelected
+                            ? const LinearGradient(
+                                colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
+                              )
+                            : null,
+                        color: isSelected ? null : const Color(0xFF252525),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: isSelected
+                              ? Colors.transparent
+                              : const Color(0xFF2A2A2A),
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          isSelected ? 'Выбран' : 'Выбрать тариф',
+                          style: TextStyle(
+                            color: isSelected ? Colors.white : const Color(0xFF1DB954),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          SizedBox(height: 20.h),
-          Text('Тарифы', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
-          SizedBox(height: 10.h),
-          _plan('Business', '\$9.99', '/мес', false),
-          _plan('Corporate', '\$49.99', '/10 чел.', true),
-          _plan('Enterprise', '\$199', '/50 чел.', false),
-        ]),
+        ),
       ),
     );
   }
 
-  Widget _plan(String name, String price, String period, bool featured) {
-    const green = Color(0xFF1DB954);
-    return Container(
-      margin: EdgeInsets.only(bottom: 8.h),
-      padding: EdgeInsets.all(14.w),
-      decoration: BoxDecoration(
-        color: featured ? green.withOpacity(0.1) : const Color(0xFF1A1A1A),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: featured ? green.withOpacity(0.4) : Colors.white.withOpacity(0.06)),
+  void _selectTariff(String tariff) {
+    setState(() {
+      _selectedTariff = tariff;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Вы выбрали тариф "${tariff == 'business' ? 'Бизнес' : 'Корпоративный'}"'),
+        backgroundColor: const Color(0xFF1DB954),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        duration: const Duration(seconds: 2),
       ),
-      child: Row(children: [
-        if (featured) Container(
-          margin: EdgeInsets.only(right: 8.w),
-          padding: EdgeInsets.symmetric(horizontal: 6.w, vertical: 2.h),
-          decoration: BoxDecoration(color: green, borderRadius: BorderRadius.circular(6)),
-          child: const Text('POP', style: TextStyle(color: Colors.black, fontSize: 8, fontWeight: FontWeight.w700)),
+    );
+  }
+
+  void _contactSales() {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: const Color(0xFF1E1E1E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1DB954).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Icon(
+                  Icons.email_rounded,
+                  color: Color(0xFF1DB954),
+                  size: 26,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Свяжитесь с нами',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Напишите нам на почту для подбора\nиндивидуального тарифа',
+                style: TextStyle(
+                  color: Color(0xFF9A9A9A),
+                  fontSize: 13,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF121212),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF2A2A2A)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.email_outlined,
+                      color: Color(0xFF1DB954),
+                      size: 18,
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'corp@presentator.ai',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const Spacer(),
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () {
+                          // Копирование email
+                          Navigator.pop(ctx);
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2A2A2A),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            Icons.copy_rounded,
+                            color: Color(0xFF1DB954),
+                            size: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF252525),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        'Закрыть',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        Expanded(child: Text(name, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: Colors.white))),
-        Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Text(price, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900, color: green)),
-          Text(period, style: TextStyle(fontSize: 10, color: const Color(0xFFB3B3B3))),
-        ]),
-      ]),
+      ),
     );
   }
 }
