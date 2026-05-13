@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:http/http.dart' as http;
+import '../providers/logo_provider.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import 'loading_screen.dart';
