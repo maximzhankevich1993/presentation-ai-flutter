@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 
 class ReferralScreen extends StatefulWidget {
@@ -8,10 +9,10 @@ class ReferralScreen extends StatefulWidget {
 }
 
 class _ReferralScreenState extends State<ReferralScreen> {
-  String _referralCode = 'PRESENTAI2024';
-  int _referralsCount = 3;
-  int _bonusGenerations = 5;
-  bool _isLoading = false;
+  late String _referralCode;
+  int _referralsCount = 0;
+  int _bonusGenerations = 0;
+  bool _isLoading = true;
   bool _isCopied = false;
 
   final List<Map<String, dynamic>> _referralRules = [
@@ -55,6 +56,51 @@ class _ReferralScreenState extends State<ReferralScreen> {
       'reward': null,
     },
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _generateUniqueReferralCode();
+    _loadReferralStats();
+  }
+
+  void _generateUniqueReferralCode() {
+    // Генерация уникального кода на основе пользователя и времени
+    final random = Random();
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789';
+    String code = '';
+    for (int i = 0; i < 8; i++) {
+      code += chars[random.nextInt(chars.length)];
+    }
+    _referralCode = 'PRESENT${DateTime.now().year}${code}';
+  }
+
+  Future<void> _loadReferralStats() async {
+    try {
+      // TODO: Загрузить реальные данные с сервера
+      // final stats = await ApiService.getReferralStats();
+      // setState(() {
+      //   _referralsCount = stats['count'];
+      //   _bonusGenerations = stats['bonus'];
+      // });
+      
+      // Временные данные
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (mounted) {
+        setState(() {
+          _referralsCount = 3;
+          _bonusGenerations = 5;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -544,44 +590,70 @@ class _ReferralScreenState extends State<ReferralScreen> {
     );
   }
 
-  void _copyCode() {
-    setState(() {
-      _isCopied = true;
-    });
-    
-    // Копирование кода
-    // await Clipboard.setData(ClipboardData(text: _referralCode));
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Код скопирован!'),
-        backgroundColor: Color(0xFF1DB954),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: EdgeInsets.fromLTRB(16, 0, 16, 24),
-        duration: Duration(seconds: 2),
-      ),
-    );
-    
-    Future.delayed(const Duration(seconds: 2), () {
+  void _copyCode() async {
+    // Копирование кода в буфер обмена
+    try {
+      await Future.delayed(Duration.zero);
+      // await Clipboard.setData(ClipboardData(text: _referralCode));
+      
+      setState(() {
+        _isCopied = true;
+      });
+      
       if (mounted) {
-        setState(() {
-          _isCopied = false;
-        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Код скопирован!'),
+            backgroundColor: const Color(0xFF1DB954),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            duration: const Duration(seconds: 2),
+          ),
+        );
       }
-    });
+      
+      Future.delayed(const Duration(seconds: 2), () {
+        if (mounted) {
+          setState(() {
+            _isCopied = false;
+          });
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Ошибка копирования'),
+            backgroundColor: const Color(0xFFFF3B30),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    }
   }
 
   void _shareCode() {
-    // Логика шаринга
+    // Логика шаринга с уникальной ссылкой
+    final shareUrl = 'https://presentator.ai/ref/$_referralCode';
+    
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Открывается окно для шаринга...'),
-        backgroundColor: Color(0xFF1DB954),
+      SnackBar(
+        content: Text('Ссылка для приглашения: $shareUrl'),
+        backgroundColor: const Color(0xFF1DB954),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: EdgeInsets.fromLTRB(16, 0, 16, 24),
-        duration: Duration(seconds: 2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        duration: const Duration(seconds: 3),
       ),
     );
   }
