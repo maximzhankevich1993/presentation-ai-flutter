@@ -1,38 +1,38 @@
 import 'package:flutter/material.dart';
 
-class GenerationRecord {
-  final String topic;
-  final int slideCount;
-  final DateTime createdAt;
-  
-  GenerationRecord({
-    required this.topic,
-    required this.slideCount,
-    required this.createdAt,
-  });
-}
+class UserProvider extends ChangeNotifier {
+  String _userName = 'User';
+  String _email = '';
+  bool _isPremium = false;
 
-class UserHistoryProvider extends ChangeNotifier {
-  final List<GenerationRecord> _records = [];
-  
-  List<GenerationRecord> get records => List.unmodifiable(_records);
-  
-  void add(String topic, {int slideCount = 5}) {
-    _records.insert(0, GenerationRecord(
-      topic: topic,
-      slideCount: slideCount,
-      createdAt: DateTime.now(),
-    ));
-    
-    if (_records.length > 20) {
-      _records.removeLast();
-    }
-    
+  // GETTERS
+  String get userName => _userName;
+  String get email => _email;
+  bool get isPremium => _isPremium;
+
+  // SET USERNAME
+  void setUserName(String name) {
+    _userName = name;
     notifyListeners();
   }
-  
-  void clear() {
-    _records.clear();
+
+  // SET EMAIL
+  void setEmail(String value) {
+    _email = value;
+    notifyListeners();
+  }
+
+  // SET PREMIUM
+  void setPremium(bool value) {
+    _isPremium = value;
+    notifyListeners();
+  }
+
+  // RESET USER
+  void reset() {
+    _userName = 'User';
+    _email = '';
+    _isPremium = false;
     notifyListeners();
   }
 }
