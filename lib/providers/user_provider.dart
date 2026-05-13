@@ -14,7 +14,6 @@ class UserProvider extends ChangeNotifier {
   int get maxSlidesPerPresentation => _user?.maxSlidesPerPresentation ?? 10;
   bool get isLoggedIn => _user != null;
   
-  // Геттеры для settings_screen.dart
   String get userName => _user?.name ?? 'Гость';
   String get userEmail => _user?.email ?? '';
   String get userId => _user?.id ?? '';
@@ -33,6 +32,23 @@ class UserProvider extends ChangeNotifier {
   void updateUser(User user) {
     _user = user;
     notifyListeners();
+  }
+
+  // Новые методы для settings_screen.dart
+  void setUserEmail(String email) {
+    if (_user != null) {
+      _user = _user!.copyWith(email: email);
+      notifyListeners();
+      _saveUserToServer();
+    }
+  }
+
+  void setUserName(String name) {
+    if (_user != null) {
+      _user = _user!.copyWith(name: name);
+      notifyListeners();
+      _saveUserToServer();
+    }
   }
 
   void useFreeGeneration() {
