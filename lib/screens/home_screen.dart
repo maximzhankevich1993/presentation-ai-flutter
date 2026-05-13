@@ -7,7 +7,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
-import '../providers/logo_provider.dart';  // ← Оставить только здесь
 import 'loading_screen.dart';
 import 'premium_screen.dart';
 import 'settings_screen.dart';
