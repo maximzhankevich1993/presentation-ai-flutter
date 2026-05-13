@@ -22,6 +22,7 @@ class UserProvider extends ChangeNotifier {
   bool _isLoggedIn = true;
 
   int _freeGenerationsLeft = 5;
+  int _maxSlidesPerPresentation = 10;  // ← ДОБАВИТЬ
 
   // USER OBJECT
   UserModel get user => UserModel(
@@ -39,6 +40,7 @@ class UserProvider extends ChangeNotifier {
   bool get isLoggedIn => _isLoggedIn;
 
   int get freeGenerationsLeft => _freeGenerationsLeft;
+  int get maxSlidesPerPresentation => _maxSlidesPerPresentation;  // ← ДОБАВИТЬ
 
   // SET USERNAME
   void setUserName(String name) {
@@ -64,6 +66,23 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ─── МЕТОД setUser (добавить) ───
+  void setUser(UserModel user, {String? token}) {
+    _userName = user.name;
+    _userEmail = user.email;
+    _avatarUrl = user.avatarUrl;
+    _isLoggedIn = true;
+    notifyListeners();
+  }
+
+  // ─── МЕТОД updateUser (добавить) ───
+  void updateUser(UserModel user) {
+    _userName = user.name;
+    _userEmail = user.email;
+    _avatarUrl = user.avatarUrl;
+    notifyListeners();
+  }
+
   // LOGIN
   void login({
     required String name,
@@ -73,12 +92,9 @@ class UserProvider extends ChangeNotifier {
   }) {
     _userName = name;
     _userEmail = email;
-
     _avatarUrl = avatarUrl;
-
     _isPremium = premium;
     _isLoggedIn = true;
-
     notifyListeners();
   }
 
@@ -99,14 +115,10 @@ class UserProvider extends ChangeNotifier {
   void logout() {
     _userName = 'User';
     _userEmail = '';
-
     _avatarUrl = null;
-
     _isPremium = false;
     _isLoggedIn = false;
-
     _freeGenerationsLeft = 5;
-
     notifyListeners();
   }
 
