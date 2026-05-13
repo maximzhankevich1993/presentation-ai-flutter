@@ -1,128 +1,87 @@
 import 'package:flutter/material.dart';
-
-class UserModel {
-  final String name;
-  final String email;
-  final String? avatarUrl;
-
-  UserModel({
-    required this.name,
-    required this.email,
-    this.avatarUrl,
-  });
-}
+import '../models/user.dart';  // ← импортируем User из models
 
 class UserProvider extends ChangeNotifier {
-  String _userName = 'User';
-  String _userEmail = '';
-
-  String? _avatarUrl;
-
-  bool _isPremium = false;
-  bool _isLoggedIn = true;
-
-  int _freeGenerationsLeft = 5;
-  int _maxSlidesPerPresentation = 10;  // ← ДОБАВИТЬ
-
-  // USER OBJECT
-  UserModel get user => UserModel(
-        name: _userName,
-        email: _userEmail,
-        avatarUrl: _avatarUrl,
-      );
+  User? _user;
+  String? _token;
 
   // GETTERS
-  String get userName => _userName;
-  String get userEmail => _userEmail;
-  String? get avatarUrl => _avatarUrl;
+  User? get user => _user;
+  String? get token => _token;
+  
+  bool get isPremium => _user?.isPremium ?? false;
+  int get freeGenerationsLeft => _user?.freeGenerationsLeft ?? 5;
+  int get maxSlidesPerPresentation => _user?.maxSlidesPerPresentation ?? 10;
+  bool get isLoggedIn => _user != null;
+  
+  String get userName => _user?.name ?? 'Гость';
+  String get userEmail => _user?.email ?? '';
+  String get userId => _user?.id ?? '';
+  bool get hasAvatar => _user?.avatarUrl != null;
+  String? get avatarUrl => _user?.avatarUrl;
 
-  bool get isPremium => _isPremium;
-  bool get isLoggedIn => _isLoggedIn;
-
-  int get freeGenerationsLeft => _freeGenerationsLeft;
-  int get maxSlidesPerPresentation => _maxSlidesPerPresentation;  // ← ДОБАВИТЬ
-
-  // SET USERNAME
-  void setUserName(String name) {
-    _userName = name;
+  // SET USER (принимает User из models/user.dart)
+  void setUser(User user, {String? token}) {
+    _user = user;
+    if (token != null) {
+      _token = token;
+    }
     notifyListeners();
   }
 
-  // SET EMAIL
+  void updateUser(User user) {
+    _user = user;
+    notifyListeners();
+  }
+
   void setUserEmail(String email) {
-    _userEmail = email;
-    notifyListeners();
+    if (_user != null) {
+      _user = _user!.copyWith(email: email);
+      notifyListeners();
+    }
   }
 
-  // SET AVATAR
+  void setUserName(String name) {
+    if (_user != null) {
+      _user = _user!.copyWith(name: name);
+      notifyListeners();
+    }
+  }
+
   void setAvatarUrl(String? url) {
-    _avatarUrl = url;
-    notifyListeners();
+    if (_user != null) {
+      _user = _user!.copyWith(avatarUrl: url);
+      notifyListeners();
+    }
   }
 
-  // PREMIUM
-  void setPremium(bool value) {
-    _isPremium = value;
-    notifyListeners();
+  void setPremium(bool value, {DateTime? until}) {
+    if (_user != null) {
+      _user = _user!.copyWith(isPremium: value, premiumUntil: until);
+      notifyListeners();
+    }
   }
 
-  // ─── МЕТОД setUser (добавить) ───
-  void setUser(UserModel user, {String? token}) {
-    _userName = user.name;
-    _userEmail = user.email;
-    _avatarUrl = user.avatarUrl;
-    _isLoggedIn = true;
-    notifyListeners();
-  }
-
-  // ─── МЕТОД updateUser (добавить) ───
-  void updateUser(UserModel user) {
-    _userName = user.name;
-    _userEmail = user.email;
-    _avatarUrl = user.avatarUrl;
-    notifyListeners();
-  }
-
-  // LOGIN
-  void login({
-    required String name,
-    required String email,
-    String? avatarUrl,
-    bool premium = false,
-  }) {
-    _userName = name;
-    _userEmail = email;
-    _avatarUrl = avatarUrl;
-    _isPremium = premium;
-    _isLoggedIn = true;
-    notifyListeners();
-  }
-
-  // FREE GENERATIONS
   void useFreeGeneration() {
-    if (_freeGenerationsLeft > 0) {
-      _freeGenerationsLeft--;
+    if (_user != null && !_user!.isPremium && _user!.freeGenerationsLeft > 0) {
+      _user = _user!.copyWith(freeGenerationsLeft: _user!.freeGenerationsLeft - 1);
       notifyListeners();
     }
   }
 
   void resetFreeGenerations() {
-    _freeGenerationsLeft = 5;
-    notifyListeners();
+    if (_user != null) {
+      _user = _user!.copyWith(freeGenerationsLeft: 5);
+      notifyListeners();
+    }
   }
 
-  // LOGOUT
   void logout() {
-    _userName = 'User';
-    _userEmail = '';
-    _avatarUrl = null;
-    _isPremium = false;
-    _isLoggedIn = false;
-    _freeGenerationsLeft = 5;
+    _user = null;
+    _token = null;
     notifyListeners();
   }
 
-  // RESET
   void reset() {
     logout();
   }
