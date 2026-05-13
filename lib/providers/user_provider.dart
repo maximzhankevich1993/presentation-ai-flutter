@@ -1,106 +1,38 @@
 import 'package:flutter/material.dart';
-import '../models/user.dart';
-import '../services/api_service.dart';
 
-class UserProvider extends ChangeNotifier {
-  User? _user;
-  String? _token;
-
-  User? get user => _user;
-  String? get token => _token;
+class GenerationRecord {
+  final String topic;
+  final int slideCount;
+  final DateTime createdAt;
   
-  bool get isPremium => _user?.isPremium ?? false;
-  int get freeGenerationsLeft => _user?.freeGenerationsLeft ?? 5;
-  int get maxSlidesPerPresentation => _user?.maxSlidesPerPresentation ?? 10;
-  bool get isLoggedIn => _user != null;
+  GenerationRecord({
+    required this.topic,
+    required this.slideCount,
+    required this.createdAt,
+  });
+}
+
+class UserHistoryProvider extends ChangeNotifier {
+  final List<GenerationRecord> _records = [];
   
-  String get userName => _user?.name ?? 'Гость';
-  String get userEmail => _user?.email ?? '';
-  String get userId => _user?.id ?? '';
-  bool get hasAvatar => _user?.avatarUrl != null;
-  String? get avatarUrl => _user?.avatarUrl;
-
-  void setUser(User user, {String? token}) {
-    _user = user;
-    if (token != null) {
-      _token = token;
-      ApiService.setAuthToken(token);
+  List<GenerationRecord> get records => List.unmodifiable(_records);
+  
+  void add(String topic, {int slideCount = 5}) {
+    _records.insert(0, GenerationRecord(
+      topic: topic,
+      slideCount: slideCount,
+      createdAt: DateTime.now(),
+    ));
+    
+    if (_records.length > 20) {
+      _records.removeLast();
     }
+    
     notifyListeners();
   }
-
-  void updateUser(User user) {
-    _user = user;
+  
+  void clear() {
+    _records.clear();
     notifyListeners();
-  }
-
-  // Новые методы для settings_screen.dart
-  void setUserEmail(String email) {
-    if (_user != null) {
-      _user = _user!.copyWith(email: email);
-      notifyListeners();
-      _saveUserToServer();
-    }
-  }
-
-  void setUserName(String name) {
-    if (_user != null) {
-      _user = _user!.copyWith(name: name);
-      notifyListeners();
-      _saveUserToServer();
-    }
-  }
-
-  void useFreeGeneration() {
-    if (_user != null && !_user!.isPremium && _user!.freeGenerationsLeft > 0) {
-      _user = _user!.copyWith(freeGenerationsLeft: _user!.freeGenerationsLeft - 1);
-      notifyListeners();
-      _saveUserToServer();
-    }
-  }
-
-  void incrementGenerations(int amount) {
-    if (_user != null) {
-      _user = _user!.copyWith(freeGenerationsLeft: _user!.freeGenerationsLeft + amount);
-      notifyListeners();
-      _saveUserToServer();
-    }
-  }
-
-  Future<void> _saveUserToServer() async {
-    if (_user == null) return;
-    try {
-      await ApiService.updateUser(_user!);
-    } catch (e) {
-      debugPrint('Error saving user to server: $e');
-    }
-  }
-
-  Future<void> refreshUser() async {
-    try {
-      final user = await ApiService.getProfile();
-      _user = user;
-      notifyListeners();
-    } catch (e) {
-      debugPrint('Error refreshing user: $e');
-    }
-  }
-
-  void logout() {
-    _user = null;
-    _token = null;
-    ApiService.clearAuthToken();
-    notifyListeners();
-  }
-
-  void setPremium(bool isPremium, {DateTime? until}) {
-    if (_user != null) {
-      _user = _user!.copyWith(
-        isPremium: isPremium,
-        premiumUntil: until,
-      );
-      notifyListeners();
-      _saveUserToServer();
-    }
   }
 }
