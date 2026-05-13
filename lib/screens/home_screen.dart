@@ -7,6 +7,8 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
+import '../providers/logo_provider.dart';
+import '../providers/history_provider.dart';
 import 'loading_screen.dart';
 import 'premium_screen.dart';
 import 'settings_screen.dart';
@@ -40,50 +42,6 @@ class _T {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// PROVIDERS
-// ═══════════════════════════════════════════════════════════════
-class LogoProvider extends ChangeNotifier {
-  String? _logoUrl;
-  String? get logoUrl => _logoUrl;
-
-  void setLogo(String url) {
-    _logoUrl = url;
-    notifyListeners();
-  }
-
-  void clear() {
-    _logoUrl = null;
-    notifyListeners();
-  }
-}
-
-class HistoryProvider extends ChangeNotifier {
-  final List<GenerationRecord> _records = [];
-  List<GenerationRecord> get records => List.unmodifiable(_records);
-
-  void add(String topic, {int slideCount = 5}) {
-    _records.insert(0, GenerationRecord(
-      topic: topic,
-      slideCount: slideCount,
-      createdAt: DateTime.now(),
-    ));
-    if (_records.length > 20) _records.removeLast();
-    notifyListeners();
-  }
-}
-
-class GenerationRecord {
-  final String topic;
-  final int slideCount;
-  final DateTime createdAt;
-  const GenerationRecord({
-    required this.topic,
-    required this.slideCount,
-    required this.createdAt,
-  });
-}
-
-// ═══════════════════════════════════════════════════════════════
 // HOME SCREEN
 // ═══════════════════════════════════════════════════════════════
 class HomeScreen extends StatefulWidget {
@@ -101,7 +59,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   int _maxSlides = 5;
   bool _isFocused = false;
 
-  // FIX: валюта хранит и usd-значение 0, чтобы не сравнивать форматированные строки
   String _currency = 'USD';
   String _currencySymbol = '\$';
   double _rate = 1.0;
@@ -109,7 +66,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   final List<String> _examples = ['ИИ', 'Бизнес', 'Экология', 'Космос', 'IT', 'Маркетинг'];
 
-  // FIX: используем countryCode безопасно
   String get _countryCode => PlatformDispatcher.instance.locale.countryCode ?? 'RU';
 
   @override
@@ -134,7 +90,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     super.dispose();
   }
 
-  // FIX: убран несуществующий код страны 'EU'; добавлены отдельные коды для EU-стран
   Future<void> _detectCurrency() async {
     try {
       final response = await http
@@ -179,7 +134,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     if (mounted) setState(() => _loadingRates = false);
   }
 
-  // FIX: проверяем исходный usd == 0, а не форматированную строку
   String _formatPrice(double usd) {
     if (usd == 0) return 'Бесплатно';
     final value = usd * _rate;
@@ -192,7 +146,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   void _push(Widget screen) =>
       Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
 
-  // FIX: передаём _maxSlides в LoadingScreen
   void _generate({String? overrideTopic}) {
     final topic = (overrideTopic ?? _topicController.text).trim();
     if (topic.isEmpty) {
@@ -205,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       return;
     }
     try {
-      Provider.of<HistoryProvider>(context, listen: false)
+      Provider.of<UserHistoryProvider>(context, listen: false)
           .add(topic, slideCount: _maxSlides);
     } catch (_) {}
     Navigator.push(
@@ -328,7 +281,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       final reader = html.FileReader();
       reader.readAsDataUrl(file);
       reader.onLoad.listen((_) {
-        Provider.of<LogoProvider>(context, listen: false)
+        Provider.of<BrandKitProvider>(context, listen: false)
             .setLogo(reader.result as String);
         setState(() {});
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -358,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   void _showHistory() {
-    final records = Provider.of<HistoryProvider>(context, listen: false).records;
+    final records = Provider.of<UserHistoryProvider>(context, listen: false).records;
     showModalBottomSheet(
       context: context,
       backgroundColor: _T.bgSurface,
@@ -395,7 +348,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
               )
             else
-              // FIX: MediaQuery вместо 320.h для надёжности в bottom sheet
               ConstrainedBox(
                 constraints: BoxConstraints(
                   maxHeight: MediaQuery.of(context).size.height * 0.4,
@@ -458,7 +410,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   @override
   Widget build(BuildContext context) {
     final up   = Provider.of<UserProvider>(context);
-    final logo = Provider.of<LogoProvider>(context).logoUrl;
+    final logo = Provider.of<BrandKitProvider>(context).logoUrl;
     final left = up.freeGenerationsLeft;
 
     return Scaffold(
@@ -486,7 +438,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ],
         ),
         actions: [
-          // FIX: logo уже non-null внутри if, убран лишний !
           if (logo != null)
             _AppBarBtn(Icons.image_rounded, _T.accentLight, () {}, tooltip: 'Логотип загружен'),
           _AppBarBtn(Icons.history_rounded, _T.txtSecondary, _showHistory, tooltip: 'История'),
@@ -502,7 +453,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // ── Заголовок ────────────────────────────────────
                 const Text(
                   'Создай презентацию',
                   style: TextStyle(color: _T.txtPrimary, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.8),
@@ -514,7 +464,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
                 const SizedBox(height: 28),
 
-                // ── Поле ввода ───────────────────────────────────
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   width: double.infinity,
@@ -542,7 +491,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
                 const SizedBox(height: 12),
 
-                // ── Слайдер ──────────────────────────────────────
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -597,7 +545,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
                 const SizedBox(height: 10),
 
-                // ── Кнопка генерации ─────────────────────────────
                 ScaleTransition(
                   scale: _pulseAnimation,
                   child: MouseRegion(
@@ -637,7 +584,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
                 const SizedBox(height: 16),
 
-                // ── Чипы примеров ────────────────────────────────
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
@@ -673,7 +619,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
                 const SizedBox(height: 16),
 
-                // ── Доп. кнопки ──────────────────────────────────
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -683,8 +628,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   ],
                 ),
 
-                // ── Превью логотипа ──────────────────────────────
-                // FIX: logo уже non-null здесь — убран лишний !
                 if (logo != null) ...[
                   const SizedBox(height: 12),
                   Container(
@@ -708,7 +651,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       MouseRegion(
                         cursor: SystemMouseCursors.click,
                         child: GestureDetector(
-                          onTap: () => Provider.of<LogoProvider>(context, listen: false).clear(),
+                          onTap: () => Provider.of<BrandKitProvider>(context, listen: false).clear(),
                           child: const Icon(Icons.close_rounded, color: _T.txtMuted, size: 16),
                         ),
                       ),
@@ -717,7 +660,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ],
                 const SizedBox(height: 20),
 
-                // ── Счётчик генераций ────────────────────────────
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
@@ -759,7 +701,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
                 const SizedBox(height: 28),
 
-                // ── Тарифы ──────────────────────────────────────
                 const Text(
                   'Выберите план',
                   style: TextStyle(color: _T.txtPrimary, fontSize: 20, fontWeight: FontWeight.w800),
@@ -773,7 +714,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 Row(children: [
                   Expanded(child: _TariffCard(
                     title: 'Бесплатно',
-                    // FIX: передаём 0 — _formatPrice вернёт 'Бесплатно'
                     usd: 0,
                     formatPrice: _formatPrice,
                     period: '',
@@ -817,7 +757,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ]),
                 const SizedBox(height: 28),
 
-                // ── Нижняя навигация ─────────────────────────────
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
                   decoration: BoxDecoration(
@@ -849,8 +788,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
 // ═══════════════════════════════════════════════════════════════
 // TARIFF CARD
-// FIX: принимает usd (double) и formatPrice, а не готовую строку price —
-//      логика "Бесплатно" вынесена в _formatPrice, нет хрупкого сравнения строк
 // ═══════════════════════════════════════════════════════════════
 class _TariffCard extends StatelessWidget {
   final String title;
