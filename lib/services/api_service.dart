@@ -60,7 +60,7 @@ class ApiService {
   }) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/login'),
-      headers: {'Content-Type': 'application/json'},
+      headers: {'Content-Type': application/json'},
       body: json.encode({
         'email': email,
         'password': password,
@@ -120,7 +120,7 @@ class ApiService {
     }
   }
   
-  // ─────────── LOGOUT МЕТОД ───────────
+  // ─────────── LOGOUT МЕТОД (без debugPrint) ───────────
   static Future<void> logout() async {
     try {
       final response = await http.post(
@@ -128,11 +128,10 @@ class ApiService {
         headers: _getHeaders(),
       );
       if (response.statusCode != 200 && response.statusCode != 204) {
-        // Даже если сервер вернул ошибку, всё равно очищаем локальные данные
-        debugPrint('Logout error on server: ${response.statusCode}');
+        print('Logout error on server: ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('Logout error: $e');
+      print('Logout error: $e');
     } finally {
       _authToken = null;
     }
