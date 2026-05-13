@@ -16,6 +16,8 @@ class ApiService {
     _authToken = null;
   }
   
+  static String? get token => _authToken;
+  
   static Map<String, String> _getHeaders() {
     final headers = {'Content-Type': 'application/json'};
     if (_authToken != null) {
@@ -184,7 +186,8 @@ class ApiService {
     } else if (response.statusCode == 401) {
       throw Exception('Требуется авторизация');
     } else {
-      throw Exception('Ошибка улучшения текста');
+      final error = json.decode(response.body);
+      throw Exception(error['message'] ?? 'Ошибка улучшения текста');
     }
   }
   
