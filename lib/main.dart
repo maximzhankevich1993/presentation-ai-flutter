@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
-import 'providers/theme_provider.dart';
 import 'providers/user_provider.dart';
+import 'providers/logo_provider.dart';
+import 'providers/history_provider.dart';
 import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -16,30 +17,20 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => LogoProvider()),  // ← Добавить это
+        ChangeNotifierProvider(create: (_) => HistoryProvider()),
       ],
-      child: ScreenUtilInit(
-        designSize: const Size(375, 812),
-        minTextAdapt: true,
-        builder: (_, child) {
-          return MaterialApp(
-            title: 'Презентатор ИИ',
-            debugShowCheckedModeBanner: false,
-            theme: ThemeData(
-              brightness: Brightness.dark,
-              scaffoldBackgroundColor: const Color(0xFF121212),
-              primaryColor: const Color(0xFF1DB954),
-              appBarTheme: const AppBarTheme(
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                centerTitle: true,
-                titleTextStyle: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w700),
-              ),
-            ),
-            home: const HomeScreen(),
-          );
-        },
+      child: MaterialApp(
+        title: 'Презентатор ИИ',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          brightness: Brightness.dark,
+          scaffoldBackgroundColor: const Color(0xFF121212),
+          fontFamily: 'Inter',
+          useMaterial3: true,
+        ),
+        home: const HomeScreen(),
       ),
     );
   }
