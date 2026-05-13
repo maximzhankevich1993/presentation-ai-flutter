@@ -4,7 +4,6 @@ import 'providers/user_provider.dart';
 import 'providers/logo_provider.dart';
 import 'providers/history_provider.dart';
 import 'screens/home_screen.dart';
-import 'screens/login_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,7 +17,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => UserProvider()),
-        ChangeNotifierProvider(create: (_) => LogoProvider()),  // ← Добавить это
+        ChangeNotifierProvider(create: (_) => LogoProvider()),
         ChangeNotifierProvider(create: (_) => HistoryProvider()),
       ],
       child: MaterialApp(
