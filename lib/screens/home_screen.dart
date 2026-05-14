@@ -68,8 +68,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   String get _countryCode => PlatformDispatcher.instance.locale.countryCode ?? 'RU';
   
-  // VIP данные (заглушка, потом заменить на реальные с сервера)
-  int _vipOccupiedSpots = 27;
+  // VIP данные для продакшена (0 занято, 50 свободно)
+  int _vipOccupiedSpots = 0;
   int _vipTotalSpots = 50;
 
   @override
@@ -97,12 +97,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   Future<void> _loadVipStats() async {
     try {
-      // TODO: заменить на реальный API запрос
+      // TODO: Заменить на реальный API запрос, когда появится
       // final stats = await ApiService.getVipStats();
       // setState(() {
       //   _vipOccupiedSpots = stats['occupiedSpots'];
       //   _vipTotalSpots = stats['totalSpots'];
       // });
+      
+      // Для продакшена: 0 занято, 50 свободно
+      if (mounted) {
+        setState(() {
+          _vipOccupiedSpots = 0;
+          _vipTotalSpots = 50;
+        });
+      }
     } catch (_) {}
   }
 
@@ -167,6 +175,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         content: const Text('Введите тему'),
         backgroundColor: _T.gold.withOpacity(0.9),
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       ));
       return;
@@ -258,6 +267,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         content: const Text('Загрузка логотипа — Premium'),
         backgroundColor: _T.gold.withOpacity(0.9),
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       ));
       return;
@@ -370,6 +380,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final up = Provider.of<UserProvider>(context);
     final logo = Provider.of<BrandKitProvider>(context).logoUrl;
     final left = up.freeGenerationsLeft;
+    final isLoggedIn = up.isLoggedIn;
 
     return Scaffold(
       backgroundColor: _T.bgBase,
@@ -389,7 +400,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           _buildVipIcon(),
           if (logo != null) _AppBarBtn(Icons.image_rounded, _T.accentLight, () {}, tooltip: 'Логотип загружен'),
           _AppBarBtn(Icons.history_rounded, _T.txtSecondary, _showHistory, tooltip: 'История'),
-          _AppBarBtn(Icons.person_outline_rounded, _T.txtSecondary, () => _push(const ProfileScreen()), tooltip: 'Профиль'),
+          _AppBarBtn(
+            Icons.person_outline_rounded,
+            _T.txtSecondary,
+            () {
+              if (isLoggedIn) {
+                _push(const ProfileScreen());
+              } else {
+                _push(const LoginScreen());
+              }
+            },
+            tooltip: isLoggedIn ? 'Профиль' : 'Войти',
+          ),
           _AppBarBtn(Icons.settings_outlined, _T.txtSecondary, () => _push(const SettingsScreen()), tooltip: 'Настройки'),
         ],
       ),
