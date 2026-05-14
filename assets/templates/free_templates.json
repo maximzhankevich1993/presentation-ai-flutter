@@ -1,0 +1,250 @@
+[
+  {
+    "id": "empty",
+    "title": "Пустой",
+    "description": "Начните с чистого листа",
+    "category": "Все",
+    "color1": "#1A1A1A",
+    "color2": "#2A2A2A",
+    "slideCount": 1,
+    "isPremium": false,
+    "isPopular": false,
+    "icon": "crop_original_rounded",
+    "slides": [
+      {
+        "title": "Новая презентация",
+        "content": ["Начните добавлять контент"]
+      }
+    ]
+  },
+  {
+    "id": "neighbors_influence",
+    "title": "Влияние соседей на продуктивность",
+    "description": "Анализ влияния окружения на эффективность работы",
+    "category": "Бизнес",
+    "color1": "#667eea",
+    "color2": "#764ba2",
+    "slideCount": 8,
+    "isPremium": false,
+    "isPopular": true,
+    "icon": "people_rounded",
+    "slides": [
+      {
+        "title": "Влияние соседей на продуктивность",
+        "content": ["Анализ влияния окружения", "Ключевые факторы"]
+      },
+      {
+        "title": "Статистика",
+        "content": ["Данные исследования", "Графики зависимости"]
+      },
+      {
+        "title": "Выводы",
+        "content": ["Рекомендации по улучшению", "Практические советы"]
+      }
+    ]
+  },
+  {
+    "id": "video_report",
+    "title": "Видео-репортаж про продукт",
+    "description": "Презентация продукта в формате видео-отчета",
+    "category": "Маркетинг",
+    "color1": "#f093fb",
+    "color2": "#f5576c",
+    "slideCount": 6,
+    "isPremium": false,
+    "isPopular": true,
+    "icon": "videocam_rounded",
+    "slides": [
+      {
+        "title": "Видео-репортаж",
+        "content": ["О продукте", "Ключевые особенности"]
+      },
+      {
+        "title": "Демонстрация",
+        "content": ["Скриншоты", "Видео материалы"]
+      }
+    ]
+  },
+  {
+    "id": "border_collie",
+    "title": "Бордер-колли: ваш активный друг",
+    "description": "Происхождение, характер, дрессировка и уход",
+    "category": "Личные",
+    "color1": "#4facfe",
+    "color2": "#00f2fe",
+    "slideCount": 10,
+    "isPremium": false,
+    "isPopular": true,
+    "icon": "pets_rounded",
+    "slides": [
+      {
+        "title": "Бордер-колли",
+        "content": ["Происхождение породы", "Характер"]
+      },
+      {
+        "title": "Дрессировка",
+        "content": ["Основные команды", "Советы по обучению"]
+      },
+      {
+        "title": "Уход",
+        "content": ["Питание", "Здоровье", "Физические нагрузки"]
+      }
+    ]
+  },
+  {
+    "id": "personal_brand",
+    "title": "Александр Волков",
+    "description": "Архитектор цифровых стратегий",
+    "category": "Личные",
+    "color1": "#434343",
+    "color2": "#000000",
+    "slideCount": 5,
+    "isPremium": false,
+    "isPopular": false,
+    "icon": "person_rounded",
+    "slides": [
+      {
+        "title": "Александр Волков",
+        "content": ["Архитектор цифровых стратегий", "Лидер продуктовых команд"]
+      },
+      {
+        "title": "Опыт работы",
+        "content": ["Проекты", "Достижения"]
+      },
+      {
+        "title": "Контакты",
+        "content": ["Email", "Telegram", "LinkedIn"]
+      }
+    ]
+  },
+  {
+    "id": "business_plan",
+    "title": "Бизнес-план",
+    "description": "Структура и финансовые показатели",
+    "category": "Бизнес",
+    "color1": "#1DB954",
+    "color2": "#1ED760",
+    "slideCount": 8,
+    "isPremium": false,
+    "isPopular": false,
+    "icon": "business_center_rounded",
+    "slides": [
+      {
+        "title": "Бизнес-план",
+        "content": ["Краткое описание проекта", "Цели и задачи"]
+      },
+      {
+        "title": "Анализ рынка",
+        "content": ["Конкуренты", "Целевая аудитория", "Тренды"]
+      },
+      {
+        "title": "Финансовый план",
+        "content": ["Прогноз доходов", "Инвестиции", "Окупаемость"]
+      }
+    ]
+  },
+  {
+    "id": "marketing_strategy",
+    "title": "Маркетинговая стратегия",
+    "description": "План продвижения на 2024 год",
+    "category": "Маркетинг",
+    "color1": "#fa709a",
+    "color2": "#fee140",
+    "slideCount": 12,
+    "isPremium": false,
+    "isPopular": false,
+    "icon": "trending_up_rounded",
+    "slides": [
+      {
+        "title": "Маркетинговая стратегия",
+        "content": ["Цели", "KPI", "Бюджет"]
+      },
+      {
+        "title": "Каналы продвижения",
+        "content": ["SEO", "Контекстная реклама", "Соцсети"]
+      },
+      {
+        "title": "Календарный план",
+        "content": ["Мероприятия", "Дедлайны"]
+      }
+    ]
+  },
+  {
+    "id": "lesson_plan",
+    "title": "План урока",
+    "description": "Готовая структура занятия",
+    "category": "Образование",
+    "color1": "#8E2DE2",
+    "color2": "#4A00E0",
+    "slideCount": 8,
+    "isPremium": false,
+    "isPopular": true,
+    "icon": "school_rounded",
+    "slides": [
+      {
+        "title": "План урока",
+        "content": ["Тема урока", "Цели и задачи"]
+      },
+      {
+        "title": "Ход урока",
+        "content": ["Организационный момент", "Объяснение", "Закрепление", "Рефлексия"]
+      },
+      {
+        "title": "Домашнее задание",
+        "content": ["Задание", "Сроки"]
+      }
+    ]
+  },
+  {
+    "id": "annual_report",
+    "title": "Годовой аналитический отчет",
+    "description": "supr.ru — полный анализ деятельности за год",
+    "category": "Отчёты",
+    "color1": "#11998e",
+    "color2": "#38ef7d",
+    "slideCount": 15,
+    "isPremium": false,
+    "isPopular": true,
+    "icon": "analytics_rounded",
+    "slides": [
+      {
+        "title": "Годовой аналитический отчет",
+        "content": ["Ключевые показатели", "Динамика роста", "Достижения"]
+      },
+      {
+        "title": "Ключевые метрики",
+        "content": ["Выручка", "Прибыль", "Клиенты", "ROI"]
+      },
+      {
+        "title": "Планы на следующий год",
+        "content": ["Цели", "Задачи", "Бюджет"]
+      }
+    ]
+  },
+  {
+    "id": "project_status",
+    "title": "Статус проекта",
+    "description": "Отчёт о ходе выполнения",
+    "category": "Отчёты",
+    "color1": "#FF416C",
+    "color2": "#FF4B2B",
+    "slideCount": 6,
+    "isPremium": false,
+    "isPopular": false,
+    "icon": "task_alt_rounded",
+    "slides": [
+      {
+        "title": "Статус проекта",
+        "content": ["Общая информация", "Даты"]
+      },
+      {
+        "title": "Выполненные задачи",
+        "content": ["Список завершённых задач"]
+      },
+      {
+        "title": "Риски и проблемы",
+        "content": ["Текущие риски", "План решения"]
+      }
+    ]
+  }
+]
