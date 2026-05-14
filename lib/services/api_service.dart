@@ -1,7 +1,9 @@
+// lib/services/api_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/presentation.dart';
 import '../models/user.dart';
+import '../models/social_user.dart';
 
 class ApiService {
   static const String baseUrl = 'https://presentation-ai-backend.onrender.com/api';
@@ -26,9 +28,9 @@ class ApiService {
     return headers;
   }
 
-  // ───────────────────────────────────────────────────────────────────────────
-  // AUTH
-  // ───────────────────────────────────────────────────────────────────────────
+  // ============================================
+  // ОБЫЧНАЯ АВТОРИЗАЦИЯ
+  // ============================================
   
   static Future<Map<String, dynamic>> register({
     required String email,
@@ -79,6 +81,32 @@ class ApiService {
       throw Exception(data['message'] ?? 'Ошибка входа');
     }
   }
+  
+  // ============================================
+  // СОЦИАЛЬНАЯ АВТОРИЗАЦИЯ (НОВЫЙ МЕТОД)
+  // ============================================
+  
+  static Future<Map<String, dynamic>> socialLogin(SocialUser socialUser) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/social'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode(socialUser.toJson()),
+    );
+    
+    final data = json.decode(response.body);
+    if (response.statusCode == 200) {
+      if (data.containsKey('token')) {
+        _authToken = data['token'];
+      }
+      return data;
+    } else {
+      throw Exception(data['message'] ?? 'Ошибка социального входа');
+    }
+  }
+  
+  // ============================================
+  // ОСТАЛЬНЫЕ МЕТОДЫ
+  // ============================================
   
   static Future<void> forgotPassword(String email) async {
     final response = await http.post(
@@ -138,9 +166,9 @@ class ApiService {
     }
   }
 
-  // ───────────────────────────────────────────────────────────────────────────
-  // GENERATION
-  // ───────────────────────────────────────────────────────────────────────────
+  // ============================================
+  // ГЕНЕРАЦИЯ ПРЕЗЕНТАЦИЙ
+  // ============================================
   
   static Future<Presentation> generate({
     required String topic,
@@ -191,9 +219,52 @@ class ApiService {
     }
   }
   
-  // ───────────────────────────────────────────────────────────────────────────
-  // VIP STATS
-  // ───────────────────────────────────────────────────────────────────────────
+  // ============================================
+  // ШАБЛОНЫ
+  // ============================================
+  
+  static Future<Map<String, dynamic>> getTemplates({bool includePremium = false}) async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/templates?include_premium=$includePremium'),
+      headers: _getHeaders(),
+    );
+    
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Ошибка загрузки шаблонов');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> getFreeTemplates() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/templates/free'),
+      headers: _getHeaders(),
+    );
+    
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Ошибка загрузки шаблонов');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> getPremiumTemplates() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/templates/premium'),
+      headers: _getHeaders(),
+    );
+    
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Ошибка загрузки премиум шаблонов');
+    }
+  }
+  
+  // ============================================
+  // VIP СТАТИСТИКА
+  // ============================================
   
   static Future<Map<String, dynamic>> getVipStats() async {
     final response = await http.get(
@@ -208,9 +279,9 @@ class ApiService {
     }
   }
   
-  // ───────────────────────────────────────────────────────────────────────────
+  // ============================================
   // HEALTH CHECK
-  // ───────────────────────────────────────────────────────────────────────────
+  // ============================================
   
   static Future<bool> healthCheck() async {
     try {
