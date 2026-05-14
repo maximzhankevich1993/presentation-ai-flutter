@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'lesson_constructor_screen.dart';
 
 class TeacherScreen extends StatefulWidget {
   final String countryCode;
@@ -9,11 +10,50 @@ class TeacherScreen extends StatefulWidget {
 }
 
 class _TeacherScreenState extends State<TeacherScreen> {
-  String _selectedTariff = 'teacher';
-  bool _isLoading = false;
+  bool _showConstructor = false;
 
   @override
   Widget build(BuildContext context) {
+    // Если выбран конструктор уроков
+    if (_showConstructor) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF121212),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF121212),
+          elevation: 0,
+          leading: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () => setState(() => _showConstructor = false),
+              child: Container(
+                width: 34,
+                height: 34,
+                margin: const EdgeInsets.only(left: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFF2A2A2A)),
+                ),
+                child: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 18),
+              ),
+            ),
+          ),
+          title: const Text(
+            'Конструктор уроков',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              letterSpacing: -0.3,
+            ),
+          ),
+          centerTitle: true,
+        ),
+        body: const LessonConstructorScreen(),
+      );
+    }
+
+    // Основной экран с тарифами
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
@@ -46,189 +86,205 @@ class _TeacherScreenState extends State<TeacherScreen> {
           ),
         ),
         centerTitle: true,
-      ),
-      body: _isLoading
-          ? const Center(
-              child: SizedBox(
-                width: 32,
-                height: 32,
-                child: CircularProgressIndicator(
-                  color: Color(0xFF1DB954),
-                  strokeWidth: 2.5,
-                ),
-              ),
-            )
-          : Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 700),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Hero header
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(24),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF1DB954).withOpacity(0.3),
-                              blurRadius: 20,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: const Icon(
-                                Icons.school_rounded,
-                                color: Colors.white,
-                                size: 26,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'Образовательный тариф',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Для преподавателей и учеников',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      const Text(
-                        'ВЫБЕРИТЕ ПЛАН',
-                        style: TextStyle(
-                          color: Color(0xFF4A4A4A),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      _buildTariffCard(
-                        title: 'Учитель',
-                        price: '0',
-                        period: 'бесплатно',
-                        originalPrice: '499',
-                        description: 'Для преподавателей',
-                        features: const [
-                          '10 генераций в месяц',
-                          '15 слайдов на презентацию',
-                          'Все базовые фоны',
-                          'Базовый экспорт',
-                          'AI-улучшение текста',
-                        ],
-                        isPopular: true,
-                        onTap: () => _selectTariff('teacher'),
-                      ),
-                      const SizedBox(height: 14),
-
-                      _buildTariffCard(
-                        title: 'Школа',
-                        price: '1499',
-                        period: 'месяц',
-                        originalPrice: '2999',
-                        description: 'Для школ и классов',
-                        features: const [
-                          'До 30 учителей',
-                          '∞ генераций',
-                          'Неограниченно слайдов',
-                          'Бренд-кит школы',
-                          'PDF без водяного знака',
-                          'Приоритетная поддержка',
-                          'Контроль учеников',
-                        ],
-                        isPopular: false,
-                        onTap: () => _selectTariff('school'),
-                      ),
-                      const SizedBox(height: 14),
-
-                      _buildTariffCard(
-                        title: 'Университет',
-                        price: '4999',
-                        period: 'месяц',
-                        originalPrice: '9999',
-                        description: 'Для вузов и колледжей',
-                        features: const [
-                          'Неограниченно преподавателей',
-                          '∞ генераций',
-                          'Бренд-кит учебного заведения',
-                          'API доступ',
-                          'Индивидуальные шаблоны',
-                          'VIP поддержка 24/7',
-                          'Интеграция с LMS',
-                        ],
-                        isPopular: false,
-                        onTap: () => _selectTariff('university'),
-                      ),
-                      const SizedBox(height: 24),
-
-                      MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          onTap: () => _contactSales(),
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1E1E1E),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: const Color(0xFF2A2A2A)),
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 20),
-                                SizedBox(width: 10),
-                                Text(
-                                  'Связаться с отделом образования',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                SizedBox(width: 8),
-                                Icon(Icons.arrow_forward_rounded, color: Color(0xFF1DB954), size: 16),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+        actions: [
+          // Кнопка перехода к конструктору уроков
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () => setState(() => _showConstructor = true),
+              child: Container(
+                margin: const EdgeInsets.only(right: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
                   ),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.edit_calendar_rounded, color: Colors.white, size: 16),
+                    SizedBox(width: 6),
+                    Text(
+                      'Конструктор уроков',
+                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                  ],
                 ),
               ),
             ),
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 700),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Hero header
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF1DB954).withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: const Icon(
+                        Icons.school_rounded,
+                        color: Colors.white,
+                        size: 26,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Образовательный тариф',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Для преподавателей и учеников',
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              const Text(
+                'ВЫБЕРИТЕ ПЛАН',
+                style: TextStyle(
+                  color: Color(0xFF4A4A4A),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              _buildTariffCard(
+                title: 'Учитель',
+                price: '0',
+                period: 'бесплатно',
+                originalPrice: '499',
+                description: 'Для преподавателей',
+                features: const [
+                  '10 генераций в месяц',
+                  '15 слайдов на презентацию',
+                  'Все базовые фоны',
+                  'Базовый экспорт',
+                  'AI-улучшение текста',
+                ],
+                isPopular: true,
+                onTap: () => _selectTariff('teacher'),
+              ),
+              const SizedBox(height: 14),
+
+              _buildTariffCard(
+                title: 'Школа',
+                price: '1499',
+                period: 'месяц',
+                originalPrice: '2999',
+                description: 'Для школ и классов',
+                features: const [
+                  'До 30 учителей',
+                  '∞ генераций',
+                  'Неограниченно слайдов',
+                  'Бренд-кит школы',
+                  'PDF без водяного знака',
+                  'Приоритетная поддержка',
+                  'Контроль учеников',
+                ],
+                isPopular: false,
+                onTap: () => _selectTariff('school'),
+              ),
+              const SizedBox(height: 14),
+
+              _buildTariffCard(
+                title: 'Университет',
+                price: '4999',
+                period: 'месяц',
+                originalPrice: '9999',
+                description: 'Для вузов и колледжей',
+                features: const [
+                  'Неограниченно преподавателей',
+                  '∞ генераций',
+                  'Бренд-кит учебного заведения',
+                  'API доступ',
+                  'Индивидуальные шаблоны',
+                  'VIP поддержка 24/7',
+                  'Интеграция с LMS',
+                ],
+                isPopular: false,
+                onTap: () => _selectTariff('university'),
+              ),
+              const SizedBox(height: 24),
+
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => _contactSales(),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1E1E),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFF2A2A2A)),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 20),
+                        SizedBox(width: 10),
+                        Text(
+                          'Связаться с отделом образования',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Icon(Icons.arrow_forward_rounded, color: Color(0xFF1DB954), size: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
