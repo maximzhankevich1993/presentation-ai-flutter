@@ -38,6 +38,25 @@ class _T {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// TEXT STYLE PRESET
+// ═══════════════════════════════════════════════════════════════════════════════
+class TextStylePreset {
+  final String name;
+  final double fontSize;
+  final FontWeight fontWeight;
+  final double letterSpacing;
+  final bool isItalic;
+
+  const TextStylePreset({
+    required this.name,
+    required this.fontSize,
+    required this.fontWeight,
+    this.letterSpacing = 0,
+    this.isItalic = false,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // EDITOR SCREEN
 // ═══════════════════════════════════════════════════════════════════════════════
 class EditorScreen extends StatefulWidget {
@@ -67,7 +86,6 @@ class _EditorScreenState extends State<EditorScreen>
   bool _isImproving = false;
   int _imageUploadsUsed = 0;
 
-  // Цвет шрифта (теперь по умолчанию белый на тёмном фоне)
   Color _globalFontColor = Colors.white;
   late List<Color?> _slideFontColors;
   late List<String> _transitions;
@@ -114,7 +132,6 @@ class _EditorScreenState extends State<EditorScreen>
     {'id': 'cube', 'label': 'Куб', 'icon': Icons.view_in_ar_rounded, 'premium': true},
   ];
 
-  // Стили текста
   final Map<String, TextStylePreset> _textStyles = {
     'h1': TextStylePreset(name: 'Заголовок 1', fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -0.5),
     'h2': TextStylePreset(name: 'Заголовок 2', fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.3),
@@ -362,6 +379,12 @@ class _EditorScreenState extends State<EditorScreen>
     });
   }
 
+  void _setColumnsCount(int count) {
+    setState(() {
+      _columnsCount = count;
+    });
+  }
+
   void _toast(String msg, {bool success = false, bool error = false, bool warning = false}) {
     Color bg = _T.bgCard;
     if (success) bg = _T.success.withOpacity(0.9);
@@ -471,6 +494,7 @@ class _EditorScreenState extends State<EditorScreen>
                       isImproving: _isImproving,
                       currentTextStyle: _currentTextStyle,
                       currentTextAlign: _currentTextAlign,
+                      columnsCount: _columnsCount,
                       textStyles: _textStyles,
                       onTabChange: (t) => setState(() => _activePropTab = t),
                       onBgSelect: (i) => setState(() {
@@ -491,6 +515,7 @@ class _EditorScreenState extends State<EditorScreen>
                       onTransitionChange: (t) => setState(() => _transitions[_activeSlide] = t),
                       onTextStyleChange: _applyTextStyle,
                       onTextAlignChange: _applyTextAlign,
+                      onColumnsChange: _setColumnsCount,
                       uploadsUsed: _imageUploadsUsed,
                     )
                   : const SizedBox.shrink(),
@@ -521,25 +546,6 @@ class _EditorScreenState extends State<EditorScreen>
     _scrollCtrl.dispose();
     super.dispose();
   }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// TEXT STYLE PRESET
-// ═══════════════════════════════════════════════════════════════════════════════
-class TextStylePreset {
-  final String name;
-  final double fontSize;
-  final FontWeight fontWeight;
-  final double letterSpacing;
-  final bool isItalic;
-
-  const TextStylePreset({
-    required this.name,
-    required this.fontSize,
-    required this.fontWeight,
-    this.letterSpacing = 0,
-    this.isItalic = false,
-  });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -856,25 +862,26 @@ class _Canvas extends StatelessWidget {
 
   Widget _buildContent(double width, double height) {
     if (columnsCount > 1) {
-      // Мультиколоночная верстка
       final columnWidth = (width - 40) / columnsCount;
       return Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: List.generate(columnsCount, (colIndex) {
-          final startIndex = colIndex * 2;
           return Expanded(
             child: Padding(
               padding: EdgeInsets.only(right: colIndex < columnsCount - 1 ? 12 : 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (startIndex < contentCtrl.length)
-                    _buildEditableText(contentCtrl[startIndex], isTitle: false),
-                  if (startIndex + 1 < contentCtrl.length)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: _buildEditableText(contentCtrl[startIndex + 1], isTitle: false),
-                    ),
+                  if (colIndex == 0 && titleCtrl.text.isNotEmpty)
+                    _buildEditableText(titleCtrl, isTitle: true),
+                  const SizedBox(height: 8),
+                  ...contentCtrl
+                      .skip(colIndex * 2)
+                      .take(2)
+                      .map((c) => Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: _buildEditableText(c, isTitle: false),
+                      )),
                 ],
               ),
             ),
@@ -883,7 +890,6 @@ class _Canvas extends StatelessWidget {
       );
     }
 
-    // Стандартная верстка с изображением
     return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Expanded(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1016,9 +1022,10 @@ class _PropertiesPanel extends StatelessWidget {
   final bool isImproving;
   final String currentTextStyle;
   final String currentTextAlign;
+  final int columnsCount;
   final Map<String, TextStylePreset> textStyles;
   final ValueChanged<String> onTabChange, onFontChange, onTransitionChange, onTextStyleChange, onTextAlignChange;
-  final ValueChanged<int> onBgSelect;
+  final ValueChanged<int> onBgSelect, onColumnsChange;
   final VoidCallback onBgUpload, onImageUpload;
   final ValueChanged<double> onFontSizeChange;
   final ValueChanged<Color> onFontColorChange;
@@ -1040,6 +1047,7 @@ class _PropertiesPanel extends StatelessWidget {
     required this.isImproving,
     required this.currentTextStyle,
     required this.currentTextAlign,
+    required this.columnsCount,
     required this.textStyles,
     required this.onTabChange,
     required this.onBgSelect,
@@ -1051,6 +1059,7 @@ class _PropertiesPanel extends StatelessWidget {
     required this.onTransitionChange,
     required this.onTextStyleChange,
     required this.onTextAlignChange,
+    required this.onColumnsChange,
     required this.uploadsUsed,
   });
 
@@ -1062,6 +1071,7 @@ class _PropertiesPanel extends StatelessWidget {
         _Tab('design', 'Дизайн', Icons.palette_rounded, activeTab, onTabChange),
         _Tab('text_style', 'Стили', Icons.text_fields_rounded, activeTab, onTabChange),
         _Tab('align', 'Выравнивание', Icons.format_align_left_rounded, activeTab, onTabChange),
+        _Tab('columns', 'Колонки', Icons.view_column_rounded, activeTab, onTabChange),
         _Tab('image', 'Медиа', Icons.image_rounded, activeTab, onTabChange),
         _Tab('ai', 'ИИ', Icons.auto_awesome_rounded, activeTab, onTabChange),
       ])),
@@ -1077,6 +1087,10 @@ class _PropertiesPanel extends StatelessWidget {
         'align' => _AlignTab(
             currentAlign: currentTextAlign,
             onAlignSelected: onTextAlignChange,
+          ),
+        'columns' => _ColumnsTab(
+            columnsCount: columnsCount,
+            onColumnsChanged: onColumnsChange,
           ),
         _ => _DesignTab(
             globalFont: globalFont,
@@ -1443,6 +1457,85 @@ class _AlignButton extends StatelessWidget {
             border: Border.all(color: isSelected ? _T.accent.withOpacity(0.5) : _T.border),
           ),
           child: Icon(icon, color: isSelected ? _T.accent : _T.txtSecondary, size: 24),
+        ),
+      ),
+    );
+  }
+}
+
+// ── COLUMNS TAB ───────────────────────────────────────────────────────────────
+class _ColumnsTab extends StatelessWidget {
+  final int columnsCount;
+  final ValueChanged<int> onColumnsChanged;
+
+  const _ColumnsTab({
+    required this.columnsCount,
+    required this.onColumnsChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _SectionLabel('КОЛИЧЕСТВО КОЛОНОК'),
+      const SizedBox(height: 12),
+      Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+        _ColumnButton(1, '1 колонка', columnsCount == 1, onColumnsChanged),
+        _ColumnButton(2, '2 колонки', columnsCount == 2, onColumnsChanged),
+        _ColumnButton(3, '3 колонки', columnsCount == 3, onColumnsChanged),
+        _ColumnButton(4, '4 колонки', columnsCount == 4, onColumnsChanged),
+      ]),
+      const SizedBox(height: 20),
+      Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: _T.bgCard,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: _T.border),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.info_outline_rounded, color: _T.accent, size: 16),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Контент автоматически распределится по колонкам',
+                style: TextStyle(color: _T.txtSecondary, fontSize: 11),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ]);
+  }
+}
+
+class _ColumnButton extends StatelessWidget {
+  final int count;
+  final String label;
+  final bool isSelected;
+  final ValueChanged<int> onTap;
+
+  const _ColumnButton(this.count, this.label, this.isSelected, this.onTap);
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => onTap(count),
+        child: AnimatedContainer(
+          duration: _T.fast,
+          width: 60, height: 60,
+          decoration: BoxDecoration(
+            color: isSelected ? _T.accentDim : _T.bgCard,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: isSelected ? _T.accent.withOpacity(0.5) : _T.border),
+          ),
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(count, (_) => Container(width: 8, height: 20, margin: const EdgeInsets.symmetric(horizontal: 2), decoration: BoxDecoration(color: isSelected ? _T.accent : _T.txtMuted, borderRadius: BorderRadius.circular(2))))),
+            const SizedBox(height: 6),
+            Text(label, style: TextStyle(color: isSelected ? _T.accent : _T.txtSecondary, fontSize: 9, fontWeight: FontWeight.w500)),
+          ]),
         ),
       ),
     );
