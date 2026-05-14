@@ -105,6 +105,23 @@ class SlideShape {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// SLIDE TEMPLATE
+// ═══════════════════════════════════════════════════════════════════════════════
+class SlideTemplate {
+  final String id;
+  final String name;
+  final IconData icon;
+  final Slide Function() build;
+
+  const SlideTemplate({
+    required this.id,
+    required this.name,
+    required this.icon,
+    required this.build,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // EDITOR SCREEN
 // ═══════════════════════════════════════════════════════════════════════════════
 class EditorScreen extends StatefulWidget {
@@ -130,7 +147,7 @@ class _EditorScreenState extends State<EditorScreen>
   String _globalFont = 'Inter';
   bool _navCollapsed = false;
   bool _propsPanelOpen = true;
-  String _activePropTab = 'image';
+  String _activePropTab = 'design';
   bool _isImproving = false;
   int _imageUploadsUsed = 0;
 
@@ -159,6 +176,46 @@ class _EditorScreenState extends State<EditorScreen>
   final Map<int, String?> _autoImages = {};
   final _scrollCtrl = ScrollController();
   final _canvasKey = GlobalKey();
+
+  // Шаблоны слайдов
+  final List<SlideTemplate> _slideTemplates = [
+    const SlideTemplate(
+      id: 'cover_left',
+      name: 'Обложка по левому краю',
+      icon: Icons.vertical_align_left_rounded,
+      build: _buildCoverLeftTemplate,
+    ),
+    const SlideTemplate(
+      id: 'cover_center',
+      name: 'Обложка по центру',
+      icon: Icons.center_focus_strong_rounded,
+      build: _buildCoverCenterTemplate,
+    ),
+    const SlideTemplate(
+      id: 'two_columns',
+      name: 'Две колонки',
+      icon: Icons.view_column_rounded,
+      build: _buildTwoColumnsTemplate,
+    ),
+    const SlideTemplate(
+      id: 'three_columns',
+      name: 'Три колонки',
+      icon: Icons.view_quilt_rounded,
+      build: _buildThreeColumnsTemplate,
+    ),
+    const SlideTemplate(
+      id: 'image_and_text',
+      name: 'Изображение и текст',
+      icon: Icons.image_rounded,
+      build: _buildImageAndTextTemplate,
+    ),
+    const SlideTemplate(
+      id: 'quote',
+      name: 'Цитата',
+      icon: Icons.format_quote_rounded,
+      build: _buildQuoteTemplate,
+    ),
+  ];
 
   // Бесплатные фоны
   final List<Map<String, dynamic>> _freeBgs = [
@@ -410,6 +467,105 @@ class _EditorScreenState extends State<EditorScreen>
   void _updateImageTextWrap(String wrap) {
     setState(() {
       _imageTextWrap[_activeSlide] = wrap;
+    });
+  }
+
+  // Шаблоны слайдов
+  static Slide _buildCoverLeftTemplate() {
+    return Slide(title: 'Заголовок презентации', content: ['Подзаголовок презентации']);
+  }
+
+  static Slide _buildCoverCenterTemplate() {
+    return Slide(title: 'Заголовок презентации', content: ['Подзаголовок презентации']);
+  }
+
+  static Slide _buildTwoColumnsTemplate() {
+    return Slide(title: 'Заголовок', content: ['Текст первой колонки', 'Текст второй колонки']);
+  }
+
+  static Slide _buildThreeColumnsTemplate() {
+    return Slide(title: 'Заголовок', content: ['Колонка 1', 'Колонка 2', 'Колонка 3']);
+  }
+
+  static Slide _buildImageAndTextTemplate() {
+    return Slide(title: 'Заголовок', content: ['Описание изображения']);
+  }
+
+  static Slide _buildQuoteTemplate() {
+    return Slide(title: 'Цитата', content: ['Важная цитата']);
+  }
+
+  void _showTemplatePicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: _T.bgSurface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Добавить шаблон слайда',
+              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            const Text('Выберите макет для нового слайда',
+              style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 13)),
+            const SizedBox(height: 20),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 1.2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: _slideTemplates.length,
+              itemBuilder: (_, i) => _TemplateCard(
+                template: _slideTemplates[i],
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _addSlideFromTemplate(_slideTemplates[i]);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _addSlideFromTemplate(SlideTemplate template) {
+    final up = Provider.of<UserProvider>(context, listen: false);
+    if (_presentation.slides.length >= up.maxSlidesPerPresentation) {
+      _toast('Максимум ${up.maxSlidesPerPresentation} слайдов');
+      return;
+    }
+
+    setState(() {
+      final idx = _activeSlide + 1;
+      final newSlide = template.build();
+      _presentation.slides.insert(idx, newSlide);
+
+      _titleCtrl.insert(idx, TextEditingController(text: newSlide.title));
+      _contentCtrl.insert(idx, newSlide.content.map((c) => TextEditingController(text: c)).toList());
+      _customImages.insert(idx, null);
+      _customBgs.insert(idx, null);
+      _fontSizes.insert(idx, 14.0);
+      _fonts.insert(idx, _globalFont);
+      _slideFontColors.insert(idx, Colors.white);
+      _transitions.insert(idx, 'none');
+      _chartTypes.insert(idx, null);
+      _chartData.insert(idx, []);
+      _shapes.insert(idx, []);
+      _imageWidths.insert(idx, 0.28);
+      _imageHeights.insert(idx, 0.55);
+      _imagePositions.insert(idx, 'right');
+      _imageTextWrap.insert(idx, 'around');
+      _activeSlide = idx;
     });
   }
 
@@ -671,6 +827,7 @@ class _EditorScreenState extends State<EditorScreen>
           onAdd: _addSlide,
           onDelete: () => _deleteSlide(_activeSlide),
           onDuplicate: () => _duplicateSlide(_activeSlide),
+          onTemplate: _showTemplatePicker,
         ),
       ]),
     );
@@ -683,6 +840,49 @@ class _EditorScreenState extends State<EditorScreen>
     for (var l in _contentCtrl) for (var c in l) c.dispose();
     _scrollCtrl.dispose();
     super.dispose();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TEMPLATE CARD
+// ═══════════════════════════════════════════════════════════════════════════════
+class _TemplateCard extends StatelessWidget {
+  final SlideTemplate template;
+  final VoidCallback onTap;
+
+  const _TemplateCard({
+    required this.template,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF2A2A2A)),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(template.icon, color: const Color(0xFF1DB954), size: 28),
+              const SizedBox(height: 8),
+              Text(
+                template.name,
+                style: const TextStyle(color: Colors.white, fontSize: 12),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -1148,6 +1348,7 @@ class _Canvas extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _buildEditableText(titleCtrl, isTitle: true),
       const SizedBox(height: 12),
+      // Убрано ограничение take(5) - теперь показывает все пункты
       ...contentCtrl.mapIndexed((i, c) => Padding(
         padding: const EdgeInsets.only(bottom: 6),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1237,7 +1438,7 @@ class _Canvas extends StatelessWidget {
       ),
       cursorColor: _T.accent,
       backgroundCursorColor: _T.accent,
-      maxLines: null,
+      maxLines: null, // Убрано ограничение maxLines
       textAlign: _getTextAlign(),
     );
   }
@@ -1507,7 +1708,7 @@ class _EditorField extends StatelessWidget {
   Widget build(BuildContext context) => TextField(
     controller: controller,
     style: TextStyle(color: _T.txtPrimary, fontSize: isTitle ? 15 : 13, fontWeight: isTitle ? FontWeight.w700 : FontWeight.w400),
-    maxLines: null,
+    maxLines: null, // Убрано ограничение maxLines
     decoration: InputDecoration(
       hintText: hint,
       hintStyle: const TextStyle(color: _T.txtMuted, fontSize: 13),
@@ -2565,7 +2766,6 @@ class _ImageTabState extends State<_ImageTab> {
       _SectionLabel('ИЗОБРАЖЕНИЕ НА СЛАЙДЕ'),
       const SizedBox(height: 8),
       
-      // Premium предупреждение
       if (!widget.isPremium)
         Container(
           width: double.infinity,
@@ -2583,7 +2783,6 @@ class _ImageTabState extends State<_ImageTab> {
           ]),
         ),
       
-      // Кнопка загрузки
       MouseRegion(
         cursor: widget.isPremium ? SystemMouseCursors.click : SystemMouseCursors.forbidden,
         child: GestureDetector(
@@ -2612,7 +2811,6 @@ class _ImageTabState extends State<_ImageTab> {
         ),
       ),
       
-      // Настройки изображения (только если есть изображение)
       if (widget.hasImage) ...[
         const SizedBox(height: 16),
         const Divider(color: _T.border),
@@ -2863,8 +3061,20 @@ class _ExportOption extends StatelessWidget {
 class _ControlBar extends StatelessWidget {
   final int activeSlide, totalSlides;
   final bool propsPanelOpen;
-  final VoidCallback onToggleProps, onPrev, onNext, onAdd, onDelete, onDuplicate;
-  const _ControlBar({required this.activeSlide, required this.totalSlides, required this.propsPanelOpen, required this.onToggleProps, required this.onPrev, required this.onNext, required this.onAdd, required this.onDelete, required this.onDuplicate});
+  final VoidCallback onToggleProps, onPrev, onNext, onAdd, onDelete, onDuplicate, onTemplate;
+
+  const _ControlBar({
+    required this.activeSlide,
+    required this.totalSlides,
+    required this.propsPanelOpen,
+    required this.onToggleProps,
+    required this.onPrev,
+    required this.onNext,
+    required this.onAdd,
+    required this.onDelete,
+    required this.onDuplicate,
+    required this.onTemplate,
+  });
 
   @override
   Widget build(BuildContext context) => Container(
@@ -2879,6 +3089,7 @@ class _ControlBar extends StatelessWidget {
       const SizedBox(width: 8),
       _IconBtn(Icons.copy_rounded, onDuplicate, size: 15, tooltip: 'Дублировать'),
       _IconBtn(Icons.delete_outline_rounded, onDelete, size: 15, tooltip: 'Удалить', danger: true),
+      _IconBtn(Icons.template_rounded, onTemplate, size: 16, tooltip: 'Шаблоны слайдов'),
       const Spacer(),
       _IconBtn(Icons.arrow_back_rounded, onPrev, size: 16, disabled: activeSlide == 0),
       Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text('${activeSlide + 1} / $totalSlides', style: const TextStyle(color: _T.txtSecondary, fontSize: 13, fontWeight: FontWeight.w600))),
