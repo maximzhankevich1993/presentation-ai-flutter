@@ -27,3 +27,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/templates/free_templates.json
+    - assets/templates/premium_templates.json
