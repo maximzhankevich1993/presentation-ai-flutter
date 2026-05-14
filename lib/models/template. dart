@@ -1,0 +1,57 @@
+class Template {
+  final String id;
+  final String title;
+  final String description;
+  final String category;
+  final String? color1;
+  final String? color2;
+  final int slideCount;
+  final bool isPremium;
+  final bool isPopular;
+  final String icon;
+  final List<Map<String, dynamic>> slides;
+
+  const Template({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.category,
+    this.color1,
+    this.color2,
+    required this.slideCount,
+    this.isPremium = false,
+    this.isPopular = false,
+    required this.icon,
+    required this.slides,
+  });
+
+  factory Template.fromJson(Map<String, dynamic> json) {
+    return Template(
+      id: json['id'],
+      title: json['title'],
+      description: json['description'],
+      category: json['category'],
+      color1: json['color1'],
+      color2: json['color2'],
+      slideCount: json['slideCount'],
+      isPremium: json['isPremium'] ?? false,
+      isPopular: json['isPopular'] ?? false,
+      icon: json['icon'],
+      slides: List<Map<String, dynamic>>.from(json['slides'] ?? []),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'description': description,
+    'category': category,
+    'color1': color1,
+    'color2': color2,
+    'slideCount': slideCount,
+    'isPremium': isPremium,
+    'isPopular': isPopular,
+    'icon': icon,
+    'slides': slides,
+  };
+}
