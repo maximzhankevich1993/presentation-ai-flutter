@@ -1,0 +1,194 @@
+[
+  {
+    "id": "four_columns",
+    "title": "Четыре колонки",
+    "description": "Сравнение 4-х показателей",
+    "category": "Бизнес",
+    "color1": "#1DB954",
+    "color2": "#1ED760",
+    "slideCount": 3,
+    "isPremium": true,
+    "isPopular": true,
+    "icon": "view_quilt_rounded",
+    "slides": [
+      {
+        "title": "Сравнительный анализ",
+        "content": ["Показатель 1", "Показатель 2", "Показатель 3", "Показатель 4"]
+      }
+    ]
+  },
+  {
+    "id": "swot_analysis",
+    "title": "SWOT-анализ",
+    "description": "Сильные и слабые стороны",
+    "category": "Бизнес",
+    "color1": "#667eea",
+    "color2": "#764ba2",
+    "slideCount": 4,
+    "isPremium": true,
+    "isPopular": true,
+    "icon": "analytics_rounded",
+    "slides": [
+      {
+        "title": "SWOT-анализ",
+        "content": ["Сильные стороны", "Слабые стороны", "Возможности", "Угрозы"]
+      }
+    ]
+  },
+  {
+    "id": "timeline",
+    "title": "Таймлайн",
+    "description": "Визуализация событий во времени",
+    "category": "Бизнес",
+    "color1": "#f093fb",
+    "color2": "#f5576c",
+    "slideCount": 5,
+    "isPremium": true,
+    "isPopular": false,
+    "icon": "timeline_rounded",
+    "slides": [
+      {
+        "title": "История проекта",
+        "content": ["Этап 1: 2020", "Этап 2: 2021", "Этап 3: 2022", "Этап 4: 2023"]
+      }
+    ]
+  },
+  {
+    "id": "team_intro",
+    "title": "Команда",
+    "description": "Представление сотрудников",
+    "category": "Бизнес",
+    "color1": "#4facfe",
+    "color2": "#00f2fe",
+    "slideCount": 6,
+    "isPremium": true,
+    "isPopular": true,
+    "icon": "group_rounded",
+    "slides": [
+      {
+        "title": "Наша команда",
+        "content": ["Имя: Должность", "Имя: Должность", "Имя: Должность"]
+      }
+    ]
+  },
+  {
+    "id": "portfolio",
+    "title": "Портфолио",
+    "description": "Ваши лучшие работы",
+    "category": "Личные",
+    "color1": "#00b4db",
+    "color2": "#0083B0",
+    "slideCount": 10,
+    "isPremium": true,
+    "isPopular": false,
+    "icon": "photo_library_rounded",
+    "slides": [
+      {
+        "title": "Проект 1",
+        "content": ["Описание проекта", "Результаты"]
+      },
+      {
+        "title": "Проект 2",
+        "content": ["Описание проекта", "Результаты"]
+      }
+    ]
+  },
+  {
+    "id": "startup_pitch",
+    "title": "Питч стартапа",
+    "description": "Презентация для инвесторов",
+    "category": "Бизнес",
+    "color1": "#FFE000",
+    "color2": "#799F0C",
+    "slideCount": 8,
+    "isPremium": true,
+    "isPopular": true,
+    "icon": "rocket_launch_rounded",
+    "slides": [
+      {
+        "title": "Наш стартап",
+        "content": ["Проблема", "Решение", "Рынок"]
+      },
+      {
+        "title": "Финансы",
+        "content": ["Прогноз доходов", "Инвестиции"]
+      }
+    ]
+  },
+  {
+    "id": "kpi_dashboard",
+    "title": "KPI Dashboard",
+    "description": "Отчёт с метриками",
+    "category": "Отчёты",
+    "color1": "#FF416C",
+    "color2": "#FF4B2B",
+    "slideCount": 7,
+    "isPremium": true,
+    "isPopular": true,
+    "icon": "dashboard_rounded",
+    "slides": [
+      {
+        "title": "Ключевые показатели",
+        "content": ["Выручка: 1.2M", "Прибыль: 300K", "Клиенты: 5000"]
+      },
+      {
+        "title": "Динамика",
+        "content": ["График роста", "Сезонность"]
+      }
+    ]
+  },
+  {
+    "id": "roadmap",
+    "title": "Дорожная карта",
+    "description": "План развития продукта",
+    "category": "Бизнес",
+    "color1": "#11998e",
+    "color2": "#38ef7d",
+    "slideCount": 6,
+    "isPremium": true,
+    "isPopular": false,
+    "icon": "map_rounded",
+    "slides": [
+      {
+        "title": "Дорожная карта",
+        "content": ["Q1 2024", "Q2 2024", "Q3 2024", "Q4 2024"]
+      }
+    ]
+  },
+  {
+    "id": "contact_info",
+    "title": "Контакты",
+    "description": "Карта и контактная информация",
+    "category": "Бизнес",
+    "color1": "#8E2DE2",
+    "color2": "#4A00E0",
+    "slideCount": 4,
+    "isPremium": true,
+    "isPopular": false,
+    "icon": "contact_phone_rounded",
+    "slides": [
+      {
+        "title": "Свяжитесь с нами",
+        "content": ["Телефон", "Email", "Адрес"]
+      }
+    ]
+  },
+  {
+    "id": "comparison",
+    "title": "Сравнение продуктов",
+    "description": "Сравнение характеристик",
+    "category": "Маркетинг",
+    "color1": "#434343",
+    "color2": "#000000",
+    "slideCount": 5,
+    "isPremium": true,
+    "isPopular": false,
+    "icon": "compare_arrows_rounded",
+    "slides": [
+      {
+        "title": "Сравнение",
+        "content": ["Функция 1", "Продукт А", "Продукт Б", "Продукт В"]
+      }
+    ]
+  }
+]
