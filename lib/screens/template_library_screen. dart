@@ -1,435 +1,89 @@
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'dart:convert';
+import 'package:flutter/services.dart';
 import '../models/template.dart';
-import '../models/presentation.dart';
-import '../providers/user_provider.dart';
-import '../services/template_service.dart';
-import 'editor_screen.dart';
-import 'loading_screen.dart';
+import 'api_service.dart';
 
-class TemplateLibraryScreen extends StatefulWidget {
-  const TemplateLibraryScreen({super.key});
-
-  @override
-  State<TemplateLibraryScreen> createState() => _TemplateLibraryScreenState();
-}
-
-class _TemplateLibraryScreenState extends State<TemplateLibraryScreen> {
-  String _searchQuery = '';
-  String _selectedCategory = 'Все';
-  bool _isLoading = true;
-  List<Template> _allTemplates = [];
-  List<Template> _filteredTemplates = [];
-
-  final List<String> _categories = [
-    'Все', 'Популярное', 'Бизнес', 'Образование', 'Маркетинг', 'Отчёты', 'Личные'
-  ];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadTemplates();
-  }
-
-  Future<void> _loadTemplates() async {
-    setState(() => _isLoading = true);
+class TemplateService {
+  static List<Template> _cachedFreeTemplates = [];
+  static List<Template> _cachedPremiumTemplates = [];
+  
+  // Загрузка бесплатных шаблонов с сервера
+  static Future<List<Template>> loadFreeTemplates() async {
+    if (_cachedFreeTemplates.isNotEmpty) {
+      return _cachedFreeTemplates;
+    }
     
     try {
-      final up = Provider.of<UserProvider>(context, listen: false);
-      final includePremium = up.isPremium;
-      
-      final templates = await TemplateService.loadAllTemplates(includePremium: includePremium);
-      
-      setState(() {
-        _allTemplates = templates;
-        _filteredTemplates = templates;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ошибка загрузки шаблонов: $e'),
-            backgroundColor: const Color(0xFFFF3B30),
-          ),
-        );
+      final response = await ApiService.get('/templates/free');
+      if (response['success'] == true) {
+        final List<dynamic> templatesJson = response['templates'];
+        _cachedFreeTemplates = templatesJson.map((j) => Template.fromJson(j)).toList();
+        return _cachedFreeTemplates;
       }
+      return [];
+    } catch (e) {
+      print('Error loading free templates: $e');
+      return [];
     }
   }
-
-  void _filterTemplates() {
-    setState(() {
-      _filteredTemplates = _allTemplates.where((t) {
-        final matchesSearch = _searchQuery.isEmpty ||
-            t.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-            t.description.toLowerCase().contains(_searchQuery.toLowerCase());
-        
-        final matchesCategory = _selectedCategory == 'Все' || 
-            (_selectedCategory == 'Популярное' ? t.isPopular : t.category == _selectedCategory);
-        
-        return matchesSearch && matchesCategory;
-      }).toList();
-    });
-  }
-
-  void _updateSearch(String query) {
-    _searchQuery = query;
-    _filterTemplates();
-  }
-
-  void _updateCategory(String category) {
-    _selectedCategory = category;
-    _filterTemplates();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF121212),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF121212),
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Шаблоны',
-          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
-        ),
-        centerTitle: true,
-      ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: Color(0xFF1DB954)))
-          : Column(
-              children: [
-                // Поиск
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E1E1E),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFF2A2A2A)),
-                    ),
-                    child: TextField(
-                      onChanged: _updateSearch,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: 'Быстрый поиск по шаблонам',
-                        hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
-                        prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF1DB954)),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.close_rounded, color: Color(0xFF4A4A4A)),
-                                onPressed: () => _updateSearch(''),
-                              )
-                            : null,
-                      ),
-                    ),
-                  ),
-                ),
-                // Категории
-                SizedBox(
-                  height: 44,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    itemCount: _categories.length,
-                    itemBuilder: (_, i) {
-                      final cat = _categories[i];
-                      final isSelected = _selectedCategory == cat;
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4),
-                        child: MouseRegion(
-                          cursor: SystemMouseCursors.click,
-                          child: GestureDetector(
-                            onTap: () => _updateCategory(cat),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: isSelected ? const Color(0xFF1DB954) : const Color(0xFF1E1E1E),
-                                borderRadius: BorderRadius.circular(24),
-                                border: Border.all(
-                                  color: isSelected ? Colors.transparent : const Color(0xFF2A2A2A),
-                                ),
-                              ),
-                              child: Text(
-                                cat,
-                                style: TextStyle(
-                                  color: isSelected ? Colors.white : const Color(0xFF9A9A9A),
-                                  fontSize: 13,
-                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // Список шаблонов
-                Expanded(
-                  child: _filteredTemplates.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.search_off_rounded, size: 48, color: const Color(0xFF4A4A4A)),
-                              const SizedBox(height: 12),
-                              const Text(
-                                'Ничего не найдено',
-                                style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.all(16),
-                          itemCount: _filteredTemplates.length,
-                          itemBuilder: (_, i) => _TemplateCard(
-                            template: _filteredTemplates[i],
-                            onTap: () => _useTemplate(_filteredTemplates[i]),
-                          ),
-                        ),
-                ),
-              ],
-            ),
-    );
-  }
-
-  void _useTemplate(Template template) async {
-    setState(() => _isLoading = true);
+  
+  // Загрузка премиум шаблонов с сервера
+  static Future<List<Template>> loadPremiumTemplates() async {
+    if (_cachedPremiumTemplates.isNotEmpty) {
+      return _cachedPremiumTemplates;
+    }
     
     try {
-      final presentation = _createPresentationFromTemplate(template);
-      
-      if (!mounted) return;
-      
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => EditorScreen(presentation: presentation),
-        ),
-      );
+      final response = await ApiService.get('/templates/premium');
+      if (response['success'] == true) {
+        final List<dynamic> templatesJson = response['templates'];
+        _cachedPremiumTemplates = templatesJson.map((j) => Template.fromJson(j)).toList();
+        return _cachedPremiumTemplates;
+      }
+      return [];
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Ошибка загрузки шаблона: $e'),
-            backgroundColor: const Color(0xFFFF3B30),
-          ),
-        );
+      print('Error loading premium templates: $e');
+      return [];
+    }
+  }
+  
+  // Загрузка всех шаблонов
+  static Future<List<Template>> loadAllTemplates({bool includePremium = false}) async {
+    final free = await loadFreeTemplates();
+    if (!includePremium) return free;
+    
+    final premium = await loadPremiumTemplates();
+    return [...free, ...premium];
+  }
+  
+  // Создание нового шаблона
+  static Future<Template?> createTemplate(Template template) async {
+    try {
+      final response = await ApiService.post('/templates', data: template.toJson());
+      if (response['success'] == true) {
+        final newTemplate = Template.fromJson(response['template']);
+        _cachedPremiumTemplates.insert(0, newTemplate);
+        return newTemplate;
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      return null;
+    } catch (e) {
+      print('Error creating template: $e');
+      return null;
     }
   }
-
-  Presentation _createPresentationFromTemplate(Template template) {
-    final List<Slide> slides = [];
-    
-    if (template.slides.isEmpty) {
-      slides.add(Slide(
-        title: template.title,
-        content: [template.description],
-      ));
-    } else {
-      for (final slideData in template.slides) {
-        slides.add(Slide(
-          title: slideData['title'] ?? '',
-          content: List<String>.from(slideData['content'] ?? []),
-        ));
+  
+  // Удаление шаблона
+  static Future<bool> deleteTemplate(String id) async {
+    try {
+      final response = await ApiService.delete('/templates/$id');
+      if (response['success'] == true) {
+        _cachedPremiumTemplates.removeWhere((t) => t.id == id);
+        return true;
       }
+      return false;
+    } catch (e) {
+      print('Error deleting template: $e');
+      return false;
     }
-    
-    return Presentation(
-      id: DateTime.now().toString(),
-      title: template.title,
-      slides: slides,
-      createdAt: DateTime.now(),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// TEMPLATE CARD WIDGET
-// ═══════════════════════════════════════════════════════════════════════════════
-class _TemplateCard extends StatelessWidget {
-  final Template template;
-  final VoidCallback onTap;
-
-  const _TemplateCard({
-    required this.template,
-    required this.onTap,
-  });
-
-  Color _getColor(String? colorHex) {
-    if (colorHex == null) return const Color(0xFF1DB954);
-    return Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
-  }
-
-  IconData _getIcon(String iconName) {
-    switch (iconName) {
-      case 'crop_original_rounded': return Icons.crop_original_rounded;
-      case 'people_rounded': return Icons.people_rounded;
-      case 'videocam_rounded': return Icons.videocam_rounded;
-      case 'pets_rounded': return Icons.pets_rounded;
-      case 'person_rounded': return Icons.person_rounded;
-      case 'business_center_rounded': return Icons.business_center_rounded;
-      case 'trending_up_rounded': return Icons.trending_up_rounded;
-      case 'school_rounded': return Icons.school_rounded;
-      case 'analytics_rounded': return Icons.analytics_rounded;
-      case 'task_alt_rounded': return Icons.task_alt_rounded;
-      case 'view_quilt_rounded': return Icons.view_quilt_rounded;
-      case 'timeline_rounded': return Icons.timeline_rounded;
-      case 'group_rounded': return Icons.group_rounded;
-      case 'photo_library_rounded': return Icons.photo_library_rounded;
-      case 'rocket_launch_rounded': return Icons.rocket_launch_rounded;
-      case 'dashboard_rounded': return Icons.dashboard_rounded;
-      case 'map_rounded': return Icons.map_rounded;
-      case 'contact_phone_rounded': return Icons.contact_phone_rounded;
-      case 'compare_arrows_rounded': return Icons.compare_arrows_rounded;
-      default: return Icons.slideshow_rounded;
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final color1 = _getColor(template.color1);
-    final color2 = _getColor(template.color2);
-    
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [color1, color2],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: color1.withOpacity(0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Stack(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(_getIcon(template.icon), color: Colors.white, size: 24),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            template.title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            template.description,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
-                              fontSize: 12,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  '${template.slideCount} слайдов',
-                                  style: const TextStyle(color: Colors.white, fontSize: 10),
-                                ),
-                              ),
-                              if (template.isPopular) ...[
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFFD700).withOpacity(0.9),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: const Text(
-                                    'Популярное',
-                                    style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                              ],
-                              if (template.isPremium) ...[
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFF1DB954).withOpacity(0.9),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: const Text(
-                                    'Premium',
-                                    style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 }
