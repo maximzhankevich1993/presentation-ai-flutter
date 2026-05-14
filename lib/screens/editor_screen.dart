@@ -2,6 +2,7 @@ import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../models/presentation.dart';
 import '../providers/user_provider.dart';
 import '../providers/logo_provider.dart';
@@ -95,6 +96,10 @@ class _EditorScreenState extends State<EditorScreen>
   String _currentTextAlign = 'left';
   int _columnsCount = 1;
 
+  // Графики
+  late List<String?> _chartTypes;
+  late List<List<Map<String, dynamic>>> _chartData;
+
   final Map<int, String?> _autoImages = {};
   final _scrollCtrl = ScrollController();
   final _canvasKey = GlobalKey();
@@ -151,6 +156,8 @@ class _EditorScreenState extends State<EditorScreen>
     _fonts = List.filled(_presentation.slides.length, 'Inter');
     _slideFontColors = List.filled(_presentation.slides.length, Colors.white);
     _transitions = List.filled(_presentation.slides.length, 'none');
+    _chartTypes = List.filled(_presentation.slides.length, null);
+    _chartData = List.filled(_presentation.slides.length, []);
     _initControllers();
     _loadAutoImages();
     _countUploads();
@@ -195,6 +202,8 @@ class _EditorScreenState extends State<EditorScreen>
       _fonts.insert(idx, _globalFont);
       _slideFontColors.insert(idx, Colors.white);
       _transitions.insert(idx, 'none');
+      _chartTypes.insert(idx, null);
+      _chartData.insert(idx, []);
       _activeSlide = idx;
     });
   }
@@ -214,6 +223,8 @@ class _EditorScreenState extends State<EditorScreen>
       _autoImages.remove(i);
       _slideFontColors.removeAt(i);
       _transitions.removeAt(i);
+      _chartTypes.removeAt(i);
+      _chartData.removeAt(i);
       if (_activeSlide >= _presentation.slides.length) {
         _activeSlide = _presentation.slides.length - 1;
       }
@@ -236,6 +247,8 @@ class _EditorScreenState extends State<EditorScreen>
       _fonts.insert(idx, _fonts[i]);
       _slideFontColors.insert(idx, _slideFontColors[i]);
       _transitions.insert(idx, _transitions[i]);
+      _chartTypes.insert(idx, _chartTypes[i]);
+      _chartData.insert(idx, List.from(_chartData[i]));
       _activeSlide = idx;
     });
     _countUploads();
@@ -256,6 +269,8 @@ class _EditorScreenState extends State<EditorScreen>
       swap(_fonts);
       swap(_slideFontColors);
       swap(_transitions);
+      swap(_chartTypes);
+      swap(_chartData);
       _activeSlide = to;
     });
   }
@@ -385,6 +400,26 @@ class _EditorScreenState extends State<EditorScreen>
     });
   }
 
+  void _setChartType(String? type) {
+    setState(() {
+      _chartTypes[_activeSlide] = type;
+      if (type != null && _chartData[_activeSlide].isEmpty) {
+        _chartData[_activeSlide] = [
+          {'label': 'Янв', 'value': 100.0},
+          {'label': 'Фев', 'value': 150.0},
+          {'label': 'Мар', 'value': 120.0},
+          {'label': 'Апр', 'value': 200.0},
+        ];
+      }
+    });
+  }
+
+  void _setChartData(List<Map<String, dynamic>> data) {
+    setState(() {
+      _chartData[_activeSlide] = data;
+    });
+  }
+
   void _toast(String msg, {bool success = false, bool error = false, bool warning = false}) {
     Color bg = _T.bgCard;
     if (success) bg = _T.success.withOpacity(0.9);
@@ -467,6 +502,8 @@ class _EditorScreenState extends State<EditorScreen>
                 textStyle: _currentTextStyle,
                 textAlign: _currentTextAlign,
                 columnsCount: _columnsCount,
+                chartType: _chartTypes[_activeSlide],
+                chartData: _chartData[_activeSlide],
                 onAddItem: () => _addContentItem(_activeSlide),
                 onRemoveItem: (i) => _removeContentItem(_activeSlide, i),
                 onRemoveImage: () => setState(() { _customImages[_activeSlide] = null; _countUploads(); }),
@@ -496,6 +533,8 @@ class _EditorScreenState extends State<EditorScreen>
                       currentTextAlign: _currentTextAlign,
                       columnsCount: _columnsCount,
                       textStyles: _textStyles,
+                      chartType: _chartTypes[_activeSlide],
+                      chartData: _chartData[_activeSlide],
                       onTabChange: (t) => setState(() => _activePropTab = t),
                       onBgSelect: (i) => setState(() {
                         _selectedBgIndex = i;
@@ -516,6 +555,8 @@ class _EditorScreenState extends State<EditorScreen>
                       onTextStyleChange: _applyTextStyle,
                       onTextAlignChange: _applyTextAlign,
                       onColumnsChange: _setColumnsCount,
+                      onChartTypeChange: _setChartType,
+                      onChartDataChange: _setChartData,
                       uploadsUsed: _imageUploadsUsed,
                     )
                   : const SizedBox.shrink(),
@@ -788,6 +829,8 @@ class _Canvas extends StatelessWidget {
   final String textStyle;
   final String textAlign;
   final int columnsCount;
+  final String? chartType;
+  final List<Map<String, dynamic>> chartData;
   final VoidCallback onAddItem;
   final ValueChanged<int> onRemoveItem;
   final VoidCallback onRemoveImage;
@@ -808,6 +851,8 @@ class _Canvas extends StatelessWidget {
     required this.textStyle,
     required this.textAlign,
     required this.columnsCount,
+    required this.chartType,
+    required this.chartData,
     required this.onAddItem,
     required this.onRemoveItem,
     required this.onRemoveImage,
@@ -861,6 +906,11 @@ class _Canvas extends StatelessWidget {
   }
 
   Widget _buildContent(double width, double height) {
+    // Если есть график - показываем его
+    if (chartType != null && chartData.isNotEmpty) {
+      return _buildChartWidget(width, height);
+    }
+
     if (columnsCount > 1) {
       final columnWidth = (width - 40) / columnsCount;
       return Row(
@@ -912,6 +962,39 @@ class _Canvas extends StatelessWidget {
         ]),
       ],
     ]);
+  }
+
+  Widget _buildChartWidget(double width, double height) {
+    if (chartData.isEmpty) {
+      return Center(
+        child: Container(
+          width: width * 0.6, height: height * 0.6,
+          decoration: BoxDecoration(
+            color: _T.bgCard,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _T.border),
+          ),
+          child: const Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(Icons.show_chart_rounded, color: _T.txtMuted, size: 48),
+            SizedBox(height: 12),
+            Text('Добавьте данные для графика', style: TextStyle(color: _T.txtMuted, fontSize: 13)),
+            SizedBox(height: 4),
+            Text('В панели справа → Графики', style: TextStyle(color: _T.txtMuted, fontSize: 11)),
+          ]),
+        ),
+      );
+    }
+
+    switch (chartType) {
+      case 'bar':
+        return _BarChartWidget(data: chartData, color: _T.accent, height: height);
+      case 'pie':
+        return _PieChartWidget(data: chartData, height: height);
+      case 'line':
+        return _LineChartWidget(data: chartData, color: _T.accent, height: height);
+      default:
+        return const SizedBox.shrink();
+    }
   }
 
   Widget _buildEditableText(TextEditingController controller, {required bool isTitle}) {
@@ -981,6 +1064,158 @@ class _Canvas extends StatelessWidget {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// CHART WIDGETS
+// ═══════════════════════════════════════════════════════════════════════════════
+class _BarChartWidget extends StatelessWidget {
+  final List<Map<String, dynamic>> data;
+  final Color color;
+  final double height;
+
+  const _BarChartWidget({required this.data, required this.color, required this.height});
+
+  @override
+  Widget build(BuildContext context) {
+    final maxY = data.map((e) => e['value'] as double).reduce((a, b) => a > b ? a : b) * 1.2;
+    return SizedBox(
+      height: height * 0.7,
+      child: BarChart(
+        BarChartData(
+          alignment: BarChartAlignment.spaceAround,
+          maxY: maxY,
+          titlesData: FlTitlesData(
+            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 35, getTitlesWidget: (value, meta) {
+              return Text(value.toInt().toString(), style: const TextStyle(color: _T.txtSecondary, fontSize: 10));
+            })),
+            bottomTitles: AxisTitles(sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                final index = value.toInt();
+                if (index >= 0 && index < data.length) {
+                  return Text(data[index]['label'], style: const TextStyle(color: _T.txtSecondary, fontSize: 10));
+                }
+                return const Text('');
+              },
+            )),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+          borderData: FlBorderData(show: false),
+          gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (value) {
+            return FlLine(color: _T.border, strokeWidth: 0.5);
+          }),
+          barGroups: data.asMap().entries.map((entry) {
+            return BarChartGroupData(
+              x: entry.key,
+              barRods: [BarChartRodData(toY: entry.value['value'], color: color, width: 30, borderRadius: BorderRadius.circular(4))],
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+class _PieChartWidget extends StatelessWidget {
+  final List<Map<String, dynamic>> data;
+  final double height;
+
+  const _PieChartWidget({required this.data, required this.height});
+
+  @override
+  Widget build(BuildContext context) {
+    final total = data.map((e) => e['value'] as double).reduce((a, b) => a + b);
+    return SizedBox(
+      height: height * 0.7,
+      child: PieChart(
+        PieChartData(
+          sections: data.asMap().entries.map((entry) {
+            final index = entry.key;
+            final value = entry.value['value'] as double;
+            return PieChartSectionData(
+              value: value,
+              title: '${((value / total) * 100).toInt()}%',
+              radius: 80,
+              titleStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+              color: [
+                _T.accent,
+                _T.accentLight,
+                Colors.orange,
+                Colors.purple,
+                Colors.cyan,
+                Colors.pink,
+              ][index % 6],
+            );
+          }).toList(),
+          sectionsSpace: 2,
+          centerSpaceRadius: 40,
+        ),
+      ),
+    );
+  }
+}
+
+class _LineChartWidget extends StatelessWidget {
+  final List<Map<String, dynamic>> data;
+  final Color color;
+  final double height;
+
+  const _LineChartWidget({required this.data, required this.color, required this.height});
+
+  @override
+  Widget build(BuildContext context) {
+    final maxY = data.map((e) => e['value'] as double).reduce((a, b) => a > b ? a : b) * 1.2;
+    return SizedBox(
+      height: height * 0.7,
+      child: LineChart(
+        LineChartData(
+          minX: 0,
+          maxX: (data.length - 1).toDouble(),
+          minY: 0,
+          maxY: maxY,
+          titlesData: FlTitlesData(
+            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, reservedSize: 35, getTitlesWidget: (value, meta) {
+              return Text(value.toInt().toString(), style: const TextStyle(color: _T.txtSecondary, fontSize: 10));
+            })),
+            bottomTitles: AxisTitles(sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                final index = value.toInt();
+                if (index >= 0 && index < data.length) {
+                  return Text(data[index]['label'], style: const TextStyle(color: _T.txtSecondary, fontSize: 10));
+                }
+                return const Text('');
+              },
+            )),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          ),
+          borderData: FlBorderData(show: false),
+          gridData: FlGridData(show: true, drawVerticalLine: true, getDrawingHorizontalLine: (value) {
+            return FlLine(color: _T.border, strokeWidth: 0.5);
+          }, getDrawingVerticalLine: (value) {
+            return FlLine(color: _T.border, strokeWidth: 0.5);
+          }),
+          lineBarsData: [
+            LineChartBarData(
+              spots: data.asMap().entries.map((entry) {
+                return FlSpot(entry.key.toDouble(), entry.value['value']);
+              }).toList(),
+              isCurved: true,
+              color: color,
+              barWidth: 3,
+              dotData: FlDotData(show: true, getDotPainter: (spot, percent, barData, index) {
+                return FlDotCirclePainter(radius: 4, color: color, strokeWidth: 0);
+              }),
+              belowBarData: BarAreaData(show: true, color: color.withOpacity(0.1)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _EditorField extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
@@ -1024,11 +1259,15 @@ class _PropertiesPanel extends StatelessWidget {
   final String currentTextAlign;
   final int columnsCount;
   final Map<String, TextStylePreset> textStyles;
+  final String? chartType;
+  final List<Map<String, dynamic>> chartData;
   final ValueChanged<String> onTabChange, onFontChange, onTransitionChange, onTextStyleChange, onTextAlignChange;
   final ValueChanged<int> onBgSelect, onColumnsChange;
   final VoidCallback onBgUpload, onImageUpload;
   final ValueChanged<double> onFontSizeChange;
   final ValueChanged<Color> onFontColorChange;
+  final ValueChanged<String?> onChartTypeChange;
+  final ValueChanged<List<Map<String, dynamic>>> onChartDataChange;
   final int uploadsUsed;
 
   const _PropertiesPanel({
@@ -1049,6 +1288,8 @@ class _PropertiesPanel extends StatelessWidget {
     required this.currentTextAlign,
     required this.columnsCount,
     required this.textStyles,
+    required this.chartType,
+    required this.chartData,
     required this.onTabChange,
     required this.onBgSelect,
     required this.onBgUpload,
@@ -1060,6 +1301,8 @@ class _PropertiesPanel extends StatelessWidget {
     required this.onTextStyleChange,
     required this.onTextAlignChange,
     required this.onColumnsChange,
+    required this.onChartTypeChange,
+    required this.onChartDataChange,
     required this.uploadsUsed,
   });
 
@@ -1072,6 +1315,7 @@ class _PropertiesPanel extends StatelessWidget {
         _Tab('text_style', 'Стили', Icons.text_fields_rounded, activeTab, onTabChange),
         _Tab('align', 'Выравнивание', Icons.format_align_left_rounded, activeTab, onTabChange),
         _Tab('columns', 'Колонки', Icons.view_column_rounded, activeTab, onTabChange),
+        _Tab('charts', 'Графики', Icons.show_chart_rounded, activeTab, onTabChange),
         _Tab('image', 'Медиа', Icons.image_rounded, activeTab, onTabChange),
         _Tab('ai', 'ИИ', Icons.auto_awesome_rounded, activeTab, onTabChange),
       ])),
@@ -1091,6 +1335,12 @@ class _PropertiesPanel extends StatelessWidget {
         'columns' => _ColumnsTab(
             columnsCount: columnsCount,
             onColumnsChanged: onColumnsChange,
+          ),
+        'charts' => _ChartsTab(
+            currentChartType: chartType,
+            chartData: chartData,
+            onChartTypeSelected: onChartTypeChange,
+            onChartDataChanged: onChartDataChange,
           ),
         _ => _DesignTab(
             globalFont: globalFont,
@@ -1537,6 +1787,267 @@ class _ColumnButton extends StatelessWidget {
             Text(label, style: TextStyle(color: isSelected ? _T.accent : _T.txtSecondary, fontSize: 9, fontWeight: FontWeight.w500)),
           ]),
         ),
+      ),
+    );
+  }
+}
+
+// ── CHARTS TAB ────────────────────────────────────────────────────────────────
+class _ChartsTab extends StatefulWidget {
+  final String? currentChartType;
+  final List<Map<String, dynamic>> chartData;
+  final ValueChanged<String?> onChartTypeSelected;
+  final ValueChanged<List<Map<String, dynamic>>> onChartDataChanged;
+
+  const _ChartsTab({
+    required this.currentChartType,
+    required this.chartData,
+    required this.onChartTypeSelected,
+    required this.onChartDataChanged,
+  });
+
+  @override
+  State<_ChartsTab> createState() => _ChartsTabState();
+}
+
+class _ChartsTabState extends State<_ChartsTab> {
+  final List<TextEditingController> _labelControllers = [];
+  final List<TextEditingController> _valueControllers = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _initControllers();
+  }
+
+  void _initControllers() {
+    _labelControllers.clear();
+    _valueControllers.clear();
+    
+    if (widget.chartData.isEmpty) {
+      _addDataPoint();
+      _addDataPoint();
+      _addDataPoint();
+      _addDataPoint();
+    } else {
+      for (var item in widget.chartData) {
+        _labelControllers.add(TextEditingController(text: item['label']));
+        _valueControllers.add(TextEditingController(text: item['value'].toString()));
+      }
+    }
+  }
+
+  void _updateData() {
+    final List<Map<String, dynamic>> newData = [];
+    for (int i = 0; i < _labelControllers.length; i++) {
+      final label = _labelControllers[i].text;
+      final value = double.tryParse(_valueControllers[i].text) ?? 0;
+      if (label.isNotEmpty && value > 0) {
+        newData.add({'label': label, 'value': value});
+      }
+    }
+    widget.onChartDataChanged(newData);
+  }
+
+  void _addDataPoint() {
+    setState(() {
+      _labelControllers.add(TextEditingController(text: 'Категория'));
+      _valueControllers.add(TextEditingController(text: '100'));
+    });
+  }
+
+  void _removeDataPoint(int index) {
+    setState(() {
+      _labelControllers[index].dispose();
+      _valueControllers[index].dispose();
+      _labelControllers.removeAt(index);
+      _valueControllers.removeAt(index);
+    });
+    _updateData();
+  }
+
+  @override
+  void dispose() {
+    for (var c in _labelControllers) c.dispose();
+    for (var c in _valueControllers) c.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _SectionLabel('ТИП ГРАФИКА'),
+      const SizedBox(height: 12),
+      Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+        _ChartTypeButton(
+          icon: Icons.bar_chart_rounded,
+          label: 'Столбчатый',
+          type: 'bar',
+          isSelected: widget.currentChartType == 'bar',
+          onTap: () => widget.onChartTypeSelected('bar'),
+        ),
+        _ChartTypeButton(
+          icon: Icons.pie_chart_rounded,
+          label: 'Круговой',
+          type: 'pie',
+          isSelected: widget.currentChartType == 'pie',
+          onTap: () => widget.onChartTypeSelected('pie'),
+        ),
+        _ChartTypeButton(
+          icon: Icons.show_chart_rounded,
+          label: 'Линейный',
+          type: 'line',
+          isSelected: widget.currentChartType == 'line',
+          onTap: () => widget.onChartTypeSelected('line'),
+        ),
+        _ChartTypeButton(
+          icon: Icons.clear_rounded,
+          label: 'Удалить',
+          type: null,
+          isSelected: widget.currentChartType == null,
+          onTap: () => widget.onChartTypeSelected(null),
+        ),
+      ]),
+      const SizedBox(height: 24),
+      if (widget.currentChartType != null) ...[
+        _SectionLabel('ДАННЫЕ'),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: _T.bgCard,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: _T.border),
+          ),
+          child: ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _labelControllers.length,
+            separatorBuilder: (_, __) => const Divider(color: _T.border, height: 1),
+            itemBuilder: (_, i) => Padding(
+              padding: const EdgeInsets.all(8),
+              child: Row(children: [
+                Expanded(
+                  flex: 2,
+                  child: TextField(
+                    controller: _labelControllers[i],
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    decoration: const InputDecoration(
+                      hintText: 'Метка',
+                      hintStyle: TextStyle(color: _T.txtMuted),
+                      filled: true,
+                      fillColor: _T.bgSurface,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide.none),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    ),
+                    onChanged: (_) => _updateData(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 1,
+                  child: TextField(
+                    controller: _valueControllers[i],
+                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      hintText: 'Знач.',
+                      hintStyle: TextStyle(color: _T.txtMuted),
+                      filled: true,
+                      fillColor: _T.bgSurface,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8)), borderSide: BorderSide.none),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    ),
+                    onChanged: (_) => _updateData(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () => _removeDataPoint(i),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: _T.danger.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Icon(Icons.close_rounded, color: _T.danger, size: 16),
+                  ),
+                ),
+              ]),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: _addDataPoint,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              decoration: BoxDecoration(
+                color: _T.accentDim,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                Icon(Icons.add_rounded, color: _T.accent, size: 18),
+                SizedBox(width: 8),
+                Text('Добавить данные', style: TextStyle(color: _T.accent, fontSize: 13, fontWeight: FontWeight.w500)),
+              ]),
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: _T.bgCard,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: _T.border),
+          ),
+          child: const Row(children: [
+            Icon(Icons.info_outline_rounded, color: _T.accent, size: 16),
+            SizedBox(width: 8),
+            Expanded(child: Text('График будет отображаться на слайде. Цвета настраиваются автоматически.', style: TextStyle(color: _T.txtSecondary, fontSize: 11))),
+          ]),
+        ),
+      ],
+    ]);
+  }
+}
+
+class _ChartTypeButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String? type;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ChartTypeButton({
+    required this.icon,
+    required this.label,
+    required this.type,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Column(children: [
+          Container(
+            width: 60, height: 60,
+            decoration: BoxDecoration(
+              color: isSelected ? _T.accentDim : _T.bgCard,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: isSelected ? _T.accent.withOpacity(0.5) : _T.border),
+            ),
+            child: Icon(icon, color: isSelected ? _T.accent : _T.txtSecondary, size: 30),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: TextStyle(color: isSelected ? _T.accent : _T.txtSecondary, fontSize: 11, fontWeight: FontWeight.w500)),
+        ]),
       ),
     );
   }
