@@ -1,29 +1,54 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/user_provider.dart';
-import '../services/api_service.dart';
-import 'login_screen.dart';
 
-class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+class VipScreen extends StatefulWidget {
+  const VipScreen({super.key});
 
   @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
+  State<VipScreen> createState() => _VipScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> {
-  bool _notificationsEnabled = true;
-  bool _autoSaveEnabled = true;
-  String _selectedLanguage = 'Русский';
-  String _selectedTheme = 'Тёмная';
+class _VipScreenState extends State<VipScreen> {
+  bool _isLoading = true;
+  final int _totalSpots = 50;
+  int _occupiedSpots = 0;
+  int _availableSpots = 50;
 
-  final List<String> _languages = ['Русский', 'English', 'Қазақша'];
-  final List<String> _themes = ['Тёмная', 'Светлая', 'Системная'];
+  @override
+  void initState() {
+    super.initState();
+    _loadVipStats();
+  }
+
+  Future<void> _loadVipStats() async {
+    try {
+      // TODO: Заменить на реальный API запрос, когда появится
+      // final stats = await ApiService.getVipStats();
+      // setState(() {
+      //   _occupiedSpots = stats['occupiedSpots'];
+      //   _availableSpots = _totalSpots - _occupiedSpots;
+      //   _isLoading = false;
+      // });
+      
+      // Для продакшена пока 0 занято, 50 свободно
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (mounted) {
+        setState(() {
+          _occupiedSpots = 0;
+          _availableSpots = _totalSpots - _occupiedSpots;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final up = Provider.of<UserProvider>(context);
-    
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
@@ -47,7 +72,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         title: const Text(
-          'Настройки',
+          'VIP доступ',
           style: TextStyle(
             color: Colors.white,
             fontSize: 20,
@@ -57,442 +82,379 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         centerTitle: true,
       ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 700),
+      body: _isLoading
+          ? const Center(
+              child: SizedBox(
+                width: 32,
+                height: 32,
+                child: CircularProgressIndicator(
+                  color: Color(0xFF1DB954),
+                  strokeWidth: 2.5,
+                ),
+              ),
+            )
+          : Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 700),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Hero header
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFFFD700), Color(0xFFFFD60A)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFFFFD700).withOpacity(0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 6),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Icon(
+                                Icons.star_rounded,
+                                color: Colors.white,
+                                size: 26,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'VIP статус',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 28,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Свободно $_availableSpots мест из $_totalSpots',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Progress
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E1E1E),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFF2A2A2A)),
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Занято мест',
+                                  style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 13),
+                                ),
+                                Text(
+                                  '$_occupiedSpots / $_totalSpots',
+                                  style: const TextStyle(
+                                    color: Color(0xFFFFD700),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: LinearProgressIndicator(
+                                value: _occupiedSpots / _totalSpots,
+                                backgroundColor: const Color(0xFF2A2A2A),
+                                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFFD700)),
+                                minHeight: 8,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              _availableSpots > 0
+                                  ? '🔥 Осталось всего $_availableSpots мест! Успей забрать VIP навсегда'
+                                  : 'Все места заняты. Следите за новостями!',
+                              style: TextStyle(
+                                color: _availableSpots > 0 ? const Color(0xFFFFD700) : const Color(0xFF9A9A9A),
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Benefits
+                      const Text(
+                        'ПРЕИМУЩЕСТВА VIP',
+                        style: TextStyle(
+                          color: Color(0xFF4A4A4A),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+
+                      _buildBenefitCard(
+                        icon: Icons.infinity_rounded,
+                        title: '∞ генераций',
+                        description: 'Неограниченное количество презентаций',
+                        color: const Color(0xFFFFD700),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildBenefitCard(
+                        icon: Icons.slideshow_rounded,
+                        title: 'До 50 слайдов',
+                        description: 'Самые большие презентации без ограничений',
+                        color: const Color(0xFFFFD700),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildBenefitCard(
+                        icon: Icons.palette_rounded,
+                        title: 'Все премиум фоны',
+                        description: '16+ эксклюзивных фонов и градиентов',
+                        color: const Color(0xFFFFD700),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildBenefitCard(
+                        icon: Icons.picture_as_pdf_rounded,
+                        title: 'Экспорт без знаков',
+                        description: 'PDF и PPTX без водяных знаков',
+                        color: const Color(0xFFFFD700),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildBenefitCard(
+                        icon: Icons.auto_awesome_rounded,
+                        title: 'AI улучшение текста',
+                        description: 'Продвинутая нейросеть для контента',
+                        color: const Color(0xFFFFD700),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildBenefitCard(
+                        icon: Icons.support_agent_rounded,
+                        title: 'VIP поддержка 24/7',
+                        description: 'Приоритетное решение любых вопросов',
+                        color: const Color(0xFFFFD700),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Price
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [const Color(0xFFFFD700).withOpacity(0.1), const Color(0xFFFFD60A).withOpacity(0.05)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.3)),
+                        ),
+                        child: Column(
+                          children: [
+                            const Text(
+                              'VIP доступ навсегда',
+                              style: TextStyle(
+                                color: Color(0xFFFFD700),
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                const Text(
+                                  '4 999',
+                                  style: TextStyle(
+                                    color: Color(0xFFFFD700),
+                                    fontSize: 48,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: -1,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: const Text(
+                                    '₽',
+                                    style: TextStyle(
+                                      color: Color(0xFFFFD700),
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Оплата только один раз',
+                              style: TextStyle(
+                                color: Color(0xFF9A9A9A),
+                                fontSize: 12,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            MouseRegion(
+                              cursor: _availableSpots > 0 ? SystemMouseCursors.click : SystemMouseCursors.forbidden,
+                              child: GestureDetector(
+                                onTap: _availableSpots > 0 ? _purchaseVip : null,
+                                child: Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  decoration: BoxDecoration(
+                                    gradient: _availableSpots > 0
+                                        ? const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFFFD60A)])
+                                        : null,
+                                    color: _availableSpots > 0 ? null : const Color(0xFF2A2A2A),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      _availableSpots > 0 ? 'Получить VIP' : 'Мест нет',
+                                      style: TextStyle(
+                                        color: _availableSpots > 0 ? Colors.white : const Color(0xFF9A9A9A),
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Info note
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E1E1E),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFF2A2A2A)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.info_outline_rounded, color: Color(0xFFFFD700), size: 20),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'VIP статус выдаётся первым 50 пользователям навсегда. Сейчас свободно 50 мест!',
+                                style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 12, height: 1.4),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+    );
+  }
+
+  Widget _buildBenefitCard({
+    required IconData icon,
+    required String title,
+    required String description,
+    required Color color,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF2A2A2A)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 24),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Профиль
-                const Text(
-                  'ПРОФИЛЬ',
-                  style: TextStyle(
-                    color: Color(0xFF4A4A4A),
-                    fontSize: 11,
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
                   ),
                 ),
-                const SizedBox(height: 12),
-                _buildSettingsCard([
-                  _SettingsItem(
-                    icon: Icons.person_outline,
-                    title: 'Имя пользователя',
-                    value: up.userName,
-                    onTap: () => _editUserName(up),
-                  ),
-                  _SettingsItem(
-                    icon: Icons.email_outlined,
-                    title: 'Email',
-                    value: up.userEmail,
-                    onTap: () => _editEmail(up),
-                  ),
-                  _SettingsItem(
-                    icon: Icons.logout_rounded,
-                    title: 'Выйти',
-                    value: '',
-                    isDanger: true,
-                    onTap: () => _logout(),
-                  ),
-                ]),
-                const SizedBox(height: 24),
-
-                // Настройки приложения
-                const Text(
-                  'ПРИЛОЖЕНИЕ',
-                  style: TextStyle(
-                    color: Color(0xFF4A4A4A),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
+                const SizedBox(height: 2),
+                Text(
+                  description,
+                  style: const TextStyle(
+                    color: Color(0xFF9A9A9A),
+                    fontSize: 12,
                   ),
                 ),
-                const SizedBox(height: 12),
-                _buildSettingsCard([
-                  _SettingsSwitch(
-                    icon: Icons.notifications_none,
-                    title: 'Уведомления',
-                    value: _notificationsEnabled,
-                    onChanged: (v) => setState(() => _notificationsEnabled = v),
-                  ),
-                  _SettingsSwitch(
-                    icon: Icons.save_outlined,
-                    title: 'Автосохранение',
-                    value: _autoSaveEnabled,
-                    onChanged: (v) => setState(() => _autoSaveEnabled = v),
-                  ),
-                  _SettingsItem(
-                    icon: Icons.language_outlined,
-                    title: 'Язык',
-                    value: _selectedLanguage,
-                    onTap: () => _showLanguagePicker(),
-                  ),
-                  _SettingsItem(
-                    icon: Icons.dark_mode_outlined,
-                    title: 'Тема',
-                    value: _selectedTheme,
-                    onTap: () => _showThemePicker(),
-                  ),
-                ]),
-                const SizedBox(height: 24),
-
-                // О приложении
-                const Text(
-                  'О ПРИЛОЖЕНИИ',
-                  style: TextStyle(
-                    color: Color(0xFF4A4A4A),
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.8,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildSettingsCard([
-                  _SettingsItem(
-                    icon: Icons.info_outline,
-                    title: 'Версия',
-                    value: '1.0.0',
-                    onTap: null,
-                  ),
-                  _SettingsItem(
-                    icon: Icons.description_outlined,
-                    title: 'Пользовательское соглашение',
-                    value: '',
-                    onTap: () => _showTerms(),
-                  ),
-                  _SettingsItem(
-                    icon: Icons.privacy_tip_outlined,
-                    title: 'Политика конфиденциальности',
-                    value: '',
-                    onTap: () => _showPrivacy(),
-                  ),
-                ]),
-                const SizedBox(height: 32),
               ],
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSettingsCard(List<Widget> items) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2A2A2A)),
-      ),
-      child: Column(
-        children: items
-            .expand((item) => [
-                  item,
-                  if (item != items.last)
-                    const Divider(
-                      height: 1,
-                      color: Color(0xFF2A2A2A),
-                      indent: 52,
-                    ),
-                ])
-            .toList(),
-      ),
-    );
-  }
-
-  Future<void> _editUserName(UserProvider up) async {
-    final controller = TextEditingController(text: up.userName);
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Изменить имя', style: TextStyle(color: Colors.white, fontSize: 18)),
-        content: TextField(
-          controller: controller,
-          style: const TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            hintText: 'Введите имя',
-            hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
-            filled: true,
-            fillColor: const Color(0xFF2A2A2A),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A)))),
-          TextButton(onPressed: () => Navigator.pop(ctx, controller.text), child: const Text('Сохранить', style: TextStyle(color: Color(0xFF1DB954)))),
-        ],
-      ),
-    );
-    
-    if (result != null && result.isNotEmpty && result != up.userName) {
-      up.setUserName(result);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Имя обновлено'), backgroundColor: Color(0xFF1DB954), behavior: SnackBarBehavior.floating),
-        );
-      }
-    }
-  }
-
-  Future<void> _editEmail(UserProvider up) async {
-    final controller = TextEditingController(text: up.userEmail);
-    final result = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Изменить Email', style: TextStyle(color: Colors.white, fontSize: 18)),
-        content: TextField(
-          controller: controller,
-          style: const TextStyle(color: Colors.white),
-          keyboardType: TextInputType.emailAddress,
-          decoration: InputDecoration(
-            hintText: 'Введите email',
-            hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
-            filled: true,
-            fillColor: const Color(0xFF2A2A2A),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A)))),
-          TextButton(onPressed: () => Navigator.pop(ctx, controller.text), child: const Text('Сохранить', style: TextStyle(color: Color(0xFF1DB954)))),
-        ],
-      ),
-    );
-    
-    if (result != null && result.isNotEmpty && result != up.userEmail) {
-      up.setUserEmail(result);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Email обновлён'), backgroundColor: Color(0xFF1DB954), behavior: SnackBarBehavior.floating),
-        );
-      }
-    }
-  }
-
-  Future<void> _logout() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Выход', style: TextStyle(color: Colors.white, fontSize: 18)),
-        content: const Text('Вы уверены, что хотите выйти?', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14)),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A)))),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Выйти', style: TextStyle(color: Color(0xFFFF3B30)))),
-        ],
-      ),
-    );
-    
-    if (confirmed == true) {
-      try {
-        await ApiService.logout();
-        final up = Provider.of<UserProvider>(context, listen: false);
-        up.logout();
-        if (mounted) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
-            (route) => false,
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Ошибка выхода'), backgroundColor: Color(0xFFFF3B30), behavior: SnackBarBehavior.floating),
-          );
-        }
-      }
-    }
-  }
-
-  void _showLanguagePicker() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1E1E1E),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 12),
-          Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF2A2A2A), borderRadius: BorderRadius.circular(2))),
-          const SizedBox(height: 16),
-          const Text('Выберите язык', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 16),
-          ..._languages.map((lang) => ListTile(
-            title: Text(lang, style: const TextStyle(color: Colors.white)),
-            trailing: _selectedLanguage == lang ? const Icon(Icons.check_rounded, color: Color(0xFF1DB954)) : null,
-            onTap: () { setState(() => _selectedLanguage = lang); Navigator.pop(ctx); },
-          )),
-          const SizedBox(height: 16),
         ],
       ),
     );
   }
 
-  void _showThemePicker() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1E1E1E),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const SizedBox(height: 12),
-          Container(width: 40, height: 4, decoration: BoxDecoration(color: const Color(0xFF2A2A2A), borderRadius: BorderRadius.circular(2))),
-          const SizedBox(height: 16),
-          const Text('Выберите тему', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 16),
-          ..._themes.map((theme) => ListTile(
-            title: Text(theme, style: const TextStyle(color: Colors.white)),
-            trailing: _selectedTheme == theme ? const Icon(Icons.check_rounded, color: Color(0xFF1DB954)) : null,
-            onTap: () { setState(() => _selectedTheme = theme); Navigator.pop(ctx); },
-          )),
-          const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-
-  void _showTerms() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Пользовательское соглашение', style: TextStyle(color: Colors.white, fontSize: 18)),
-        content: const SingleChildScrollView(
-          child: Text('Здесь будет текст пользовательского соглашения...', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 13, height: 1.5)),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Закрыть', style: TextStyle(color: Color(0xFF1DB954)))),
-        ],
-      ),
-    );
-  }
-
-  void _showPrivacy() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Политика конфиденциальности', style: TextStyle(color: Colors.white, fontSize: 18)),
-        content: const SingleChildScrollView(
-          child: Text('Здесь будет текст политики конфиденциальности...', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 13, height: 1.5)),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Закрыть', style: TextStyle(color: Color(0xFF1DB954)))),
-        ],
-      ),
-    );
-  }
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// ВСПОМОГАТЕЛЬНЫЕ ВИДЖЕТЫ
-// ──────────────────────────────────────────────────────────────────────────────
-
-class _SettingsItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String value;
-  final bool isDanger;
-  final VoidCallback? onTap;
-
-  const _SettingsItem({
-    required this.icon,
-    required this.title,
-    required this.value,
-    this.isDanger = false,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(0),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Icon(icon, size: 22, color: isDanger ? const Color(0xFFFF3B30) : const Color(0xFF1DB954)),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    color: isDanger ? const Color(0xFFFF3B30) : Colors.white,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-              if (value.isNotEmpty)
-                Text(
-                  value,
-                  style: TextStyle(
-                    color: isDanger ? const Color(0xFFFF3B30) : const Color(0xFF9A9A9A),
-                    fontSize: 13,
-                  ),
-                ),
-              if (onTap != null && !isDanger)
-                const Icon(Icons.chevron_right_rounded, color: Color(0xFF4A4A4A), size: 20),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SettingsSwitch extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const _SettingsSwitch({
-    required this.icon,
-    required this.title,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: [
-          Icon(icon, size: 22, color: const Color(0xFF1DB954)),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeColor: const Color(0xFF1DB954),
-            activeTrackColor: const Color(0xFF1DB954).withOpacity(0.3),
-            inactiveTrackColor: const Color(0xFF2A2A2A),
-          ),
-        ],
+  void _purchaseVip() {
+    // TODO: Интеграция с платёжной системой
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Оплата VIP доступа'),
+        backgroundColor: Color(0xFFFFD700),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: EdgeInsets.fromLTRB(16, 0, 16, 24),
+        duration: Duration(seconds: 2),
       ),
     );
   }
