@@ -90,3 +90,5 @@ flutter:
     - family: Courier
       fonts:
         - asset: assets/fonts/Courier-Prime.ttf
+dependencies:
+  fl_chart: ^0.66.0  # для графиков
