@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
+import 'template_library_screen.dart';
 
 class WorkspaceScreen extends StatefulWidget {
   const WorkspaceScreen({super.key});
@@ -11,8 +14,57 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   String _selectedTariff = 'team';
   bool _isLoading = false;
 
+  // Командные функции
+  final List<Map<String, dynamic>> _teamFeatures = [
+    {
+      'title': 'Ролевая модель',
+      'description': 'Администратор, редактор, зритель',
+      'icon': Icons.admin_panel_settings_rounded,
+      'isPremium': false,
+    },
+    {
+      'title': 'Общие шаблоны',
+      'description': 'Корпоративная библиотека',
+      'icon': Icons.template_rounded,
+      'isPremium': false,
+    },
+    {
+      'title': 'Комментарии',
+      'description': 'Рецензирование и обсуждения',
+      'icon': Icons.comment_rounded,
+      'isPremium': true,
+    },
+    {
+      'title': 'История версий',
+      'description': 'Отслеживание изменений',
+      'icon': Icons.history_rounded,
+      'isPremium': true,
+    },
+    {
+      'title': 'Экспорт в корпоративные форматы',
+      'description': 'Google Slides, SharePoint, Confluence',
+      'icon': Icons.cloud_upload_rounded,
+      'isPremium': true,
+    },
+    {
+      'title': 'Аналитика команды',
+      'description': 'Статистика и отчёты',
+      'icon': Icons.analytics_rounded,
+      'isPremium': true,
+    },
+    {
+      'title': 'Общий чат',
+      'description': 'Обсуждения в реальном времени',
+      'icon': Icons.chat_rounded,
+      'isPremium': true,
+    },
+  ];
+
   @override
   Widget build(BuildContext context) {
+    final up = Provider.of<UserProvider>(context);
+    final isPremium = up.isPremium;
+
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
@@ -57,174 +109,280 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 ),
               ),
             )
-          : Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 700),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(24),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF1DB954).withOpacity(0.3),
-                              blurRadius: 20,
-                              offset: const Offset(0, 6),
-                            ),
-                          ],
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 700),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Hero header
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                        child: Column(
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF1DB954).withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Icon(
+                              Icons.group_rounded,
+                              color: Colors.white,
+                              size: 26,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Командный тариф',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'Совместная работа над проектами',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Тарифы
+                    const Text(
+                      'ВЫБЕРИТЕ ПЛАН',
+                      style: TextStyle(
+                        color: Color(0xFF4A4A4A),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    _buildTariffCard(
+                      title: 'Team',
+                      price: '999',
+                      period: 'месяц',
+                      originalPrice: '1999',
+                      description: 'Для небольших команд',
+                      features: const [
+                        'До 5 пользователей',
+                        '∞ генераций',
+                        'Общее хранилище',
+                        'Совместный доступ',
+                        'Бренд-кит',
+                        'Ролевая модель',
+                        'Общие шаблоны',
+                      ],
+                      isPopular: true,
+                      onTap: () => _selectTariff('team'),
+                    ),
+                    const SizedBox(height: 14),
+
+                    _buildTariffCard(
+                      title: 'Business',
+                      price: '2499',
+                      period: 'месяц',
+                      originalPrice: '4999',
+                      description: 'Для среднего бизнеса',
+                      features: const [
+                        'До 20 пользователей',
+                        '∞ генераций',
+                        'Общее хранилище 500GB',
+                        'Совместный доступ',
+                        'Бренд-кит',
+                        'Ролевая модель',
+                        'Общие шаблоны',
+                        'Комментарии и рецензирование',
+                        'История версий',
+                        'API доступ',
+                      ],
+                      isPopular: false,
+                      onTap: () => _selectTariff('business'),
+                    ),
+                    const SizedBox(height: 14),
+
+                    _buildTariffCard(
+                      title: 'Enterprise',
+                      price: '4999',
+                      period: 'месяц',
+                      originalPrice: '9999',
+                      description: 'Для крупных компаний',
+                      features: const [
+                        'Неограниченно пользователей',
+                        '∞ генераций',
+                        'Общее хранилище 2TB',
+                        'Совместный доступ',
+                        'Бренд-кит',
+                        'Ролевая модель',
+                        'Общие шаблоны',
+                        'Комментарии и рецензирование',
+                        'История версий',
+                        'API + Webhook',
+                        'Аналитика команды',
+                        'Общий чат',
+                        'Экспорт в корпоративные форматы',
+                        'VIP поддержка 24/7',
+                      ],
+                      isPopular: false,
+                      onTap: () => _selectTariff('enterprise'),
+                    ),
+                    const SizedBox(height: 32),
+
+                    // Командные функции
+                    const Text(
+                      'ВОЗМОЖНОСТИ КОМАНДНОЙ РАБОТЫ',
+                      style: TextStyle(
+                        color: Color(0xFF4A4A4A),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    ..._teamFeatures.map((feature) {
+                      final isLocked = feature['isPremium'] == true && !isPremium;
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isLocked ? const Color(0xFF1A1A1A) : const Color(0xFF1E1E1E),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isLocked ? const Color(0xFF2A2A2A) : const Color(0xFF1DB954).withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
                           children: [
                             Container(
-                              width: 48,
-                              height: 48,
+                              width: 44,
+                              height: 44,
                               decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(16),
+                                color: const Color(0xFF1DB954).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Icon(
-                                Icons.group_rounded,
-                                color: Colors.white,
-                                size: 26,
+                              child: Icon(feature['icon'], color: isLocked ? const Color(0xFF4A4A4A) : const Color(0xFF1DB954), size: 24),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        feature['title'],
+                                        style: TextStyle(
+                                          color: isLocked ? const Color(0xFF4A4A4A) : Colors.white,
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      if (feature['isPremium'] == true) ...[
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            gradient: const LinearGradient(
+                                              colors: [Color(0xFFFFD700), Color(0xFFFFD60A)],
+                                            ),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: const Text(
+                                            'PRO',
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w800,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    feature['description'],
+                                    style: TextStyle(
+                                      color: isLocked ? const Color(0xFF4A4A4A) : const Color(0xFF9A9A9A),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'Командный тариф',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 24,
-                                fontWeight: FontWeight.w800,
-                                letterSpacing: -0.5,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            Text(
-                              'Совместная работа над проектами',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.9),
-                                fontSize: 13,
-                              ),
-                            ),
+                            if (isLocked)
+                              const Icon(Icons.lock_rounded, color: Color(0xFFFFD700), size: 20)
+                            else
+                              const Icon(Icons.check_circle_rounded, color: Color(0xFF1DB954), size: 20),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 24),
+                      );
+                    }),
 
-                      const Text(
-                        'ВЫБЕРИТЕ ПЛАН',
-                        style: TextStyle(
-                          color: Color(0xFF4A4A4A),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
+                    const SizedBox(height: 24),
 
-                      _buildTariffCard(
-                        title: 'Team',
-                        price: '999',
-                        period: 'месяц',
-                        originalPrice: '1999',
-                        description: 'Для небольших команд',
-                        features: const [
-                          'До 5 пользователей',
-                          '∞ генераций',
-                          'Общее хранилище',
-                          'Совместный доступ',
-                          'Бренд-кит',
-                        ],
-                        isPopular: true,
-                        onTap: () => _selectTariff('team'),
-                      ),
-                      const SizedBox(height: 14),
-
-                      _buildTariffCard(
-                        title: 'Business',
-                        price: '2499',
-                        period: 'месяц',
-                        originalPrice: '4999',
-                        description: 'Для среднего бизнеса',
-                        features: const [
-                          'До 20 пользователей',
-                          '∞ генераций',
-                          'Общее хранилище 500GB',
-                          'Совместный доступ',
-                          'Бренд-кит',
-                          'Приоритетная поддержка',
-                          'API доступ',
-                        ],
-                        isPopular: false,
-                        onTap: () => _selectTariff('business'),
-                      ),
-                      const SizedBox(height: 14),
-
-                      _buildTariffCard(
-                        title: 'Enterprise',
-                        price: '4999',
-                        period: 'месяц',
-                        originalPrice: '9999',
-                        description: 'Для крупных компаний',
-                        features: const [
-                          'Неограниченно пользователей',
-                          '∞ генераций',
-                          'Общее хранилище 2TB',
-                          'Совместный доступ',
-                          'Бренд-кит',
-                          'VIP поддержка 24/7',
-                          'API + Webhook',
-                          'Интеграция с CRM',
-                        ],
-                        isPopular: false,
-                        onTap: () => _selectTariff('enterprise'),
-                      ),
-                      const SizedBox(height: 24),
-
-                      MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          onTap: () => _contactSales(),
-                          child: Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1E1E1E),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: const Color(0xFF2A2A2A)),
-                            ),
-                            child: const Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 20),
-                                SizedBox(width: 10),
-                                Text(
-                                  'Связаться с отделом продаж',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                    // Кнопка связи
+                    MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: GestureDetector(
+                        onTap: () => _contactSales(),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E1E1E),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFF2A2A2A)),
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 20),
+                              SizedBox(width: 10),
+                              Text(
+                                'Связаться с отделом продаж',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
                                 ),
-                                SizedBox(width: 8),
-                                Icon(Icons.arrow_forward_rounded, color: Color(0xFF1DB954), size: 16),
-                              ],
-                            ),
+                              ),
+                              SizedBox(width: 8),
+                              Icon(Icons.arrow_forward_rounded, color: Color(0xFF1DB954), size: 16),
+                            ],
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
