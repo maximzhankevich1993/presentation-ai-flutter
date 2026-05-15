@@ -1,4 +1,4 @@
- import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/presentation.dart';
 import '../models/lesson_plan.dart';
@@ -58,11 +58,17 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
     setState(() => _isGenerating = true);
     
     try {
-      final userProvider = context.read<UserProvider>();
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      
+      // Если пользователь не загружен - загружаем
+      if (userProvider.token == null) {
+        await userProvider.loadUser();
+      }
+      
       final token = userProvider.token;
       
-      if (token == null) {
-        _showError('Пользователь не авторизован');
+      if (token == null || token.isEmpty) {
+        _showError('Пользователь не авторизован. Пожалуйста, войдите в аккаунт.');
         setState(() => _isGenerating = false);
         return;
       }
@@ -95,6 +101,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
   Presentation _convertToPresentation(LessonPlan lessonPlan) {
     final List<Slide> slides = [];
     
+    // Титульный слайд
     slides.add(Slide(
       title: 'План урока',
       content: [
@@ -106,11 +113,13 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       ],
     ));
     
+    // Цели урока
     slides.add(Slide(
       title: 'Цели урока',
       content: lessonPlan.objectives.map((obj) => '• $obj').toList(),
     ));
     
+    // Этапы урока
     for (final stage in lessonPlan.stages) {
       slides.add(Slide(
         title: stage.name,
@@ -123,6 +132,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       ));
     }
     
+    // Домашнее задание
     if (_includeHomework) {
       slides.add(Slide(
         title: 'Домашнее задание',
@@ -130,6 +140,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       ));
     }
     
+    // Оценивание
     if (_includeAssessments) {
       slides.add(Slide(
         title: 'Оценивание',
@@ -137,6 +148,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       ));
     }
     
+    // Дифференциация
     if (_includeDifferentiation) {
       slides.add(Slide(
         title: 'Дифференциация',
@@ -204,6 +216,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
+                  // Заголовок
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),
@@ -237,6 +250,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                   ),
                   const SizedBox(height: 24),
                   
+                  // Поля ввода
                   _buildTextField(
                     controller: _topicController,
                     hint: 'Тема урока',
@@ -256,6 +270,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                   ),
                   const SizedBox(height: 16),
                   
+                  // Стандарт и длительность
                   Row(
                     children: [
                       Expanded(child: _buildStandardDropdown()),
@@ -265,6 +280,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                   ),
                   const SizedBox(height: 24),
                   
+                  // Дополнительные настройки
                   _buildSwitch(
                     value: _includeAssessments,
                     onChanged: (v) => setState(() => _includeAssessments = v),
@@ -287,6 +303,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                   ),
                   const SizedBox(height: 32),
                   
+                  // Кнопка создания
                   MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: GestureDetector(
