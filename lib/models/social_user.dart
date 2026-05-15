@@ -3,7 +3,7 @@ class SocialUser {
   final String email;
   final String name;
   final String? avatarUrl;
-  final String provider;
+  final String provider; // 'google', 'apple'
 
   SocialUser({
     required this.id,
