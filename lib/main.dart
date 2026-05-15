@@ -10,30 +10,25 @@ import 'screens/login_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Загружаем сохранённый токен при старте приложения
+  // Загружаем сохранённый токен при старте (без редиректа)
   await ApiService.loadToken();
   
-  // Проверяем токен и обновляем профиль если нужно
-  bool isLoggedIn = false;
+  // Если токен есть — тихо обновляем профиль в фоне
   if (ApiService.token != null) {
     try {
       final user = await ApiService.getProfile();
-      isLoggedIn = true;
       print('✅ Пользователь авторизован: ${user.name}');
     } catch (e) {
-      // Токен невалидный, очищаем
       await ApiService.clearToken();
       print('❌ Токен невалидный, очищен');
     }
   }
   
-  runApp(MyApp(isLoggedIn: isLoggedIn));
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  final bool isLoggedIn;
-  
-  const MyApp({super.key, this.isLoggedIn = false});
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -52,7 +47,7 @@ class MyApp extends StatelessWidget {
           fontFamily: 'Inter',
           useMaterial3: true,
         ),
-        home: isLoggedIn ? const HomeScreen() : const LoginScreen(),
+        home: const HomeScreen(), // Всегда показываем HomeScreen
       ),
     );
   }
