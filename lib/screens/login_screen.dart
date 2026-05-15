@@ -353,32 +353,35 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 20),
                       
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Google
-                          _SocialButton(
-                            icon: Icons.g_mobiledata,
-                            label: 'Google',
-                            color: const Color(0xFFDB4437),
-                            onTap: () => _socialLogin(
-                              () => SocialAuthService.signInWithGoogle(),
-                              'Google',
+                      // Google кнопка
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: () => _socialLogin(
+                            () => SocialAuthService.signInWithGoogle(),
+                            'Google',
+                          ),
+                          child: Container(
+                            width: 200,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E1E1E),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: const Color(0xFF2A2A2A)),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.g_mobiledata, color: Color(0xFFDB4437), size: 24),
+                                SizedBox(width: 12),
+                                Text(
+                                  'Google',
+                                  style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: 20),
-                          
-                          // Apple
-                          _SocialButton(
-                            icon: Icons.apple,
-                            label: 'Apple',
-                            color: Colors.white,
-                            onTap: () => _socialLogin(
-                              () => SocialAuthService.signInWithApple(),
-                              'Apple',
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                       
                       const SizedBox(height: 20),
@@ -414,49 +417,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
             ),
-    );
-  }
-}
-
-class _SocialButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _SocialButton({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Column(
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E),
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFF2A2A2A)),
-              ),
-              child: Icon(icon, color: color, size: 28),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 11),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
