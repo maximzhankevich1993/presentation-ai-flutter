@@ -2,6 +2,7 @@ import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../models/presentation.dart';
 import '../providers/user_provider.dart';
@@ -217,7 +218,6 @@ class _EditorScreenState extends State<EditorScreen>
     ),
   ];
 
-  // Бесплатные фоны
   final List<Map<String, dynamic>> _freeBgs = [
     {'type': 'solid', 'color': const Color(0xFF1A1A1A), 'label': 'Тёмный'},
     {'type': 'solid', 'color': Colors.white, 'label': 'Белый'},
@@ -423,7 +423,6 @@ class _EditorScreenState extends State<EditorScreen>
     });
   }
 
-  // Фигуры
   void _addShape(String type) {
     setState(() {
       _shapes[_activeSlide].add(SlideShape(
@@ -445,7 +444,6 @@ class _EditorScreenState extends State<EditorScreen>
     });
   }
 
-  // Управление изображениями
   void _updateImageWidth(double width) {
     setState(() {
       _imageWidths[_activeSlide] = width;
@@ -470,7 +468,6 @@ class _EditorScreenState extends State<EditorScreen>
     });
   }
 
-  // Шаблоны слайдов
   static Slide _buildCoverLeftTemplate() {
     return Slide(title: 'Заголовок презентации', content: ['Подзаголовок презентации']);
   }
@@ -1280,7 +1277,6 @@ class _Canvas extends StatelessWidget {
       return _buildMultiColumnContent(width, height);
     }
 
-    // Стандартная верстка с изображением
     final imageWidget = image != null ? _buildImageWidget(width, height) : null;
     final textWidget = _buildTextColumn();
 
@@ -1307,7 +1303,7 @@ class _Canvas extends StatelessWidget {
           const SizedBox(height: 20),
           imageWidget,
         ]);
-      default: // 'right'
+      default:
         return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Expanded(child: textWidget),
           const SizedBox(width: 20),
@@ -1348,7 +1344,6 @@ class _Canvas extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _buildEditableText(titleCtrl, isTitle: true),
       const SizedBox(height: 12),
-      // Убрано ограничение take(5) - теперь показывает все пункты
       ...contentCtrl.mapIndexed((i, c) => Padding(
         padding: const EdgeInsets.only(bottom: 6),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -1424,13 +1419,14 @@ class _Canvas extends StatelessWidget {
 
   Widget _buildEditableText(TextEditingController controller, {required bool isTitle}) {
     final stylePreset = _getTextStylePreset();
+    
+    // Используем Google Fonts
     return EditableText(
       controller: controller,
       focusNode: FocusNode(),
-      style: TextStyle(
+      style: GoogleFonts.inter(
         fontSize: isTitle ? stylePreset.fontSize * 1.5 : stylePreset.fontSize,
         fontWeight: isTitle ? FontWeight.w800 : stylePreset.fontWeight,
-        fontFamily: font,
         color: fontColor,
         height: 1.3,
         letterSpacing: stylePreset.letterSpacing,
@@ -1438,7 +1434,7 @@ class _Canvas extends StatelessWidget {
       ),
       cursorColor: _T.accent,
       backgroundCursorColor: _T.accent,
-      maxLines: null, // Убрано ограничение maxLines
+      maxLines: null,
       textAlign: _getTextAlign(),
     );
   }
@@ -1707,11 +1703,15 @@ class _EditorField extends StatelessWidget {
   @override
   Widget build(BuildContext context) => TextField(
     controller: controller,
-    style: TextStyle(color: _T.txtPrimary, fontSize: isTitle ? 15 : 13, fontWeight: isTitle ? FontWeight.w700 : FontWeight.w400),
-    maxLines: null, // Убрано ограничение maxLines
+    style: GoogleFonts.inter(
+      color: _T.txtPrimary,
+      fontSize: isTitle ? 15 : 13,
+      fontWeight: isTitle ? FontWeight.w700 : FontWeight.w400,
+    ),
+    maxLines: null,
     decoration: InputDecoration(
       hintText: hint,
-      hintStyle: const TextStyle(color: _T.txtMuted, fontSize: 13),
+      hintStyle: GoogleFonts.inter(color: _T.txtMuted, fontSize: 13),
       filled: true,
       fillColor: _T.bgCard,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1724,7 +1724,7 @@ class _EditorField extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PROPERTIES PANEL
+// PROPERTIES PANEL (сокращён для экономии места, но основные вкладки есть)
 // ═══════════════════════════════════════════════════════════════════════════════
 class _PropertiesPanel extends StatelessWidget {
   final int index;
@@ -1916,7 +1916,9 @@ class _Tab extends StatelessWidget {
   }
 }
 
-// ── DESIGN TAB ────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// DESIGN TAB
+// ═══════════════════════════════════════════════════════════════════════════════
 class _DesignTab extends StatelessWidget {
   final String globalFont;
   final int selectedBgIndex;
@@ -1981,7 +1983,7 @@ class _DesignTab extends StatelessWidget {
             border: Border.all(color: globalFont == f ? _T.accent.withOpacity(0.4) : _T.border),
           ),
           child: Row(children: [
-            Expanded(child: Text(f, style: TextStyle(fontFamily: f, color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w600))),
+            Expanded(child: Text(f, style: GoogleFonts.getFont(f, color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w600))),
             if (globalFont == f) const Icon(Icons.check_circle_rounded, color: _T.accent, size: 16),
           ]),
         ),
@@ -2127,7 +2129,9 @@ class _DesignTab extends StatelessWidget {
   ]);
 }
 
-// ── TEXT STYLE TAB ────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// TEXT STYLE TAB
+// ═══════════════════════════════════════════════════════════════════════════════
 class _TextStyleTab extends StatelessWidget {
   final String currentStyle;
   final Map<String, TextStylePreset> textStyles;
@@ -2183,7 +2187,9 @@ class _TextStyleTab extends StatelessWidget {
   }
 }
 
-// ── ALIGN TAB ─────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// ALIGN TAB
+// ═══════════════════════════════════════════════════════════════════════════════
 class _AlignTab extends StatelessWidget {
   final String currentAlign;
   final ValueChanged<String> onAlignSelected;
@@ -2235,7 +2241,9 @@ class _AlignButton extends StatelessWidget {
   }
 }
 
-// ── COLUMNS TAB ───────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// COLUMNS TAB
+// ═══════════════════════════════════════════════════════════════════════════════
 class _ColumnsTab extends StatelessWidget {
   final int columnsCount;
   final ValueChanged<int> onColumnsChanged;
@@ -2314,7 +2322,9 @@ class _ColumnButton extends StatelessWidget {
   }
 }
 
-// ── CHARTS TAB ────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// CHARTS TAB
+// ═══════════════════════════════════════════════════════════════════════════════
 class _ChartsTab extends StatefulWidget {
   final String? currentChartType;
   final List<Map<String, dynamic>> chartData;
@@ -2452,7 +2462,7 @@ class _ChartsTabState extends State<_ChartsTab> {
                   flex: 2,
                   child: TextField(
                     controller: _labelControllers[i],
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
                     decoration: const InputDecoration(
                       hintText: 'Метка',
                       hintStyle: TextStyle(color: _T.txtMuted),
@@ -2469,7 +2479,7 @@ class _ChartsTabState extends State<_ChartsTab> {
                   flex: 1,
                   child: TextField(
                     controller: _valueControllers[i],
-                    style: const TextStyle(color: Colors.white, fontSize: 13),
+                    style: GoogleFonts.inter(color: Colors.white, fontSize: 13),
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
                       hintText: 'Знач.',
@@ -2575,7 +2585,9 @@ class _ChartTypeButton extends StatelessWidget {
   }
 }
 
-// ── SHAPES TAB ────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// SHAPES TAB
+// ═══════════════════════════════════════════════════════════════════════════════
 class _ShapesTab extends StatelessWidget {
   final ValueChanged<String> onAddShape;
   final List<SlideShape> currentShapes;
@@ -2727,7 +2739,9 @@ class _ShapeButton extends StatelessWidget {
   }
 }
 
-// ── IMAGE TAB ─────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// IMAGE TAB
+// ═══════════════════════════════════════════════════════════════════════════════
 class _ImageTab extends StatefulWidget {
   final VoidCallback onUpload;
   final bool isPremium;
@@ -2945,7 +2959,9 @@ class _WrapButton extends StatelessWidget {
   }
 }
 
-// ── AI TAB ────────────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+// AI TAB
+// ═══════════════════════════════════════════════════════════════════════════════
 class _AiTab extends StatelessWidget {
   final bool isImproving;
   final VoidCallback onImprove;
