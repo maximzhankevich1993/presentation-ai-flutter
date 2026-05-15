@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
-
+import 'template_library_screen.dart';
+import 'premium_screen.dart';
 
 class CorporateScreen extends StatefulWidget {
   final String countryCode;
@@ -14,146 +15,6 @@ class CorporateScreen extends StatefulWidget {
 class _CorporateScreenState extends State<CorporateScreen> {
   String _selectedTariff = 'business';
   bool _isLoading = false;
-
-  // Бесплатные шаблоны
-  final List<Map<String, dynamic>> _freeTemplates = [
-    {
-      'title': 'Бизнес-план',
-      'description': 'Структура и финансовые показатели',
-      'color1': '#1DB954',
-      'color2': '#1ED760',
-      'slideCount': 8,
-      'icon': Icons.business_center_rounded,
-      'isPremium': false,
-    },
-    {
-      'title': 'Презентация продукта',
-      'description': 'Запуск нового продукта',
-      'color1': '#f093fb',
-      'color2': '#f5576c',
-      'slideCount': 8,
-      'icon': Icons.videocam_rounded,
-      'isPremium': false,
-    },
-    {
-      'title': 'SWOT-анализ',
-      'description': 'Сильные и слабые стороны',
-      'color1': '#667eea',
-      'color2': '#764ba2',
-      'slideCount': 6,
-      'icon': Icons.analytics_rounded,
-      'isPremium': false,
-    },
-  ];
-
-  // Премиум шаблоны (только для подписчиков)
-  final List<Map<String, dynamic>> _premiumTemplates = [
-    {
-      'title': 'Годовой отчёт',
-      'description': 'Полный анализ деятельности компании',
-      'color1': '#11998e',
-      'color2': '#38ef7d',
-      'slideCount': 15,
-      'icon': Icons.analytics_rounded,
-      'isPremium': true,
-    },
-    {
-      'title': 'Финансовая отчётность',
-      'description': 'Баланс, прибыль, денежные потоки',
-      'color1': '#1DB954',
-      'color2': '#1ED760',
-      'slideCount': 12,
-      'icon': Icons.attach_money_rounded,
-      'isPremium': true,
-    },
-    {
-      'title': 'Маркетинговая стратегия',
-      'description': 'План продвижения на год',
-      'color1': '#fa709a',
-      'color2': '#fee140',
-      'slideCount': 10,
-      'icon': Icons.trending_up_rounded,
-      'isPremium': true,
-    },
-    {
-      'title': 'KPI Dashboard',
-      'description': 'Ключевые показатели эффективности',
-      'color1': '#FF416C',
-      'color2': '#FF4B2B',
-      'slideCount': 10,
-      'icon': Icons.dashboard_rounded,
-      'isPremium': true,
-    },
-    {
-      'title': 'Инвестиционная презентация',
-      'description': 'Для инвесторов и партнёров',
-      'color1': '#8E2DE2',
-      'color2': '#4A00E0',
-      'slideCount': 12,
-      'icon': Icons.rocket_launch_rounded,
-      'isPremium': true,
-    },
-    {
-      'title': 'Отчёт по продажам',
-      'description': 'Анализ продаж и прогнозы',
-      'color1': '#FFE000',
-      'color2': '#799F0C',
-      'slideCount': 10,
-      'icon': Icons.trending_up_rounded,
-      'isPremium': true,
-    },
-  ];
-
-  void _useTemplate(Map<String, dynamic> template) {
-    final up = Provider.of<UserProvider>(context, listen: false);
-    
-    // Проверка на премиум доступ
-    if (template['isPremium'] == true && !up.isPremium) {
-      _showPremiumRequired();
-      return;
-    }
-    
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const TemplateLibraryScreen(),
-      ),
-    );
-  }
-
-  void _showPremiumRequired() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Premium доступ',
-          style: TextStyle(color: Color(0xFFFFD700), fontSize: 20, fontWeight: FontWeight.w700),
-        ),
-        content: const Text(
-          'Этот шаблон доступен только по подписке Premium.\nОформите подписку, чтобы получить доступ ко всем шаблонам.',
-          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Закрыть', style: TextStyle(color: Color(0xFF9A9A9A))),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const PremiumScreen()),
-              );
-            },
-            child: const Text('Оформить', style: TextStyle(color: Color(0xFF1DB954), fontWeight: FontWeight.w700)),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -211,7 +72,6 @@ class _CorporateScreenState extends State<CorporateScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Hero header
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -268,7 +128,6 @@ class _CorporateScreenState extends State<CorporateScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Тарифы
                     const Text(
                       'ВЫБЕРИТЕ ПЛАН',
                       style: TextStyle(
@@ -315,39 +174,45 @@ class _CorporateScreenState extends State<CorporateScreen> {
                       isPopular: false,
                       onTap: () => _selectTariff('corporate'),
                     ),
-                    const SizedBox(height: 32),
-
-                    // Бесплатные шаблоны
-                    const Text(
-                      'БЕСПЛАТНЫЕ ШАБЛОНЫ',
-                      style: TextStyle(
-                        color: Color(0xFF4A4A4A),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildTemplateSection(_freeTemplates, isPremium),
-
-                    if (isPremium) ...[
-                      const SizedBox(height: 24),
-                      const Text(
-                        'PREMIUM ШАБЛОНЫ',
-                        style: TextStyle(
-                          color: Color(0xFFFFD700),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildTemplateSection(_premiumTemplates, isPremium),
-                    ],
-
                     const SizedBox(height: 24),
 
-                    // Кнопка связи
+                    if (!isPremium)
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const PremiumScreen()),
+                            );
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E1E1E),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: const Color(0xFF2A2A2A)),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.star_rounded, color: Color(0xFFFFD700), size: 20),
+                                SizedBox(width: 10),
+                                Text(
+                                  'Premium доступ',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+
                     MouseRegion(
                       cursor: SystemMouseCursors.click,
                       child: GestureDetector(
@@ -384,114 +249,6 @@ class _CorporateScreenState extends State<CorporateScreen> {
                 ),
               ),
             ),
-    );
-  }
-
-  Widget _buildTemplateSection(List<Map<String, dynamic>> templates, bool isPremium) {
-    return Column(
-      children: templates.map((template) {
-        final isLocked = template['isPremium'] == true && !isPremium;
-        return Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          child: MouseRegion(
-            cursor: isLocked ? SystemMouseCursors.forbidden : SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: isLocked ? () => _showPremiumRequired() : () => _useTemplate(template),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: isLocked ? const Color(0xFF1A1A1A) : const Color(0xFF1E1E1E),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: isLocked ? const Color(0xFF2A2A2A) : const Color(0xFF1DB954).withOpacity(0.3),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: Color(int.parse(template['color1'].replaceFirst('#', '0xFF'))).withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Icon(template['icon'], color: Color(int.parse(template['color1'].replaceFirst('#', '0xFF'))), size: 24),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                template['title'],
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              if (template['isPremium'] == true) ...[
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [Color(0xFFFFD700), Color(0xFFFFD60A)],
-                                    ),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: const Text(
-                                    'PRO',
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            template['description'],
-                            style: const TextStyle(
-                              color: Color(0xFF9A9A9A),
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            '${template['slideCount']} слайдов',
-                            style: const TextStyle(
-                              color: Color(0xFF4A4A4A),
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (isLocked)
-                      const Icon(Icons.lock_rounded, color: Color(0xFFFFD700), size: 20)
-                    else
-                      Container(
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1DB954).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF1DB954), size: 18),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
     );
   }
 
