@@ -39,10 +39,9 @@ dependencies:
   # Animations
   lottie: ^2.7.0
   
-  # Social Auth
+  # Social Auth (Google и Apple)
   google_sign_in: ^6.2.1
   sign_in_with_apple: ^5.0.0
-  flutter_vk_auth: ^1.2.0
   
   # Security
   crypto: ^3.0.3
