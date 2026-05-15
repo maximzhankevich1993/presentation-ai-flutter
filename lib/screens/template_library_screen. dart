@@ -1,174 +1,445 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/presentation.dart';
 import 'editor_screen.dart';
 
-class TemplateLibraryScreen extends StatefulWidget {
+// ═══════════════════════════════════════════════════════════════════════════════
+// DESIGN TOKENS
+// ═══════════════════════════════════════════════════════════════════════════════
+class _T {
+  static const bgBase = Color(0xFF121212);
+  static const bgSurface = Color(0xFF1A1A1A);
+  static const bgCard = Color(0xFF1E1E1E);
+  static const accent = Color(0xFF1DB954);
+  static const accentLight = Color(0xFF1ED760);
+  static const txtPrimary = Colors.white;
+  static const txtSecondary = Color(0xFF9A9A9A);
+  static const txtMuted = Color(0xFF4A4A4A);
+  static const gold = Color(0xFFFFD700);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MODEL
+// ═══════════════════════════════════════════════════════════════════════════════
+enum TemplateCategory { all, business, marketing, education, popular, reports, personal }
+
+class Template {
+  final String id;
+  final String title;
+  final String description;
+  final TemplateCategory category;
+  final bool isPopular;
+  final bool isPremium;
+  final String color1;
+  final String color2;
+  final int slideCount;
+  final IconData icon;
+
+  const Template({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.category,
+    required this.isPopular,
+    required this.isPremium,
+    required this.color1,
+    required this.color2,
+    required this.slideCount,
+    required this.icon,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DATA (20 реальных шаблонов)
+// ═══════════════════════════════════════════════════════════════════════════════
+final List<Template> _allTemplates = [
+  const Template(
+    id: 'empty',
+    title: 'Пустой',
+    description: 'Начните с чистого листа',
+    category: TemplateCategory.all,
+    isPopular: false,
+    isPremium: false,
+    color1: '#1A1A1A',
+    color2: '#2A2A2A',
+    slideCount: 1,
+    icon: Icons.crop_original_rounded,
+  ),
+  const Template(
+    id: 'annual_report',
+    title: 'Годовой аналитический отчет',
+    description: 'Полный анализ деятельности за год',
+    category: TemplateCategory.reports,
+    isPopular: true,
+    isPremium: true,
+    color1: '#11998e',
+    color2: '#38ef7d',
+    slideCount: 15,
+    icon: Icons.analytics_rounded,
+  ),
+  const Template(
+    id: 'business_plan',
+    title: 'Бизнес-план',
+    description: 'Структура и финансовые показатели',
+    category: TemplateCategory.business,
+    isPopular: false,
+    isPremium: false,
+    color1: '#1DB954',
+    color2: '#1ED760',
+    slideCount: 12,
+    icon: Icons.business_center_rounded,
+  ),
+  const Template(
+    id: 'marketing_strategy',
+    title: 'Маркетинговая стратегия',
+    description: 'План продвижения на 2024 год',
+    category: TemplateCategory.marketing,
+    isPopular: false,
+    isPremium: true,
+    color1: '#fa709a',
+    color2: '#fee140',
+    slideCount: 10,
+    icon: Icons.trending_up_rounded,
+  ),
+  const Template(
+    id: 'social_influence',
+    title: 'Влияние соцсетей на продуктивность',
+    description: 'Анализ влияния социальных сетей',
+    category: TemplateCategory.business,
+    isPopular: true,
+    isPremium: false,
+    color1: '#667eea',
+    color2: '#764ba2',
+    slideCount: 8,
+    icon: Icons.people_rounded,
+  ),
+  const Template(
+    id: 'video_report',
+    title: 'Видео-репортаж про продукт',
+    description: 'Презентация продукта в формате видео-отчета',
+    category: TemplateCategory.marketing,
+    isPopular: true,
+    isPremium: false,
+    color1: '#f093fb',
+    color2: '#f5576c',
+    slideCount: 6,
+    icon: Icons.videocam_rounded,
+  ),
+  const Template(
+    id: 'border_collie',
+    title: 'Бордер-колли: ваш активный друг',
+    description: 'Происхождение, характер, дрессировка и уход',
+    category: TemplateCategory.personal,
+    isPopular: true,
+    isPremium: false,
+    color1: '#4facfe',
+    color2: '#00f2fe',
+    slideCount: 10,
+    icon: Icons.pets_rounded,
+  ),
+  const Template(
+    id: 'alexander_volkov',
+    title: 'Александр Волков',
+    description: 'Архитектор цифровых стратегий',
+    category: TemplateCategory.personal,
+    isPopular: false,
+    isPremium: false,
+    color1: '#434343',
+    color2: '#000000',
+    slideCount: 5,
+    icon: Icons.person_rounded,
+  ),
+  const Template(
+    id: 'lesson_plan',
+    title: 'План урока',
+    description: 'Готовая структура занятия',
+    category: TemplateCategory.education,
+    isPopular: true,
+    isPremium: false,
+    color1: '#8E2DE2',
+    color2: '#4A00E0',
+    slideCount: 8,
+    icon: Icons.school_rounded,
+  ),
+  const Template(
+    id: 'project_status',
+    title: 'Статус проекта',
+    description: 'Отчёт о ходе выполнения',
+    category: TemplateCategory.reports,
+    isPopular: false,
+    isPremium: false,
+    color1: '#FF416C',
+    color2: '#FF4B2B',
+    slideCount: 6,
+    icon: Icons.task_alt_rounded,
+  ),
+  const Template(
+    id: 'startup_pitch',
+    title: 'Питч стартапа',
+    description: 'Презентация для инвесторов',
+    category: TemplateCategory.business,
+    isPopular: true,
+    isPremium: true,
+    color1: '#FFE000',
+    color2: '#799F0C',
+    slideCount: 8,
+    icon: Icons.rocket_launch_rounded,
+  ),
+  const Template(
+    id: 'portfolio',
+    title: 'Портфолио',
+    description: 'Ваши лучшие работы',
+    category: TemplateCategory.personal,
+    isPopular: false,
+    isPremium: true,
+    color1: '#00b4db',
+    color2: '#0083B0',
+    slideCount: 10,
+    icon: Icons.photo_library_rounded,
+  ),
+  const Template(
+    id: 'four_columns',
+    title: 'Четыре колонки',
+    description: 'Сравнение 4-х показателей',
+    category: TemplateCategory.business,
+    isPopular: false,
+    isPremium: true,
+    color1: '#1DB954',
+    color2: '#1ED760',
+    slideCount: 3,
+    icon: Icons.view_quilt_rounded,
+  ),
+  const Template(
+    id: 'swot_analysis',
+    title: 'SWOT-анализ',
+    description: 'Сильные и слабые стороны',
+    category: TemplateCategory.business,
+    isPopular: true,
+    isPremium: true,
+    color1: '#667eea',
+    color2: '#764ba2',
+    slideCount: 4,
+    icon: Icons.analytics_rounded,
+  ),
+  const Template(
+    id: 'timeline',
+    title: 'Таймлайн',
+    description: 'Визуализация событий во времени',
+    category: TemplateCategory.business,
+    isPopular: false,
+    isPremium: true,
+    color1: '#f093fb',
+    color2: '#f5576c',
+    slideCount: 5,
+    icon: Icons.timeline_rounded,
+  ),
+  const Template(
+    id: 'team_intro',
+    title: 'Команда',
+    description: 'Представление сотрудников',
+    category: TemplateCategory.business,
+    isPopular: true,
+    isPremium: true,
+    color1: '#4facfe',
+    color2: '#00f2fe',
+    slideCount: 6,
+    icon: Icons.group_rounded,
+  ),
+  const Template(
+    id: 'kpi_dashboard',
+    title: 'KPI Dashboard',
+    description: 'Отчёт с метриками',
+    category: TemplateCategory.reports,
+    isPopular: true,
+    isPremium: true,
+    color1: '#FF416C',
+    color2: '#FF4B2B',
+    slideCount: 7,
+    icon: Icons.dashboard_rounded,
+  ),
+  const Template(
+    id: 'roadmap',
+    title: 'Дорожная карта',
+    description: 'План развития продукта',
+    category: TemplateCategory.business,
+    isPopular: false,
+    isPremium: true,
+    color1: '#11998e',
+    color2: '#38ef7d',
+    slideCount: 6,
+    icon: Icons.map_rounded,
+  ),
+  const Template(
+    id: 'contacts',
+    title: 'Контакты',
+    description: 'Карта и контактная информация',
+    category: TemplateCategory.business,
+    isPopular: false,
+    isPremium: true,
+    color1: '#8E2DE2',
+    color2: '#4A00E0',
+    slideCount: 4,
+    icon: Icons.contact_phone_rounded,
+  ),
+  const Template(
+    id: 'comparison',
+    title: 'Сравнение продуктов',
+    description: 'Сравнение характеристик',
+    category: TemplateCategory.marketing,
+    isPopular: false,
+    isPremium: true,
+    color1: '#434343',
+    color2: '#000000',
+    slideCount: 5,
+    icon: Icons.compare_arrows_rounded,
+  ),
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// STATE (RIVERPOD)
+// ═══════════════════════════════════════════════════════════════════════════════
+final searchProvider = StateProvider<String>((ref) => '');
+final categoryProvider = StateProvider<TemplateCategory>((ref) => TemplateCategory.all);
+
+final templatesProvider = StateNotifierProvider<TemplateController, List<Template>>(
+  (ref) => TemplateController(ref, _allTemplates),
+);
+
+class TemplateController extends StateNotifier<List<Template>> {
+  TemplateController(this.ref, this._allTemplates) : super([]) {
+    _loadMore();
+  }
+
+  final Ref ref;
+  final List<Template> _allTemplates;
+  int _page = 0;
+  bool _loading = false;
+  bool _hasMore = true;
+  static const int _limit = 12;
+
+  bool get hasMore => _hasMore;
+
+  Future<void> _loadMore() async {
+    if (_loading || !_hasMore) return;
+
+    _loading = true;
+
+    final start = _page * _limit;
+    if (start >= _allTemplates.length) {
+      _hasMore = false;
+    } else {
+      final end = (start + _limit) > _allTemplates.length ? _allTemplates.length : start + _limit;
+      final newItems = _allTemplates.sublist(start, end);
+      _page++;
+      state = [...state, ...newItems];
+    }
+
+    _loading = false;
+  }
+
+  Future<void> loadMore() async => _loadMore();
+
+  Future<void> refresh() async {
+    _page = 0;
+    _hasMore = true;
+    state = [];
+    await _loadMore();
+  }
+}
+
+final filteredProvider = Provider<List<Template>>((ref) {
+  final list = ref.watch(templatesProvider);
+  final query = ref.watch(searchProvider).toLowerCase();
+  final category = ref.watch(categoryProvider);
+
+  return list.where((t) {
+    final matchSearch = query.isEmpty ||
+        t.title.toLowerCase().contains(query) ||
+        t.description.toLowerCase().contains(query);
+
+    final matchCategory = category == TemplateCategory.all ||
+        (category == TemplateCategory.popular && t.isPopular) ||
+        t.category == category;
+
+    return matchSearch && matchCategory;
+  }).toList();
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MAIN SCREEN
+// ═══════════════════════════════════════════════════════════════════════════════
+class TemplateLibraryScreen extends ConsumerStatefulWidget {
   const TemplateLibraryScreen({super.key});
 
   @override
-  State<TemplateLibraryScreen> createState() => _TemplateLibraryScreenState();
+  ConsumerState<TemplateLibraryScreen> createState() => _TemplateLibraryScreenState();
 }
 
-class _TemplateLibraryScreenState extends State<TemplateLibraryScreen> {
-  String _searchQuery = '';
-  String _selectedCategory = 'Все';
-
-  final List<String> _categories = [
-    'Все', 'Популярное', 'Бизнес', 'Образование', 'Маркетинг', 'Отчёты', 'Личные'
+class _TemplateLibraryScreenState extends ConsumerState<TemplateLibraryScreen> {
+  final ScrollController _scrollController = ScrollController();
+  final List<String> _categoryNames = [
+    'Все', 'Популярное', 'Бизнес', 'Маркетинг', 'Образование', 'Отчёты', 'Личные'
+  ];
+  final List<TemplateCategory> _categoryValues = [
+    TemplateCategory.all, TemplateCategory.popular, TemplateCategory.business,
+    TemplateCategory.marketing, TemplateCategory.education, TemplateCategory.reports,
+    TemplateCategory.personal,
   ];
 
-  final List<Map<String, dynamic>> _templates = [
-    {
-      'id': 'empty',
-      'title': 'Пустой',
-      'description': 'Начните с чистого листа',
-      'category': 'Все',
-      'color1': '#1A1A1A',
-      'color2': '#2A2A2A',
-      'slideCount': 1,
-      'isPopular': false,
-      'icon': Icons.crop_original_rounded,
-    },
-    {
-      'id': 'social_influence',
-      'title': 'Влияние соцсетей на продуктивность',
-      'description': 'Анализ влияния социальных сетей на эффективность работы',
-      'category': 'Бизнес',
-      'color1': '#667eea',
-      'color2': '#764ba2',
-      'slideCount': 8,
-      'isPopular': true,
-      'icon': Icons.people_rounded,
-    },
-    {
-      'id': 'video_report',
-      'title': 'Видео-репортаж про продукт',
-      'description': 'Презентация продукта в формате видео-отчета',
-      'category': 'Маркетинг',
-      'color1': '#f093fb',
-      'color2': '#f5576c',
-      'slideCount': 6,
-      'isPopular': true,
-      'icon': Icons.videocam_rounded,
-    },
-    {
-      'id': 'border_collie',
-      'title': 'Бордер-колли: ваш активный друг',
-      'description': 'Происхождение, характер, дрессировка и уход',
-      'category': 'Личные',
-      'color1': '#4facfe',
-      'color2': '#00f2fe',
-      'slideCount': 10,
-      'isPopular': true,
-      'icon': Icons.pets_rounded,
-    },
-    {
-      'id': 'alexander_volkov',
-      'title': 'Александр Волков',
-      'description': 'Архитектор цифровых стратегий и лидер продуктовых команд',
-      'category': 'Бизнес',
-      'color1': '#434343',
-      'color2': '#000000',
-      'slideCount': 5,
-      'isPopular': false,
-      'icon': Icons.person_rounded,
-    },
-    {
-      'id': 'annual_report',
-      'title': 'Годовой аналитический отчет',
-      'description': 'supr.ru — полный анализ деятельности за год',
-      'category': 'Отчёты',
-      'color1': '#11998e',
-      'color2': '#38ef7d',
-      'slideCount': 15,
-      'isPopular': true,
-      'icon': Icons.analytics_rounded,
-    },
-    {
-      'id': 'business_plan',
-      'title': 'Бизнес-план',
-      'description': 'Структура и финансовые показатели',
-      'category': 'Бизнес',
-      'color1': '#1DB954',
-      'color2': '#1ED760',
-      'slideCount': 12,
-      'isPopular': false,
-      'icon': Icons.business_center_rounded,
-    },
-    {
-      'id': 'marketing_strategy',
-      'title': 'Маркетинговая стратегия',
-      'description': 'План продвижения на 2024 год',
-      'category': 'Маркетинг',
-      'color1': '#fa709a',
-      'color2': '#fee140',
-      'slideCount': 10,
-      'isPopular': false,
-      'icon': Icons.trending_up_rounded,
-    },
-    {
-      'id': 'lesson_plan',
-      'title': 'План урока',
-      'description': 'Готовая структура занятия',
-      'category': 'Образование',
-      'color1': '#8E2DE2',
-      'color2': '#4A00E0',
-      'slideCount': 8,
-      'isPopular': true,
-      'icon': Icons.school_rounded,
-    },
-    {
-      'id': 'project_status',
-      'title': 'Статус проекта',
-      'description': 'Отчёт о ходе выполнения',
-      'category': 'Отчёты',
-      'color1': '#FF416C',
-      'color2': '#FF4B2B',
-      'slideCount': 6,
-      'isPopular': false,
-      'icon': Icons.task_alt_rounded,
-    },
-    {
-      'id': 'startup_pitch',
-      'title': 'Питч стартапа',
-      'description': 'Презентация для инвесторов',
-      'category': 'Бизнес',
-      'color1': '#FFE000',
-      'color2': '#799F0C',
-      'slideCount': 8,
-      'isPopular': true,
-      'icon': Icons.rocket_launch_rounded,
-    },
-    {
-      'id': 'portfolio',
-      'title': 'Портфолио',
-      'description': 'Ваши лучшие работы',
-      'category': 'Личные',
-      'color1': '#00b4db',
-      'color2': '#0083B0',
-      'slideCount': 10,
-      'isPopular': false,
-      'icon': Icons.photo_library_rounded,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 300) {
+        ref.read(templatesProvider.notifier).loadMore();
+      }
+    });
+  }
 
-  List<Map<String, dynamic>> get _filteredTemplates {
-    return _templates.where((t) {
-      final matchesSearch = _searchQuery.isEmpty ||
-          t['title'].toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          t['description'].toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesCategory = _selectedCategory == 'Все' ||
-          (_selectedCategory == 'Популярное' ? t['isPopular'] == true : t['category'] == _selectedCategory);
-      return matchesSearch && matchesCategory;
-    }).toList();
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onSearch(String value) {
+    ref.read(searchProvider.notifier).state = value;
+  }
+
+  void _useTemplate(Template template) {
+    // Создаём презентацию из шаблона
+    final presentation = Presentation(
+      id: DateTime.now().toString(),
+      title: template.title,
+      slides: [
+        Slide(
+          title: template.title,
+          content: [template.description],
+        ),
+      ],
+      createdAt: DateTime.now(),
+    );
+    
+    // Открываем редактор ПОЛНОЭКРАННО (не снизу)
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EditorScreen(presentation: presentation),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final templates = ref.watch(filteredProvider);
+    final controller = ref.watch(templatesProvider.notifier);
+    final selectedCategory = ref.watch(categoryProvider);
+
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: _T.bgBase,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF121212),
+        backgroundColor: _T.bgBase,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
@@ -187,25 +458,19 @@ class _TemplateLibraryScreenState extends State<TemplateLibraryScreen> {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E),
+                color: _T.bgCard,
                 borderRadius: BorderRadius.circular(14),
                 border: Border.all(color: const Color(0xFF2A2A2A)),
               ),
               child: TextField(
-                onChanged: (v) => setState(() => _searchQuery = v),
+                onChanged: _onSearch,
                 style: const TextStyle(color: Colors.white),
                 decoration: InputDecoration(
                   hintText: 'Быстрый поиск по шаблонам',
-                  hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
-                  prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF1DB954)),
+                  hintStyle: const TextStyle(color: _T.txtMuted),
+                  prefixIcon: const Icon(Icons.search_rounded, color: _T.accent),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.close_rounded, color: Color(0xFF4A4A4A)),
-                          onPressed: () => setState(() => _searchQuery = ''),
-                        )
-                      : null,
                 ),
               ),
             ),
@@ -216,30 +481,29 @@ class _TemplateLibraryScreenState extends State<TemplateLibraryScreen> {
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: _categories.length,
+              itemCount: _categoryNames.length,
               itemBuilder: (_, i) {
-                final cat = _categories[i];
-                final isSelected = _selectedCategory == cat;
+                final isSelected = _categoryValues[i] == selectedCategory;
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: GestureDetector(
-                      onTap: () => setState(() => _selectedCategory = cat),
+                      onTap: () => ref.read(categoryProvider.notifier).state = _categoryValues[i],
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFF1DB954) : const Color(0xFF1E1E1E),
+                          color: isSelected ? _T.accent : _T.bgCard,
                           borderRadius: BorderRadius.circular(24),
                           border: Border.all(
                             color: isSelected ? Colors.transparent : const Color(0xFF2A2A2A),
                           ),
                         ),
                         child: Text(
-                          cat,
+                          _categoryNames[i],
                           style: TextStyle(
-                            color: isSelected ? Colors.white : const Color(0xFF9A9A9A),
+                            color: isSelected ? Colors.white : _T.txtSecondary,
                             fontSize: 13,
                             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                           ),
@@ -254,46 +518,45 @@ class _TemplateLibraryScreenState extends State<TemplateLibraryScreen> {
           const SizedBox(height: 8),
           // Список шаблонов
           Expanded(
-            child: _filteredTemplates.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.search_off_rounded, size: 48, color: const Color(0xFF4A4A4A)),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Ничего не найдено',
-                          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _filteredTemplates.length,
-                    itemBuilder: (_, i) => _TemplateCard(
-                      template: _filteredTemplates[i],
-                      onTap: () {
-                        final presentation = Presentation(
-                          id: DateTime.now().toString(),
-                          title: _filteredTemplates[i]['title'],
-                          slides: [
-                            Slide(
-                              title: _filteredTemplates[i]['title'],
-                              content: [_filteredTemplates[i]['description']],
-                            ),
-                          ],
-                          createdAt: DateTime.now(),
-                        );
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => EditorScreen(presentation: presentation),
+            child: RefreshIndicator(
+              onRefresh: controller.refresh,
+              color: _T.accent,
+              child: templates.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.search_off_rounded, size: 48, color: _T.txtMuted),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Ничего не найдено',
+                            style: TextStyle(color: _T.txtSecondary, fontSize: 14),
                           ),
+                        ],
+                      ),
+                    )
+                  : GridView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(16),
+                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 2,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.85,
+                      ),
+                      itemCount: templates.length + 2,
+                      itemBuilder: (_, i) {
+                        if (i >= templates.length) {
+                          return const _SkeletonCard();
+                        }
+                        final template = templates[i];
+                        return _TemplateCard(
+                          template: template,
+                          onTap: () => _useTemplate(template),
                         );
                       },
                     ),
-                  ),
+            ),
           ),
         ],
       ),
@@ -301,8 +564,11 @@ class _TemplateLibraryScreenState extends State<TemplateLibraryScreen> {
   }
 }
 
-class _TemplateCard extends StatelessWidget {
-  final Map<String, dynamic> template;
+// ═══════════════════════════════════════════════════════════════════════════════
+// TEMPLATE CARD
+// ═══════════════════════════════════════════════════════════════════════════════
+class _TemplateCard extends StatefulWidget {
+  final Template template;
   final VoidCallback onTap;
 
   const _TemplateCard({
@@ -311,121 +577,178 @@ class _TemplateCard extends StatelessWidget {
   });
 
   @override
+  State<_TemplateCard> createState() => _TemplateCardState();
+}
+
+class _TemplateCardState extends State<_TemplateCard> {
+  bool _hover = false;
+
+  Color _getColor(String hex) {
+    return Color(int.parse(hex.replaceFirst('#', '0xFF')));
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final color1 = Color(int.parse(template['color1'].replaceFirst('#', '0xFF')));
-    final color2 = Color(int.parse(template['color2'].replaceFirst('#', '0xFF')));
-    
+    final t = widget.template;
+    final color1 = _getColor(t.color1);
+    final color2 = _getColor(t.color2);
+
     return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          margin: const EdgeInsets.only(bottom: 12),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [color1, color2],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: color1.withOpacity(0.3),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: AnimatedScale(
+        duration: const Duration(milliseconds: 150),
+        scale: _hover ? 1.02 : 1.0,
+        child: GestureDetector(
+          onTap: widget.onTap,
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [color1, color2],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
-            ],
-          ),
-          child: Stack(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    // Иконка
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: _hover
+                  ? [
+                      BoxShadow(
+                        color: color1.withOpacity(0.4),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
                       ),
-                      child: Icon(template['icon'], color: Colors.white, size: 24),
-                    ),
-                    const SizedBox(width: 16),
-                    // Текст
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    ]
+                  : null,
+            ),
+            child: Stack(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Иконка
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(t.icon, color: Colors.white, size: 26),
+                      ),
+                      const Spacer(),
+                      // Заголовок
+                      Text(
+                        t.title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      // Описание
+                      Text(
+                        t.description,
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 11,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      // Количество слайдов
+                      Row(
                         children: [
-                          Text(
-                            template['title'],
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(4),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            template['description'],
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.8),
-                              fontSize: 12,
+                            child: Text(
+                              '${t.slideCount} слайдов',
+                              style: const TextStyle(color: Colors.white, fontSize: 10),
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  '${template['slideCount']} слайдов',
-                                  style: const TextStyle(color: Colors.white, fontSize: 10),
-                                ),
+                          if (t.isPopular) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: _T.gold.withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(4),
                               ),
-                              if (template['isPopular'] == true) ...[
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFFFD700).withOpacity(0.9),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                  child: const Text(
-                                    'Популярное',
-                                    style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w600),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
+                              child: const Text(
+                                'Популярное',
+                                style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                          if (t.isPremium) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: _T.accent.withOpacity(0.9),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'PRO',
+                                style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
-                    ),
-                    // Стрелка
-                    Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 18),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                // Hover overlay
+                if (_hover)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Center(
+                        child: Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 32),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SKELETON CARD (LOADER)
+// ═══════════════════════════════════════════════════════════════════════════════
+class _SkeletonCard extends StatelessWidget {
+  const _SkeletonCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: _T.bgCard,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: const Center(
+        child: SizedBox(
+          width: 24,
+          height: 24,
+          child: CircularProgressIndicator(
+            color: _T.accent,
+            strokeWidth: 2,
           ),
         ),
       ),
