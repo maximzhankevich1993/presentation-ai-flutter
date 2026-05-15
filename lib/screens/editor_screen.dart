@@ -294,7 +294,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     });
   }
 
-  // FIX: добавлен отдельный метод удаления фигуры
   void _removeShape(String id) {
     setState(() {
       _shapes[_activeSlide].removeWhere((s) => s.id == id);
@@ -481,7 +480,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
               onAddItem: () => _addContentItem(_activeSlide), onRemoveItem: (i) => _removeContentItem(_activeSlide, i),
             )),
             const VerticalDivider(color: _T.border, width: 1),
-            // FIX: убраны фигурные скобки вокруг тела setState (создавали Set-литерал вместо блока)
             AnimatedContainer(duration: _T.normal, width: _propsPanelOpen ? 280 : 0, child: _propsPanelOpen ? _PropertiesPanel(
               index: _activeSlide, isPremium: Provider.of<UserProvider>(context).isPremium, activeTab: _activePropTab,
               globalFont: _globalFont, selectedBgIndex: _selectedBgIndex, freeBgs: _freeBgs, premiumBgs: const [], customBg: _customBgs[_activeSlide],
@@ -492,7 +490,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
               imagePosition: _imagePositions[_activeSlide], imageTextWrap: _imageTextWrap[_activeSlide],
               hasImage: _customImages[_activeSlide] != null || _autoImages[_activeSlide] != null,
               onTabChange: (t) => setState(() => _activePropTab = t),
-              // FIX: setState с блоком вместо Set-литерала
               onBgSelect: (i) => setState(() {
                 _selectedBgIndex = i;
                 _customBgs = List.filled(_presentation.slides.length, null);
@@ -508,11 +505,9 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
               onTextStyleChange: (s) => setState(() => _currentTextStyle = s),
               onTextAlignChange: (a) => setState(() => _currentTextAlign = a),
               onColumnsChange: (c) => setState(() => _columnsCount = c),
-              // FIX: onChartTypeChange принимает String? — передаём корректный nullable callback
               onChartTypeChange: (t) => setState(() => _chartTypes[_activeSlide] = t),
               onChartDataChange: (d) => setState(() => _chartData[_activeSlide] = d),
               onAddShape: _addShape,
-              // FIX: передаём отдельный callback для удаления фигуры
               onRemoveShape: _removeShape,
               onImageWidthChange: _updateImageWidth, onImageHeightChange: _updateImageHeight,
               onImagePositionChange: _updateImagePosition, onImageTextWrapChange: _updateImageTextWrap,
@@ -735,8 +730,7 @@ class _Canvas extends StatelessWidget {
       case 'circle':
         return Container(width: s.width, height: s.height, decoration: BoxDecoration(color: s.color, shape: BoxShape.circle, boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)]));
       case 'square':
-        return Container(width: s.width, height: s.height, decoration: const BoxDecoration(color: null, boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)]));
-      // FIX: убран некорректный const BoxDecoration со значением color из s
+        return Container(width: s.width, height: s.height, decoration: BoxDecoration(color: s.color, boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)]));
       case 'rectangle':
         return Container(width: s.width, height: s.height, decoration: BoxDecoration(color: s.color, borderRadius: BorderRadius.circular(8), boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 4)]));
       case 'triangle':
@@ -989,7 +983,6 @@ class _PropertiesPanel extends StatelessWidget {
   final int index;
   final bool isPremium;
   final String activeTab, globalFont, transition, currentTextStyle, currentTextAlign;
-  // FIX: nullable поля объявлены корректно по одному
   final String? chartType;
   final String? imagePosition;
   final String? imageTextWrap;
@@ -1004,7 +997,6 @@ class _PropertiesPanel extends StatelessWidget {
   final Map<String, TextStylePreset> textStyles;
   final bool isImproving, hasImage;
   final ValueChanged<String> onTabChange, onFontChange, onTransitionChange, onTextStyleChange, onTextAlignChange;
-  // FIX: onChartTypeChange принимает nullable String
   final ValueChanged<String?> onChartTypeChange;
   final ValueChanged<String> onImagePositionChange, onImageTextWrapChange;
   final ValueChanged<int> onBgSelect, onColumnsChange;
@@ -1013,7 +1005,6 @@ class _PropertiesPanel extends StatelessWidget {
   final ValueChanged<Color> onFontColorChange;
   final ValueChanged<List<Map<String, dynamic>>> onChartDataChange;
   final ValueChanged<String> onAddShape;
-  // FIX: добавлен отдельный callback для удаления фигуры
   final ValueChanged<String> onRemoveShape;
 
   const _PropertiesPanel({
@@ -1066,13 +1057,17 @@ class _PropertiesPanel extends StatelessWidget {
     return _buildDesignTab();
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // DESIGN TAB — ТОЛЬКО Inter (Georgia и Courier УДАЛЕНЫ)
+  // ═══════════════════════════════════════════════════════════════════════════════
   Widget _buildDesignTab() => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
     const Text('ШРИФТ', style: TextStyle(color: _T.txtMuted, fontSize: 10, fontWeight: FontWeight.w700)),
     const SizedBox(height: 8),
-    ...['Inter', 'Georgia', 'Courier'].map((f) => GestureDetector(
+    ...['Inter'].map((f) => GestureDetector(
       onTap: () => onFontChange(f),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 6), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        margin: const EdgeInsets.only(bottom: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(color: globalFont == f ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(8), border: Border.all(color: globalFont == f ? _T.accent.withOpacity(0.4) : _T.border)),
         child: Row(children: [
           Expanded(child: Text(f, style: GoogleFonts.getFont(f, color: _T.txtPrimary, fontSize: 13))),
@@ -1132,7 +1127,7 @@ class _PropertiesPanel extends StatelessWidget {
       ('circle', Icons.circle_rounded),
       ('square', Icons.square_rounded),
       ('rectangle', Icons.rectangle_rounded),
-      ('triangle', Icons.change_history_rounded), // FIX: Icons.triangle_rounded не существует
+      ('triangle', Icons.change_history_rounded),
       ('star', Icons.star_rounded),
     ].map(((String, IconData) pair) => GestureDetector(
       onTap: () => onAddShape(pair.$1),
@@ -1141,7 +1136,6 @@ class _PropertiesPanel extends StatelessWidget {
     if (shapes.isNotEmpty) ...[
       const SizedBox(height: 16),
       const Text('ФИГУРЫ НА СЛАЙДЕ', style: TextStyle(color: _T.txtMuted, fontSize: 10, fontWeight: FontWeight.w700)),
-      // FIX: используем onRemoveShape вместо onAddShape('remove_...')
       ...shapes.map((s) => Container(
         margin: const EdgeInsets.only(bottom: 8), padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(8)),
@@ -1197,7 +1191,6 @@ class _PropertiesPanel extends StatelessWidget {
     ],
   ]);
 
-  // FIX: onChartTypeChange принимает String? — исправлено
   Widget _chartButton(String? t, IconData icon, String label) => GestureDetector(
     onTap: () => onChartTypeChange(t),
     child: Column(children: [
@@ -1223,7 +1216,6 @@ class _PropertiesPanel extends StatelessWidget {
         const Text('ИИ перепишет заголовок и пункты', style: TextStyle(color: _T.txtSecondary, fontSize: 12)),
         const SizedBox(height: 12),
         GestureDetector(
-          // FIX: передаём реальный callback onImprove вместо пустого () {}
           onTap: isImproving ? null : onImprove,
           child: Container(
             width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 12),
@@ -1258,7 +1250,6 @@ class _ExportSheet extends StatelessWidget {
         subtitle: Text(isPremium ? 'Без знака' : 'С водяным знаком'),
       ),
       ListTile(
-        // FIX: используем переменную isPremium вместо хардкода true
         onTap: isPremium ? () { Navigator.pop(context); ExportService.exportToPDF(context: context, presentation: presentation, isPremium: isPremium); } : null,
         leading: Icon(Icons.picture_as_pdf, color: isPremium ? null : _T.txtMuted),
         title: const Text('PDF'),
@@ -1288,7 +1279,6 @@ class _ControlBar extends StatelessWidget {
     child: Row(children: [
       _IconBtn(Icons.copy_rounded, onDuplicate),
       _IconBtn(Icons.delete_outline_rounded, onDelete, danger: true),
-      // FIX: Icons.template_rounded не существует — заменён на корректную иконку
       _IconBtn(Icons.view_quilt_rounded, onTemplate),
       const Spacer(),
       _IconBtn(Icons.arrow_back_rounded, onPrev, disabled: activeSlide == 0),
