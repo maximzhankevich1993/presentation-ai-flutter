@@ -1,142 +1,52 @@
-class PresentationTemplate {
-  final String id;
-  final String name;
-  final String description;
-  final String category;
-  final String icon;
-  final List<String> slideStructure;
-  final bool isFree;
-
-  const PresentationTemplate({
-    required this.id,
-    required this.name,
-    required this.description,
-    required this.category,
-    required this.icon,
-    required this.slideStructure,
-    this.isFree = true,
-  });
-}
+import '../models/template.dart';
+import 'api_service.dart';
 
 class TemplateService {
-  static List<PresentationTemplate> getTemplates({bool? freeOnly}) {
-    final templates = List<PresentationTemplate>.unmodifiable(_allTemplates);
-
-    if (freeOnly == true) {
-      return templates.where((t) => t.isFree).toList(growable: false);
+  static List<Template> _cachedFreeTemplates = [];
+  static List<Template> _cachedPremiumTemplates = [];
+  
+  static Future<List<Template>> loadFreeTemplates() async {
+    if (_cachedFreeTemplates.isNotEmpty) {
+      return _cachedFreeTemplates;
     }
-
-    return templates;
+    
+    try {
+      final response = await ApiService.getFreeTemplates();
+      if (response['success'] == true) {
+        final List<dynamic> templatesJson = response['templates'];
+        _cachedFreeTemplates = templatesJson.map((j) => Template.fromJson(j)).toList();
+        return _cachedFreeTemplates;
+      }
+      return [];
+    } catch (e) {
+      print('Error loading free templates: $e');
+      return [];
+    }
   }
-
-  static List<PresentationTemplate> getTemplatesByCategory(String category) {
-    if (category.trim().isEmpty) return [];
-
-    final normalized = category.trim().toLowerCase();
-
-    return _allTemplates
-        .where((t) => t.category.toLowerCase() == normalized)
-        .toList(growable: false);
+  
+  static Future<List<Template>> loadPremiumTemplates() async {
+    if (_cachedPremiumTemplates.isNotEmpty) {
+      return _cachedPremiumTemplates;
+    }
+    
+    try {
+      final response = await ApiService.getPremiumTemplates();
+      if (response['success'] == true) {
+        final List<dynamic> templatesJson = response['templates'];
+        _cachedPremiumTemplates = templatesJson.map((j) => Template.fromJson(j)).toList();
+        return _cachedPremiumTemplates;
+      }
+      return [];
+    } catch (e) {
+      print('Error loading premium templates: $e');
+      return [];
+    }
   }
-
-  static List<String> getCategories() {
-    final categories = _allTemplates
-        .map((t) => t.category.trim())
-        .where((c) => c.isNotEmpty)
-        .toSet()
-        .toList();
-
-    categories.sort(); // стабильный порядок
-    return categories;
+  
+  static Future<List<Template>> loadAllTemplates({bool includePremium = false}) async {
+    final free = await loadFreeTemplates();
+    if (!includePremium) return free;
+    final premium = await loadPremiumTemplates();
+    return [...free, ...premium];
   }
-
-  static final List<PresentationTemplate> _allTemplates = List.unmodifiable([
-    const PresentationTemplate(
-      id: 'pitch_deck',
-      name: 'Pitch Deck',
-      description: 'Презентация для привлечения инвесторов',
-      category: 'Бизнес',
-      icon: '💰',
-      slideStructure: [
-        'Титульный слайд',
-        'Проблема',
-        'Решение',
-        'Рынок',
-        'Бизнес-модель',
-        'Команда',
-        'Финансы',
-        'Дорожная карта',
-        'Призыв к действию',
-      ],
-      isFree: true,
-    ),
-    const PresentationTemplate(
-      id: 'report',
-      name: 'Отчёт',
-      description: 'Еженедельный или ежемесячный отчёт',
-      category: 'Бизнес',
-      icon: '📊',
-      slideStructure: [
-        'Титульный слайд',
-        'Ключевые метрики',
-        'Достижения',
-        'Проблемы',
-        'Выводы',
-        'План на следующий период',
-      ],
-      isFree: true,
-    ),
-    const PresentationTemplate(
-      id: 'education',
-      name: 'Учебная',
-      description: 'Презентация для урока или лекции',
-      category: 'Образование',
-      icon: '📚',
-      slideStructure: [
-        'Тема урока',
-        'Цели',
-        'Основной материал',
-        'Примеры',
-        'Практика',
-        'Итоги',
-        'Домашнее задание',
-      ],
-      isFree: true,
-    ),
-    const PresentationTemplate(
-      id: 'product_launch',
-      name: 'Запуск продукта',
-      description: 'Презентация для запуска нового продукта',
-      category: 'Маркетинг',
-      icon: '🚀',
-      slideStructure: [
-        'Анонс',
-        'Проблема рынка',
-        'Наше решение',
-        'Особенности продукта',
-        'Целевая аудитория',
-        'Конкуренты',
-        'Маркетинговый план',
-        'Ожидаемые результаты',
-      ],
-      isFree: false,
-    ),
-    const PresentationTemplate(
-      id: 'conference',
-      name: 'Конференция',
-      description: 'Выступление на конференции',
-      category: 'Выступления',
-      icon: '🎤',
-      slideStructure: [
-        'Приветствие',
-        'О спикере',
-        'Введение в тему',
-        'Основная часть',
-        'Кейсы',
-        'Выводы',
-        'Q&A',
-      ],
-      isFree: false,
-    ),
-  ]);
 }
