@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/presentation.dart';
 import '../models/user.dart';
-import '../models/social_user.dart';
+//import '../models/social_user.dart';
 
 class ApiService {
   static const String baseUrl = 'https://presentation-ai-backend.onrender.com/api';
