@@ -203,7 +203,7 @@ class ApiService {
   }
 
   // ============================================
-  // ГЕНЕРАЦИЯ
+  // ГЕНЕРАЦИЯ ПРЕЗЕНТАЦИИ
   // ============================================
   
   static Future<Presentation> generate({
@@ -252,6 +252,50 @@ class ApiService {
     } else {
       final error = json.decode(response.body);
       throw Exception(error['message'] ?? 'Ошибка улучшения текста');
+    }
+  }
+
+  // ============================================
+  // ⭐ НОВЫЙ МЕТОД: ГЕНЕРАЦИЯ ПЛАНА УРОКА ⭐
+  // ============================================
+  
+  static Future<Map<String, dynamic>> generateLessonPlan({
+    required String topic,
+    required String subject,
+    required String standard,
+    required String grade,
+    required int durationMinutes,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/lesson-plan/generate'),
+        headers: _getHeaders(),
+        body: json.encode({
+          'topic': topic,
+          'subject': subject,
+          'standard': standard,
+          'grade': grade,
+          'durationMinutes': durationMinutes,
+        }),
+      );
+      
+      print('📚 Lesson Plan API response status: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('✅ Lesson Plan получен успешно');
+        return data;
+      } else if (response.statusCode == 401) {
+        throw Exception('Требуется авторизация');
+      } else if (response.statusCode == 429) {
+        throw Exception('Превышен лимит генераций');
+      } else {
+        final error = json.decode(response.body);
+        throw Exception(error['message'] ?? 'Ошибка генерации плана урока');
+      }
+    } catch (e) {
+      print('❌ Ошибка генерации плана урока: $e');
+      throw Exception('Ошибка соединения: $e');
     }
   }
   
