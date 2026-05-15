@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import '../models/user.dart';  // ← импортируем User из models
+import '../models/user.dart';
+import '../services/api_service.dart';
 
 class UserProvider extends ChangeNotifier {
   User? _user;
   String? _token;
 
-  // GETTERS
   User? get user => _user;
   String? get token => _token;
   
@@ -20,11 +20,12 @@ class UserProvider extends ChangeNotifier {
   bool get hasAvatar => _user?.avatarUrl != null;
   String? get avatarUrl => _user?.avatarUrl;
 
-  // SET USER (принимает User из models/user.dart)
   void setUser(User user, {String? token}) {
     _user = user;
     if (token != null) {
       _token = token;
+      ApiService.setAuthToken(token);
+      ApiService.saveToken(token);
     }
     notifyListeners();
   }
@@ -38,6 +39,7 @@ class UserProvider extends ChangeNotifier {
     if (_user != null) {
       _user = _user!.copyWith(email: email);
       notifyListeners();
+      _saveUserToServer();
     }
   }
 
@@ -45,20 +47,7 @@ class UserProvider extends ChangeNotifier {
     if (_user != null) {
       _user = _user!.copyWith(name: name);
       notifyListeners();
-    }
-  }
-
-  void setAvatarUrl(String? url) {
-    if (_user != null) {
-      _user = _user!.copyWith(avatarUrl: url);
-      notifyListeners();
-    }
-  }
-
-  void setPremium(bool value, {DateTime? until}) {
-    if (_user != null) {
-      _user = _user!.copyWith(isPremium: value, premiumUntil: until);
-      notifyListeners();
+      _saveUserToServer();
     }
   }
 
@@ -66,23 +55,52 @@ class UserProvider extends ChangeNotifier {
     if (_user != null && !_user!.isPremium && _user!.freeGenerationsLeft > 0) {
       _user = _user!.copyWith(freeGenerationsLeft: _user!.freeGenerationsLeft - 1);
       notifyListeners();
+      _saveUserToServer();
     }
   }
 
-  void resetFreeGenerations() {
+  void incrementGenerations(int amount) {
     if (_user != null) {
-      _user = _user!.copyWith(freeGenerationsLeft: 5);
+      _user = _user!.copyWith(freeGenerationsLeft: _user!.freeGenerationsLeft + amount);
       notifyListeners();
+      _saveUserToServer();
     }
   }
 
-  void logout() {
+  Future<void> _saveUserToServer() async {
+    if (_user == null) return;
+    try {
+      await ApiService.updateUser(_user!);
+    } catch (e) {
+      debugPrint('Error saving user to server: $e');
+    }
+  }
+
+  Future<void> refreshUser() async {
+    try {
+      final user = await ApiService.getProfile();
+      _user = user;
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error refreshing user: $e');
+    }
+  }
+
+  Future<void> logout() async {
+    await ApiService.logout();
     _user = null;
     _token = null;
     notifyListeners();
   }
 
-  void reset() {
-    logout();
+  void setPremium(bool isPremium, {DateTime? until}) {
+    if (_user != null) {
+      _user = _user!.copyWith(
+        isPremium: isPremium,
+        premiumUntil: until,
+      );
+      notifyListeners();
+      _saveUserToServer();
+    }
   }
 }
