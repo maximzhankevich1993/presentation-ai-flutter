@@ -1,7 +1,7 @@
-// lib/screens/login_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/user.dart';
+import '../models/social_user.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
 import '../services/social_auth_service.dart';
@@ -30,9 +30,6 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  // ============================================
-  // ОБЫЧНЫЙ ВХОД
-  // ============================================
   Future<void> _login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -74,9 +71,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // ============================================
-  // СОЦИАЛЬНЫЙ ВХОД
-  // ============================================
   Future<void> _socialLogin(Future<SocialUser?> Function() signInMethod, String providerName) async {
     setState(() => _isSocialLoading = true);
     
@@ -89,8 +83,6 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       
       final up = Provider.of<UserProvider>(context, listen: false);
-      
-      // Получаем токен с бэкенда
       final response = await ApiService.socialLogin(socialUser);
       
       if (response.containsKey('user')) {
@@ -216,7 +208,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 32),
                       
-                      // Заголовок
                       const Text(
                         'Добро пожаловать',
                         style: TextStyle(
@@ -346,9 +337,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       
-                      // ============================================
-                      // КНОПКИ СОЦИАЛЬНЫХ СЕТЕЙ (НОВЫЕ)
-                      // ============================================
                       const SizedBox(height: 24),
                       const Row(
                         children: [
@@ -388,18 +376,6 @@ class _LoginScreenState extends State<LoginScreen> {
                             onTap: () => _socialLogin(
                               () => SocialAuthService.signInWithApple(),
                               'Apple',
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          
-                          // VK
-                          _SocialButton(
-                            icon: Icons.videocam,
-                            label: 'VK',
-                            color: const Color(0xFF0077FF),
-                            onTap: () => _socialLogin(
-                              () => SocialAuthService.signInWithVK(),
-                              'VK',
                             ),
                           ),
                         ],
