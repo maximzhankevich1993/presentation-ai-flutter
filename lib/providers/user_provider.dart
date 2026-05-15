@@ -86,6 +86,26 @@ class UserProvider extends ChangeNotifier {
     }
   }
 
+  // ⭐ ДОБАВЬ ЭТОТ МЕТОД ⭐
+  Future<void> loadUser() async {
+    try {
+      final token = await ApiService.getToken();
+      if (token != null && token.isNotEmpty) {
+        _token = token;
+        ApiService.setAuthToken(token);
+        
+        final user = await ApiService.getProfile();
+        _user = user;
+        notifyListeners();
+        debugPrint('User loaded successfully: ${user.email}');
+      } else {
+        debugPrint('No token found');
+      }
+    } catch (e) {
+      debugPrint('Error loading user: $e');
+    }
+  }
+
   Future<void> logout() async {
     await ApiService.logout();
     _user = null;
