@@ -20,4 +20,14 @@ class SocialUser {
     'avatarUrl': avatarUrl,
     'provider': provider,
   };
+
+  factory SocialUser.fromJson(Map<String, dynamic> json) {
+    return SocialUser(
+      id: json['id'],
+      email: json['email'],
+      name: json['name'],
+      avatarUrl: json['avatarUrl'],
+      provider: json['provider'],
+    );
+  }
 }
