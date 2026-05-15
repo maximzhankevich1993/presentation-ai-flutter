@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../models/presentation.dart';
-import '../providers/user_provider.dart';
+import '../models/lesson_plan.dart';
 import '../services/lesson_plan_service.dart';
 import 'editor_screen.dart';
 
@@ -57,7 +56,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
     setState(() => _isGenerating = true);
     
     try {
-      final lessonPlan = LessonPlanService.generate(
+      final lessonPlan = await LessonPlanService.generate(
         topic: topic,
         subject: subject,
         standard: _selectedStandard,
@@ -84,10 +83,11 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
   Presentation _convertToPresentation(LessonPlan lessonPlan) {
     final List<Slide> slides = [];
     
+    // Титульный слайд
     slides.add(Slide(
       title: 'План урока',
       content: [
-        '📚 ${lessonPlan.subject}',
+        '📚 Предмет: ${lessonPlan.subject}',
         '📖 Тема: ${lessonPlan.topic}',
         '🎓 Класс: ${lessonPlan.grade}',
         '🌍 Стандарт: ${_getStandardName(lessonPlan.standard)}',
@@ -95,11 +95,13 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       ],
     ));
     
+    // Цели урока
     slides.add(Slide(
       title: 'Цели урока',
       content: lessonPlan.objectives.map((obj) => '• $obj').toList(),
     ));
     
+    // Этапы урока
     for (final stage in lessonPlan.stages) {
       slides.add(Slide(
         title: stage.name,
@@ -112,6 +114,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       ));
     }
     
+    // Домашнее задание
     if (_includeHomework) {
       slides.add(Slide(
         title: 'Домашнее задание',
@@ -119,6 +122,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       ));
     }
     
+    // Оценивание
     if (_includeAssessments) {
       slides.add(Slide(
         title: 'Оценивание',
@@ -126,10 +130,11 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       ));
     }
     
+    // Дифференциация
     if (_includeDifferentiation) {
       slides.add(Slide(
         title: 'Дифференциация',
-        content: lessonPlan.differentiation,
+        content: lessonPlan.differentiation.map((d) => '• $d').toList(),
       ));
     }
     
@@ -203,22 +208,48 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                     ),
                     child: Column(
                       children: [
-                        Container(width: 56, height: 56, decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.school_rounded, color: Colors.white, size: 28)),
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(Icons.school_rounded, color: Colors.white, size: 28),
+                        ),
                         const SizedBox(height: 16),
-                        const Text('Конструктор уроков', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
+                        const Text(
+                          'Конструктор уроков',
+                          style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800),
+                        ),
                         const SizedBox(height: 8),
-                        Text('Создайте план урока по международным стандартам', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
+                        Text(
+                          'Создайте план урока по международным стандартам',
+                          style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
+                        ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 24),
                   
                   // Поля ввода
-                  _buildTextField(controller: _topicController, hint: 'Тема урока', icon: Icons.topic_rounded),
+                  _buildTextField(
+                    controller: _topicController,
+                    hint: 'Тема урока',
+                    icon: Icons.topic_rounded,
+                  ),
                   const SizedBox(height: 12),
-                  _buildTextField(controller: _subjectController, hint: 'Предмет', icon: Icons.subject_rounded),
+                  _buildTextField(
+                    controller: _subjectController,
+                    hint: 'Предмет',
+                    icon: Icons.subject_rounded,
+                  ),
                   const SizedBox(height: 12),
-                  _buildTextField(controller: _gradeController, hint: 'Класс', icon: Icons.numbers_rounded),
+                  _buildTextField(
+                    controller: _gradeController,
+                    hint: 'Класс',
+                    icon: Icons.numbers_rounded,
+                  ),
                   const SizedBox(height: 16),
                   
                   // Стандарт и длительность
@@ -232,11 +263,26 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                   const SizedBox(height: 24),
                   
                   // Дополнительные настройки
-                  _buildSwitch(value: _includeAssessments, onChanged: (v) => setState(() => _includeAssessments = v), title: 'Включить систему оценивания', icon: Icons.assessment_rounded),
+                  _buildSwitch(
+                    value: _includeAssessments,
+                    onChanged: (v) => setState(() => _includeAssessments = v),
+                    title: 'Включить систему оценивания',
+                    icon: Icons.assessment_rounded,
+                  ),
                   const SizedBox(height: 8),
-                  _buildSwitch(value: _includeDifferentiation, onChanged: (v) => setState(() => _includeDifferentiation = v), title: 'Включить дифференциацию', icon: Icons.graphic_eq_rounded),
+                  _buildSwitch(
+                    value: _includeDifferentiation,
+                    onChanged: (v) => setState(() => _includeDifferentiation = v),
+                    title: 'Включить дифференциацию',
+                    icon: Icons.graphic_eq_rounded,
+                  ),
                   const SizedBox(height: 8),
-                  _buildSwitch(value: _includeHomework, onChanged: (v) => setState(() => _includeHomework = v), title: 'Включить домашнее задание', icon: Icons.home_rounded),
+                  _buildSwitch(
+                    value: _includeHomework,
+                    onChanged: (v) => setState(() => _includeHomework = v),
+                    title: 'Включить домашнее задание',
+                    icon: Icons.home_rounded,
+                  ),
                   const SizedBox(height: 32),
                   
                   // Кнопка создания
@@ -256,7 +302,10 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                           children: [
                             Icon(Icons.auto_awesome, color: Colors.white, size: 20),
                             SizedBox(width: 10),
-                            Text('Создать план урока', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                            Text(
+                              'Создать план урока',
+                              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                            ),
                           ],
                         ),
                       ),
@@ -268,9 +317,17 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
     );
   }
   
-  Widget _buildTextField({required TextEditingController controller, required String hint, required IconData icon}) {
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+  }) {
     return Container(
-      decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF2A2A2A))),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF2A2A2A)),
+      ),
       child: TextField(
         controller: controller,
         style: const TextStyle(color: Colors.white),
@@ -288,7 +345,11 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
   Widget _buildStandardDropdown() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF2A2A2A))),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF2A2A2A)),
+      ),
       child: DropdownButtonFormField<String>(
         value: _selectedStandard,
         items: _standards.map((standard) {
@@ -319,7 +380,10 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Длительность: $_durationMinutes мин', style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13)),
+        Text(
+          'Длительность: $_durationMinutes мин',
+          style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13),
+        ),
         Slider(
           value: _durationMinutes.toDouble(),
           min: 20,
@@ -333,16 +397,30 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
     );
   }
   
-  Widget _buildSwitch({required bool value, required ValueChanged<bool> onChanged, required String title, required IconData icon}) {
+  Widget _buildSwitch({
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    required String title,
+    required IconData icon,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF2A2A2A))),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF2A2A2A)),
+      ),
       child: Row(
         children: [
           Icon(icon, color: const Color(0xFF1DB954), size: 20),
           const SizedBox(width: 12),
           Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 14))),
-          Switch(value: value, onChanged: onChanged, activeColor: const Color(0xFF1DB954), inactiveTrackColor: const Color(0xFF2A2A2A)),
+          Switch(
+            value: value,
+            onChanged: onChanged,
+            activeColor: const Color(0xFF1DB954),
+            inactiveTrackColor: const Color(0xFF2A2A2A),
+          ),
         ],
       ),
     );
