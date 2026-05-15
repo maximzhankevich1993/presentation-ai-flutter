@@ -12,50 +12,16 @@ class TeacherScreen extends StatefulWidget {
 class _TeacherScreenState extends State<TeacherScreen> {
   String _selectedTariff = 'teacher';
   bool _isLoading = false;
-  bool _showConstructor = false;
+
+  void _openConstructor() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const LessonConstructorScreen()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Если выбран конструктор уроков
-    if (_showConstructor) {
-      return Scaffold(
-        backgroundColor: const Color(0xFF121212),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF121212),
-          elevation: 0,
-          leading: MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              onTap: () => setState(() => _showConstructor = false),
-              child: Container(
-                width: 34,
-                height: 34,
-                margin: const EdgeInsets.only(left: 8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFF2A2A2A)),
-                ),
-                child: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 18),
-              ),
-            ),
-          ),
-          title: const Text(
-            'Конструктор уроков',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.3,
-            ),
-          ),
-          centerTitle: true,
-        ),
-        body: const LessonConstructorScreen(),
-      );
-    }
-
-    // Основной экран с тарифами и кнопкой конструктора
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
@@ -92,7 +58,7 @@ class _TeacherScreenState extends State<TeacherScreen> {
           MouseRegion(
             cursor: SystemMouseCursors.click,
             child: GestureDetector(
-              onTap: () => setState(() => _showConstructor = true),
+              onTap: _openConstructor,
               child: Container(
                 margin: const EdgeInsets.only(right: 12),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -262,11 +228,11 @@ class _TeacherScreenState extends State<TeacherScreen> {
                       ),
                       const SizedBox(height: 32),
 
-                      // Кнопка перехода к конструктору уроков
+                      // Большая кнопка конструктора уроков
                       MouseRegion(
                         cursor: SystemMouseCursors.click,
                         child: GestureDetector(
-                          onTap: () => setState(() => _showConstructor = true),
+                          onTap: _openConstructor,
                           child: Container(
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 14),
