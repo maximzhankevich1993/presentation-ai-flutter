@@ -183,6 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      // Логотип
                       Container(
                         width: 80,
                         height: 80,
@@ -226,6 +227,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 40),
                       
+                      // Поле Email
                       Container(
                         decoration: BoxDecoration(
                           color: const Color(0xFF1E1E1E),
@@ -247,6 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 16),
                       
+                      // Поле Пароль
                       Container(
                         decoration: BoxDecoration(
                           color: const Color(0xFF1E1E1E),
@@ -275,6 +278,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 12),
                       
+                      // Забыли пароль?
                       Align(
                         alignment: Alignment.centerRight,
                         child: TextButton(
@@ -292,6 +296,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(height: 24),
                       
+                      // Кнопка входа
                       MouseRegion(
                         cursor: SystemMouseCursors.click,
                         child: GestureDetector(
@@ -351,6 +356,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          // Google
                           _SocialButton(
                             icon: Icons.g_mobiledata,
                             label: 'Google',
@@ -360,7 +366,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               'Google',
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 20),
+                          
+                          // Apple
                           _SocialButton(
                             icon: Icons.apple,
                             label: 'Apple',
@@ -375,6 +383,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       
                       const SizedBox(height: 20),
                       
+                      // Регистрация
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
