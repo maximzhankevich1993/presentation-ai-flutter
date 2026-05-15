@@ -1,9 +1,8 @@
-// lib/services/api_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/presentation.dart';
 import '../models/user.dart';
-//import '../models/social_user.dart';
+import '../models/social_user.dart';
 
 class ApiService {
   static const String baseUrl = 'https://presentation-ai-backend.onrender.com/api';
@@ -83,7 +82,7 @@ class ApiService {
   }
   
   // ============================================
-  // СОЦИАЛЬНАЯ АВТОРИЗАЦИЯ (НОВЫЙ МЕТОД)
+  // СОЦИАЛЬНАЯ АВТОРИЗАЦИЯ
   // ============================================
   
   static Future<Map<String, dynamic>> socialLogin(SocialUser socialUser) async {
@@ -105,21 +104,8 @@ class ApiService {
   }
   
   // ============================================
-  // ОСТАЛЬНЫЕ МЕТОДЫ
+  // ПРОФИЛЬ
   // ============================================
-  
-  static Future<void> forgotPassword(String email) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/auth/forgot-password'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({'email': email}),
-    );
-    
-    if (response.statusCode != 200) {
-      final data = json.decode(response.body);
-      throw Exception(data['message'] ?? 'Ошибка сброса пароля');
-    }
-  }
   
   static Future<User> getProfile() async {
     final response = await http.get(
@@ -150,6 +136,19 @@ class ApiService {
     }
   }
   
+  static Future<void> forgotPassword(String email) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/auth/forgot-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'email': email}),
+    );
+    
+    if (response.statusCode != 200) {
+      final data = json.decode(response.body);
+      throw Exception(data['message'] ?? 'Ошибка сброса пароля');
+    }
+  }
+  
   static Future<void> logout() async {
     try {
       final response = await http.post(
@@ -167,7 +166,7 @@ class ApiService {
   }
 
   // ============================================
-  // ГЕНЕРАЦИЯ ПРЕЗЕНТАЦИЙ
+  // ГЕНЕРАЦИЯ
   // ============================================
   
   static Future<Presentation> generate({
@@ -257,6 +256,8 @@ class ApiService {
     
     if (response.statusCode == 200) {
       return json.decode(response.body);
+    } else if (response.statusCode == 403) {
+      throw Exception('Premium доступ только для подписчиков');
     } else {
       throw Exception('Ошибка загрузки премиум шаблонов');
     }
