@@ -97,6 +97,36 @@ class SlideTemplate {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// HOVER CARD
+// ═══════════════════════════════════════════════════════════════════════════════
+class _HoverCard extends StatefulWidget {
+  final Widget child;
+  final VoidCallback onTap;
+  const _HoverCard({required this.child, required this.onTap});
+  @override
+  State<_HoverCard> createState() => _HoverCardState();
+}
+
+class _HoverCardState extends State<_HoverCard> {
+  bool hover = false;
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => hover = true),
+      onExit: (_) => setState(() => hover = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          duration: _T.fast,
+          scale: hover ? 1.02 : 1,
+          child: widget.child,
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // EDITOR SCREEN
 // ═══════════════════════════════════════════════════════════════════════════════
 class EditorScreen extends StatefulWidget {
@@ -280,6 +310,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
   }
 
   void _addContentItem(int i) => setState(() => _contentCtrl[i].add(TextEditingController(text: 'Новый пункт')));
+  
   void _removeContentItem(int slide, int item) {
     if (_contentCtrl[slide].length <= 1) return;
     setState(() {
@@ -314,53 +345,79 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
   void _showTemplatePicker() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: _T.bgSurface,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => Container(
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => Container(
         padding: const EdgeInsets.all(20),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Добавить шаблон слайда', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 20),
-          GridView.builder(
-            shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 1.2, crossAxisSpacing: 12, mainAxisSpacing: 12),
-            itemCount: _slideTemplates.length,
-            itemBuilder: (_, i) => GestureDetector(
-              onTap: () {
-                Navigator.pop(ctx);
-                int idx = _activeSlide + 1;
-                Slide newSlide = _slideTemplates[i].build();
-                setState(() {
-                  _presentation.slides.insert(idx, newSlide);
-                  _titleCtrl.insert(idx, TextEditingController(text: newSlide.title));
-                  _contentCtrl.insert(idx, newSlide.content.map((c) => TextEditingController(text: c)).toList());
-                  _customImages.insert(idx, null);
-                  _customBgs.insert(idx, null);
-                  _fontSizes.insert(idx, 14.0);
-                  _fonts.insert(idx, _globalFont);
-                  _slideFontColors.insert(idx, Colors.white);
-                  _transitions.insert(idx, 'none');
-                  _chartTypes.insert(idx, null);
-                  _chartData.insert(idx, []);
-                  _shapes.insert(idx, []);
-                  _imageWidths.insert(idx, 0.28);
-                  _imageHeights.insert(idx, 0.55);
-                  _imagePositions.insert(idx, 'right');
-                  _imageTextWrap.insert(idx, 'around');
-                  _activeSlide = idx;
-                });
-              },
-              child: Container(
-                padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF2A2A2A))),
-                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Icon(_slideTemplates[i].icon, color: const Color(0xFF1DB954), size: 28),
-                  const SizedBox(height: 8),
-                  Text(_slideTemplates[i].name, style: const TextStyle(color: Colors.white, fontSize: 12), textAlign: TextAlign.center),
-                ]),
+        decoration: BoxDecoration(
+          color: _T.bgSurface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Добавить шаблон слайда', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 20),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 1.2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: _slideTemplates.length,
+              itemBuilder: (_, i) => _HoverCard(
+                onTap: () {
+                  Navigator.pop(context);
+                  int idx = _activeSlide + 1;
+                  Slide newSlide = _slideTemplates[i].build();
+                  setState(() {
+                    _presentation.slides.insert(idx, newSlide);
+                    _titleCtrl.insert(idx, TextEditingController(text: newSlide.title));
+                    _contentCtrl.insert(idx, newSlide.content.map((c) => TextEditingController(text: c)).toList());
+                    _customImages.insert(idx, null);
+                    _customBgs.insert(idx, null);
+                    _fontSizes.insert(idx, 14.0);
+                    _fonts.insert(idx, _globalFont);
+                    _slideFontColors.insert(idx, Colors.white);
+                    _transitions.insert(idx, 'none');
+                    _chartTypes.insert(idx, null);
+                    _chartData.insert(idx, []);
+                    _shapes.insert(idx, []);
+                    _imageWidths.insert(idx, 0.28);
+                    _imageHeights.insert(idx, 0.55);
+                    _imagePositions.insert(idx, 'right');
+                    _imageTextWrap.insert(idx, 'around');
+                    _activeSlide = idx;
+                  });
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E1E1E),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF2A2A2A)),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(_slideTemplates[i].icon, color: const Color(0xFF1DB954), size: 28),
+                      const SizedBox(height: 8),
+                      Text(
+                        _slideTemplates[i].name,
+                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ),
-        ]),
+          ],
+        ),
       ),
     );
   }
@@ -418,111 +475,222 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
   }
 
   Decoration _slideDeco(int idx) {
-    if (_customBgs[idx] != null) return BoxDecoration(image: DecorationImage(image: NetworkImage(_customBgs[idx]!), fit: BoxFit.cover), borderRadius: _T.r12);
+    if (_customBgs[idx] != null) {
+      return BoxDecoration(
+        image: DecorationImage(image: NetworkImage(_customBgs[idx]!), fit: BoxFit.cover),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.25),
+            blurRadius: 30,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      );
+    }
     var bg = _freeBgs[_selectedBgIndex.clamp(0, _freeBgs.length - 1)];
-    if (bg['type'] == 'gradient') return BoxDecoration(gradient: LinearGradient(colors: bg['colors'] as List<Color>), borderRadius: _T.r12);
-    return BoxDecoration(color: bg['color'] as Color, borderRadius: _T.r12);
+    if (bg['type'] == 'gradient') {
+      return BoxDecoration(
+        gradient: LinearGradient(colors: bg['colors'] as List<Color>),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.25),
+            blurRadius: 30,
+            offset: const Offset(0, 14),
+          ),
+        ],
+      );
+    }
+    return BoxDecoration(
+      color: bg['color'] as Color,
+      borderRadius: BorderRadius.circular(24),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.25),
+          blurRadius: 30,
+          offset: const Offset(0, 14),
+        ),
+      ],
+    );
   }
 
   void _toast(String msg, {bool success = false, bool error = false, bool warning = false}) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg), backgroundColor: success ? _T.success : error ? _T.danger : warning ? _T.gold : _T.bgCard,
-      behavior: SnackBarBehavior.floating, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 24), duration: const Duration(seconds: 2),
+      content: Text(msg),
+      backgroundColor: success ? _T.success : error ? _T.danger : warning ? _T.gold : _T.bgCard,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      duration: const Duration(seconds: 2),
     ));
   }
 
   void _export() {
     _saveAll();
-    _showSheet(_ExportSheet(isPremium: Provider.of<UserProvider>(context, listen: false).isPremium, presentation: _presentation));
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => _ExportSheet(
+        isPremium: Provider.of<UserProvider>(context, listen: false).isPremium,
+        presentation: _presentation,
+      ),
+    );
   }
-
-  void _showSheet(Widget child) => showModalBottomSheet(context: context, backgroundColor: Colors.transparent, isScrollControlled: true, builder: (_) => child);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _T.bgBase,
       body: Column(children: [
-        _TopBar(title: _presentation.title, slideCount: _presentation.slides.length, uploadsUsed: _imageUploadsUsed, onBack: () { _saveAll(); Navigator.pop(context); }, onExport: _export),
+        _TopBar(
+          title: _presentation.title,
+          slideCount: _presentation.slides.length,
+          uploadsUsed: _imageUploadsUsed,
+          onBack: () { _saveAll(); Navigator.pop(context); },
+          onExport: _export,
+        ),
         const Divider(color: _T.border, height: 1),
         Expanded(
           child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            AnimatedContainer(duration: _T.normal, width: _navCollapsed ? 48 : 200, child: _SlideNavigator(
-              slides: _presentation.slides, titleControllers: _titleCtrl, activeIndex: _activeSlide, collapsed: _navCollapsed,
-              customBgs: _customBgs, backgrounds: _freeBgs, selectedBgIndex: _selectedBgIndex,
-              onSelect: (i) => setState(() => _activeSlide = i), onAdd: _addSlide, onDelete: _deleteSlide, onDuplicate: _duplicateSlide,
-              onMoveUp: (i) => setState(() {
-                var tmp = _presentation.slides[i];
-                _presentation.slides[i] = _presentation.slides[i - 1];
-                _presentation.slides[i - 1] = tmp;
-                _activeSlide = i - 1;
-              }),
-              onMoveDown: (i) => setState(() {
-                var tmp = _presentation.slides[i];
-                _presentation.slides[i] = _presentation.slides[i + 1];
-                _presentation.slides[i + 1] = tmp;
-                _activeSlide = i + 1;
-              }),
-              onToggleCollapse: () => setState(() => _navCollapsed = !_navCollapsed),
-            )),
+            AnimatedContainer(
+              duration: _T.normal,
+              width: _navCollapsed ? 48 : 200,
+              child: _SlideNavigator(
+                slides: _presentation.slides,
+                titleControllers: _titleCtrl,
+                activeIndex: _activeSlide,
+                collapsed: _navCollapsed,
+                customBgs: _customBgs,
+                backgrounds: _freeBgs,
+                selectedBgIndex: _selectedBgIndex,
+                onSelect: (i) => setState(() => _activeSlide = i),
+                onAdd: _addSlide,
+                onDelete: _deleteSlide,
+                onDuplicate: _duplicateSlide,
+                onMoveUp: (i) => setState(() {
+                  var tmp = _presentation.slides[i];
+                  _presentation.slides[i] = _presentation.slides[i - 1];
+                  _presentation.slides[i - 1] = tmp;
+                  _activeSlide = i - 1;
+                }),
+                onMoveDown: (i) => setState(() {
+                  var tmp = _presentation.slides[i];
+                  _presentation.slides[i] = _presentation.slides[i + 1];
+                  _presentation.slides[i + 1] = tmp;
+                  _activeSlide = i + 1;
+                }),
+                onToggleCollapse: () => setState(() => _navCollapsed = !_navCollapsed),
+              ),
+            ),
             const VerticalDivider(color: _T.border, width: 1),
-            Expanded(child: _Canvas(
-              index: _activeSlide, titleCtrl: _titleCtrl[_activeSlide], contentCtrl: _contentCtrl[_activeSlide],
-              decoration: _slideDeco(_activeSlide), font: _fonts[_activeSlide] != 'Inter' ? _fonts[_activeSlide] : _globalFont,
-              fontSize: _fontSizes[_activeSlide], fontColor: _slideFontColors[_activeSlide] ?? _globalFontColor, slideCount: _presentation.slides.length,
-              image: _customImages[_activeSlide] ?? _autoImages[_activeSlide], hasCustomImage: _customImages[_activeSlide] != null,
-              onRemoveImage: () => setState(() { _customImages[_activeSlide] = null; _countUploads(); }),
-              textStyle: _currentTextStyle, textAlign: _currentTextAlign, columnsCount: _columnsCount,
-              chartType: _chartTypes[_activeSlide], chartData: _chartData[_activeSlide], shapes: _shapes[_activeSlide],
-              imageWidth: _imageWidths[_activeSlide] ?? 0.28, imageHeight: _imageHeights[_activeSlide] ?? 0.55,
-              imagePosition: _imagePositions[_activeSlide] ?? 'right', imageTextWrap: _imageTextWrap[_activeSlide] ?? 'around',
-              onAddItem: () => _addContentItem(_activeSlide), onRemoveItem: (i) => _removeContentItem(_activeSlide, i),
-            )),
+            Expanded(
+              child: _Canvas(
+                index: _activeSlide,
+                titleCtrl: _titleCtrl[_activeSlide],
+                contentCtrl: _contentCtrl[_activeSlide],
+                decoration: _slideDeco(_activeSlide),
+                font: _fonts[_activeSlide] != 'Inter' ? _fonts[_activeSlide] : _globalFont,
+                fontSize: _fontSizes[_activeSlide],
+                fontColor: _slideFontColors[_activeSlide] ?? _globalFontColor,
+                slideCount: _presentation.slides.length,
+                image: _customImages[_activeSlide] ?? _autoImages[_activeSlide],
+                hasCustomImage: _customImages[_activeSlide] != null,
+                onRemoveImage: () => setState(() { _customImages[_activeSlide] = null; _countUploads(); }),
+                textStyle: _currentTextStyle,
+                textAlign: _currentTextAlign,
+                columnsCount: _columnsCount,
+                chartType: _chartTypes[_activeSlide],
+                chartData: _chartData[_activeSlide],
+                shapes: _shapes[_activeSlide],
+                imageWidth: _imageWidths[_activeSlide] ?? 0.28,
+                imageHeight: _imageHeights[_activeSlide] ?? 0.55,
+                imagePosition: _imagePositions[_activeSlide] ?? 'right',
+                imageTextWrap: _imageTextWrap[_activeSlide] ?? 'around',
+                onAddItem: () => _addContentItem(_activeSlide),
+                onRemoveItem: (i) => _removeContentItem(_activeSlide, i),
+              ),
+            ),
             const VerticalDivider(color: _T.border, width: 1),
-            AnimatedContainer(duration: _T.normal, width: _propsPanelOpen ? 280 : 0, child: _propsPanelOpen ? _PropertiesPanel(
-              index: _activeSlide, isPremium: Provider.of<UserProvider>(context).isPremium, activeTab: _activePropTab,
-              globalFont: _globalFont, selectedBgIndex: _selectedBgIndex, freeBgs: _freeBgs, premiumBgs: const [], customBg: _customBgs[_activeSlide],
-              fontSize: _fontSizes[_activeSlide], fontColor: _slideFontColors[_activeSlide] ?? _globalFontColor, transition: _transitions[_activeSlide],
-              allTransitions: _allTransitions, isImproving: _isImproving, currentTextStyle: _currentTextStyle, currentTextAlign: _currentTextAlign,
-              columnsCount: _columnsCount, textStyles: _textStyles, chartType: _chartTypes[_activeSlide], chartData: _chartData[_activeSlide],
-              shapes: _shapes[_activeSlide], imageWidth: _imageWidths[_activeSlide], imageHeight: _imageHeights[_activeSlide],
-              imagePosition: _imagePositions[_activeSlide], imageTextWrap: _imageTextWrap[_activeSlide],
-              hasImage: _customImages[_activeSlide] != null || _autoImages[_activeSlide] != null,
-              onTabChange: (t) => setState(() => _activePropTab = t),
-              onBgSelect: (i) => setState(() {
-                _selectedBgIndex = i;
-                _customBgs = List.filled(_presentation.slides.length, null);
-              }),
-              onBgUpload: () => _uploadBg(_activeSlide), onImageUpload: () => _uploadImage(_activeSlide),
-              onFontChange: (f) => setState(() {
-                _globalFont = f;
-                for (int i = 0; i < _fonts.length; i++) _fonts[i] = f;
-              }),
-              onFontSizeChange: (v) => setState(() => _fontSizes[_activeSlide] = v),
-              onFontColorChange: (c) => setState(() { _slideFontColors[_activeSlide] = c; _globalFontColor = c; }),
-              onTransitionChange: (t) => setState(() => _transitions[_activeSlide] = t),
-              onTextStyleChange: (s) => setState(() => _currentTextStyle = s),
-              onTextAlignChange: (a) => setState(() => _currentTextAlign = a),
-              onColumnsChange: (c) => setState(() => _columnsCount = c),
-              onChartTypeChange: (t) => setState(() => _chartTypes[_activeSlide] = t),
-              onChartDataChange: (d) => setState(() => _chartData[_activeSlide] = d),
-              onAddShape: _addShape,
-              onRemoveShape: _removeShape,
-              onImageWidthChange: _updateImageWidth, onImageHeightChange: _updateImageHeight,
-              onImagePositionChange: _updateImagePosition, onImageTextWrapChange: _updateImageTextWrap,
-              uploadsUsed: _imageUploadsUsed,
-              onImprove: () => _improveSlide(_activeSlide),
-            ) : const SizedBox.shrink()),
+            AnimatedContainer(
+              duration: _T.normal,
+              width: _propsPanelOpen ? 280 : 0,
+              child: AnimatedSwitcher(
+                duration: _T.fast,
+                child: !_propsPanelOpen
+                    ? const SizedBox.shrink()
+                    : _PropertiesPanel(
+                        key: ValueKey(_activeSlide),
+                        index: _activeSlide,
+                        isPremium: Provider.of<UserProvider>(context).isPremium,
+                        activeTab: _activePropTab,
+                        globalFont: _globalFont,
+                        selectedBgIndex: _selectedBgIndex,
+                        freeBgs: _freeBgs,
+                        premiumBgs: const [],
+                        customBg: _customBgs[_activeSlide],
+                        fontSize: _fontSizes[_activeSlide],
+                        fontColor: _slideFontColors[_activeSlide] ?? _globalFontColor,
+                        transition: _transitions[_activeSlide],
+                        allTransitions: _allTransitions,
+                        isImproving: _isImproving,
+                        currentTextStyle: _currentTextStyle,
+                        currentTextAlign: _currentTextAlign,
+                        columnsCount: _columnsCount,
+                        textStyles: _textStyles,
+                        chartType: _chartTypes[_activeSlide],
+                        chartData: _chartData[_activeSlide],
+                        shapes: _shapes[_activeSlide],
+                        imageWidth: _imageWidths[_activeSlide],
+                        imageHeight: _imageHeights[_activeSlide],
+                        imagePosition: _imagePositions[_activeSlide],
+                        imageTextWrap: _imageTextWrap[_activeSlide],
+                        hasImage: _customImages[_activeSlide] != null || _autoImages[_activeSlide] != null,
+                        uploadsUsed: _imageUploadsUsed,
+                        onTabChange: (t) => setState(() => _activePropTab = t),
+                        onBgSelect: (i) => setState(() {
+                          _selectedBgIndex = i;
+                          _customBgs = List.filled(_presentation.slides.length, null);
+                        }),
+                        onBgUpload: () => _uploadBg(_activeSlide),
+                        onImageUpload: () => _uploadImage(_activeSlide),
+                        onFontChange: (f) => setState(() {
+                          _globalFont = f;
+                          for (int i = 0; i < _fonts.length; i++) _fonts[i] = f;
+                        }),
+                        onFontSizeChange: (v) => setState(() => _fontSizes[_activeSlide] = v),
+                        onFontColorChange: (c) => setState(() { _slideFontColors[_activeSlide] = c; _globalFontColor = c; }),
+                        onTransitionChange: (t) => setState(() => _transitions[_activeSlide] = t),
+                        onTextStyleChange: (s) => setState(() => _currentTextStyle = s),
+                        onTextAlignChange: (a) => setState(() => _currentTextAlign = a),
+                        onColumnsChange: (c) => setState(() => _columnsCount = c),
+                        onChartTypeChange: (t) => setState(() => _chartTypes[_activeSlide] = t),
+                        onChartDataChange: (d) => setState(() => _chartData[_activeSlide] = d),
+                        onAddShape: _addShape,
+                        onRemoveShape: _removeShape,
+                        onImageWidthChange: _updateImageWidth,
+                        onImageHeightChange: _updateImageHeight,
+                        onImagePositionChange: _updateImagePosition,
+                        onImageTextWrapChange: _updateImageTextWrap,
+                        onImprove: () => _improveSlide(_activeSlide),
+                      ),
+              ),
+            ),
           ]),
         ),
         const Divider(color: _T.border, height: 1),
-        _ControlBar(activeSlide: _activeSlide, totalSlides: _presentation.slides.length, propsPanelOpen: _propsPanelOpen,
+        _ControlBar(
+          activeSlide: _activeSlide,
+          totalSlides: _presentation.slides.length,
+          propsPanelOpen: _propsPanelOpen,
           onToggleProps: () => setState(() => _propsPanelOpen = !_propsPanelOpen),
           onPrev: () => setState(() { if (_activeSlide > 0) _activeSlide--; }),
           onNext: () => setState(() { if (_activeSlide < _presentation.slides.length - 1) _activeSlide++; }),
-          onAdd: _addSlide, onDelete: () => _deleteSlide(_activeSlide),
-          onDuplicate: () => _duplicateSlide(_activeSlide), onTemplate: _showTemplatePicker,
+          onAdd: _addSlide,
+          onDelete: () => _deleteSlide(_activeSlide),
+          onDuplicate: () => _duplicateSlide(_activeSlide),
+          onTemplate: _showTemplatePicker,
         ),
       ]),
     );
@@ -531,15 +699,15 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
   @override
   void dispose() {
     _saveAll();
-    for (var c in _titleCtrl) c.dispose();
-    for (var l in _contentCtrl) for (var c in l) c.dispose();
+    for (final c in _titleCtrl) { c.dispose(); }
+    for (final group in _contentCtrl) { for (final c in group) { c.dispose(); } }
     _scrollCtrl.dispose();
     super.dispose();
   }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// TOP BAR
+// TOP BAR (Glassmorphism)
 // ═══════════════════════════════════════════════════════════════════════════════
 class _TopBar extends StatelessWidget {
   final String title;
@@ -547,28 +715,49 @@ class _TopBar extends StatelessWidget {
   final VoidCallback onBack, onExport;
   const _TopBar({required this.title, required this.slideCount, required this.uploadsUsed, required this.onBack, required this.onExport});
   @override
-  Widget build(BuildContext context) => Container(
-    height: 52, color: _T.bgSurface, padding: const EdgeInsets.symmetric(horizontal: 12),
-    child: Row(children: [
-      _IconBtn(Icons.arrow_back_ios_rounded, onBack, size: 17), const SizedBox(width: 8),
-      Container(width: 26, height: 26, decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(6)), child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 14)),
-      const SizedBox(width: 10), Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title, style: const TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w600, fontSize: 13), overflow: TextOverflow.ellipsis),
-        Text('$slideCount слайдов', style: const TextStyle(color: _T.txtMuted, fontSize: 10)),
-      ])),
-      if (uploadsUsed > 0) Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: uploadsUsed >= 10 ? _T.gold.withOpacity(0.12) : _T.accent.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: uploadsUsed >= 10 ? _T.gold.withOpacity(0.3) : _T.accent.withOpacity(0.3)),
-        ),
-        child: Text('🖼 $uploadsUsed/10', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: uploadsUsed >= 10 ? _T.gold : _T.accentLight)),
+  Widget build(BuildContext context) {
+    return Container(
+      height: 58,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: _T.bgSurface.withOpacity(0.9),
+        border: const Border(bottom: BorderSide(color: _T.border)),
       ),
-      _IconBtn(Icons.ios_share_rounded, onExport, tooltip: 'Экспорт', child: const Text('Экспорт', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13))),
-    ]),
-  );
+      child: Row(children: [
+        _IconBtn(Icons.arrow_back_ios_new_rounded, onBack, size: 16),
+        const SizedBox(width: 12),
+        Container(
+          width: 34, height: 34,
+          decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(10)),
+          child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 18),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(title, overflow: TextOverflow.ellipsis, style: const TextStyle(color: _T.txtPrimary, fontSize: 14, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 2),
+            Text('$slideCount слайдов', style: const TextStyle(color: _T.txtMuted, fontSize: 11)),
+          ]),
+        ),
+        if (uploadsUsed > 0)
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: uploadsUsed >= 10 ? _T.gold.withOpacity(0.12) : _T.accent.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: uploadsUsed >= 10 ? _T.gold.withOpacity(0.3) : _T.accent.withOpacity(0.3)),
+            ),
+            child: Text('🖼 $uploadsUsed/10', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: uploadsUsed >= 10 ? _T.gold : _T.accentLight)),
+          ),
+        _IconBtn(Icons.ios_share_rounded, onExport, child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(10)),
+          child: const Text('Экспорт', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+        )),
+      ]),
+    );
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -607,7 +796,12 @@ class _SlideNavigator extends StatelessWidget {
     Expanded(child: ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
       itemCount: slides.length,
-      itemBuilder: (_, i) => _buildThumbnail(i),
+      itemBuilder: (_, i) => _SlideThumbnail(
+        index: i, title: titleControllers[i].text, isActive: i == activeIndex, collapsed: collapsed,
+        bgColor: _getColor(i), onTap: () => onSelect(i), onDelete: slides.length > 1 ? () => onDelete(i) : null,
+        onDuplicate: () => onDuplicate(i), onMoveUp: i > 0 ? () => onMoveUp(i) : null,
+        onMoveDown: i < slides.length - 1 ? () => onMoveDown(i) : null,
+      ),
     )),
     const Divider(color: _T.border, height: 1),
     GestureDetector(onTap: onAdd, child: Container(height: 44, alignment: Alignment.center, child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -616,51 +810,72 @@ class _SlideNavigator extends StatelessWidget {
       if (!collapsed) const Text('Слайд', style: TextStyle(color: _T.accent, fontSize: 12, fontWeight: FontWeight.w600)),
     ]))),
   ]));
-  Widget _buildThumbnail(int i) => StatefulBuilder(builder: (ctx, setState) {
-    bool hover = false;
+}
+
+class _SlideThumbnail extends StatefulWidget {
+  final int index;
+  final String title;
+  final bool isActive, collapsed;
+  final Color bgColor;
+  final VoidCallback onTap, onDuplicate;
+  final VoidCallback? onDelete, onMoveUp, onMoveDown;
+  const _SlideThumbnail({required this.index, required this.title, required this.isActive, required this.collapsed, required this.bgColor, required this.onTap, this.onDelete, required this.onDuplicate, this.onMoveUp, this.onMoveDown});
+  @override
+  State<_SlideThumbnail> createState() => _SlideThumbnailState();
+}
+
+class _SlideThumbnailState extends State<_SlideThumbnail> {
+  bool hover = false;
+  @override
+  Widget build(BuildContext context) {
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => hover = true),
       onExit: (_) => setState(() => hover = false),
-      child: GestureDetector(onTap: () => onSelect(i), child: AnimatedContainer(
-        duration: _T.fast, margin: const EdgeInsets.only(bottom: 6), padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: i == activeIndex ? _T.accent.withOpacity(0.12) : hover ? _T.bgHover : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: i == activeIndex ? _T.accent.withOpacity(0.5) : Colors.transparent, width: 1.5),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: _T.fast,
+          margin: const EdgeInsets.only(bottom: 6),
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: widget.isActive ? _T.accent.withOpacity(0.12) : hover ? _T.bgHover : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: widget.isActive ? _T.accent.withOpacity(0.5) : Colors.transparent, width: 1.5),
+          ),
+          child: widget.collapsed ? _collapsedView() : _expandedView(),
         ),
-        child: collapsed ? _collapsedView(i) : _expandedView(i, hover),
-      )),
+      ),
     );
-  });
-  Widget _collapsedView(int i) => Column(children: [
-    Container(width: 30, height: 20, decoration: BoxDecoration(color: _getColor(i), borderRadius: BorderRadius.circular(3)),
-      child: Center(child: Text('${i + 1}', style: TextStyle(fontSize: 8, color: _getColor(i).computeLuminance() > 0.5 ? Colors.black : Colors.white, fontWeight: FontWeight.w700)))),
+  }
+  
+  Widget _collapsedView() => Column(children: [
+    Container(width: 30, height: 20, decoration: BoxDecoration(color: widget.bgColor, borderRadius: BorderRadius.circular(3)),
+      child: Center(child: Text('${widget.index + 1}', style: TextStyle(fontSize: 8, color: widget.bgColor.computeLuminance() > 0.5 ? Colors.black : Colors.white, fontWeight: FontWeight.w700)))),
   ]);
-  Widget _expandedView(int i, bool hover) => Row(children: [
-    Container(width: 52, height: 34, decoration: BoxDecoration(color: _getColor(i), borderRadius: BorderRadius.circular(4)),
-      child: Center(child: Text('${i + 1}', style: TextStyle(fontSize: 10, color: _getColor(i).computeLuminance() > 0.5 ? Colors.black54 : Colors.white38, fontWeight: FontWeight.w700)))),
+  
+  Widget _expandedView() => Row(children: [
+    Container(width: 52, height: 34, decoration: BoxDecoration(color: widget.bgColor, borderRadius: BorderRadius.circular(4)),
+      child: Center(child: Text('${widget.index + 1}', style: TextStyle(fontSize: 10, color: widget.bgColor.computeLuminance() > 0.5 ? Colors.black54 : Colors.white38, fontWeight: FontWeight.w700)))),
     const SizedBox(width: 8),
-    Expanded(child: Text(
-      titleControllers[i].text.isEmpty ? 'Слайд ${i + 1}' : titleControllers[i].text,
-      style: TextStyle(color: i == activeIndex ? _T.txtPrimary : _T.txtSecondary, fontSize: 11, fontWeight: i == activeIndex ? FontWeight.w600 : FontWeight.w400),
-      maxLines: 2, overflow: TextOverflow.ellipsis,
-    )),
+    Expanded(child: Text(widget.title.isEmpty ? 'Слайд ${widget.index + 1}' : widget.title, style: TextStyle(color: widget.isActive ? _T.txtPrimary : _T.txtSecondary, fontSize: 11, fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w400), maxLines: 2, overflow: TextOverflow.ellipsis)),
     if (hover) PopupMenuButton<String>(
-      iconSize: 14, color: _T.bgCard,
+      padding: EdgeInsets.zero,
+      iconSize: 14,
+      color: _T.bgCard,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: _T.border)),
       icon: const Icon(Icons.more_vert_rounded, color: _T.txtSecondary, size: 14),
       onSelected: (v) {
-        if (v == 'dup') onDuplicate(i);
-        if (v == 'del') onDelete(i);
-        if (v == 'up') onMoveUp(i);
-        if (v == 'down') onMoveDown(i);
+        if (v == 'dup') widget.onDuplicate();
+        if (v == 'del') widget.onDelete?.call();
+        if (v == 'up') widget.onMoveUp?.call();
+        if (v == 'down') widget.onMoveDown?.call();
       },
       itemBuilder: (_) => [
-        if (i > 0) const PopupMenuItem(value: 'up', height: 36, child: Row(children: [Icon(Icons.arrow_upward_rounded, size: 14), SizedBox(width: 8), Text('Вверх')])),
-        if (i < slides.length - 1) const PopupMenuItem(value: 'down', height: 36, child: Row(children: [Icon(Icons.arrow_downward_rounded, size: 14), SizedBox(width: 8), Text('Вниз')])),
+        if (widget.onMoveUp != null) const PopupMenuItem(value: 'up', height: 36, child: Row(children: [Icon(Icons.arrow_upward_rounded, size: 14), SizedBox(width: 8), Text('Вверх')])),
+        if (widget.onMoveDown != null) const PopupMenuItem(value: 'down', height: 36, child: Row(children: [Icon(Icons.arrow_downward_rounded, size: 14), SizedBox(width: 8), Text('Вниз')])),
         const PopupMenuItem(value: 'dup', height: 36, child: Row(children: [Icon(Icons.copy_rounded, size: 14), SizedBox(width: 8), Text('Дублировать')])),
-        if (slides.length > 1) const PopupMenuItem(value: 'del', height: 36, child: Row(children: [Icon(Icons.delete_outline_rounded, size: 14, color: _T.danger), SizedBox(width: 8), Text('Удалить', style: TextStyle(color: _T.danger))])),
+        if (widget.onDelete != null) const PopupMenuItem(value: 'del', height: 36, child: Row(children: [Icon(Icons.delete_outline_rounded, size: 14, color: _T.danger), SizedBox(width: 8), Text('Удалить', style: TextStyle(color: _T.danger))])),
       ],
     ),
   ]);
@@ -745,6 +960,7 @@ class _Canvas extends StatelessWidget {
   Widget _buildContent(double width, double height) {
     if (chartType != null && chartData.isNotEmpty) return _buildChart(width, height);
     if (columnsCount > 1) return _buildColumns(width);
+    
     Widget textCol = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _buildText(titleCtrl, true),
       const SizedBox(height: 12),
@@ -753,62 +969,136 @@ class _Canvas extends StatelessWidget {
         Expanded(child: _buildText(c, false)),
       ]))),
     ]);
+    
     if (image == null) return textCol;
+    
     double imgW = width * imageWidth, imgH = height * imageHeight;
     Widget img = Stack(children: [
       ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(image!, width: imgW, height: imgH, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox())),
       if (hasCustomImage) Positioned(top: 4, right: 4, child: GestureDetector(onTap: onRemoveImage, child: Container(width: 20, height: 20, decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.close_rounded, color: Colors.white, size: 12)))),
     ]);
+    
     switch (imagePosition) {
-      case 'left':
-        return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [img, const SizedBox(width: 20), Expanded(child: textCol)]);
-      case 'top':
-        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [img, const SizedBox(height: 20), textCol]);
-      case 'bottom':
-        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [textCol, const SizedBox(height: 20), img]);
-      default:
-        return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(child: textCol), const SizedBox(width: 20), img]);
+      case 'left': return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [img, const SizedBox(width: 20), Expanded(child: textCol)]);
+      case 'top': return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [img, const SizedBox(height: 20), textCol]);
+      case 'bottom': return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [textCol, const SizedBox(height: 20), img]);
+      default: return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(child: textCol), const SizedBox(width: 20), img]);
     }
   }
 
-  Widget _buildColumns(double w) => Row(children: List.generate(columnsCount, (c) => Expanded(child: Padding(
-    padding: EdgeInsets.only(right: c < columnsCount - 1 ? 12 : 0),
-    child: Column(children: [
-      if (c == 0 && titleCtrl.text.isNotEmpty) _buildText(titleCtrl, true),
-      const SizedBox(height: 8),
-      ...contentCtrl.skip(c * 2).take(2).map((ctrl) => _buildText(ctrl, false)),
-    ]),
-  ))));
+  Widget _buildColumns(double w) {
+    return Row(children: List.generate(columnsCount, (c) => Expanded(child: Padding(
+      padding: EdgeInsets.only(right: c < columnsCount - 1 ? 12 : 0),
+      child: Column(children: [
+        if (c == 0 && titleCtrl.text.isNotEmpty) _buildText(titleCtrl, true),
+        const SizedBox(height: 8),
+        ...List.generate(2, (i) {
+          int index = c * 2 + i;
+          if (index < contentCtrl.length) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: _buildText(contentCtrl[index], false),
+            );
+          } else {
+            return const SizedBox.shrink();
+          }
+        }),
+      ]),
+    ))));
+  }
 
   Widget _buildChart(double w, double h) {
-    if (chartData.isEmpty) return Center(child: Container(
-      width: w * 0.6, height: h * 0.6,
-      decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: _T.border)),
-      child: const Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Icon(Icons.show_chart_rounded, color: _T.txtMuted, size: 48),
-        SizedBox(height: 12),
-        Text('Добавьте данные', style: TextStyle(color: _T.txtMuted)),
-      ]),
-    ));
+    if (chartData.isEmpty) {
+      return Center(child: Container(
+        width: w * 0.6, height: h * 0.6,
+        decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: _T.border)),
+        child: const Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Icon(Icons.show_chart_rounded, color: _T.txtMuted, size: 48),
+          SizedBox(height: 12),
+          Text('Добавьте данные', style: TextStyle(color: _T.txtMuted)),
+        ]),
+      ));
+    }
+    double maxY = chartData.map((e) => e['value'] as double).reduce((a, b) => a > b ? a : b) * 1.2;
     switch (chartType) {
-      case 'bar': return _BarChart(data: chartData, height: h);
-      case 'pie': return _PieChart(data: chartData, height: h);
-      case 'line': return _LineChart(data: chartData, height: h);
-      default: return const SizedBox();
+      case 'bar':
+        return SizedBox(height: h * 0.7, child: BarChart(BarChartData(
+          alignment: BarChartAlignment.spaceAround,
+          maxY: maxY,
+          titlesData: FlTitlesData(
+            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, _) => Text(v.toInt().toString(), style: const TextStyle(color: _T.txtSecondary, fontSize: 10)))),
+            bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, _) {
+              int i = v.toInt();
+              return i >= 0 && i < chartData.length ? Text(chartData[i]['label'], style: const TextStyle(color: _T.txtSecondary, fontSize: 10)) : const Text('');
+            })),
+          ),
+          borderData: FlBorderData(show: false),
+          gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (_) => FlLine(color: _T.border.withOpacity(0.2), strokeWidth: 1)),
+          barGroups: chartData.asMap().entries.map((e) => BarChartGroupData(x: e.key, barRods: [BarChartRodData(toY: e.value['value'], color: _T.accent, width: 30, borderRadius: BorderRadius.circular(4))])).toList(),
+        )));
+      case 'pie':
+        double total = chartData.map((e) => e['value'] as double).reduce((a, b) => a + b);
+        List<Color> colors = [_T.accent, _T.accentLight, Colors.orange, Colors.purple, Colors.cyan];
+        return SizedBox(height: h * 0.7, child: PieChart(PieChartData(
+          sections: chartData.asMap().entries.map((e) => PieChartSectionData(
+            value: e.value['value'],
+            title: '${((e.value['value'] / total) * 100).toInt()}%',
+            radius: 80,
+            titleStyle: const TextStyle(color: Colors.white, fontSize: 12),
+            color: colors[e.key % colors.length],
+          )).toList(),
+          sectionsSpace: 2,
+          centerSpaceRadius: 40,
+        )));
+      case 'line':
+        return SizedBox(height: h * 0.7, child: LineChart(LineChartData(
+          minX: 0,
+          maxX: (chartData.length - 1).toDouble(),
+          minY: 0,
+          maxY: maxY,
+          titlesData: FlTitlesData(
+            leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, _) => Text(v.toInt().toString(), style: const TextStyle(color: _T.txtSecondary, fontSize: 10)))),
+            bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, _) {
+              int i = v.toInt();
+              return i >= 0 && i < chartData.length ? Text(chartData[i]['label'], style: const TextStyle(color: _T.txtSecondary, fontSize: 10)) : const Text('');
+            })),
+          ),
+          borderData: FlBorderData(show: false),
+          gridData: FlGridData(show: true, getDrawingHorizontalLine: (_) => FlLine(color: _T.border.withOpacity(0.2), strokeWidth: 1)),
+          lineBarsData: [LineChartBarData(
+            spots: chartData.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value['value'])).toList(),
+            isCurved: true,
+            color: _T.accent,
+            barWidth: 3,
+            dotData: const FlDotData(show: true),
+            belowBarData: BarAreaData(show: true, color: _T.accent.withOpacity(0.1)),
+          )],
+        )));
+      default:
+        return const SizedBox();
     }
   }
 
   Widget _buildText(TextEditingController c, bool isTitle) {
-    var preset = _getStyle();
-    return EditableText(
-      controller: c, focusNode: FocusNode(),
+    final preset = _getStyle();
+    return TextField(
+      controller: c,
+      maxLines: null,
+      cursorColor: _T.accent,
+      textAlign: _getAlign(),
       style: GoogleFonts.inter(
         fontSize: isTitle ? preset.fontSize * 1.5 : preset.fontSize,
         fontWeight: isTitle ? FontWeight.w800 : preset.fontWeight,
-        color: fontColor, height: 1.3, letterSpacing: preset.letterSpacing,
+        color: fontColor,
+        height: 1.3,
+        letterSpacing: preset.letterSpacing,
         fontStyle: preset.isItalic ? FontStyle.italic : FontStyle.normal,
       ),
-      cursorColor: _T.accent, backgroundCursorColor: _T.accent, maxLines: null, textAlign: _getAlign(),
+      decoration: const InputDecoration(
+        border: InputBorder.none,
+        isCollapsed: true,
+        contentPadding: EdgeInsets.zero,
+      ),
     );
   }
 
@@ -870,76 +1160,6 @@ class _Canvas extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CHART WIDGETS
-// ═══════════════════════════════════════════════════════════════════════════════
-class _BarChart extends StatelessWidget {
-  final List<Map<String, dynamic>> data;
-  final double height;
-  const _BarChart({required this.data, required this.height});
-  @override
-  Widget build(BuildContext context) {
-    double maxY = data.map((e) => e['value'] as double).reduce((a, b) => a > b ? a : b) * 1.2;
-    return SizedBox(height: height * 0.7, child: BarChart(BarChartData(
-      alignment: BarChartAlignment.spaceAround, maxY: maxY,
-      titlesData: FlTitlesData(
-        leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, _) => Text(v.toInt().toString(), style: const TextStyle(color: _T.txtSecondary, fontSize: 10)))),
-        bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, _) {
-          int i = v.toInt();
-          return i >= 0 && i < data.length ? Text(data[i]['label'], style: const TextStyle(color: _T.txtSecondary, fontSize: 10)) : const Text('');
-        })),
-      ),
-      borderData: FlBorderData(show: false), gridData: const FlGridData(show: true, drawVerticalLine: false),
-      barGroups: data.asMap().entries.map((e) => BarChartGroupData(x: e.key, barRods: [BarChartRodData(toY: e.value['value'], color: _T.accent, width: 30, borderRadius: BorderRadius.circular(4))])).toList(),
-    )));
-  }
-}
-
-class _PieChart extends StatelessWidget {
-  final List<Map<String, dynamic>> data;
-  final double height;
-  const _PieChart({required this.data, required this.height});
-  @override
-  Widget build(BuildContext context) {
-    double total = data.map((e) => e['value'] as double).reduce((a, b) => a + b);
-    List<Color> colors = [_T.accent, _T.accentLight, Colors.orange, Colors.purple, Colors.cyan];
-    return SizedBox(height: height * 0.7, child: PieChart(PieChartData(
-      sections: data.asMap().entries.map((e) => PieChartSectionData(
-        value: e.value['value'], title: '${((e.value['value'] / total) * 100).toInt()}%',
-        radius: 80, titleStyle: const TextStyle(color: Colors.white, fontSize: 12),
-        color: colors[e.key % colors.length],
-      )).toList(),
-      sectionsSpace: 2, centerSpaceRadius: 40,
-    )));
-  }
-}
-
-class _LineChart extends StatelessWidget {
-  final List<Map<String, dynamic>> data;
-  final double height;
-  const _LineChart({required this.data, required this.height});
-  @override
-  Widget build(BuildContext context) {
-    double maxY = data.map((e) => e['value'] as double).reduce((a, b) => a > b ? a : b) * 1.2;
-    return SizedBox(height: height * 0.7, child: LineChart(LineChartData(
-      minX: 0, maxX: (data.length - 1).toDouble(), minY: 0, maxY: maxY,
-      titlesData: FlTitlesData(
-        leftTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, _) => Text(v.toInt().toString(), style: const TextStyle(color: _T.txtSecondary, fontSize: 10)))),
-        bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, getTitlesWidget: (v, _) {
-          int i = v.toInt();
-          return i >= 0 && i < data.length ? Text(data[i]['label'], style: const TextStyle(color: _T.txtSecondary, fontSize: 10)) : const Text('');
-        })),
-      ),
-      borderData: FlBorderData(show: false), gridData: const FlGridData(show: true),
-      lineBarsData: [LineChartBarData(
-        spots: data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value['value'])).toList(),
-        isCurved: true, color: _T.accent, barWidth: 3, dotData: const FlDotData(show: true),
-        belowBarData: BarAreaData(show: true, color: _T.accent.withOpacity(0.1)),
-      )],
-    )));
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
 // SHAPE PAINTERS
 // ═══════════════════════════════════════════════════════════════════════════════
 class _TrianglePainter extends CustomPainter {
@@ -983,9 +1203,7 @@ class _PropertiesPanel extends StatelessWidget {
   final int index;
   final bool isPremium;
   final String activeTab, globalFont, transition, currentTextStyle, currentTextAlign;
-  final String? chartType;
-  final String? imagePosition;
-  final String? imageTextWrap;
+  final String? chartType, imagePosition, imageTextWrap;
   final int selectedBgIndex, columnsCount, uploadsUsed;
   final double fontSize;
   final Color fontColor;
@@ -1004,8 +1222,7 @@ class _PropertiesPanel extends StatelessWidget {
   final ValueChanged<double> onFontSizeChange, onImageWidthChange, onImageHeightChange;
   final ValueChanged<Color> onFontColorChange;
   final ValueChanged<List<Map<String, dynamic>>> onChartDataChange;
-  final ValueChanged<String> onAddShape;
-  final ValueChanged<String> onRemoveShape;
+  final ValueChanged<String> onAddShape, onRemoveShape;
 
   const _PropertiesPanel({
     required this.index, required this.isPremium, required this.activeTab, required this.globalFont,
@@ -1057,17 +1274,13 @@ class _PropertiesPanel extends StatelessWidget {
     return _buildDesignTab();
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════════
-  // DESIGN TAB — ТОЛЬКО Inter (Georgia и Courier УДАЛЕНЫ)
-  // ═══════════════════════════════════════════════════════════════════════════════
   Widget _buildDesignTab() => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
     const Text('ШРИФТ', style: TextStyle(color: _T.txtMuted, fontSize: 10, fontWeight: FontWeight.w700)),
     const SizedBox(height: 8),
     ...['Inter'].map((f) => GestureDetector(
       onTap: () => onFontChange(f),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+        margin: const EdgeInsets.only(bottom: 6), padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(color: globalFont == f ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(8), border: Border.all(color: globalFont == f ? _T.accent.withOpacity(0.4) : _T.border)),
         child: Row(children: [
           Expanded(child: Text(f, style: GoogleFonts.getFont(f, color: _T.txtPrimary, fontSize: 13))),
@@ -1112,10 +1325,7 @@ class _PropertiesPanel extends StatelessWidget {
       const Text('ПОЗИЦИЯ', style: TextStyle(color: _T.txtMuted, fontSize: 10, fontWeight: FontWeight.w700)),
       Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: ['left', 'right', 'top', 'bottom'].map((p) => IconButton(
         onPressed: () => onImagePositionChange(p),
-        icon: Icon(
-          p == 'left' ? Icons.format_align_left : p == 'right' ? Icons.format_align_right : p == 'top' ? Icons.vertical_align_top : Icons.vertical_align_bottom,
-          color: imagePosition == p ? _T.accent : _T.txtSecondary,
-        ),
+        icon: Icon(p == 'left' ? Icons.format_align_left : p == 'right' ? Icons.format_align_right : p == 'top' ? Icons.vertical_align_top : Icons.vertical_align_bottom, color: imagePosition == p ? _T.accent : _T.txtSecondary),
       )).toList()),
     ],
   ]);
@@ -1275,7 +1485,12 @@ class _ControlBar extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) => Container(
-    height: 48, color: _T.bgSurface, padding: const EdgeInsets.symmetric(horizontal: 16),
+    height: 56,
+    padding: const EdgeInsets.symmetric(horizontal: 18),
+    decoration: const BoxDecoration(
+      color: _T.bgSurface,
+      border: Border(top: BorderSide(color: _T.border)),
+    ),
     child: Row(children: [
       _IconBtn(Icons.copy_rounded, onDuplicate),
       _IconBtn(Icons.delete_outline_rounded, onDelete, danger: true),
