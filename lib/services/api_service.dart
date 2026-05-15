@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/presentation.dart';
 import '../models/user.dart';
 import '../models/social_user.dart';
@@ -9,6 +10,44 @@ class ApiService {
   
   static String? _authToken;
   
+  // ============================================
+  // УПРАВЛЕНИЕ ТОКЕНОМ (С СОХРАНЕНИЕМ)
+  // ============================================
+  
+  static Future<void> loadToken() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _authToken = prefs.getString('auth_token');
+      print('✅ Токен загружен: ${_authToken != null ? "есть" : "нет"}');
+    } catch (e) {
+      print('❌ Ошибка загрузки токена: $e');
+    }
+  }
+  
+  static Future<void> saveToken(String token) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('auth_token', token);
+      _authToken = token;
+      print('✅ Токен сохранён');
+    } catch (e) {
+      print('❌ Ошибка сохранения токена: $e');
+    }
+  }
+  
+  static Future<void> clearToken() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('auth_token');
+      _authToken = null;
+      print('✅ Токен удалён');
+    } catch (e) {
+      print('❌ Ошибка удаления токена: $e');
+    }
+  }
+  
+  static String? get token => _authToken;
+  
   static void setAuthToken(String token) {
     _authToken = token;
   }
@@ -16,8 +55,6 @@ class ApiService {
   static void clearAuthToken() {
     _authToken = null;
   }
-  
-  static String? get token => _authToken;
   
   static Map<String, String> _getHeaders() {
     final headers = {'Content-Type': 'application/json'};
@@ -49,7 +86,7 @@ class ApiService {
     final data = json.decode(response.body);
     if (response.statusCode == 200 || response.statusCode == 201) {
       if (data.containsKey('token')) {
-        _authToken = data['token'];
+        await saveToken(data['token']);
       }
       return data;
     } else {
@@ -73,7 +110,7 @@ class ApiService {
     final data = json.decode(response.body);
     if (response.statusCode == 200) {
       if (data.containsKey('token')) {
-        _authToken = data['token'];
+        await saveToken(data['token']);
       }
       return data;
     } else {
@@ -95,7 +132,7 @@ class ApiService {
     final data = json.decode(response.body);
     if (response.statusCode == 200) {
       if (data.containsKey('token')) {
-        _authToken = data['token'];
+        await saveToken(data['token']);
       }
       return data;
     } else {
@@ -161,7 +198,7 @@ class ApiService {
     } catch (e) {
       print('Logout error: $e');
     } finally {
-      _authToken = null;
+      await clearToken();
     }
   }
 
@@ -277,6 +314,40 @@ class ApiService {
       return json.decode(response.body);
     } else {
       throw Exception('Ошибка загрузки VIP статистики');
+    }
+  }
+  
+  // ============================================
+  // ЭКСПОРТ
+  // ============================================
+  
+  static Future<Map<String, dynamic>> exportToPPTX(Map<String, dynamic> presentationData) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/export/pptx'),
+      headers: _getHeaders(),
+      body: json.encode(presentationData),
+    );
+    
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Ошибка экспорта в PPTX');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> exportToPDF(Map<String, dynamic> presentationData) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/export/pdf'),
+      headers: _getHeaders(),
+      body: json.encode(presentationData),
+    );
+    
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else if (response.statusCode == 403) {
+      throw Exception('Premium доступ required');
+    } else {
+      throw Exception('Ошибка экспорта в PDF');
     }
   }
   
