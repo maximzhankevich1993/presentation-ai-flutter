@@ -1,9 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
-import 'editor_screen.dart';
+import 'canvas_editor_screen.dart';
+import 'premium_screen.dart';
 
 class CorporateScreen extends StatefulWidget {
   final String countryCode;
@@ -16,11 +15,6 @@ class CorporateScreen extends StatefulWidget {
 class _CorporateScreenState extends State<CorporateScreen> {
   String _selectedTariff = 'business';
   bool _isLoading = false;
-  bool _loadingRates = true;
-  
-  String _currency = 'USD';
-  String _currencySymbol = '\$';
-  double _rate = 1.0;
 
   // Бесплатные шаблоны/отчёты
   final List<Map<String, dynamic>> _freeReports = [
@@ -28,25 +22,25 @@ class _CorporateScreenState extends State<CorporateScreen> {
       'id': 'business_plan',
       'title': 'Бизнес-план',
       'description': 'Структура и финансовые показатели',
-      'slides': 8,
       'color': '#1DB954',
       'icon': Icons.business_center_rounded,
+      'template': '📊 Бизнес-план\n\n• Краткое описание\n• Цели и задачи\n• Финансовый план',
     },
     {
       'id': 'swot_analysis',
       'title': 'SWOT-анализ',
       'description': 'Сильные и слабые стороны компании',
-      'slides': 6,
       'color': '#667eea',
       'icon': Icons.analytics_rounded,
+      'template': '📈 SWOT-анализ\n\nСильные стороны:\n• \n\nСлабые стороны:\n• \n\nВозможности:\n• \n\nУгрозы:\n•',
     },
     {
       'id': 'product_presentation',
       'title': 'Презентация продукта',
       'description': 'Запуск нового продукта или услуги',
-      'slides': 8,
       'color': '#f093fb',
       'icon': Icons.videocam_rounded,
+      'template': '🎯 Презентация продукта\n\nО продукте:\n• \n\nПреимущества:\n• \n\nДля кого:\n•',
     },
   ];
 
@@ -56,125 +50,43 @@ class _CorporateScreenState extends State<CorporateScreen> {
       'id': 'annual_report',
       'title': 'Годовой отчёт',
       'description': 'Полный анализ деятельности компании',
-      'slides': 15,
       'color': '#11998e',
       'icon': Icons.analytics_rounded,
+      'template': '📅 Годовой отчёт\n\nКлючевые показатели:\n• Выручка:\n• Прибыль:\n• ROI:\n\nДинамика:\n•',
     },
     {
       'id': 'financial_report',
       'title': 'Финансовая отчётность',
       'description': 'Баланс, прибыль, денежные потоки',
-      'slides': 12,
       'color': '#1DB954',
       'icon': Icons.attach_money_rounded,
-    },
-    {
-      'id': 'marketing_strategy',
-      'title': 'Маркетинговая стратегия',
-      'description': 'План продвижения на год',
-      'slides': 10,
-      'color': '#fa709a',
-      'icon': Icons.trending_up_rounded,
+      'template': '💰 Финансовая отчётность\n\nБухгалтерский баланс:\n• Активы:\n• Пассивы:\n\nОтчёт о прибылях и убытках:\n• Выручка:\n• Себестоимость:\n• Чистая прибыль:',
     },
     {
       'id': 'kpi_dashboard',
       'title': 'KPI Dashboard',
       'description': 'Ключевые показатели эффективности',
-      'slides': 10,
       'color': '#FF416C',
       'icon': Icons.dashboard_rounded,
+      'template': '📊 KPI Dashboard\n\nМетрики:\n• Конверсия:\n• LTV:\n• CAC:\n• NPS:',
     },
     {
       'id': 'investment_pitch',
       'title': 'Инвестиционная презентация',
       'description': 'Для инвесторов и партнёров',
-      'slides': 12,
       'color': '#8E2DE2',
       'icon': Icons.rocket_launch_rounded,
-    },
-    {
-      'id': 'sales_report',
-      'title': 'Отчёт по продажам',
-      'description': 'Анализ продаж и прогнозы',
-      'slides': 10,
-      'color': '#FFE000',
-      'icon': Icons.trending_up_rounded,
+      'template': '🚀 Инвестиционная презентация\n\nПроблема:\n• \n\nРешение:\n• \n\nРынок:\n• \n\nФинансы:\n•',
     },
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _detectCurrency();
-  }
-
-  Future<void> _detectCurrency() async {
-    try {
-      final response = await http
-          .get(Uri.parse('https://ipapi.co/json/'))
-          .timeout(const Duration(seconds: 5));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body) as Map<String, dynamic>;
-        final countryCode = (data['country_code'] as String? ?? 'US').toUpperCase();
-        const euroCountries = {
-          'DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'AT', 'PT', 'FI',
-          'IE', 'GR', 'SK', 'SI', 'EE', 'LV', 'LT', 'LU', 'MT', 'CY',
-        };
-        final currencyMap = <String, Map<String, dynamic>>{
-          'BY': {'code': 'BYN', 'symbol': 'Br',  'rate': 3.25},
-          'RU': {'code': 'RUB', 'symbol': '₽',   'rate': 95.0},
-          'KZ': {'code': 'KZT', 'symbol': '₸',   'rate': 460.0},
-          'UA': {'code': 'UAH', 'symbol': '₴',   'rate': 41.0},
-          'GB': {'code': 'GBP', 'symbol': '£',   'rate': 0.79},
-        };
-        if (currencyMap.containsKey(countryCode)) {
-          final entry = currencyMap[countryCode]!;
-          if (mounted) {
-            setState(() {
-              _currency = entry['code'] as String;
-              _currencySymbol = entry['symbol'] as String;
-              _rate = (entry['rate'] as num).toDouble();
-            });
-          }
-        } else if (euroCountries.contains(countryCode)) {
-          if (mounted) {
-            setState(() {
-              _currency = 'EUR';
-              _currencySymbol = '€';
-              _rate = 0.92;
-            });
-          }
-        }
-      }
-    } catch (_) {}
-    if (mounted) setState(() => _loadingRates = false);
-  }
-
-  String _formatPrice(double usd) {
-    if (usd == 0) return 'Бесплатно';
-    final value = usd * _rate;
-    if (_currency == 'USD' || _currency == 'EUR' || _currency == 'GBP') {
-      return '$_currencySymbol${value.toStringAsFixed(2)}';
-    }
-    return '${value.ceil()} $_currencySymbol';
-  }
-
-  void _useTemplate(Map<String, dynamic> template) {
+  void _openReport(Map<String, dynamic> report) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => EditorScreen(
-          presentation: Presentation(
-            id: DateTime.now().toString(),
-            title: template['title'],
-            slides: [
-              Slide(
-                title: template['title'],
-                content: [template['description']],
-              ),
-            ],
-            createdAt: DateTime.now(),
-          ),
+        builder: (_) => CanvasEditorScreen(
+          title: report['title'],
+          initialContent: report['template'],
         ),
       ),
     );
@@ -191,7 +103,7 @@ class _CorporateScreenState extends State<CorporateScreen> {
           style: TextStyle(color: Color(0xFFFFD700), fontSize: 20, fontWeight: FontWeight.w700),
         ),
         content: const Text(
-          'Этот шаблон доступен только по подписке Premium.\nОформите подписку, чтобы получить доступ ко всем шаблонам и отчётам.',
+          'Этот отчёт доступен только по подписке Premium.\nОформите подписку, чтобы получить доступ ко всем отчётам и шаблонам.',
           style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
         ),
         actions: [
@@ -252,7 +164,7 @@ class _CorporateScreenState extends State<CorporateScreen> {
         ),
         centerTitle: true,
       ),
-      body: _isLoading || _loadingRates
+      body: _isLoading
           ? const Center(
               child: SizedBox(
                 width: 32,
@@ -345,8 +257,9 @@ class _CorporateScreenState extends State<CorporateScreen> {
                           Expanded(
                             child: _buildTariffCard(
                               title: 'Бизнес',
-                              price: 4.99,
-                              period: '/мес',
+                              price: '499',
+                              period: 'месяц',
+                              originalPrice: '999',
                               description: 'Для малого бизнеса',
                               features: const [
                                 'До 10 пользователей',
@@ -364,8 +277,9 @@ class _CorporateScreenState extends State<CorporateScreen> {
                           Expanded(
                             child: _buildTariffCard(
                               title: 'Корпоративный',
-                              price: 14.99,
-                              period: '/мес',
+                              price: '1499',
+                              period: 'месяц',
+                              originalPrice: '2499',
                               description: 'Для крупных компаний',
                               features: const [
                                 'Неограниченно пользователей',
@@ -383,7 +297,7 @@ class _CorporateScreenState extends State<CorporateScreen> {
                       ),
                       const SizedBox(height: 32),
 
-                      // Бесплатные отчёты/шаблоны
+                      // Бесплатные отчёты
                       const Text(
                         'БЕСПЛАТНЫЕ ОТЧЁТЫ',
                         style: TextStyle(
@@ -508,15 +422,15 @@ class _CorporateScreenState extends State<CorporateScreen> {
 
   Widget _buildTariffCard({
     required String title,
-    required double price,
+    required String price,
     required String period,
+    required String originalPrice,
     required String description,
     required List<String> features,
     required bool isPopular,
     required VoidCallback onTap,
   }) {
     final bool isSelected = _selectedTariff == title.toLowerCase();
-    final priceLabel = _formatPrice(price);
     
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -579,15 +493,11 @@ class _CorporateScreenState extends State<CorporateScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    Text(
-                      priceLabel,
-                      style: const TextStyle(color: Color(0xFF1DB954), fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -0.5),
-                    ),
+                    Text('$price ₽', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
                     const SizedBox(width: 4),
-                    Text(
-                      period,
-                      style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13),
-                    ),
+                    Text('/$period', style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13)),
+                    const SizedBox(width: 12),
+                    Text('$originalPrice ₽', style: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 14, decoration: TextDecoration.lineThrough)),
                     const Spacer(),
                     if (isSelected)
                       Container(
@@ -645,18 +555,20 @@ class _CorporateScreenState extends State<CorporateScreen> {
   }
 
   Widget _buildReportCard(Map<String, dynamic> report, {required bool isPremium}) {
+    final color = Color(int.parse(report['color'].replaceFirst('#', '0xFF')));
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         child: GestureDetector(
-          onTap: () => _useTemplate(report),
+          onTap: isPremium ? () => _openReport(report) : _showPremiumRequired,
           child: Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: const Color(0xFF1E1E1E),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.3)),
+              border: Border.all(color: color.withOpacity(0.3)),
             ),
             child: Row(
               children: [
@@ -664,56 +576,49 @@ class _CorporateScreenState extends State<CorporateScreen> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: Color(int.parse(report['color'].replaceFirst('#', '0xFF'))).withOpacity(0.2),
+                    color: color.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(report['icon'], color: Color(int.parse(report['color'].replaceFirst('#', '0xFF'))), size: 24),
+                  child: Icon(report['icon'], color: color, size: 24),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
-                        children: [
-                          Text(
-                            report['title'],
-                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
-                          ),
-                          if (isPremium) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFFFD60A)]),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text('PRO', style: TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.w800)),
-                            ),
-                          ],
-                        ],
+                      Text(
+                        report['title'],
+                        style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         report['description'],
                         style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 12),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${report['slides']} слайдов',
-                        style: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 11),
-                      ),
                     ],
                   ),
                 ),
+                if (isPremium)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFFFD60A)]),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'PRO',
+                      style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                const SizedBox(width: 8),
                 Container(
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1DB954).withOpacity(0.1),
+                    color: color.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.arrow_forward_rounded, color: Color(0xFF1DB954), size: 18),
+                  child: Icon(Icons.arrow_forward_rounded, color: color, size: 18),
                 ),
               ],
             ),
