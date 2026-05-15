@@ -9,7 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-    flutter_riverpod: ^2.5.1
+  flutter_riverpod: ^2.5.1
   
   # UI & Screen Adaptation
   flutter_screenutil: ^5.9.0
