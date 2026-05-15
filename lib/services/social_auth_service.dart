@@ -41,7 +41,7 @@ class SocialAuthService {
   }
 
   // ============================================
-  // АВТОРИЗАЦИЯ ЧЕРЕЗ APPLE
+  // АВТОРИЗАЦИЯ ЧЕРЕЗ APPLE (отключена в Web)
   // ============================================
   static Future<SocialUser?> signInWithApple() async {
     try {
@@ -52,14 +52,14 @@ class SocialAuthService {
         ],
       );
 
+      // Формируем имя из givenName + familyName
       String userName = 'Пользователь Apple';
-      if (credential.givenName != null) {
+      if (credential.givenName != null && credential.familyName != null) {
+        userName = '${credential.givenName!} ${credential.familyName!}';
+      } else if (credential.givenName != null) {
         userName = credential.givenName!;
-        if (credential.familyName != null) {
-          userName = '$userName ${credential.familyName}';
-        }
-      } else if (credential.fullName != null) {
-        userName = credential.fullName!;
+      } else if (credential.familyName != null) {
+        userName = credential.familyName!;
       }
 
       final SocialUser user = SocialUser(
