@@ -39,7 +39,7 @@ dependencies:
   # Animations
   lottie: ^2.7.0
   
-  # Social Auth (НОВЫЕ ЗАВИСИМОСТИ)
+  # Social Auth
   google_sign_in: ^6.2.1
   sign_in_with_apple: ^5.0.0
   flutter_vk_auth: ^1.2.0
@@ -90,5 +90,3 @@ flutter:
     - family: Courier
       fonts:
         - asset: assets/fonts/Courier-Prime.ttf
-dependencies:
-  fl_chart: ^0.66.0  # для графиков
