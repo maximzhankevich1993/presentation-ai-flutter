@@ -64,7 +64,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       final isLoggedIn = userProvider.isLoggedIn;
       final isPremium = userProvider.isPremium;
       
-      final canGenerate = await GenerationCounter.canGenerate(isLoggedIn, isPremium);
+      final canGenerate = await GenerationCounter.canGeneratePresentation(isLoggedIn, isPremium);
       if (!canGenerate) {
         if (mounted) {
           _showLimitAndRedirect();
@@ -85,7 +85,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       );
       
       if (!isLoggedIn) {
-        await GenerationCounter.increment();
+        await GenerationCounter.incrementPresentation();
       }
       
       final presentation = _convertToPresentation(lessonPlan);
@@ -264,7 +264,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  // Заголовок
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),
@@ -298,7 +297,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                   ),
                   const SizedBox(height: 24),
                   
-                  // Поля ввода
                   _buildTextField(
                     controller: _topicController,
                     hint: 'Тема урока',
@@ -318,7 +316,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                   ),
                   const SizedBox(height: 16),
                   
-                  // Стандарт и длительность
                   Row(
                     children: [
                       Expanded(child: _buildStandardDropdown()),
@@ -328,7 +325,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                   ),
                   const SizedBox(height: 24),
                   
-                  // Дополнительные настройки
                   _buildSwitch(
                     value: _includeAssessments,
                     onChanged: (v) => setState(() => _includeAssessments = v),
@@ -351,10 +347,9 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                   ),
                   const SizedBox(height: 24),
                   
-                  // Индикатор остатка генераций (только для гостей)
                   if (!isLoggedIn) ...[
                     FutureBuilder<int>(
-                      future: GenerationCounter.getRemainingForGuest(),
+                      future: GenerationCounter.getRemainingPresentationsForGuest(),
                       builder: (context, snapshot) {
                         final remaining = snapshot.data ?? 5;
                         return Container(
@@ -382,7 +377,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                     ),
                   ],
                   
-                  // Кнопка создания
                   MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: GestureDetector(
