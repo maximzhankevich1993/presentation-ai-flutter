@@ -4,7 +4,7 @@ import '../models/presentation.dart';
 import '../services/generation_counter.dart';
 import '../providers/user_provider.dart';
 import 'editor_screen.dart';
-import 'teacher_screen.dart';
+import 'corporate_screen.dart';
 
 class ReportConstructorScreen extends StatefulWidget {
   const ReportConstructorScreen({super.key});
@@ -58,7 +58,7 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
       final isLoggedIn = userProvider.isLoggedIn;
       final isPremium = userProvider.isPremium;
       
-      final canGenerate = await GenerationCounter.canGenerate(isLoggedIn, isPremium);
+      final canGenerate = await GenerationCounter.canGenerateReport(isLoggedIn, isPremium);
       if (!canGenerate) {
         if (mounted) {
           _showLimitAndRedirect();
@@ -67,7 +67,6 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
         return;
       }
       
-      // TODO: Вызов API для генерации отчёта
       final presentation = await _generateReportViaAPI(
         company: company,
         period: period,
@@ -76,7 +75,7 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
       );
       
       if (!isLoggedIn) {
-        await GenerationCounter.increment();
+        await GenerationCounter.incrementReport();
       }
       
       if (!mounted) return;
@@ -99,7 +98,7 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
     required String standard,
     required String reportType,
   }) async {
-    // Временная заглушка — пока бэкенд не готов
+    // TODO: Вызов API для генерации отчёта
     await Future.delayed(const Duration(seconds: 1));
     
     final standardName = _standards.firstWhere((s) => s['code'] == standard)['name'] ?? standard;
@@ -176,7 +175,12 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
             onPressed: () {
               Navigator.pop(context);
               Navigator.pop(context);
-              // Возврат на страницу бизнеса
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const CorporateScreen(countryCode: 'US'),
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1DB954),
@@ -235,7 +239,6 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  // Заголовок
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),
@@ -269,7 +272,6 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                   ),
                   const SizedBox(height: 24),
                   
-                  // Поля ввода
                   _buildTextField(
                     controller: _companyController,
                     hint: 'Название компании',
@@ -283,7 +285,6 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                   ),
                   const SizedBox(height: 16),
                   
-                  // Тип отчёта
                   const Text(
                     'ТИП ОТЧЁТА',
                     style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8),
@@ -292,7 +293,6 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                   _buildReportTypeSelector(),
                   const SizedBox(height: 16),
                   
-                  // Стандарт
                   const Text(
                     'СТАНДАРТ ОТЧЁТНОСТИ',
                     style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8),
@@ -301,10 +301,9 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                   _buildStandardDropdown(),
                   const SizedBox(height: 24),
                   
-                  // Индикатор остатка (только для гостей)
                   if (!isLoggedIn) ...[
                     FutureBuilder<int>(
-                      future: GenerationCounter.getRemainingForGuest(),
+                      future: GenerationCounter.getRemainingReportsForGuest(),
                       builder: (context, snapshot) {
                         final remaining = snapshot.data ?? 3;
                         return Container(
@@ -332,7 +331,6 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                     ),
                   ],
                   
-                  // Кнопка создания
                   MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: GestureDetector(
@@ -361,7 +359,6 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                   
                   const SizedBox(height: 24),
                   
-                  // Информация о стандартах
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -412,6 +409,8 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                       ],
                     ),
                   ),
+                  
+                  const SizedBox(height: 32),
                 ],
               ),
             ),
