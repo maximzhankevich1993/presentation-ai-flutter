@@ -123,21 +123,18 @@ class _TeacherScreenState extends State<TeacherScreen> {
     final isLoggedIn = userProvider.isLoggedIn;
     final isPremium = userProvider.isPremium;
     
-    // Проверяем, может ли пользователь генерировать
     final canGenerate = await GenerationCounter.canGenerate(isLoggedIn, isPremium);
     
     if (!canGenerate) {
-      _showLimitDialog();
+      _showUpgradeDialog();
       return;
     }
     
-    // Если гость, показываем сколько осталось генераций
     if (!isLoggedIn) {
       final remaining = await GenerationCounter.getRemainingForGuest();
       _showGuestInfo(remaining);
     }
     
-    // Открываем конструктор
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const LessonConstructorScreen()),
@@ -152,12 +149,14 @@ class _TeacherScreenState extends State<TeacherScreen> {
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 3),
         action: SnackBarAction(
-          label: 'Войти',
+          label: 'Купить',
           textColor: Colors.white,
           onPressed: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              MaterialPageRoute(
+                builder: (_) => TeacherScreen(countryCode: _currency),
+              ),
             );
           },
         ),
@@ -165,19 +164,19 @@ class _TeacherScreenState extends State<TeacherScreen> {
     );
   }
   
-  void _showLimitDialog() {
+  void _showUpgradeDialog() {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
-          'Лимит генераций исчерпан',
+          'Лимит исчерпан',
           style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
         ),
         content: const Text(
           'Вы использовали все 5 бесплатных генераций.\n\n'
-          'Зарегистрируйтесь или войдите в аккаунт, чтобы продолжить создавать планы уроков без ограничений.',
+          'Выберите тариф, чтобы продолжить создавать планы уроков без ограничений.',
           style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
         ),
         actions: [
@@ -188,16 +187,12 @@ class _TeacherScreenState extends State<TeacherScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF1DB954),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('Войти / Зарегистрироваться'),
+            child: const Text('Выбрать тариф'),
           ),
         ],
       ),
@@ -208,10 +203,8 @@ class _TeacherScreenState extends State<TeacherScreen> {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     
     if (userProvider.isLoggedIn) {
-      // Уже авторизован — показать оплату
       _showPaymentSheet(planId, price, period);
     } else {
-      // Не авторизован — предложить зарегистрироваться и оплатить
       showDialog(
         context: context,
         builder: (_) => AlertDialog(
@@ -395,7 +388,6 @@ class _TeacherScreenState extends State<TeacherScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Hero header
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
@@ -418,7 +410,6 @@ class _TeacherScreenState extends State<TeacherScreen> {
                     const Text('ВЫБЕРИТЕ ПЛАН', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
                     const SizedBox(height: 12),
 
-                    // Бесплатный тариф
                     _buildTariffCard(
                       title: 'Бесплатный',
                       usd: 0,
@@ -426,11 +417,10 @@ class _TeacherScreenState extends State<TeacherScreen> {
                       description: 'Для тестирования',
                       features: const ['5 генераций', 'Конструктор уроков', 'Базовые шаблоны'],
                       isPopular: true,
-                      onTap: () => _openConstructor(),
+                      onTap: _openConstructor,
                     ),
                     const SizedBox(height: 14),
 
-                    // Месячная подписка
                     _buildTariffCard(
                       title: 'Premium месяц',
                       usd: 9.99,
@@ -442,7 +432,6 @@ class _TeacherScreenState extends State<TeacherScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    // Полугодовая подписка
                     _buildTariffCard(
                       title: 'Premium полгода',
                       usd: 49.99,
@@ -454,7 +443,6 @@ class _TeacherScreenState extends State<TeacherScreen> {
                     ),
                     const SizedBox(height: 14),
 
-                    // Годовая подписка
                     _buildTariffCard(
                       title: 'Premium год',
                       usd: 89.99,
@@ -466,7 +454,6 @@ class _TeacherScreenState extends State<TeacherScreen> {
                     ),
                     const SizedBox(height: 32),
 
-                    // Кнопка конструктора
                     MouseRegion(
                       cursor: SystemMouseCursors.click,
                       child: GestureDetector(
@@ -491,7 +478,6 @@ class _TeacherScreenState extends State<TeacherScreen> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Связаться с нами
                     MouseRegion(
                       cursor: SystemMouseCursors.click,
                       child: GestureDetector(
