@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
@@ -224,6 +225,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       return;
     }
     
+    final inviteLink = 'https://presentator.ai/join/$_workspaceId/${DateTime.now().millisecondsSinceEpoch}';
+    Clipboard.setData(ClipboardData(text: inviteLink));
+    
     setState(() {
       _members.add({
         'id': DateTime.now().toString(),
@@ -238,7 +242,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     _saveWorkspaceData();
     
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Приглашение отправлено'), backgroundColor: Color(0xFF1DB954)),
+      SnackBar(
+        content: Text('Ссылка-приглашение скопирована! Отправьте её на $_inviteEmail'),
+        backgroundColor: const Color(0xFF1DB954),
+        duration: const Duration(seconds: 4),
+      ),
     );
   }
   
@@ -297,6 +305,22 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
             child: const Text('Сохранить'),
           ),
+        ],
+      ),
+    );
+  }
+
+  void _showPaymentDialog(String tariff) {
+    double price = tariff == 'team' ? _teamPriceUSD : tariff == 'business' ? _businessPriceUSD : _enterprisePriceUSD;
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1C1C1C),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Тариф $tariff', style: const TextStyle(color: Colors.white)),
+        content: Text('Стоимость: ${_formatPrice(price)} ${_currency == 'RUB' ? '₽' : _currency == 'BYN' ? 'Br' : _currency == 'KZT' ? '₸' : '\$'}/мес\n\nОплата временно недоступна.', style: const TextStyle(color: Color(0xFF9A9A9A))),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Закрыть', style: TextStyle(color: Color(0xFF1DB954)))),
         ],
       ),
     );
@@ -468,6 +492,15 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
               features: const ['До 50 участников', 'Безлимит генераций', 'VIP поддержка 24/7'],
               isPopular: false,
               onTap: () => _showPaymentDialog('business'),
+            ),
+            const SizedBox(height: 8),
+            _buildTariffCard(
+              title: 'Enterprise',
+              price: _enterprisePriceUSD,
+              period: '/мес',
+              features: const ['Неограниченно участников', 'Безлимит генераций', 'Выделенный сервер', 'Персональный менеджер'],
+              isPopular: false,
+              onTap: () => _showPaymentDialog('enterprise'),
             ),
           ],
         ),
@@ -792,86 +825,79 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   }) {
     final priceLabel = price == 0 ? 'Бесплатно' : _formatPrice(price);
     
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isPopular ? const Color(0xFF1DB954).withOpacity(0.5) : const Color(0xFF2A2A2A), width: isPopular ? 1.5 : 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 40, height: 40,
-                decoration: BoxDecoration(color: isPopular ? const Color(0xFF1DB954) : const Color(0xFF2A2A2A), borderRadius: BorderRadius.circular(10)),
-                child: Icon(title == 'Team' ? Icons.group_rounded : (title == 'Business' ? Icons.business_center_rounded : Icons.apartment_rounded), color: isPopular ? Colors.white : const Color(0xFF1DB954), size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                    Text(priceLabel, style: const TextStyle(color: Color(0xFF1DB954), fontSize: 14, fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-              if (isPopular)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text('Популярный', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700)),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8, runSpacing: 6,
-            children: features.map((f) => Row(
-              mainAxisSize: MainAxisSize.min,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isPopular ? const Color(0xFF1DB954).withOpacity(0.5) : const Color(0xFF2A2A2A), width: isPopular ? 1.5 : 1),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                const Icon(Icons.check_circle_rounded, color: Color(0xFF1DB954), size: 12),
-                const SizedBox(width: 4),
-                Text(f, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                Container(
+                  width: 44, height: 44,
+                  decoration: BoxDecoration(color: isPopular ? const Color(0xFF1DB954) : const Color(0xFF2A2A2A), borderRadius: BorderRadius.circular(12)),
+                  child: Icon(title == 'Team' ? Icons.group_rounded : (title == 'Business' ? Icons.business_center_rounded : Icons.apartment_rounded), color: isPopular ? Colors.white : const Color(0xFF1DB954), size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+                      Text(priceLabel, style: const TextStyle(color: Color(0xFF1DB954), fontSize: 14, fontWeight: FontWeight.w600)),
+                    ],
+                  ),
+                ),
+                if (isPopular)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Text('Популярный', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+                  ),
               ],
-            )).toList(),
-          ),
-          const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: onTap,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: price == 0 ? Colors.grey.shade800 : const Color(0xFF1DB954),
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            child: Text(
-              price == 0 ? 'Текущий план' : 'Выбрать',
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12),
+            const SizedBox(height: 12),
+            const Divider(color: Color(0xFF2A2A2A), height: 1),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8, runSpacing: 8,
+              children: features.map((f) => Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.check_circle_rounded, color: Color(0xFF1DB954), size: 14),
+                  const SizedBox(width: 6),
+                  Text(f, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                ],
+              )).toList(),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  void _showPaymentDialog(String tariff) {
-    double price = tariff == 'team' ? _teamPriceUSD : tariff == 'business' ? _businessPriceUSD : _enterprisePriceUSD;
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1C),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text('Тариф $tariff', style: const TextStyle(color: Colors.white)),
-        content: Text('Стоимость: ${_formatPrice(price)} ${_currency == 'RUB' ? '₽' : _currency == 'BYN' ? 'Br' : _currency == 'KZT' ? '₸' : '\$'}/мес\n\nОплата временно недоступна.', style: const TextStyle(color: Color(0xFF9A9A9A))),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Закрыть', style: TextStyle(color: Color(0xFF1DB954)))),
-        ],
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onTap,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: price == 0 ? Colors.grey.shade800 : const Color(0xFF1DB954),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Text(
+                  price == 0 ? 'Текущий план' : 'Выбрать',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
