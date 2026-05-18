@@ -1392,7 +1392,7 @@ class _Canvas extends StatelessWidget {
         return SizedBox(height: h * 0.7, child: PieChart(PieChartData(
           sections: chartData.asMap().entries.map((e) => PieChartSectionData(
             value: e.value['value'] as double,
-            title: '${((e.value['value'] as double / total) * 100).toInt()}%',
+            title: '${((e.value['value'] as double) / total * 100).toInt()}%',
             radius: 76,
             titleStyle: const TextStyle(color: Colors.white, fontSize: 12),
             color: colors[e.key % colors.length],
