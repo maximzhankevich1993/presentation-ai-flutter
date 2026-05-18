@@ -64,7 +64,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       final isLoggedIn = userProvider.isLoggedIn;
       final isPremium = userProvider.isPremium;
       
-      // Проверка лимита для гостей
       final canGenerate = await GenerationCounter.canGenerate(isLoggedIn, isPremium);
       if (!canGenerate) {
         if (mounted) {
@@ -74,15 +73,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
         return;
       }
       
-      // Если гость, показываем сколько осталось ДО генерации
-      if (!isLoggedIn) {
-        final remaining = await GenerationCounter.getRemainingForGuest();
-        if (mounted) {
-          _showGuestInfo(remaining);
-        }
-      }
-      
-      // Получаем токен (если есть)
       final token = userProvider.token;
       
       final lessonPlan = await LessonPlanService.generate(
@@ -94,7 +84,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
         token: token,
       );
       
-      // Увеличиваем счётчик для гостей ТОЛЬКО ПОСЛЕ УСПЕШНОЙ ГЕНЕРАЦИИ
       if (!isLoggedIn) {
         await GenerationCounter.increment();
       }
@@ -113,19 +102,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       _showError('Ошибка создания плана урока: $e');
       setState(() => _isGenerating = false);
     }
-  }
-  
-  void _showGuestInfo(int remaining) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Осталось $remaining из 5 бесплатных генераций'),
-        backgroundColor: const Color(0xFF1DB954),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
   
   void _showLimitAndRedirect() {
@@ -256,6 +232,8 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isLoggedIn = context.watch<UserProvider>().isLoggedIn;
+    
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
@@ -286,6 +264,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
+                  // Заголовок
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),
@@ -319,6 +298,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                   ),
                   const SizedBox(height: 24),
                   
+                  // Поля ввода
                   _buildTextField(
                     controller: _topicController,
                     hint: 'Тема урока',
@@ -338,6 +318,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                   ),
                   const SizedBox(height: 16),
                   
+                  // Стандарт и длительность
                   Row(
                     children: [
                       Expanded(child: _buildStandardDropdown()),
@@ -347,6 +328,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                   ),
                   const SizedBox(height: 24),
                   
+                  // Дополнительные настройки
                   _buildSwitch(
                     value: _includeAssessments,
                     onChanged: (v) => setState(() => _includeAssessments = v),
@@ -367,8 +349,40 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                     title: 'Включить домашнее задание',
                     icon: Icons.home_rounded,
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
                   
+                  // Индикатор остатка генераций (только для гостей)
+                  if (!isLoggedIn) ...[
+                    FutureBuilder<int>(
+                      future: GenerationCounter.getRemainingForGuest(),
+                      builder: (context, snapshot) {
+                        final remaining = snapshot.data ?? 5;
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1DB954).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.info_outline_rounded, color: Color(0xFF1DB954), size: 18),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Осталось $remaining из 5 бесплатных генераций',
+                                  style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13, fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                  
+                  // Кнопка создания
                   MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: GestureDetector(
@@ -394,6 +408,8 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                       ),
                     ),
                   ),
+                  
+                  const SizedBox(height: 32),
                 ],
               ),
             ),
