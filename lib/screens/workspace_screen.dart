@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import 'editor_screen.dart';
@@ -20,6 +21,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
   bool _hasWorkspace = false;
   bool _isLoading = true;
   String _workspaceName = '';
+  String _workspaceId = '';
   String _inviteEmail = '';
   int _topicMaxSlides = 5;
   final TextEditingController _topicController = TextEditingController();
@@ -30,7 +32,6 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
   int _usedGenerations = 0;
   final int _maxGenerations = 5;
   final int _maxMembers = 5;
-  String _workspaceId = '';
   
   String _currency = 'USD';
   String _currencySymbol = '\$';
@@ -81,6 +82,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
   }
 
   String _formatPrice(double usd) {
+    if (usd == 0) return 'Бесплатно';
     final value = usd * _rate;
     if (_currency == 'USD' || _currency == 'EUR' || _currency == 'GBP') {
       return '$_currencySymbol${value.toStringAsFixed(2)}';
@@ -88,12 +90,53 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
     return '${value.ceil()} $_currencySymbol';
   }
 
+  Future<void> _saveWorkspaceData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final data = {
+        'id': _workspaceId,
+        'name': _workspaceName,
+        'members': _members,
+        'presentations': _presentations,
+        'usedGenerations': _usedGenerations,
+      };
+      await prefs.setString('workspace_data', json.encode(data));
+      await prefs.setBool('has_workspace', true);
+    } catch (e) {
+      print('Error saving workspace: $e');
+    }
+  }
+
   Future<void> _loadWorkspaceData() async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    setState(() {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final hasWorkspace = prefs.getBool('has_workspace') ?? false;
+      
+      if (hasWorkspace) {
+        final savedData = prefs.getString('workspace_data');
+        if (savedData != null) {
+          final data = json.decode(savedData);
+          setState(() {
+            _workspaceId = data['id'] ?? DateTime.now().toString();
+            _workspaceName = data['name'] ?? 'Моя команда';
+            _members = List<Map<String, dynamic>>.from(data['members'] ?? [
+              {'id': '1', 'name': 'Я', 'email': 'me@example.com', 'role': 'Owner', 'avatar': 'Я', 'status': 'online'},
+            ]);
+            _presentations = List<Map<String, dynamic>>.from(data['presentations'] ?? []);
+            _usedGenerations = data['usedGenerations'] ?? 0;
+            _hasWorkspace = true;
+          });
+        } else {
+          _hasWorkspace = false;
+        }
+      } else {
+        _hasWorkspace = false;
+      }
+    } catch (e) {
+      print('Error loading workspace: $e');
       _hasWorkspace = false;
-      _isLoading = false;
-    });
+    }
+    setState(() => _isLoading = false);
   }
 
   void _createWorkspace() {
@@ -114,6 +157,40 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
       _presentations = [];
       _usedGenerations = 0;
     });
+    _saveWorkspaceData();
+  }
+
+  void _editWorkspaceName() {
+    final controller = TextEditingController(text: _workspaceName);
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1C1C1C),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Изменить название', style: TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: controller,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            hintText: 'Название пространства',
+            hintStyle: TextStyle(color: Color(0xFF4A4A4A)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(_), child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A)))),
+          ElevatedButton(
+            onPressed: () {
+              setState(() => _workspaceName = controller.text);
+              Navigator.pop(_);
+              _saveWorkspaceData();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
+            child: const Text('Сохранить'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _generatePresentation() async {
@@ -140,6 +217,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
         'slides': _topicMaxSlides,
       });
     });
+    _saveWorkspaceData();
     
     Navigator.push(
       context,
@@ -196,6 +274,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
       });
       _inviteEmail = '';
     });
+    _saveWorkspaceData();
     
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Приглашение отправлено'), backgroundColor: Color(0xFF1DB954)),
@@ -206,6 +285,28 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
     setState(() {
       _members.removeWhere((m) => m['id'] == id);
     });
+    _saveWorkspaceData();
+  }
+  
+  void _deletePresentation(String id) {
+    setState(() {
+      _presentations.removeWhere((p) => p['id'] == id);
+    });
+    _saveWorkspaceData();
+  }
+  
+  void _openPresentation(Map<String, dynamic> presentation) {
+    // Создаём презентацию для редактирования
+    final pres = Presentation(
+      id: presentation['id'],
+      title: presentation['title'],
+      slides: [Slide(title: 'Слайд 1', content: ['Загрузите сохранённую презентацию'])],
+      createdAt: DateTime.now(),
+    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => EditorScreen(presentation: pres)),
+    );
   }
 
   @override
@@ -235,6 +336,13 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
           style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.edit_rounded, color: Color(0xFF1DB954)),
+            onPressed: _editWorkspaceName,
+            tooltip: 'Изменить название',
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: const Color(0xFF1DB954),
@@ -495,7 +603,18 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
                       ],
                     ),
                   ),
-                  const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFF9A9A9A), size: 14),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFF9A9A9A), size: 20),
+                        onPressed: () => _deletePresentation(p['id']),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFF1DB954), size: 16),
+                        onPressed: () => _openPresentation(p),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             )),
@@ -793,7 +912,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text('Тариф $tariff', style: const TextStyle(color: Colors.white)),
-        content: const Text('Оплата временно недоступна.\nPremium доступ будет активирован после оплаты.', style: TextStyle(color: Color(0xFF9A9A9A))),
+        content: Text('Стоимость: ${_formatPrice(tariff == 'team' ? _teamPriceUSD : tariff == 'business' ? _businessPriceUSD : _enterprisePriceUSD)} ${_currency == 'RUB' ? '₽' : _currency == 'BYN' ? 'Br' : _currency == 'KZT' ? '₸' : '\$'}/мес\n\nОплата временно недоступна.', style: const TextStyle(color: Color(0xFF9A9A9A))),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Закрыть', style: TextStyle(color: Color(0xFF1DB954)))),
         ],
