@@ -225,4 +225,303 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(width: 40, height: 40, child: CircularProgressIndicator(color:
+                  SizedBox(width: 40, height: 40, child: CircularProgressIndicator(color: Color(0xFF1DB954), strokeWidth: 2.5)),
+                  SizedBox(height: 16),
+                  Text('Создаём отчёт...', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14)),
+                ],
+              ),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  // Заголовок
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(Icons.business_center_rounded, color: Colors.white, size: 28),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Конструктор отчётов',
+                          style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Создайте финансовый отчёт по международным стандартам',
+                          style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  
+                  // Поля ввода
+                  _buildTextField(
+                    controller: _companyController,
+                    hint: 'Название компании',
+                    icon: Icons.business_rounded,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildTextField(
+                    controller: _periodController,
+                    hint: 'Отчётный период (например, 2024 год)',
+                    icon: Icons.calendar_today_rounded,
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Тип отчёта
+                  const Text(
+                    'ТИП ОТЧЁТА',
+                    style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildReportTypeSelector(),
+                  const SizedBox(height: 16),
+                  
+                  // Стандарт
+                  const Text(
+                    'СТАНДАРТ ОТЧЁТНОСТИ',
+                    style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildStandardDropdown(),
+                  const SizedBox(height: 24),
+                  
+                  // Индикатор остатка (только для гостей)
+                  if (!isLoggedIn) ...[
+                    FutureBuilder<int>(
+                      future: GenerationCounter.getRemainingForGuest(),
+                      builder: (context, snapshot) {
+                        final remaining = snapshot.data ?? 3;
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1DB954).withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.3)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.info_outline_rounded, color: Color(0xFF1DB954), size: 18),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Осталось $remaining из 3 бесплатных отчётов',
+                                  style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13, fontWeight: FontWeight.w500),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                  
+                  // Кнопка создания
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: _generateReport,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.auto_awesome, color: Colors.white, size: 20),
+                            SizedBox(width: 10),
+                            Text(
+                              'Создать отчёт',
+                              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Информация о стандартах
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1E1E),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: const Color(0xFF2A2A2A)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'О стандартах отчетности',
+                          style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 12),
+                        ..._standards.map((s) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                width: 4,
+                                height: 4,
+                                margin: const EdgeInsets.only(top: 6, right: 8),
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF1DB954),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      s['name']!,
+                                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                                    ),
+                                    Text(
+                                      s['description']!,
+                                      style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 11),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        )),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+  
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF2A2A2A)),
+      ),
+      child: TextField(
+        controller: controller,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
+          prefixIcon: Icon(icon, color: const Color(0xFF1DB954), size: 20),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildReportTypeSelector() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF2A2A2A)),
+      ),
+      child: Row(
+        children: _reportTypes.map((type) {
+          final isSelected = _selectedReportType == type['id'];
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _selectedReportType = type['id'] as String),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFF1DB954) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      type['icon'] as IconData,
+                      color: isSelected ? Colors.white : const Color(0xFF9A9A9A),
+                      size: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      type['name'] as String,
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : const Color(0xFF9A9A9A),
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+  
+  Widget _buildStandardDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF2A2A2A)),
+      ),
+      child: DropdownButtonFormField<String>(
+        value: _selectedStandard,
+        items: _standards.map((standard) {
+          return DropdownMenuItem(
+            value: standard['code'],
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(standard['name']!, style: const TextStyle(color: Colors.white, fontSize: 14)),
+                Text(standard['description']!, style: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 11)),
+              ],
+            ),
+          );
+        }).toList(),
+        onChanged: (v) => setState(() => _selectedStandard = v!),
+        decoration: const InputDecoration(
+          labelText: 'Стандарт отчетности',
+          labelStyle: TextStyle(color: Color(0xFF4A4A4A)),
+          border: InputBorder.none,
+        ),
+        dropdownColor: const Color(0xFF1E1E1E),
+        style: const TextStyle(color: Colors.white),
+      ),
+    );
+  }
+}
