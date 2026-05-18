@@ -3,7 +3,6 @@ import 'dart:html' as html;
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
@@ -44,43 +43,9 @@ class _T {
 // ═══════════════════════════════════════════════════════════════
 // HOME SCREEN
 // ═══════════════════════════════════════════════════════════════
-class _HomeScreenState extends State<HomeScreen> {
-  String _countryCode = 'US';
-  
-  @override
-  void initState() {
-    super.initState();
-    _detectCountry();
-  }
-  
-  Future<void> _detectCountry() async {
-    try {
-      final response = await http.get(Uri.parse('https://ipapi.co/json/'));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          _countryCode = data['country_code'] ?? 'US';
-        });
-      }
-    } catch (e) {
-      _countryCode = 'US';
-    }
-  }
-  
-  // В методе навигации:
-  void _openWorkspace() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => WorkspaceScreen(countryCode: _countryCode),
-      ),
-    );
-  }
-}
-
-
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
@@ -98,10 +63,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   String _currencySymbol = '\$';
   double _rate = 1.0;
   bool _loadingRates = true;
+  String _countryCode = 'US';
 
   final List<String> _examples = ['ИИ', 'Бизнес', 'Экология', 'Космос', 'IT', 'Маркетинг'];
-
-  String get _countryCode => PlatformDispatcher.instance.locale.countryCode ?? 'RU';
   
   // VIP данные для продакшена (0 занято, 50 свободно)
   int _vipOccupiedSpots = 0;
@@ -119,6 +83,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
     _focusNode.addListener(() => setState(() => _isFocused = _focusNode.hasFocus));
     _detectCurrency();
+    _detectCountry();
     _loadVipStats();
   }
 
@@ -130,16 +95,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     super.dispose();
   }
 
+  Future<void> _detectCountry() async {
+    try {
+      final response = await http.get(Uri.parse('https://ipapi.co/json/')).timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _countryCode = data['country_code'] ?? 'US';
+        });
+      }
+    } catch (e) {
+      _countryCode = 'US';
+    }
+  }
+
   Future<void> _loadVipStats() async {
     try {
       // TODO: Заменить на реальный API запрос, когда появится
-      // final stats = await ApiService.getVipStats();
-      // setState(() {
-      //   _vipOccupiedSpots = stats['occupiedSpots'];
-      //   _vipTotalSpots = stats['totalSpots'];
-      // });
-      
-      // Для продакшена: 0 занято, 50 свободно
       if (mounted) {
         setState(() {
           _vipOccupiedSpots = 0;
@@ -589,7 +561,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
                     _NavItem(Icons.school_outlined, 'Учителям', () => _push(TeacherScreen(countryCode: _countryCode))),
                     _NavItem(Icons.business_center_outlined, 'Бизнесу', () => _push(CorporateScreen(countryCode: _countryCode))),
-                    _NavItem(Icons.group_outlined, 'Команда', () => _push(const WorkspaceScreen())),
+                    _NavItem(Icons.group_outlined, 'Команда', () => _push(WorkspaceScreen(countryCode: _countryCode))),
                     _NavItem(Icons.quiz_outlined, 'Тесты', () => _push(const QuizScreen())),
                     _NavItem(Icons.card_giftcard_outlined, 'Друзья', () => _push(const ReferralScreen())),
                     _NavItem(Icons.person_outline, 'Профиль', () => _push(const ProfileScreen())),
