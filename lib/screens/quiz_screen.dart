@@ -245,8 +245,7 @@ class _QuizScreenState extends State<QuizScreen> {
   }
   
   void _exportToWord() {
-    // Генерация HTML для Word
-    String html = '''
+    String htmlContent = '''
     <!DOCTYPE html>
     <html>
     <head>
@@ -272,27 +271,27 @@ class _QuizScreenState extends State<QuizScreen> {
     for (int i = 0; i < _questions.length; i++) {
       final q = _questions[i];
       final correctLetter = String.fromCharCode(65 + (q['correct'] as int));
-      html += '''
+      htmlContent += '''
       <div class="question">
         <div class="question-text">${i + 1}. ${q['question']}</div>
         <div class="options">
-    ''';
+      ''';
       for (int j = 0; j < (q['options'] as List).length; j++) {
         final letter = String.fromCharCode(65 + j);
         final isCorrect = j == q['correct'];
-        html += '<div>${letter}. ${q['options'][j]} ${isCorrect ? '✓' : ''}</div>';
+        htmlContent += '<div>${letter}. ${q['options'][j]} ${isCorrect ? '✓' : ''}</div>';
       }
-      html += '''
+      htmlContent += '''
         </div>
         <div class="explanation">📝 ${q['explanation']}</div>
       </div>
       <hr>
-    ''';
+      ''';
     }
     
-    html += '</body></html>';
+    htmlContent += '</body></html>';
     
-    final blob = html.Blob([html], 'application/msword');
+    final blob = html.Blob([htmlContent], 'application/msword');
     final url = html.Url.createObjectUrlFromBlob(blob);
     final anchor = html.AnchorElement(href: url)
       ..setAttribute('download', '${_currentTestTopic}_тест.doc')
@@ -303,7 +302,6 @@ class _QuizScreenState extends State<QuizScreen> {
   }
   
   void _exportToPdf() {
-    // Для PDF используем print или html2canvas
     html.window.print();
   }
   
@@ -465,73 +463,76 @@ class _QuizScreenState extends State<QuizScreen> {
   Widget _buildQuizScreen() {
     final question = _questions[_currentQuestionIndex];
     
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFF2A2A2A)),
-          ),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Вопрос ${_currentQuestionIndex + 1} из ${_questions.length}', style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13)),
-                  Text('Счёт: $_score', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13, fontWeight: FontWeight.w700)),
-                ],
-              ),
-              const SizedBox(height: 8),
-              LinearProgressIndicator(
-                value: (_currentQuestionIndex + 1) / _questions.length,
-                backgroundColor: const Color(0xFF2A2A2A),
-                color: const Color(0xFF1DB954),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-        
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1DB954).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.2)),
-          ),
-          child: Text(question['question'], style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
-        ),
-        const SizedBox(height: 24),
-        
-        const Text('ВЫБЕРИТЕ ОТВЕТ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 12),
-        ...List.generate((question['options'] as List).length, (index) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF2A2A2A)),
-              ),
-              child: ListTile(
-                onTap: () => _answerQuestion(index),
-                leading: Container(
-                  width: 24, height: 24,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2A2A2A),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.circle_outlined, color: Color(0xFF9A9A9A), size: 14),
-                ),
-                title: Text(question['options'][index], style: const TextStyle(color: Colors.white)),
-              ),
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF2A2A2A)),
             ),
-          );
-        }),
-      ],
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Вопрос ${_currentQuestionIndex + 1} из ${_questions.length}', style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13)),
+                    Text('Счёт: $_score', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13, fontWeight: FontWeight.w700)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                LinearProgressIndicator(
+                  value: (_currentQuestionIndex + 1) / _questions.length,
+                  backgroundColor: const Color(0xFF2A2A2A),
+                  color: const Color(0xFF1DB954),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1DB954).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.2)),
+            ),
+            child: Text(question['question'], style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+          ),
+          const SizedBox(height: 24),
+          
+          const Text('ВЫБЕРИТЕ ОТВЕТ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 12),
+          ...List.generate((question['options'] as List).length, (index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E1E1E),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFF2A2A2A)),
+                ),
+                child: ListTile(
+                  onTap: () => _answerQuestion(index),
+                  leading: Container(
+                    width: 24, height: 24,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2A2A2A),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(Icons.circle_outlined, color: Color(0xFF9A9A9A), size: 14),
+                  ),
+                  title: Text(question['options'][index], style: const TextStyle(color: Colors.white)),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
     );
   }
   
@@ -647,6 +648,17 @@ class _QuizScreenState extends State<QuizScreen> {
             children: [
               Expanded(
                 child: OutlinedButton(
+                  onPressed: _exportToPdf,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF2A2A2A)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text('📑 PDF', style: TextStyle(color: Colors.white)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton(
                   onPressed: () {
                     setState(() {
                       _showQuiz = false;
@@ -663,18 +675,17 @@ class _QuizScreenState extends State<QuizScreen> {
                   child: const Text('Новый тест', style: TextStyle(color: Colors.white)),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1DB954),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text('На главную', style: TextStyle(color: Colors.white)),
-                ),
-              ),
             ],
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1DB954),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Center(child: Text('На главную', style: TextStyle(color: Colors.white))),
           ),
         ],
       ),
