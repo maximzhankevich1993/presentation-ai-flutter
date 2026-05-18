@@ -67,12 +67,19 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       // Проверка лимита для гостей
       final canGenerate = await GenerationCounter.canGenerate(isLoggedIn, isPremium);
       if (!canGenerate) {
-        // Лимит исчерпан — показываем диалог и перенаправляем на тарифы
         if (mounted) {
           _showLimitAndRedirect();
         }
         setState(() => _isGenerating = false);
         return;
+      }
+      
+      // Если гость, показываем сколько осталось ДО генерации
+      if (!isLoggedIn) {
+        final remaining = await GenerationCounter.getRemainingForGuest();
+        if (mounted) {
+          _showGuestInfo(remaining);
+        }
       }
       
       // Получаем токен (если есть)
@@ -87,19 +94,9 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
         token: token,
       );
       
-      // Увеличиваем счётчик для гостей ПОСЛЕ успешной генерации
+      // Увеличиваем счётчик для гостей ТОЛЬКО ПОСЛЕ УСПЕШНОЙ ГЕНЕРАЦИИ
       if (!isLoggedIn) {
         await GenerationCounter.increment();
-        final remaining = await GenerationCounter.getRemainingForGuest();
-        
-        // Если после этой генерации лимит исчерпан (remaining == 0)
-        if (remaining == 0 && mounted) {
-          _showLimitReachedAndRedirect();
-          setState(() => _isGenerating = false);
-          return;
-        } else if (mounted) {
-          _showGuestInfo(remaining);
-        }
       }
       
       final presentation = _convertToPresentation(lessonPlan);
@@ -116,6 +113,19 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       _showError('Ошибка создания плана урока: $e');
       setState(() => _isGenerating = false);
     }
+  }
+  
+  void _showGuestInfo(int remaining) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Осталось $remaining из 5 бесплатных генераций'),
+        backgroundColor: const Color(0xFF1DB954),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
   
   void _showLimitAndRedirect() {
@@ -137,20 +147,19 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // Закрываем диалог
-              Navigator.pop(context); // Закрываем конструктор
+              Navigator.pop(context);
+              Navigator.pop(context);
             },
             child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A))),
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context); // Закрываем диалог
-              Navigator.pop(context); // Закрываем конструктор
-              // Переходим на страницу с тарифами
+              Navigator.pop(context);
+              Navigator.pop(context);
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => TeacherScreen(countryCode: 'US'),
+                  builder: (_) => const TeacherScreen(countryCode: 'US'),
                 ),
               );
             },
@@ -161,83 +170,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
             child: const Text('Выбрать тариф'),
           ),
         ],
-      ),
-    );
-  }
-  
-  void _showLimitReachedAndRedirect() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1C),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Лимит исчерпан',
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
-        ),
-        content: const Text(
-          'Вы использовали все 5 бесплатных генераций.\n\n'
-          'Выберите тариф, чтобы продолжить создавать планы уроков без ограничений.',
-          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context); // Закрываем диалог
-              Navigator.pop(context); // Закрываем конструктор
-              // Переходим на страницу с тарифами
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => TeacherScreen(countryCode: 'US'),
-                ),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1DB954),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('Выбрать тариф'),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  void _showGuestInfo(int remaining) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Осталось $remaining из 5 бесплатных генераций'),
-        backgroundColor: const Color(0xFF1DB954),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        duration: const Duration(seconds: 3),
-        action: SnackBarAction(
-          label: 'Купить',
-          textColor: Colors.white,
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => TeacherScreen(countryCode: 'US'),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-  
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: const Color(0xFFFF3B30),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       ),
     );
   }
@@ -245,7 +177,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
   Presentation _convertToPresentation(LessonPlan lessonPlan) {
     final List<Slide> slides = [];
     
-    // Титульный слайд
     slides.add(Slide(
       title: 'План урока',
       content: [
@@ -257,13 +188,11 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       ],
     ));
     
-    // Цели урока
     slides.add(Slide(
       title: 'Цели урока',
       content: lessonPlan.objectives.map((obj) => '• $obj').toList(),
     ));
     
-    // Этапы урока
     for (final stage in lessonPlan.stages) {
       slides.add(Slide(
         title: stage.name,
@@ -276,7 +205,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       ));
     }
     
-    // Домашнее задание
     if (_includeHomework) {
       slides.add(Slide(
         title: 'Домашнее задание',
@@ -284,7 +212,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       ));
     }
     
-    // Оценивание
     if (_includeAssessments) {
       slides.add(Slide(
         title: 'Оценивание',
@@ -292,7 +219,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       ));
     }
     
-    // Дифференциация
     if (_includeDifferentiation) {
       slides.add(Slide(
         title: 'Дифференциация',
@@ -314,6 +240,18 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       orElse: () => {'name': code},
     );
     return standard['name'] ?? code;
+  }
+  
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFFFF3B30),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      ),
+    );
   }
 
   @override
@@ -348,7 +286,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
               padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  // Заголовок
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),
@@ -382,7 +319,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                   ),
                   const SizedBox(height: 24),
                   
-                  // Поля ввода
                   _buildTextField(
                     controller: _topicController,
                     hint: 'Тема урока',
@@ -402,7 +338,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                   ),
                   const SizedBox(height: 16),
                   
-                  // Стандарт и длительность
                   Row(
                     children: [
                       Expanded(child: _buildStandardDropdown()),
@@ -412,7 +347,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                   ),
                   const SizedBox(height: 24),
                   
-                  // Дополнительные настройки
                   _buildSwitch(
                     value: _includeAssessments,
                     onChanged: (v) => setState(() => _includeAssessments = v),
@@ -435,7 +369,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                   ),
                   const SizedBox(height: 32),
                   
-                  // Кнопка создания
                   MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: GestureDetector(
