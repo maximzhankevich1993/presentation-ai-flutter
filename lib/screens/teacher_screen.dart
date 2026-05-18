@@ -21,7 +21,6 @@ class _TeacherScreenState extends State<TeacherScreen> {
   bool _isLoading = false;
   bool _loadingRates = true;
   
-  // Валюты
   String _currency = 'USD';
   String _currencySymbol = '\$';
   double _rate = 1.0;
@@ -41,70 +40,35 @@ class _TeacherScreenState extends State<TeacherScreen> {
         final data = json.decode(response.body) as Map<String, dynamic>;
         final countryCode = (data['country_code'] as String? ?? 'US').toUpperCase();
         
-        print('📍 TeacherScreen - Страна: $countryCode');
-        
         const euroCountries = {
           'IT', 'FR', 'DE', 'ES', 'NL', 'BE', 'AT', 'PT', 'FI',
           'IE', 'GR', 'SK', 'SI', 'EE', 'LV', 'LT', 'LU', 'MT', 'CY',
         };
         
         if (countryCode == 'BY') {
-          setState(() {
-            _currency = 'BYN';
-            _currencySymbol = 'Br';
-            _rate = 3.25;
-          });
+          setState(() { _currency = 'BYN'; _currencySymbol = 'Br'; _rate = 3.25; });
         }
         else if (countryCode == 'RU') {
-          setState(() {
-            _currency = 'RUB';
-            _currencySymbol = '₽';
-            _rate = 95.0;
-          });
+          setState(() { _currency = 'RUB'; _currencySymbol = '₽'; _rate = 95.0; });
         }
         else if (countryCode == 'KZ') {
-          setState(() {
-            _currency = 'KZT';
-            _currencySymbol = '₸';
-            _rate = 460.0;
-          });
+          setState(() { _currency = 'KZT'; _currencySymbol = '₸'; _rate = 460.0; });
         }
         else if (countryCode == 'UA') {
-          setState(() {
-            _currency = 'UAH';
-            _currencySymbol = '₴';
-            _rate = 41.0;
-          });
+          setState(() { _currency = 'UAH'; _currencySymbol = '₴'; _rate = 41.0; });
         }
         else if (countryCode == 'GB') {
-          setState(() {
-            _currency = 'GBP';
-            _currencySymbol = '£';
-            _rate = 0.79;
-          });
+          setState(() { _currency = 'GBP'; _currencySymbol = '£'; _rate = 0.79; });
         }
         else if (euroCountries.contains(countryCode)) {
-          setState(() {
-            _currency = 'EUR';
-            _currencySymbol = '€';
-            _rate = 0.92;
-          });
+          setState(() { _currency = 'EUR'; _currencySymbol = '€'; _rate = 0.92; });
         }
         else {
-          setState(() {
-            _currency = 'USD';
-            _currencySymbol = '\$';
-            _rate = 1.0;
-          });
+          setState(() { _currency = 'USD'; _currencySymbol = '\$'; _rate = 1.0; });
         }
       }
     } catch (e) {
-      print('Ошибка определения валюты: $e');
-      setState(() {
-        _currency = 'USD';
-        _currencySymbol = '\$';
-        _rate = 1.0;
-      });
+      setState(() { _currency = 'USD'; _currencySymbol = '\$'; _rate = 1.0; });
     }
     if (mounted) setState(() => _loadingRates = false);
   }
@@ -130,37 +94,9 @@ class _TeacherScreenState extends State<TeacherScreen> {
       return;
     }
     
-    if (!isLoggedIn) {
-      final remaining = await GenerationCounter.getRemainingForGuest();
-      _showGuestInfo(remaining);
-    }
-    
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const LessonConstructorScreen()),
-    );
-  }
-  
-  void _showGuestInfo(int remaining) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Осталось $remaining из 5 бесплатных генераций'),
-        backgroundColor: const Color(0xFF1DB954),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
-        action: SnackBarAction(
-          label: 'Купить',
-          textColor: Colors.white,
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => TeacherScreen(countryCode: _currency),
-              ),
-            );
-          },
-        ),
-      ),
     );
   }
   
@@ -170,28 +106,16 @@ class _TeacherScreenState extends State<TeacherScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Лимит исчерпан',
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
-        ),
+        title: const Text('Лимит исчерпан', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
         content: const Text(
-          'Вы использовали все 5 бесплатных генераций.\n\n'
-          'Выберите тариф, чтобы продолжить создавать планы уроков без ограничений.',
+          'Вы использовали все 5 бесплатных генераций.\n\nВыберите тариф, чтобы продолжить.',
           style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A))),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A)))),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1DB954),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
             child: const Text('Выбрать тариф'),
           ),
         ],
@@ -210,38 +134,16 @@ class _TeacherScreenState extends State<TeacherScreen> {
         builder: (_) => AlertDialog(
           backgroundColor: const Color(0xFF1C1C1C),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text(
-            'Premium доступ',
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
-          ),
-          content: const Text(
-            'Для оформления подписки необходимо создать аккаунт.\n\n'
-            'Это займёт меньше минуты.',
-            style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
-          ),
+          title: const Text('Premium доступ', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+          content: const Text('Для оформления подписки необходимо создать аккаунт.\n\nЭто займёт меньше минуты.'),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A))),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A)))),
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => RegisterPaymentScreen(
-                      planId: planId,
-                      price: price,
-                      period: period,
-                    ),
-                  ),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterPaymentScreen(planId: planId, price: price, period: period)));
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1DB954),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
+              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
               child: const Text('Создать аккаунт и оплатить'),
             ),
           ],
@@ -257,49 +159,19 @@ class _TeacherScreenState extends State<TeacherScreen> {
       builder: (_) => Container(
         margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1C1C1C),
-          borderRadius: BorderRadius.circular(20),
-        ),
+        decoration: BoxDecoration(color: const Color(0xFF1C1C1C), borderRadius: BorderRadius.circular(20)),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              'Оплата подписки',
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
-            ),
+            const Text('Оплата подписки', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
             const SizedBox(height: 16),
-            Text(
-              '${_getPlanName(planId)} — ${_formatPrice(price)} $period',
-              style: const TextStyle(color: Color(0xFF1DB954), fontSize: 16, fontWeight: FontWeight.w600),
-            ),
+            Text('${_getPlanName(planId)} — ${_formatPrice(price)} $period', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 16)),
             const SizedBox(height: 24),
             Row(
               children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF2A2A2A)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A))),
-                  ),
-                ),
+                Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(context), style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF2A2A2A))), child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A)))),
                 const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _showPaymentDemo();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1DB954),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text('Оплатить', style: TextStyle(color: Colors.white)),
-                  ),
-                ),
+                Expanded(child: ElevatedButton(onPressed: () { Navigator.pop(context); _showPaymentDemo(); }, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)), child: const Text('Оплатить'))),
               ],
             ),
           ],
@@ -313,18 +185,9 @@ class _TeacherScreenState extends State<TeacherScreen> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Тестовый режим', style: TextStyle(color: Colors.white)),
-        content: const Text(
-          'Платёжный модуль в разработке.\n\n'
-          'Premium доступ будет активирован после оплаты.',
-          style: TextStyle(color: Color(0xFF9A9A9A)),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Закрыть', style: TextStyle(color: Color(0xFF1DB954))),
-          ),
+        content: const Text('Платёжный модуль в разработке.\n\nPremium доступ будет активирован после оплаты.'),
+        actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text('Закрыть', style: TextStyle(color: Color(0xFF1DB954)))),
         ],
       ),
     );
@@ -362,10 +225,7 @@ class _TeacherScreenState extends State<TeacherScreen> {
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+                  decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(20)),
                   child: const Row(
                     children: [
                       Icon(Icons.edit_calendar_rounded, color: Colors.white, size: 16),
@@ -381,123 +241,82 @@ class _TeacherScreenState extends State<TeacherScreen> {
       ),
       body: _isLoading || _loadingRates
           ? const Center(child: CircularProgressIndicator(color: Color(0xFF1DB954)))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 700),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
-                        borderRadius: BorderRadius.circular(24),
+          : Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 700),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                        decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(24)),
+                        child: Column(
+                          children: [
+                            Container(width: 48, height: 48, decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.school_rounded, color: Colors.white, size: 26)),
+                            const SizedBox(height: 16),
+                            const Text('Образовательный тариф', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
+                            const SizedBox(height: 6),
+                            Text('Для преподавателей и учеников', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 13)),
+                          ],
+                        ),
                       ),
-                      child: Column(
-                        children: [
-                          Container(width: 48, height: 48, decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.school_rounded, color: Colors.white, size: 26)),
-                          const SizedBox(height: 16),
-                          const Text('Образовательный тариф', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
-                          const SizedBox(height: 6),
-                          Text('Для преподавателей и учеников', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    const Text('ВЫБЕРИТЕ ПЛАН', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 12),
-
-                    _buildTariffCard(
-                      title: 'Бесплатный',
-                      usd: 0,
-                      period: '',
-                      description: 'Для тестирования',
-                      features: const ['5 генераций', 'Конструктор уроков', 'Базовые шаблоны'],
-                      isPopular: true,
-                      onTap: _openConstructor,
-                    ),
-                    const SizedBox(height: 14),
-
-                    _buildTariffCard(
-                      title: 'Premium месяц',
-                      usd: 9.99,
-                      period: '/мес',
-                      description: 'Безлимитный доступ',
-                      features: const ['∞ генераций', 'Конструктор уроков PRO', 'Все шаблоны', 'Экспорт PDF'],
-                      isPopular: false,
-                      onTap: () => _showPaymentDialog('monthly', 9.99, '/мес'),
-                    ),
-                    const SizedBox(height: 14),
-
-                    _buildTariffCard(
-                      title: 'Premium полгода',
-                      usd: 49.99,
-                      period: '/6 мес',
-                      description: 'Экономия 20%',
-                      features: const ['∞ генераций', 'Конструктор уроков PRO', 'Все шаблоны', 'Экспорт PDF', 'Приоритетная поддержка'],
-                      isPopular: false,
-                      onTap: () => _showPaymentDialog('semiannual', 49.99, '/6 мес'),
-                    ),
-                    const SizedBox(height: 14),
-
-                    _buildTariffCard(
-                      title: 'Premium год',
-                      usd: 89.99,
-                      period: '/год',
-                      description: 'Экономия 40%',
-                      features: const ['∞ генераций', 'Конструктор уроков PRO', 'Все шаблоны', 'Экспорт PDF', 'Приоритетная поддержка', 'VIP статус'],
-                      isPopular: false,
-                      onTap: () => _showPaymentDialog('annual', 89.99, '/год'),
-                    ),
-                    const SizedBox(height: 32),
-
-                    MouseRegion(
-                      cursor: SystemMouseCursors.click,
-                      child: GestureDetector(
-                        onTap: _openConstructor,
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.edit_calendar_rounded, color: Colors.white, size: 20),
-                              SizedBox(width: 10),
-                              Text('Открыть конструктор уроков', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
-                            ],
+                      const SizedBox(height: 24),
+                      const Text('ВЫБЕРИТЕ ПЛАН', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+                      const SizedBox(height: 12),
+                      _buildTariffCard(title: 'Бесплатный', usd: 0, period: '', description: 'Для тестирования', features: const ['5 генераций', 'Конструктор уроков', 'Базовые шаблоны'], isPopular: true, onTap: _openConstructor),
+                      const SizedBox(height: 14),
+                      _buildTariffCard(title: 'Premium месяц', usd: 9.99, period: '/мес', description: 'Безлимитный доступ', features: const ['∞ генераций', 'Конструктор уроков PRO', 'Все шаблоны', 'Экспорт PDF'], isPopular: false, onTap: () => _showPaymentDialog('monthly', 9.99, '/мес')),
+                      const SizedBox(height: 14),
+                      _buildTariffCard(title: 'Premium полгода', usd: 49.99, period: '/6 мес', description: 'Экономия 20%', features: const ['∞ генераций', 'Конструктор уроков PRO', 'Все шаблоны', 'Экспорт PDF', 'Приоритетная поддержка'], isPopular: false, onTap: () => _showPaymentDialog('semiannual', 49.99, '/6 мес')),
+                      const SizedBox(height: 14),
+                      _buildTariffCard(title: 'Premium год', usd: 89.99, period: '/год', description: 'Экономия 40%', features: const ['∞ генераций', 'Конструктор уроков PRO', 'Все шаблоны', 'Экспорт PDF', 'Приоритетная поддержка', 'VIP статус'], isPopular: false, onTap: () => _showPaymentDialog('annual', 89.99, '/год')),
+                      const SizedBox(height: 32),
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: _openConstructor,
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(16)),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.edit_calendar_rounded, color: Colors.white, size: 20),
+                                SizedBox(width: 10),
+                                Text('Открыть конструктор уроков', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-
-                    MouseRegion(
-                      cursor: SystemMouseCursors.click,
-                      child: GestureDetector(
-                        onTap: _contactSales,
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF2A2A2A))),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 20),
-                              SizedBox(width: 10),
-                              Text('Связаться с отделом образования', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
-                            ],
+                      const SizedBox(height: 24),
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: _contactSales,
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF2A2A2A))),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 20),
+                                SizedBox(width: 10),
+                                Text('Связаться с отделом образования', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 20),
+                    ],
+                  ),
                 ),
               ),
             ),
