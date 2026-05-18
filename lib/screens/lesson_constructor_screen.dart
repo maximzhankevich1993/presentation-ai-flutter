@@ -6,7 +6,7 @@ import '../services/lesson_plan_service.dart';
 import '../services/generation_counter.dart';
 import '../providers/user_provider.dart';
 import 'editor_screen.dart';
-import 'login_screen.dart';
+import 'teacher_screen.dart';
 
 class LessonConstructorScreen extends StatefulWidget {
   const LessonConstructorScreen({super.key});
@@ -67,7 +67,10 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       // Проверка лимита для гостей
       final canGenerate = await GenerationCounter.canGenerate(isLoggedIn, isPremium);
       if (!canGenerate) {
-        _showLimitDialog();
+        // Лимит исчерпан — показываем диалог и перенаправляем на тарифы
+        if (mounted) {
+          _showLimitAndRedirect();
+        }
         setState(() => _isGenerating = false);
         return;
       }
@@ -84,11 +87,19 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
         token: token,
       );
       
-      // Увеличиваем счётчик для гостей
+      // Увеличиваем счётчик для гостей ПОСЛЕ успешной генерации
       if (!isLoggedIn) {
         await GenerationCounter.increment();
         final remaining = await GenerationCounter.getRemainingForGuest();
-        if (mounted) _showGuestInfo(remaining);
+        
+        // Если после этой генерации лимит исчерпан (remaining == 0)
+        if (remaining == 0 && mounted) {
+          _showLimitReachedAndRedirect();
+          setState(() => _isGenerating = false);
+          return;
+        } else if (mounted) {
+          _showGuestInfo(remaining);
+        }
       }
       
       final presentation = _convertToPresentation(lessonPlan);
@@ -105,6 +116,130 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       _showError('Ошибка создания плана урока: $e');
       setState(() => _isGenerating = false);
     }
+  }
+  
+  void _showLimitAndRedirect() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1C1C1C),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Лимит исчерпан',
+          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+        ),
+        content: const Text(
+          'Вы использовали все 5 бесплатных генераций.\n\n'
+          'Выберите тариф, чтобы продолжить создавать планы уроков без ограничений.',
+          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Закрываем диалог
+              Navigator.pop(context); // Закрываем конструктор
+            },
+            child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A))),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context); // Закрываем диалог
+              Navigator.pop(context); // Закрываем конструктор
+              // Переходим на страницу с тарифами
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => TeacherScreen(countryCode: 'US'),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1DB954),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Выбрать тариф'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _showLimitReachedAndRedirect() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1C1C1C),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'Лимит исчерпан',
+          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+        ),
+        content: const Text(
+          'Вы использовали все 5 бесплатных генераций.\n\n'
+          'Выберите тариф, чтобы продолжить создавать планы уроков без ограничений.',
+          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context); // Закрываем диалог
+              Navigator.pop(context); // Закрываем конструктор
+              // Переходим на страницу с тарифами
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => TeacherScreen(countryCode: 'US'),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1DB954),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Выбрать тариф'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _showGuestInfo(int remaining) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Осталось $remaining из 5 бесплатных генераций'),
+        backgroundColor: const Color(0xFF1DB954),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        duration: const Duration(seconds: 3),
+        action: SnackBarAction(
+          label: 'Купить',
+          textColor: Colors.white,
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => TeacherScreen(countryCode: 'US'),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+  
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFFFF3B30),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      ),
+    );
   }
   
   Presentation _convertToPresentation(LessonPlan lessonPlan) {
@@ -179,80 +314,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       orElse: () => {'name': code},
     );
     return standard['name'] ?? code;
-  }
-  
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: const Color(0xFFFF3B30),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-      ),
-    );
-  }
-  
-  void _showGuestInfo(int remaining) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Осталось $remaining из 5 бесплатных генераций. Войдите в аккаунт для безлимита.'),
-        backgroundColor: const Color(0xFF1DB954),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        duration: const Duration(seconds: 4),
-        action: SnackBarAction(
-          label: 'Войти',
-          textColor: Colors.white,
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const LoginScreen()),
-            );
-          },
-        ),
-      ),
-    );
-  }
-  
-  void _showLimitDialog() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1C),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Лимит генераций исчерпан',
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
-        ),
-        content: const Text(
-          'Вы использовали все 5 бесплатных генераций.\n\n'
-          'Зарегистрируйтесь или войдите в аккаунт, чтобы продолжить создавать планы уроков без ограничений.',
-          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A))),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginScreen()),
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1DB954),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('Войти / Зарегистрироваться'),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
