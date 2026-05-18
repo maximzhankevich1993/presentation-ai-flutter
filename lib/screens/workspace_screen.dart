@@ -269,6 +269,39 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     );
   }
 
+  void _editWorkspaceName() {
+    final controller = TextEditingController(text: _workspaceName);
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1C1C1C),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Изменить название', style: TextStyle(color: Colors.white)),
+        content: TextField(
+          controller: controller,
+          style: const TextStyle(color: Colors.white),
+          decoration: const InputDecoration(
+            hintText: 'Название пространства',
+            hintStyle: TextStyle(color: Color(0xFF4A4A4A)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A)))),
+          ElevatedButton(
+            onPressed: () {
+              setState(() => _workspaceName = controller.text);
+              Navigator.pop(context);
+              _saveWorkspaceData();
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
+            child: const Text('Сохранить'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -303,452 +336,31 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      body: DefaultTabController(
+        length: 3,
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildStatsRow(),
-            const SizedBox(height: 24),
-            _buildCreatePresentationCard(),
-            const SizedBox(height: 24),
-            if (_presentations.isNotEmpty) _buildHistorySection(),
-            const SizedBox(height: 24),
-            _buildMembersSection(),
-            const SizedBox(height: 24),
-            _buildTariffsSection(),
-          ],
-        ),
-      ),
-    );
-  }
-  
-  void _editWorkspaceName() {
-    final controller = TextEditingController(text: _workspaceName);
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1C),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Изменить название', style: TextStyle(color: Colors.white)),
-        content: TextField(
-          controller: controller,
-          style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(
-            hintText: 'Название пространства',
-            hintStyle: TextStyle(color: Color(0xFF4A4A4A)),
-            border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(_), child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A)))),
-          ElevatedButton(
-            onPressed: () {
-              setState(() => _workspaceName = controller.text);
-              Navigator.pop(_);
-              _saveWorkspaceData();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
-            child: const Text('Сохранить'),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildStatsRow() {
-    final remainingGenerations = _maxGenerations - _usedGenerations;
-    final remainingMembers = _maxMembers - _members.length;
-    
-    return Row(
-      children: [
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF2A2A2A)),
-            ),
-            child: Column(
-              children: [
-                const Icon(Icons.people_rounded, color: Color(0xFF1DB954), size: 24),
-                const SizedBox(height: 8),
-                Text('${_members.length}/$_maxMembers', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700)),
-                const Text('Участников', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 12)),
+            const TabBar(
+              indicatorColor: Color(0xFF1DB954),
+              labelColor: Color(0xFF1DB954),
+              unselectedLabelColor: Color(0xFF9A9A9A),
+              tabs: [
+                Tab(icon: Icon(Icons.dashboard_rounded), text: 'Обзор'),
+                Tab(icon: Icon(Icons.people_rounded), text: 'Участники'),
+                Tab(icon: Icon(Icons.stars_rounded), text: 'Тарифы'),
               ],
             ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF2A2A2A)),
-            ),
-            child: Column(
-              children: [
-                const Icon(Icons.auto_awesome_rounded, color: Color(0xFF1DB954), size: 24),
-                const SizedBox(height: 8),
-                Text('$_usedGenerations/$_maxGenerations', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700)),
-                const Text('Генераций', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 12)),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF2A2A2A)),
-            ),
-            child: Column(
-              children: [
-                const Icon(Icons.slideshow_rounded, color: Color(0xFF1DB954), size: 24),
-                const SizedBox(height: 8),
-                Text('${_presentations.length}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700)),
-                const Text('Презентаций', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 12)),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildCreatePresentationCard() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF2A2A2A)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('СОЗДАТЬ ПРЕЗЕНТАЦИЮ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
-          const SizedBox(height: 12),
-          TextField(
-            controller: _topicController,
-            style: const TextStyle(color: Colors.white),
-            decoration: InputDecoration(
-              hintText: 'О чём презентация?',
-              hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
-              prefixIcon: const Icon(Icons.edit_rounded, color: Color(0xFF1DB954)),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Text('Слайдов:', style: TextStyle(color: Color(0xFF9A9A9A))),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Slider(
-                  value: _topicMaxSlides.toDouble(),
-                  min: 3,
-                  max: 10,
-                  divisions: 7,
-                  activeColor: const Color(0xFF1DB954),
-                  inactiveColor: const Color(0xFF2A2A2A),
-                  onChanged: (v) => setState(() => _topicMaxSlides = v.round()),
-                ),
-              ),
-              Text('$_topicMaxSlides', style: const TextStyle(color: Color(0xFF1DB954), fontWeight: FontWeight.w700)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _generatePresentation,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1DB954),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('Создать', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Widget _buildHistorySection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('ИСТОРИЯ ПРЕЗЕНТАЦИЙ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 12),
-        ..._presentations.map((p) => Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFF2A2A2A)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 44, height: 44,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1DB954).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.slideshow_rounded, color: Color(0xFF1DB954), size: 24),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(p['title'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                    Text('${p['slides']} слайдов • ${p['updated']}', style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 11)),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFF9A9A9A), size: 20),
-                onPressed: () => _deletePresentation(p['id']),
-              ),
-              IconButton(
-                icon: const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFF1DB954), size: 16),
-                onPressed: () => _openPresentation(p),
-              ),
-            ],
-          ),
-        )),
-      ],
-    );
-  }
-  
-  Widget _buildMembersSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('УЧАСТНИКИ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 12),
-        Row(
-          children: [
             Expanded(
-              child: TextField(
-                style: const TextStyle(color: Colors.white),
-                onChanged: (v) => _inviteEmail = v,
-                decoration: InputDecoration(
-                  hintText: 'Email для приглашения',
-                  hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
-                  prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 20),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
-                ),
+              child: TabBarView(
+                children: [
+                  _buildOverviewTab(),
+                  _buildMembersTab(),
+                  _buildTariffsTab(),
+                ],
               ),
-            ),
-            const SizedBox(width: 12),
-            ElevatedButton(
-              onPressed: _inviteMember,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1DB954),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: const Text('Пригласить'),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        ..._members.map((m) => Container(
-          margin: const EdgeInsets.only(bottom: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFF2A2A2A)),
-          ),
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: m['role'] == 'Owner' ? const Color(0xFFFFD700) : const Color(0xFF2A2A2A),
-                child: Text(m['avatar'], style: TextStyle(color: m['role'] == 'Owner' ? Colors.black : Colors.white, fontSize: 14)),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(m['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                    Text(m['email'], style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 11)),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: m['role'] == 'Owner' ? const Color(0xFFFFD700).withOpacity(0.2) : const Color(0xFF1DB954).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(m['role'], style: TextStyle(color: m['role'] == 'Owner' ? const Color(0xFFFFD700) : const Color(0xFF1DB954), fontSize: 11)),
-              ),
-              if (m['role'] != 'Owner')
-                IconButton(
-                  icon: const Icon(Icons.close_rounded, color: Color(0xFF9A9A9A), size: 18),
-                  onPressed: () => _removeMember(m['id']),
-                ),
-            ],
-          ),
-        )),
-      ],
-    );
-  }
-  
-  Widget _buildTariffsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text('ТАРИФЫ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
-        const SizedBox(height: 12),
-        if (_usedGenerations >= _maxGenerations || _members.length >= _maxMembers)
-          Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFD700).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.3)),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.warning_amber_rounded, color: Color(0xFFFFD700), size: 20),
-                SizedBox(width: 8),
-                Expanded(child: Text('Лимит превышен. Выберите платный тариф.', style: TextStyle(color: Color(0xFFFFD700), fontSize: 12))),
-              ],
-            ),
-          ),
-        _buildTariffCard(
-          title: 'Бесплатный',
-          price: 0,
-          period: '',
-          features: const ['5 участников', '5 генераций'],
-          isPopular: false,
-          onTap: () {},
-        ),
-        const SizedBox(height: 8),
-        _buildTariffCard(
-          title: 'Team',
-          price: _teamPriceUSD,
-          period: '/мес',
-          features: const ['До 15 участников', 'Безлимит генераций', 'Приоритетная поддержка'],
-          isPopular: true,
-          onTap: () => _showPaymentDialog('team'),
-        ),
-        const SizedBox(height: 8),
-        _buildTariffCard(
-          title: 'Business',
-          price: _businessPriceUSD,
-          period: '/мес',
-          features: const ['До 50 участников', 'Безлимит генераций', 'VIP поддержка 24/7', 'API доступ'],
-          isPopular: false,
-          onTap: () => _showPaymentDialog('business'),
-        ),
-        const SizedBox(height: 8),
-        _buildTariffCard(
-          title: 'Enterprise',
-          price: _enterprisePriceUSD,
-          period: '/мес',
-          features: const ['Неограниченно участников', 'Безлимит генераций', 'Выделенный сервер', 'Персональный менеджер'],
-          isPopular: false,
-          onTap: () => _showPaymentDialog('enterprise'),
-        ),
-      ],
-    );
-  }
-  
-  Widget _buildTariffCard({
-    required String title,
-    required double price,
-    required String period,
-    required List<String> features,
-    required bool isPopular,
-    required VoidCallback onTap,
-  }) {
-    final priceLabel = price == 0 ? 'Бесплатно' : _formatPrice(price);
-    
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isPopular ? const Color(0xFF1DB954).withOpacity(0.5) : const Color(0xFF2A2A2A), width: isPopular ? 1.5 : 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 40, height: 40,
-                decoration: BoxDecoration(color: isPopular ? const Color(0xFF1DB954) : const Color(0xFF2A2A2A), borderRadius: BorderRadius.circular(10)),
-                child: Icon(title == 'Team' ? Icons.group_rounded : (title == 'Business' ? Icons.business_center_rounded : Icons.apartment_rounded), color: isPopular ? Colors.white : const Color(0xFF1DB954), size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                    Text(priceLabel, style: const TextStyle(color: Color(0xFF1DB954), fontSize: 14, fontWeight: FontWeight.w600)),
-                  ],
-                ),
-              ),
-              if (isPopular)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text('Популярный', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700)),
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8, runSpacing: 6,
-            children: features.map((f) => Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.check_circle_rounded, color: Color(0xFF1DB954), size: 12),
-                const SizedBox(width: 4),
-                Text(f, style: const TextStyle(color: Colors.white70, fontSize: 11)),
-              ],
-            )).toList(),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: onTap,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: price == 0 ? Colors.grey.shade800 : const Color(0xFF1DB954),
-                padding: const EdgeInsets.symmetric(vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: Text(
-                price == 0 ? 'Текущий план' : 'Выбрать',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12),
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -816,17 +428,14 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _createWorkspace,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1DB954),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: const Text('Создать бесплатно', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+                  ElevatedButton(
+                    onPressed: _createWorkspace,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1DB954),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
+                    child: const Text('Создать бесплатно', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
                   ),
                 ],
               ),
@@ -862,6 +471,391 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+  
+  Widget _buildOverviewTab() {
+    final remainingGenerations = _maxGenerations - _usedGenerations;
+    final remainingMembers = _maxMembers - _members.length;
+    
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              _buildStatCard('Участники', '${_members.length}/$_maxMembers', Icons.people_rounded, remainingMembers > 0 ? Colors.green : Colors.orange),
+              const SizedBox(width: 12),
+              _buildStatCard('Генерации', '$_usedGenerations/$_maxGenerations', Icons.auto_awesome_rounded, remainingGenerations > 0 ? Colors.green : Colors.orange),
+              const SizedBox(width: 12),
+              _buildStatCard('Презентации', '${_presentations.length}', Icons.slideshow_rounded, Colors.blue),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildCreatePresentationCard(),
+          const SizedBox(height: 24),
+          if (_presentations.isNotEmpty) _buildHistorySection(),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFF2A2A2A)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(height: 8),
+            Text(value, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700)),
+            Text(title, style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 12)),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildCreatePresentationCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFF2A2A2A)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('СОЗДАТЬ ПРЕЗЕНТАЦИЮ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _topicController,
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'О чём презентация?',
+              hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
+              prefixIcon: const Icon(Icons.edit_rounded, color: Color(0xFF1DB954)),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Text('Слайдов:', style: TextStyle(color: Color(0xFF9A9A9A))),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Slider(
+                  value: _topicMaxSlides.toDouble(),
+                  min: 3,
+                  max: 10,
+                  divisions: 7,
+                  activeColor: const Color(0xFF1DB954),
+                  inactiveColor: const Color(0xFF2A2A2A),
+                  onChanged: (v) => setState(() => _topicMaxSlides = v.round()),
+                ),
+              ),
+              Text('$_topicMaxSlides', style: const TextStyle(color: Color(0xFF1DB954), fontWeight: FontWeight.w700)),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _generatePresentation,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1DB954),
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Center(child: Text('Создать', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildHistorySection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('ИСТОРИЯ ПРЕЗЕНТАЦИЙ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+        const SizedBox(height: 12),
+        ..._presentations.map((p) => Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFF2A2A2A)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44, height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1DB954).withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.slideshow_rounded, color: Color(0xFF1DB954), size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(p['title'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                    Text('${p['slides']} слайдов • ${p['updated']}', style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 11)),
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFF9A9A9A), size: 20),
+                onPressed: () => _deletePresentation(p['id']),
+              ),
+              IconButton(
+                icon: const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFF1DB954), size: 16),
+                onPressed: () => _openPresentation(p),
+              ),
+            ],
+          ),
+        )),
+      ],
+    );
+  }
+  
+  Widget _buildMembersTab() {
+    return Column(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1E1E1E),
+            border: Border(bottom: BorderSide(color: const Color(0xFF2A2A2A))),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  style: const TextStyle(color: Colors.white),
+                  onChanged: (v) => _inviteEmail = v,
+                  decoration: InputDecoration(
+                    hintText: 'Email для приглашения',
+                    hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
+                    prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton(
+                onPressed: _inviteMember,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1DB954),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: const Text('Пригласить'),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: _members.length,
+            itemBuilder: (_, i) {
+              final m = _members[i];
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: m['role'] == 'Owner' ? const Color(0xFFFFD700) : const Color(0xFF2A2A2A),
+                  child: Text(m['avatar'], style: TextStyle(color: m['role'] == 'Owner' ? Colors.black : Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                ),
+                title: Text(m['name'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                subtitle: Text(m['email'], style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 12)),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: m['role'] == 'Owner' ? const Color(0xFFFFD700).withOpacity(0.2) : const Color(0xFF1DB954).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(m['role'], style: TextStyle(color: m['role'] == 'Owner' ? const Color(0xFFFFD700) : const Color(0xFF1DB954), fontSize: 11)),
+                    ),
+                    if (m['role'] != 'Owner')
+                      IconButton(
+                        icon: const Icon(Icons.close_rounded, color: Color(0xFF9A9A9A), size: 18),
+                        onPressed: () => _removeMember(m['id']),
+                      ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildTariffsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF2A2A2A)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  width: 48, height: 48,
+                  decoration: BoxDecoration(color: const Color(0xFF1DB954).withOpacity(0.2), borderRadius: BorderRadius.circular(12)),
+                  child: const Icon(Icons.favorite_rounded, color: Color(0xFF1DB954), size: 24),
+                ),
+                const SizedBox(height: 12),
+                const Text('Текущий план: Бесплатный', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 8),
+                Text('$_maxMembers участников, $_maxGenerations генераций', style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13)),
+                if (_usedGenerations >= _maxGenerations || _members.length >= _maxMembers)
+                  Container(
+                    margin: const EdgeInsets.only(top: 12),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFD700).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFFFD700).withOpacity(0.3)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.warning_amber_rounded, color: Color(0xFFFFD700), size: 20),
+                        SizedBox(width: 8),
+                        Expanded(child: Text('Лимит превышен. Выберите платный тариф.', style: TextStyle(color: Color(0xFFFFD700), fontSize: 12))),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text('ПЛАТНЫЕ ТАРИФЫ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 12),
+          _buildTariffCard(
+            title: 'Team',
+            price: _teamPriceUSD,
+            period: '/мес',
+            features: const ['До 15 участников', 'Безлимит генераций', 'Приоритетная поддержка', 'Бренд-кит', 'API доступ'],
+            isPopular: true,
+            onTap: () => _showPaymentDialog('team'),
+          ),
+          const SizedBox(height: 14),
+          _buildTariffCard(
+            title: 'Business',
+            price: _businessPriceUSD,
+            period: '/мес',
+            features: const ['До 50 участников', 'Безлимит генераций', 'VIP поддержка 24/7', 'API + Webhook', 'Интеграции'],
+            isPopular: false,
+            onTap: () => _showPaymentDialog('business'),
+          ),
+          const SizedBox(height: 14),
+          _buildTariffCard(
+            title: 'Enterprise',
+            price: _enterprisePriceUSD,
+            period: '/мес',
+            features: const ['Неограниченно участников', 'Безлимит генераций', 'Выделенный сервер', 'SLA 99.9%', 'Персональный менеджер'],
+            isPopular: false,
+            onTap: () => _showPaymentDialog('enterprise'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildTariffCard({
+    required String title,
+    required double price,
+    required String period,
+    required List<String> features,
+    required bool isPopular,
+    required VoidCallback onTap,
+  }) {
+    final priceLabel = price == 0 ? 'Бесплатно' : _formatPrice(price);
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: isPopular ? const Color(0xFF1DB954).withOpacity(0.5) : const Color(0xFF2A2A2A), width: isPopular ? 1.5 : 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40, height: 40,
+                decoration: BoxDecoration(color: isPopular ? const Color(0xFF1DB954) : const Color(0xFF2A2A2A), borderRadius: BorderRadius.circular(10)),
+                child: Icon(title == 'Team' ? Icons.group_rounded : (title == 'Business' ? Icons.business_center_rounded : Icons.apartment_rounded), color: isPopular ? Colors.white : const Color(0xFF1DB954), size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                    Text(priceLabel, style: const TextStyle(color: Color(0xFF1DB954), fontSize: 14, fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+              if (isPopular)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text('Популярный', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700)),
+                ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8, runSpacing: 6,
+            children: features.map((f) => Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle_rounded, color: Color(0xFF1DB954), size: 12),
+                const SizedBox(width: 4),
+                Text(f, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+              ],
+            )).toList(),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: onTap,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: price == 0 ? Colors.grey.shade800 : const Color(0xFF1DB954),
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: Text(
+              price == 0 ? 'Текущий план' : 'Выбрать',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 12),
+            ),
+          ),
+        ],
       ),
     );
   }
