@@ -89,7 +89,7 @@ class UserProvider extends ChangeNotifier {
   // ⭐ ДОБАВЬ ЭТОТ МЕТОД ⭐
   Future<void> loadUser() async {
     try {
-      final token = await ApiService.getToken();
+      final token = ApiService.token;
       if (token != null && token.isNotEmpty) {
         _token = token;
         ApiService.setAuthToken(token);
