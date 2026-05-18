@@ -44,6 +44,41 @@ class _T {
 // ═══════════════════════════════════════════════════════════════
 // HOME SCREEN
 // ═══════════════════════════════════════════════════════════════
+class _HomeScreenState extends State<HomeScreen> {
+  String _countryCode = 'US';
+  
+  @override
+  void initState() {
+    super.initState();
+    _detectCountry();
+  }
+  
+  Future<void> _detectCountry() async {
+    try {
+      final response = await http.get(Uri.parse('https://ipapi.co/json/'));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        setState(() {
+          _countryCode = data['country_code'] ?? 'US';
+        });
+      }
+    } catch (e) {
+      _countryCode = 'US';
+    }
+  }
+  
+  // В методе навигации:
+  void _openWorkspace() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => WorkspaceScreen(countryCode: _countryCode),
+      ),
+    );
+  }
+}
+
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
   @override
