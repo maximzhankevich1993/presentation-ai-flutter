@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
-import '../services/generation_counter.dart';
 import 'editor_screen.dart';
 import 'loading_screen.dart';
 import '../models/presentation.dart';
@@ -20,12 +19,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
   late TabController _tabController;
   bool _hasWorkspace = false;
   bool _isLoading = true;
+  String _workspaceName = '';
   String _inviteEmail = '';
   int _topicMaxSlides = 5;
   final TextEditingController _topicController = TextEditingController();
   final TextEditingController _workspaceNameController = TextEditingController();
   
-  // Данные workspace
   List<Map<String, dynamic>> _members = [];
   List<Map<String, dynamic>> _presentations = [];
   int _usedGenerations = 0;
@@ -33,13 +32,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
   final int _maxMembers = 5;
   String _workspaceId = '';
   
-  // Валюты
   String _currency = 'USD';
   String _currencySymbol = '\$';
   double _rate = 1.0;
   bool _loadingRates = true;
   
-  // Цены в USD
   final double _teamPriceUSD = 49.99;
   final double _businessPriceUSD = 99.99;
   final double _enterprisePriceUSD = 199.99;
@@ -93,7 +90,6 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
 
   Future<void> _loadWorkspaceData() async {
     await Future.delayed(const Duration(milliseconds: 300));
-    // TODO: Загрузить из API (есть ли у пользователя workspace)
     setState(() {
       _hasWorkspace = false;
       _isLoading = false;
@@ -129,13 +125,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
       return;
     }
     
-    // Проверка лимита генераций
     if (_usedGenerations >= _maxGenerations) {
       _showLimitDialog();
       return;
     }
     
-    // Сохраняем в историю
     setState(() {
       _usedGenerations++;
       _presentations.insert(0, {
@@ -147,7 +141,6 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
       });
     });
     
-    // Переход на загрузку и редактор
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -172,7 +165,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              _tabController.index = 2; // Переход на тарифы
+              _tabController.index = 2;
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
             child: const Text('Выбрать тариф'),
@@ -224,12 +217,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
       );
     }
     
-    // Если нет workspace — показываем создание и тарифы
     if (!_hasWorkspace) {
       return _buildNoWorkspaceScreen();
     }
     
-    // Если есть workspace — показываем управление
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
@@ -408,7 +399,6 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
           _buildStatCard('Презентации', _presentations.length.toString(), Icons.slideshow_rounded, Colors.blue),
           
           const SizedBox(height: 24),
-          // Форма создания презентации
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -778,13 +768,14 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> with SingleTickerProv
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
+                  gradient: price == 0 ? null : const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
+                  color: price == 0 ? const Color(0xFF2A2A2A) : null,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
                   child: Text(
                     price == 0 ? 'Текущий план' : 'Выбрать',
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
+                    style: TextStyle(color: price == 0 ? Colors.grey : Colors.white, fontWeight: FontWeight.w700, fontSize: 14),
                   ),
                 ),
               ),
