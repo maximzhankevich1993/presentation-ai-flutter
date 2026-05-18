@@ -8,11 +8,13 @@ class LessonPlanService {
     required String standard,
     required String grade,
     required int durationMinutes,
-    required String token,
+    required String? token,  // ← token может быть null для гостей
   }) async {
     try {
-      // Устанавливаем токен в ApiService
-      ApiService.setAuthToken(token);
+      // Устанавливаем токен в ApiService (если есть)
+      if (token != null && token.isNotEmpty) {
+        ApiService.setAuthToken(token);
+      }
       
       final data = await ApiService.generateLessonPlan(
         topic: topic,
