@@ -67,7 +67,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   final List<String> _examples = ['ИИ', 'Бизнес', 'Экология', 'Космос', 'IT', 'Маркетинг'];
   
-  // VIP данные для продакшена (0 занято, 50 свободно)
   int _vipOccupiedSpots = 0;
   int _vipTotalSpots = 50;
 
@@ -111,7 +110,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   Future<void> _loadVipStats() async {
     try {
-      // TODO: Заменить на реальный API запрос, когда появится
       if (mounted) {
         setState(() {
           _vipOccupiedSpots = 0;
@@ -213,7 +211,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             children: [
               const Text('Загрузите текст', style: TextStyle(color: _T.txtPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
               const SizedBox(height: 6),
-              const Text('Вставьте текст...', style: TextStyle(color: _T.txtSecondary, fontSize: 13)),
+              const Text('Вставьте текст для презентации', style: TextStyle(color: _T.txtSecondary, fontSize: 13)),
               const SizedBox(height: 20),
               TextField(
                 controller: controller,
@@ -271,7 +269,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final up = Provider.of<UserProvider>(context, listen: false);
     if (!up.isPremium) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Загрузка логотипа — Premium'),
+        content: const Text('Загрузка логотипа — Premium функция'),
         backgroundColor: _T.gold.withOpacity(0.9),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -317,7 +315,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(child: Container(width: 36, height: 4, margin: const EdgeInsets.only(bottom: 16), decoration: BoxDecoration(color: _T.border, borderRadius: BorderRadius.circular(2)))),
-            const Text('История', style: TextStyle(color: _T.txtPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+            const Text('История генераций', style: TextStyle(color: _T.txtPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
             if (records.isEmpty)
               const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 24), child: Text('Пока нет генераций', style: TextStyle(color: _T.txtMuted, fontSize: 13))))
@@ -507,7 +505,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                   _ExtraBtn(Icons.article_outlined, 'Из текста', _showTextInput),
                   const SizedBox(width: 10),
-                  _ExtraBtn(Icons.image_outlined, 'Из логотипа', _uploadLogo),
+                  _ExtraBtn(Icons.image_outlined, 'Загрузить логотип', _uploadLogo),
                 ]),
 
                 if (logo != null) ...[
