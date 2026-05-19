@@ -1,9 +1,12 @@
 import 'dart:convert';
 import 'dart:html' as html;
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/generation_counter.dart';
+import '../services/quiz_service.dart';
+import '../services/api_service.dart';
+import '../providers/user_provider.dart';
+import '../models/presentation.dart';
 import 'teacher_screen.dart';
 
 class QuizScreen extends StatefulWidget {
@@ -13,55 +16,62 @@ class QuizScreen extends StatefulWidget {
   State<QuizScreen> createState() => _QuizScreenState();
 }
 
-class _QuizScreenState extends State<QuizScreen> {
+class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+  
+  // Вкладка "По презентации"
+  List<Presentation> _userPresentations = [];
+  Presentation? _selectedPresentation;
+  bool _loadingPresentations = false;
+  
+  // Вкладка "По теме"
   final TextEditingController _topicController = TextEditingController();
+  final TextEditingController _textbookController = TextEditingController();
+  final TextEditingController _gradeController = TextEditingController(text: '9');
   final TextEditingController _questionCountController = TextEditingController(text: '5');
   
+  // Общее
   bool _isLoading = false;
   bool _showQuiz = false;
   bool _showAnswers = false;
-  String _countryCode = 'RU';
-  String _currency = 'RUB';
-  String _currencySymbol = '₽';
-  double _rate = 95.0;
   
-  List<Map<String, dynamic>> _questions = [];
-  Map<int, String?> _userAnswers = {};
+  Quiz? _currentQuiz;
+  Map<int, int?> _userAnswers = {};
   int _score = 0;
   int _usedGenerations = 0;
   final int _maxGenerations = 5;
   
-  String _currentTestTopic = '';
   int _currentQuestionIndex = 0;
   bool _quizFinished = false;
+  
+  String _countryCode = 'RU';
 
   @override
   void initState() {
     super.initState();
-    _detectCountry();
+    _tabController = TabController(length: 2, vsync: this);
     _loadGenerationCount();
+    _loadUserPresentations();
+    _detectCountry();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _topicController.dispose();
+    _textbookController.dispose();
+    _gradeController.dispose();
+    _questionCountController.dispose();
+    super.dispose();
   }
 
   Future<void> _detectCountry() async {
     try {
-      final response = await http
-          .get(Uri.parse('https://ipwho.is/'))
-          .timeout(const Duration(seconds: 5));
+      final response = await http.get(Uri.parse('https://ipwho.is/'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final countryCode = data['country_code'] ?? 'RU';
-        
         setState(() {
-          _countryCode = countryCode;
-          if (countryCode == 'BY') {
-            _currency = 'BYN'; _currencySymbol = 'Br'; _rate = 3.25;
-          } else if (countryCode == 'RU') {
-            _currency = 'RUB'; _currencySymbol = '₽'; _rate = 95.0;
-          } else if (countryCode == 'KZ') {
-            _currency = 'KZT'; _currencySymbol = '₸'; _rate = 460.0;
-          } else {
-            _currency = 'USD'; _currencySymbol = '\$'; _rate = 1.0;
-          }
+          _countryCode = data['country_code'] ?? 'RU';
         });
       }
     } catch (e) {
@@ -81,8 +91,79 @@ class _QuizScreenState extends State<QuizScreen> {
     await prefs.setInt('quiz_generations', _usedGenerations);
   }
 
-  Future<void> _generateQuiz() async {
+  Future<void> _loadUserPresentations() async {
+    setState(() => _loadingPresentations = true);
+    try {
+      final token = Provider.of<UserProvider>(context, listen: false).token;
+      // TODO: Загрузить презентации пользователя из API
+      // final presentations = await ApiService.getUserPresentations(token);
+      await Future.delayed(const Duration(milliseconds: 500));
+      setState(() {
+        _userPresentations = [
+          Presentation(id: '1', title: 'Вторая мировая война', slides: [], createdAt: DateTime.now()),
+          Presentation(id: '2', title: 'Квадратные уравнения', slides: [], createdAt: DateTime.now()),
+          Presentation(id: '3', title: 'Падежи русского языка', slides: [], createdAt: DateTime.now()),
+        ];
+        _loadingPresentations = false;
+      });
+    } catch (e) {
+      setState(() => _loadingPresentations = false);
+      _showError('Ошибка загрузки презентаций: $e');
+    }
+  }
+
+  Future<void> _generateQuizFromPresentation() async {
+    if (_selectedPresentation == null) {
+      _showError('Выберите презентацию');
+      return;
+    }
+    
+    if (_usedGenerations >= _maxGenerations) {
+      _showLimitDialog();
+      return;
+    }
+    
+    setState(() => _isLoading = true);
+    
+    try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final token = userProvider.token;
+      
+      final slideContents = _selectedPresentation!.slides.map((s) => 
+        s.title + ' ' + s.content.join(' ')
+      ).toList();
+      
+      final quiz = await QuizService.generateFromPresentation(
+        presentationTitle: _selectedPresentation!.title,
+        slideContents: slideContents,
+        token: token,
+        questionCount: 5,
+      );
+      
+      setState(() {
+        _currentQuiz = quiz;
+        _showQuiz = true;
+        _showAnswers = false;
+        _quizFinished = false;
+        _currentQuestionIndex = 0;
+        _userAnswers.clear();
+        _score = 0;
+        _usedGenerations++;
+      });
+      
+      await _saveGenerationCount();
+      
+    } catch (e) {
+      _showError('Ошибка генерации теста: $e');
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _generateQuizFromTopic() async {
     final topic = _topicController.text.trim();
+    final textbook = _textbookController.text.trim();
+    final grade = _gradeController.text.trim();
     final questionCount = int.tryParse(_questionCountController.text.trim()) ?? 5;
     
     if (topic.isEmpty) {
@@ -95,7 +176,6 @@ class _QuizScreenState extends State<QuizScreen> {
       return;
     }
     
-    // Проверка лимита
     if (_usedGenerations >= _maxGenerations) {
       _showLimitDialog();
       return;
@@ -104,17 +184,20 @@ class _QuizScreenState extends State<QuizScreen> {
     setState(() => _isLoading = true);
     
     try {
-      final prompt = _buildPrompt(topic, questionCount);
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final token = userProvider.token;
       
-      // TODO: Заменить на реальный API запрос к YandexGPT
-      await Future.delayed(const Duration(seconds: 2));
-      
-      // Демо-данные для теста
-      final demoQuestions = _generateDemoQuestions(topic, questionCount);
+      final quiz = await QuizService.generateFromTopic(
+        topic: topic,
+        textbook: textbook.isNotEmpty ? textbook : null,
+        grade: grade,
+        token: token,
+        questionCount: questionCount,
+        countryCode: _countryCode,
+      );
       
       setState(() {
-        _questions = demoQuestions;
-        _currentTestTopic = topic;
+        _currentQuiz = quiz;
         _showQuiz = true;
         _showAnswers = false;
         _quizFinished = false;
@@ -124,64 +207,13 @@ class _QuizScreenState extends State<QuizScreen> {
         _usedGenerations++;
       });
       
-      _saveGenerationCount();
+      await _saveGenerationCount();
       
     } catch (e) {
       _showError('Ошибка генерации теста: $e');
     } finally {
       setState(() => _isLoading = false);
     }
-  }
-  
-  String _buildPrompt(String topic, int questionCount) {
-    return '''
-Ты — эксперт по педагогике. Создай тест по теме "${topic}" для учащихся.
-
-Параметры:
-- Количество вопросов: $questionCount
-- Страна: ${_getCountryName()}
-- Язык: русский
-
-Для каждого вопроса:
-- Вопрос
-- 4 варианта ответа
-- Номер правильного ответа (0-3)
-- Краткое пояснение
-
-Верни ТОЛЬКО JSON в формате:
-{
-  "questions": [
-    {
-      "question": "текст вопроса",
-      "options": ["вариант 1", "вариант 2", "вариант 3", "вариант 4"],
-      "correct": 0,
-      "explanation": "пояснение"
-    }
-  ]
-}
-''';
-  }
-  
-  String _getCountryName() {
-    switch (_countryCode) {
-      case 'RU': return 'Россия';
-      case 'BY': return 'Беларусь';
-      case 'KZ': return 'Казахстан';
-      default: return 'международный';
-    }
-  }
-  
-  List<Map<String, dynamic>> _generateDemoQuestions(String topic, int count) {
-    List<Map<String, dynamic>> questions = [];
-    for (int i = 0; i < count; i++) {
-      questions.add({
-        'question': 'Вопрос ${i + 1} по теме "$topic"?',
-        'options': ['Вариант А', 'Вариант Б', 'Вариант В', 'Вариант Г'],
-        'correct': i % 4,
-        'explanation': 'Это пояснение к вопросу ${i + 1}. Правильный ответ — вариант ${String.fromCharCode(65 + (i % 4))}.',
-      });
-    }
-    return questions;
   }
   
   void _showLimitDialog() {
@@ -192,9 +224,9 @@ class _QuizScreenState extends State<QuizScreen> {
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Лимит исчерпан', style: TextStyle(color: Colors.white)),
-        content: Text(
-          'Вы использовали все $_maxGenerations бесплатных генераций тестов.\n\nПриобретите тариф "Учитель" для безлимитного доступа.',
-          style: const TextStyle(color: Color(0xFF9A9A9A)),
+        content: const Text(
+          'Вы использовали все 5 бесплатных генераций тестов.\n\nПриобретите тариф "Учитель" для безлимитного доступа.',
+          style: TextStyle(color: Color(0xFF9A9A9A)),
         ),
         actions: [
           TextButton(
@@ -218,23 +250,23 @@ class _QuizScreenState extends State<QuizScreen> {
   }
   
   void _answerQuestion(int selectedIndex) {
-    final question = _questions[_currentQuestionIndex];
-    final isCorrect = selectedIndex == question['correct'];
+    final question = _currentQuiz!.questions[_currentQuestionIndex];
+    final isCorrect = selectedIndex == question.correctIndex;
     
     setState(() {
-      _userAnswers[_currentQuestionIndex] = question['options'][selectedIndex];
+      _userAnswers[_currentQuestionIndex] = selectedIndex;
       if (isCorrect) _score++;
     });
     
     _showSnackBar(
-      isCorrect ? 'Правильно! 🎉' : 'Неправильно! Правильный ответ: ${question['options'][question['correct']]}',
+      isCorrect ? 'Правильно! 🎉' : 'Неправильно! Правильный ответ: ${question.options[question.correctIndex]}',
       isCorrect,
     );
     
     Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted) {
         setState(() {
-          if (_currentQuestionIndex + 1 < _questions.length) {
+          if (_currentQuestionIndex + 1 < _currentQuiz!.questions.length) {
             _currentQuestionIndex++;
           } else {
             _quizFinished = true;
@@ -245,64 +277,40 @@ class _QuizScreenState extends State<QuizScreen> {
   }
   
   void _exportToWord() {
-    String htmlContent = '''
+    if (_currentQuiz == null) return;
+    
+    final content = QuizService.exportToWord(_currentQuiz!, includeAnswers: true);
+    
+    final htmlContent = '''
     <!DOCTYPE html>
     <html>
     <head>
       <meta charset="UTF-8">
-      <title>${_currentTestTopic} - Тест</title>
+      <title>${_currentQuiz!.title}</title>
       <style>
-        body { font-family: Arial, sans-serif; margin: 40px; }
+        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.5; }
         h1 { color: #1DB954; }
         .question { margin-bottom: 30px; }
         .question-text { font-weight: bold; margin-bottom: 10px; }
         .options { margin-left: 20px; margin-bottom: 10px; }
-        .correct { color: green; }
-        .explanation { color: #666; margin-top: 10px; font-style: italic; }
         hr { margin: 20px 0; }
+        .answer-key { margin-top: 30px; padding-top: 20px; border-top: 2px solid #1DB954; }
       </style>
     </head>
     <body>
-      <h1>Тест: ${_currentTestTopic}</h1>
-      <p>Количество вопросов: ${_questions.length}</p>
-      <hr>
+      <pre style="white-space: pre-wrap; font-family: Arial, sans-serif;">$content</pre>
+    </body>
+    </html>
     ''';
-    
-    for (int i = 0; i < _questions.length; i++) {
-      final q = _questions[i];
-      final correctLetter = String.fromCharCode(65 + (q['correct'] as int));
-      htmlContent += '''
-      <div class="question">
-        <div class="question-text">${i + 1}. ${q['question']}</div>
-        <div class="options">
-      ''';
-      for (int j = 0; j < (q['options'] as List).length; j++) {
-        final letter = String.fromCharCode(65 + j);
-        final isCorrect = j == q['correct'];
-        htmlContent += '<div>${letter}. ${q['options'][j]} ${isCorrect ? '✓' : ''}</div>';
-      }
-      htmlContent += '''
-        </div>
-        <div class="explanation">📝 ${q['explanation']}</div>
-      </div>
-      <hr>
-      ''';
-    }
-    
-    htmlContent += '</body></html>';
     
     final blob = html.Blob([htmlContent], 'application/msword');
     final url = html.Url.createObjectUrlFromBlob(blob);
     final anchor = html.AnchorElement(href: url)
-      ..setAttribute('download', '${_currentTestTopic}_тест.doc')
+      ..setAttribute('download', '${_currentQuiz!.title}.doc')
       ..click();
     html.Url.revokeObjectUrl(url);
     
     _showSnackBar('Тест сохранён в Word', true);
-  }
-  
-  void _exportToPdf() {
-    html.window.print();
   }
   
   void _showError(String message) {
@@ -341,50 +349,89 @@ class _QuizScreenState extends State<QuizScreen> {
         ),
         title: const Text('Генератор тестов', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
         centerTitle: true,
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: const Color(0xFF1DB954),
+          labelColor: const Color(0xFF1DB954),
+          unselectedLabelColor: const Color(0xFF9A9A9A),
+          tabs: const [
+            Tab(icon: Icon(Icons.slideshow_rounded), text: 'Из презентации'),
+            Tab(icon: Icon(Icons.topic_rounded), text: 'По теме'),
+          ],
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFF1DB954)))
           : _showQuiz
               ? (!_quizFinished ? _buildQuizScreen() : _buildResultScreen())
-              : _buildStartScreen(remaining),
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildPresentationTab(remaining),
+                    _buildTopicTab(remaining),
+                  ],
+                ),
     );
   }
   
-  Widget _buildStartScreen(int remaining) {
+  Widget _buildPresentationTab(int remaining) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
-              children: [
-                Container(
-                  width: 64, height: 64,
-                  decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
-                  child: const Icon(Icons.quiz_rounded, color: Colors.white, size: 32),
-                ),
-                const SizedBox(height: 16),
-                const Text('Генератор тестов', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
-                const SizedBox(height: 8),
-                Text('Создайте тест по любой теме для ваших учеников', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
-              ],
-            ),
-          ),
+          _buildHeader('Тест из презентации', 'Создайте тест по вашей презентации', Icons.slideshow_rounded),
           const SizedBox(height: 24),
           
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFF2A2A2A)),
+            decoration: _buildCardDecoration(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('ВЫБЕРИТЕ ПРЕЗЕНТАЦИЮ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 12),
+                _loadingPresentations
+                    ? const Center(child: CircularProgressIndicator(color: Color(0xFF1DB954)))
+                    : DropdownButtonFormField<Presentation>(
+                        value: _selectedPresentation,
+                        dropdownColor: const Color(0xFF1E1E1E),
+                        style: const TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
+                        ),
+                        items: _userPresentations.map((p) {
+                          return DropdownMenuItem(
+                            value: p,
+                            child: Text(p.title, style: const TextStyle(color: Colors.white)),
+                          );
+                        }).toList(),
+                        onChanged: (value) => setState(() => _selectedPresentation = value),
+                        hint: const Text('Выберите презентацию', style: TextStyle(color: Color(0xFF9A9A9A))),
+                      ),
+                const SizedBox(height: 20),
+                _buildRemainingInfo(remaining),
+                const SizedBox(height: 20),
+                _buildGenerateButton('Сгенерировать тест', _generateQuizFromPresentation),
+              ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildTopicTab(int remaining) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: [
+          _buildHeader('Тест по теме', 'Создайте тест по любой теме', Icons.topic_rounded),
+          const SizedBox(height: 24),
+          
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: _buildCardDecoration(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -403,6 +450,37 @@ class _QuizScreenState extends State<QuizScreen> {
                 ),
                 const SizedBox(height: 16),
                 
+                const Text('УЧЕБНИК (ОПЦИОНАЛЬНО)', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _textbookController,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: 'Название учебника',
+                    hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
+                    prefixIcon: const Icon(Icons.menu_book_rounded, color: Color(0xFF1DB954)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                const Text('КЛАСС', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: _gradeController,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(color: Colors.white),
+                  decoration: InputDecoration(
+                    hintText: '9',
+                    hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
+                    prefixIcon: const Icon(Icons.school_rounded, color: Color(0xFF1DB954)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
+                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
                 const Text('КОЛИЧЕСТВО ВОПРОСОВ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 8),
                 TextField(
@@ -410,7 +488,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   keyboardType: TextInputType.number,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    hintText: '5',
+                    hintText: '5 (3-10)',
                     hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
                     prefixIcon: const Icon(Icons.numbers_rounded, color: Color(0xFF1DB954)),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
@@ -418,40 +496,9 @@ class _QuizScreenState extends State<QuizScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1DB954).withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.3)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.info_outline_rounded, color: Color(0xFF1DB954), size: 18),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Осталось $remaining из $_maxGenerations бесплатных генераций',
-                          style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                _buildRemainingInfo(remaining),
                 const SizedBox(height: 20),
-                
-                ElevatedButton(
-                  onPressed: _generateQuiz,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1DB954),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Center(
-                    child: Text('Сгенерировать тест', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
-                  ),
-                ),
+                _buildGenerateButton('Сгенерировать тест', _generateQuizFromTopic),
               ],
             ),
           ),
@@ -460,8 +507,77 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
   
+  Widget _buildHeader(String title, String subtitle, IconData icon) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(32),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 64, height: 64,
+            decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
+            child: Icon(icon, color: Colors.white, size: 32),
+          ),
+          const SizedBox(height: 16),
+          Text(title, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 8),
+          Text(subtitle, style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
+        ],
+      ),
+    );
+  }
+  
+  BoxDecoration _buildCardDecoration() {
+    return BoxDecoration(
+      color: const Color(0xFF1E1E1E),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: const Color(0xFF2A2A2A)),
+    );
+  }
+  
+  Widget _buildRemainingInfo(int remaining) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1DB954).withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.info_outline_rounded, color: Color(0xFF1DB954), size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Осталось $remaining из $_maxGenerations бесплатных генераций',
+              style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Widget _buildGenerateButton(String label, VoidCallback onPressed) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF1DB954),
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      child: Center(
+        child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+      ),
+    );
+  }
+  
   Widget _buildQuizScreen() {
-    final question = _questions[_currentQuestionIndex];
+    final question = _currentQuiz!.questions[_currentQuestionIndex];
     
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -469,23 +585,21 @@ class _QuizScreenState extends State<QuizScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: const Color(0xFF2A2A2A)),
-            ),
+            decoration: _buildCardDecoration(),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Вопрос ${_currentQuestionIndex + 1} из ${_questions.length}', style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13)),
-                    Text('Счёт: $_score', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13, fontWeight: FontWeight.w700)),
+                    Text('Вопрос ${_currentQuestionIndex + 1} из ${_currentQuiz!.questions.length}', 
+                        style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13)),
+                    Text('Счёт: $_score', 
+                        style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13, fontWeight: FontWeight.w700)),
                   ],
                 ),
                 const SizedBox(height: 8),
                 LinearProgressIndicator(
-                  value: (_currentQuestionIndex + 1) / _questions.length,
+                  value: (_currentQuestionIndex + 1) / _currentQuiz!.questions.length,
                   backgroundColor: const Color(0xFF2A2A2A),
                   color: const Color(0xFF1DB954),
                 ),
@@ -501,13 +615,15 @@ class _QuizScreenState extends State<QuizScreen> {
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.2)),
             ),
-            child: Text(question['question'], style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+            child: Text(question.question, 
+                style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
           ),
           const SizedBox(height: 24),
           
-          const Text('ВЫБЕРИТЕ ОТВЕТ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+          const Text('ВЫБЕРИТЕ ОТВЕТ', 
+              style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
           const SizedBox(height: 12),
-          ...List.generate((question['options'] as List).length, (index) {
+          ...List.generate(question.options.length, (index) {
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: Container(
@@ -526,7 +642,8 @@ class _QuizScreenState extends State<QuizScreen> {
                     ),
                     child: const Icon(Icons.circle_outlined, color: Color(0xFF9A9A9A), size: 14),
                   ),
-                  title: Text(question['options'][index], style: const TextStyle(color: Colors.white)),
+                  title: Text(question.options[index], 
+                      style: const TextStyle(color: Colors.white)),
                 ),
               ),
             );
@@ -537,7 +654,7 @@ class _QuizScreenState extends State<QuizScreen> {
   }
   
   Widget _buildResultScreen() {
-    final percentage = (_score / _questions.length) * 100;
+    final percentage = (_score / _currentQuiz!.questions.length) * 100;
     
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -550,7 +667,8 @@ class _QuizScreenState extends State<QuizScreen> {
               borderRadius: BorderRadius.circular(50),
             ),
             child: Center(
-              child: Text('${percentage.toInt()}%', style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w800)),
+              child: Text('${percentage.toInt()}%', 
+                  style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w800)),
             ),
           ),
           const SizedBox(height: 24),
@@ -562,23 +680,20 @@ class _QuizScreenState extends State<QuizScreen> {
           
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: const Color(0xFF1E1E1E),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFF2A2A2A)),
-            ),
+            decoration: _buildCardDecoration(),
             child: Column(
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text('Правильных ответов:', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14)),
-                    Text('$_score / ${_questions.length}', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 20, fontWeight: FontWeight.w700)),
+                    Text('$_score / ${_currentQuiz!.questions.length}', 
+                        style: const TextStyle(color: Color(0xFF1DB954), fontSize: 20, fontWeight: FontWeight.w700)),
                   ],
                 ),
                 const SizedBox(height: 12),
                 LinearProgressIndicator(
-                  value: _score / _questions.length,
+                  value: _score / _currentQuiz!.questions.length,
                   backgroundColor: const Color(0xFF2A2A2A),
                   color: const Color(0xFF1DB954),
                 ),
@@ -587,14 +702,14 @@ class _QuizScreenState extends State<QuizScreen> {
           ),
           const SizedBox(height: 24),
           
-          // Правильные ответы
           if (_showAnswers) ...[
-            const Text('ПРАВИЛЬНЫЕ ОТВЕТЫ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+            const Text('ПРАВИЛЬНЫЕ ОТВЕТЫ', 
+                style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
-            ..._questions.asMap().entries.map((entry) {
+            ..._currentQuiz!.questions.asMap().entries.map((entry) {
               final i = entry.key;
               final q = entry.value;
-              final correctLetter = String.fromCharCode(65 + (q['correct'] as int));
+              final correctLetter = String.fromCharCode(65 + q.correctIndex);
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
@@ -606,11 +721,14 @@ class _QuizScreenState extends State<QuizScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${i + 1}. ${q['question']}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                    Text('${i + 1}. ${q.question}', 
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
-                    Text('✓ $correctLetter. ${q['options'][q['correct']]}', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13)),
+                    Text('✓ $correctLetter. ${q.options[q.correctIndex]}', 
+                        style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13)),
                     const SizedBox(height: 8),
-                    Text('📝 ${q['explanation']}', style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 12)),
+                    Text('📝 ${q.explanation}', 
+                        style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 12)),
                   ],
                 ),
               );
@@ -627,7 +745,8 @@ class _QuizScreenState extends State<QuizScreen> {
                     side: const BorderSide(color: Color(0xFF2A2A2A)),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: Text(_showAnswers ? 'Скрыть ответы' : 'Показать ответы', style: const TextStyle(color: Color(0xFF1DB954))),
+                  child: Text(_showAnswers ? 'Скрыть ответы' : 'Показать ответы', 
+                      style: const TextStyle(color: Color(0xFF1DB954))),
                 ),
               ),
               const SizedBox(width: 12),
@@ -648,17 +767,6 @@ class _QuizScreenState extends State<QuizScreen> {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: _exportToPdf,
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFF2A2A2A)),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text('📑 PDF', style: TextStyle(color: Colors.white)),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton(
                   onPressed: () {
                     setState(() {
                       _showQuiz = false;
@@ -666,6 +774,7 @@ class _QuizScreenState extends State<QuizScreen> {
                       _currentQuestionIndex = 0;
                       _score = 0;
                       _userAnswers.clear();
+                      _currentQuiz = null;
                     });
                   },
                   style: OutlinedButton.styleFrom(
@@ -675,17 +784,18 @@ class _QuizScreenState extends State<QuizScreen> {
                   child: const Text('Новый тест', style: TextStyle(color: Colors.white)),
                 ),
               ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1DB954),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text('На главную', style: TextStyle(color: Colors.white)),
+                ),
+              ),
             ],
-          ),
-          const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1DB954),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Center(child: Text('На главную', style: TextStyle(color: Colors.white))),
           ),
         ],
       ),
