@@ -24,6 +24,8 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
   List<Presentation> _userPresentations = [];
   Presentation? _selectedPresentation;
   bool _loadingPresentations = false;
+  String? _uploadedFileName;
+  String? _uploadedFileContent;
   
   // Вкладка "По теме"
   final TextEditingController _topicController = TextEditingController();
@@ -96,24 +98,86 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
     setState(() => _loadingPresentations = true);
     try {
       final token = Provider.of<UserProvider>(context, listen: false).token;
-      // TODO: Загрузить презентации пользователя из API
-      // final presentations = await ApiService.getUserPresentations(token);
-      await Future.delayed(const Duration(milliseconds: 500));
-      setState(() {
-        _userPresentations = [
-          Presentation(id: '1', title: 'Вторая мировая война', slides: [], createdAt: DateTime.now()),
-          Presentation(id: '2', title: 'Квадратные уравнения', slides: [], createdAt: DateTime.now()),
-          Presentation(id: '3', title: 'Падежи русского языка', slides: [], createdAt: DateTime.now()),
-        ];
-        _loadingPresentations = false;
-      });
+      final prefs = await SharedPreferences.getInstance();
+      final presentationsJson = prefs.getString('user_presentations');
+      
+      if (presentationsJson != null) {
+        final List<dynamic> list = json.decode(presentationsJson);
+        setState(() {
+          _userPresentations = list.map((p) => Presentation.fromJson(p)).toList();
+        });
+      }
     } catch (e) {
-      setState(() => _loadingPresentations = false);
-      _showError('Ошибка загрузки презентаций: $e');
+      print('Error loading presentations: $e');
+    }
+    setState(() => _loadingPresentations = false);
+  }
+
+  void _uploadFile() {
+    final input = html.FileUploadInputElement()..accept = '.pptx,.pdf,.docx,.txt';
+    input.click();
+    input.onChange.listen((event) {
+      final file = input.files!.first;
+      final reader = html.FileReader();
+      reader.readAsText(file);
+      reader.onLoad.listen((_) {
+        setState(() {
+          _uploadedFileName = file.name;
+          _uploadedFileContent = reader.result as String;
+        });
+      });
+    });
+  }
+
+  Future<void> _generateQuizFromFile() async {
+    if (_uploadedFileContent == null) {
+      _showError('Загрузите файл презентации');
+      return;
+    }
+    
+    if (_usedGenerations >= _maxGenerations) {
+      _showLimitDialog();
+      return;
+    }
+    
+    setState(() => _isLoading = true);
+    
+    try {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final token = userProvider.token;
+      
+      // Получаем текст из файла
+      final content = _uploadedFileContent!;
+      final fileName = _uploadedFileName ?? 'презентация';
+      
+      final quiz = await QuizService.generateFromPresentation(
+        presentationTitle: fileName,
+        slideContents: [content],
+        token: token,
+        questionCount: 5,
+      );
+      
+      setState(() {
+        _currentQuiz = quiz;
+        _showQuiz = true;
+        _showAnswers = false;
+        _quizFinished = false;
+        _currentQuestionIndex = 0;
+        _userAnswers.clear();
+        _score = 0;
+        _usedGenerations++;
+      });
+      
+      await _saveGenerationCount();
+      
+    } catch (e) {
+      _showError('Ошибка генерации теста: $e');
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
-  Future<void> _generateQuizFromPresentation() async {
+  Future<void> _generateQuizFromSelectedPresentation() async {
     if (_selectedPresentation == null) {
       _showError('Выберите презентацию');
       return;
@@ -314,6 +378,49 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
     _showSnackBar('Тест сохранён в Word', true);
   }
   
+  void _exportToPdf() {
+    if (_currentQuiz == null) return;
+    
+    final content = QuizService.exportToWord(_currentQuiz!, includeAnswers: true);
+    
+    const style = '''
+    <style>
+      body { font-family: Arial, sans-serif; margin: 40px; }
+      h1 { color: #1DB954; }
+      .question { margin-bottom: 30px; }
+      .question-text { font-weight: bold; }
+      .options { margin-left: 20px; }
+      @media print {
+        body { margin: 0; padding: 20px; }
+      }
+    </style>
+    ''';
+    
+    final fullHtml = '''
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>${_currentQuiz!.title}</title>
+      $style
+    </head>
+    <body>
+      <pre style="white-space: pre-wrap; font-family: Arial, sans-serif;">$content</pre>
+      <script>
+        window.onload = function() {
+          window.print();
+        }
+      </script>
+    </body>
+    </html>
+    ''';
+    
+    final blob = html.Blob([fullHtml], 'text/html');
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    html.window.open(url, '_blank');
+    html.Url.revokeObjectUrl(url);
+  }
+  
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -380,16 +487,84 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
       padding: const EdgeInsets.all(20),
       child: Column(
         children: [
-          _buildHeader('Тест из презентации', 'Создайте тест по вашей презентации', Icons.slideshow_rounded),
+          _buildHeader('Тест из презентации', 'Создайте тест из загруженного файла или сохранённой презентации', Icons.slideshow_rounded),
           const SizedBox(height: 24),
           
+          // Загрузка файла с компьютера
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: _buildCardDecoration(),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF2A2A2A)),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('ВЫБЕРИТЕ ПРЕЗЕНТАЦИЮ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+                const Text('ЗАГРУЗИТЬ ФАЙЛ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: _uploadFile,
+                  icon: const Icon(Icons.upload_file_rounded, color: Colors.white),
+                  label: const Text('Выбрать файл', style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF252525),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                ),
+                if (_uploadedFileName != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2A2A2A),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.insert_drive_file_rounded, color: Color(0xFF1DB954), size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(child: Text(_uploadedFileName!, style: const TextStyle(color: Colors.white))),
+                        IconButton(
+                          icon: const Icon(Icons.close_rounded, color: Color(0xFF9A9A9A), size: 18),
+                          onPressed: () => setState(() {
+                            _uploadedFileName = null;
+                            _uploadedFileContent = null;
+                          }),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: _generateQuizFromFile,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1DB954),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: const Center(child: Text('Сгенерировать тест из файла', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // Выбор из сохранённых презентаций
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF2A2A2A)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('ИЛИ ВЫБЕРИТЕ ИЗ СОХРАНЁННЫХ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
                 _loadingPresentations
                     ? const Center(child: CircularProgressIndicator(color: Color(0xFF1DB954)))
@@ -413,7 +588,15 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
                 const SizedBox(height: 20),
                 _buildRemainingInfo(remaining),
                 const SizedBox(height: 20),
-                _buildGenerateButton('Сгенерировать тест', _generateQuizFromPresentation),
+                ElevatedButton(
+                  onPressed: _generateQuizFromSelectedPresentation,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1DB954),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Center(child: Text('Сгенерировать тест из презентации', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
+                ),
               ],
             ),
           ),
@@ -432,7 +615,11 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
           
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: _buildCardDecoration(),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF2A2A2A)),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -499,7 +686,15 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
                 const SizedBox(height: 20),
                 _buildRemainingInfo(remaining),
                 const SizedBox(height: 20),
-                _buildGenerateButton('Сгенерировать тест', _generateQuizFromTopic),
+                ElevatedButton(
+                  onPressed: _generateQuizFromTopic,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF1DB954),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
+                  child: const Center(child: Text('Сгенерировать тест', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
+                ),
               ],
             ),
           ),
@@ -532,14 +727,6 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
     );
   }
   
-  BoxDecoration _buildCardDecoration() {
-    return BoxDecoration(
-      color: const Color(0xFF1E1E1E),
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: const Color(0xFF2A2A2A)),
-    );
-  }
-  
   Widget _buildRemainingInfo(int remaining) {
     return Container(
       padding: const EdgeInsets.all(12),
@@ -563,20 +750,6 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
     );
   }
   
-  Widget _buildGenerateButton(String label, VoidCallback onPressed) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF1DB954),
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      child: Center(
-        child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
-      ),
-    );
-  }
-  
   Widget _buildQuizScreen() {
     final question = _currentQuiz!.questions[_currentQuestionIndex];
     
@@ -586,7 +759,11 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
         children: [
           Container(
             padding: const EdgeInsets.all(16),
-            decoration: _buildCardDecoration(),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF2A2A2A)),
+            ),
             child: Column(
               children: [
                 Row(
@@ -681,7 +858,11 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
           
           Container(
             padding: const EdgeInsets.all(20),
-            decoration: _buildCardDecoration(),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1E1E1E),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: const Color(0xFF2A2A2A)),
+            ),
             child: Column(
               children: [
                 Row(
@@ -768,6 +949,17 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
             children: [
               Expanded(
                 child: OutlinedButton(
+                  onPressed: _exportToPdf,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF2A2A2A)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text('📑 PDF', style: TextStyle(color: Colors.white)),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton(
                   onPressed: () {
                     setState(() {
                       _showQuiz = false;
@@ -785,18 +977,17 @@ class _QuizScreenState extends State<QuizScreen> with SingleTickerProviderStateM
                   child: const Text('Новый тест', style: TextStyle(color: Colors.white)),
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1DB954),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text('На главную', style: TextStyle(color: Colors.white)),
-                ),
-              ),
             ],
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF1DB954),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Center(child: Text('На главную', style: TextStyle(color: Colors.white))),
           ),
         ],
       ),
