@@ -34,6 +34,7 @@ class Template {
   final String color2;
   final int slideCount;
   final IconData icon;
+  final List<Slide> Function() buildSlides;
 
   const Template({
     required this.id,
@@ -46,108 +47,561 @@ class Template {
     required this.color2,
     required this.slideCount,
     required this.icon,
+    required this.buildSlides,
   });
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// DATA (20 реальных шаблонов)
+// ФАБРИКИ СЛАЙДОВ (10 БЕСПЛАТНЫХ)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+List<Slide> _buildEmptySlides() => [
+  Slide(title: 'Новый слайд', content: ['Начните вводить текст здесь']),
+];
+
+List<Slide> _buildBusinessPlanSlides() => [
+  Slide(title: 'Бизнес-план', content: [
+    'Краткое описание проекта',
+    'Целевая аудитория',
+    'Бизнес-модель',
+  ]),
+  Slide(title: 'Финансовый план', content: [
+    'Стартовые инвестиции: 5 млн ₽',
+    'Точка безубыточности: 8 мес',
+    'Прогноз прибыли: 2.5 млн ₽',
+  ]),
+  Slide(title: 'Анализ рынка', content: [
+    'Объём рынка: 150 млн ₽',
+    'Рост рынка: 12% в год',
+    'Основные конкуренты: 3 компании',
+  ]),
+];
+
+List<Slide> _buildSwotSlides() => [
+  Slide(title: 'SWOT-анализ', content: [
+    'Сильные стороны (Strengths)',
+    'Слабые стороны (Weaknesses)',
+    'Возможности (Opportunities)',
+    'Угрозы (Threats)',
+  ]),
+  Slide(title: 'Матрица SWOT', content: [
+    '💪 S: Сильный бренд, экспертиза',
+    '👎 W: Высокая цена, долгий цикл',
+    '🚀 O: Новые рынки, технологии',
+    '⚠️ T: Конкуренция, регуляторы',
+  ]),
+];
+
+List<Slide> _buildSocialInfluenceSlides() => [
+  Slide(title: 'Влияние соцсетей на продуктивность', content: [
+    'Введение: проблема зависимости',
+    'Статистика использования',
+  ]),
+  Slide(title: 'Статистика', content: [
+    '📱 Среднее время: 2.5 часа/день',
+    '🔔 Проверка телефона: 96 раз/день',
+    '⏰ Потеря времени: 1 месяц/год',
+  ]),
+  Slide(title: 'Рекомендации', content: [
+    'Установите лимиты времени',
+    'Отключите уведомления',
+    'Используйте режим "Не беспокоить"',
+  ]),
+];
+
+List<Slide> _buildBorderCollieSlides() => [
+  Slide(title: 'Бордер-колли: ваш активный друг', content: [
+    'Происхождение породы',
+    'Характер и особенности',
+  ]),
+  Slide(title: 'Характер', content: [
+    'Очень умные (самая умная порода)',
+    'Энергичные и активные',
+    'Преданные и дружелюбные',
+  ]),
+  Slide(title: 'Уход и дрессировка', content: [
+    '🐕 Ежедневные прогулки (2+ часа)',
+    '🧠 Интеллектуальные игры',
+    '🏃‍♂️ Спортивные дисциплины',
+  ]),
+];
+
+List<Slide> _buildLessonPlanSlides() => [
+  Slide(title: 'План урока', content: [
+    'Тема урока',
+    'Цели и задачи',
+    'Ход занятия',
+  ]),
+  Slide(title: 'Цели урока', content: [
+    '🎯 Понять основные концепции',
+    '📝 Научиться применять на практике',
+    '💡 Развить критическое мышление',
+  ]),
+  Slide(title: 'Ход занятия', content: [
+    '1. Оргмомент (5 мин)',
+    '2. Актуализация знаний (10 мин)',
+    '3. Изучение нового материала (20 мин)',
+    '4. Закрепление (10 мин)',
+  ]),
+];
+
+List<Slide> _buildProjectStatusSlides() => [
+  Slide(title: 'Статус проекта', content: [
+    'Название: Запуск CRM',
+    'Текущая стадия: 75%',
+    'Дедлайн: 15.12.2024',
+  ]),
+  Slide(title: 'Выполненные задачи', content: [
+    '✓ Анализ требований',
+    '✓ Проектирование архитектуры',
+    '✓ Разработка бэкенда',
+    '◉ Разработка фронтенда',
+    '◉ Тестирование',
+  ]),
+];
+
+List<Slide> _buildPersonalPortfolioSlides() => [
+  Slide(title: 'Портфолио', content: [
+    'Имя: Иван Иванов',
+    'Роль: UI/UX Дизайнер',
+    'Опыт: 7 лет',
+  ]),
+  Slide(title: 'Избранные работы', content: [
+    '📱 Мобильное приложение "Банк Онлайн"',
+    '💻 Сайт для сети ресторанов',
+    '🎨 Брендинг стартапа "EcoLife"',
+  ]),
+];
+
+List<Slide> _buildFourColumnsSlides() => [
+  Slide(title: 'Сравнительный анализ', content: [
+    '=== Продукт А ===',
+    '• 1000+ клиентов',
+    '• 24/7 поддержка',
+    '=== Продукт Б ===',
+    '• 500+ клиентов',
+    '• 12/7 поддержка',
+  ]),
+];
+
+List<Slide> _buildTimelineSlides() => [
+  Slide(title: 'Дорожная карта', content: [
+    'Q1 2024',
+    '• Запуск MVP',
+    '• Первые 100 клиентов',
+    'Q2 2024',
+    '• Выход на рынок СНГ',
+    '• Партнёрства',
+  ]),
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ФАБРИКИ СЛАЙДОВ (20 ПЛАТНЫХ PREMIUM)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+List<Slide> _buildAnnualReportSlides() => [
+  Slide(title: 'Годовой аналитический отчёт', content: [
+    'Ключевые показатели деятельности',
+    'Финансовые результаты',
+    'Достижения и планы',
+  ]),
+  Slide(title: 'Финансовые показатели', content: [
+    '📊 Выручка: ▲ 25%',
+    '💰 Прибыль: ▲ 18%',
+    '📈 ROI: 32%',
+    '💵 Денежный поток: +15%',
+  ]),
+  Slide(title: 'Ключевые метрики', content: [
+    'NPS: 72 (+12 пп)',
+    'Новые клиенты: +3400',
+    'Средняя оценка: 4.8',
+    'Удержание: 85%',
+  ]),
+  Slide(title: 'Планы на следующий год', content: [
+    'Выход на новые рынки',
+    'Запуск мобильного приложения',
+    'Увеличение команды на 40%',
+    'Внедрение AI-решений',
+  ]),
+];
+
+List<Slide> _buildMarketingStrategySlides() => [
+  Slide(title: 'Маркетинговая стратегия 2024', content: [
+    'Цели и KPI',
+    'Каналы продвижения',
+    'Бюджет и сроки',
+  ]),
+  Slide(title: 'Каналы привлечения', content: [
+    '📍 SEO-оптимизация',
+    '📱 Таргетированная реклама',
+    '✉️ Email-маркетинг',
+    '🎯 Контент-маркетинг',
+  ]),
+  Slide(title: 'Бюджет на квартал', content: [
+    'Контекстная реклама: 300k ₽',
+    'SMM: 200k ₽',
+    'Контент: 100k ₽',
+    'Прочее: 50k ₽',
+  ]),
+  Slide(title: 'Прогноз результатов', content: [
+    'Рост трафика: +50%',
+    'Конверсия: 3.2% → 4.1%',
+    'CAC: -15%',
+    'ROAS: 320%',
+  ]),
+];
+
+List<Slide> _buildStartupPitchSlides() => [
+  Slide(title: 'Питч стартапа', content: [
+    'Проблема',
+    'Решение',
+    'Рынок',
+    'Трекшн',
+  ]),
+  Slide(title: 'Проблема', content: [
+    '⚠️ Компании теряют 30% времени на ручной ввод данных',
+    '⚠️ Ошибки при переносе информации между системами',
+    '⚠️ Низкая скорость обработки заказов',
+  ]),
+  Slide(title: 'Наше решение', content: [
+    '🤖 AI-помощник для автоматического переноса данных',
+    '⚡ Скорость: 10 сек вместо 2 часов',
+    '✅ Точность: 99.7%',
+    '💰 Экономия: до 1 млн ₽/год',
+  ]),
+  Slide(title: 'Рынок и конкуренты', content: [
+    'TAM: 50 млрд ₽',
+    'SAM: 10 млрд ₽',
+    'SOM: 1 млрд ₽',
+    'Конкурентов: 2 прямых, 5 косвенных',
+  ]),
+  Slide(title: 'Финансы и трекшн', content: [
+    'Выручка (прошлый год): 12 млн ₽',
+    'Рост: 320% год к году',
+    'Клиентов: 247',
+    'План на год: 50 млн ₽',
+  ]),
+];
+
+List<Slide> _buildKpiDashboardSlides() => [
+  Slide(title: 'KPI Dashboard', content: [
+    'Выручка: ▲ 25%',
+    'Конверсия: 3.2% → 4.1%',
+    'Удержание: 85%',
+  ]),
+  Slide(title: 'Ключевые метрики', content: [
+    '📈 NPS: +12 пп',
+    '👥 LTV: +18%',
+    '💰 CAC: -8%',
+    '🔄 Churn: 5.2%',
+  ]),
+  Slide(title: 'Прогноз до конца года', content: [
+    'Выручка: 120 млн ₽',
+    'Прибыль: 24 млн ₽',
+    'Клиенты: 1500',
+  ]),
+];
+
+List<Slide> _buildRoadmapSlides() => [
+  Slide(title: 'Roadmap 2024-2025', content: [
+    'Этап 1: Исследование',
+    'Этап 2: Прототип',
+    'Этап 3: Пилот',
+    'Этап 4: Масштабирование',
+  ]),
+  Slide(title: 'Этапы и сроки', content: [
+    '🔬 Исследование: Q1 2024',
+    '🎨 Прототип: Q2 2024',
+    '🚀 Пилот: Q3 2024',
+    '🌍 Масштабирование: Q4 2024',
+  ]),
+  Slide(title: 'Ключевые вехи', content: [
+    'Май 2024 — Запуск MVP',
+    'Сентябрь 2024 — 1000 клиентов',
+    'Декабрь 2024 — Выход в прибыль',
+    'Март 2025 — Запуск в Европе',
+  ]),
+];
+
+List<Slide> _buildTeamIntroSlides() => [
+  Slide(title: 'Наша команда', content: [
+    'CEO: Александр Петров',
+    'CTO: Мария Сидорова',
+    'CMO: Дмитрий Иванов',
+    'CPO: Елена Смирнова',
+  ]),
+  Slide(title: 'Опыт команды', content: [
+    '📊 Суммарный опыт: 35 лет',
+    '🏆 Реализовано проектов: 20+',
+    '🌍 География: Россия, Европа, США, Азия',
+    '🎓 Образование: МГУ, ВШЭ, Сколково',
+  ]),
+  Slide(title: 'Достижения', content: [
+    '🏅 Премия "Стартап года"',
+    '💼 Выручка 2023: 50 млн ₽',
+    '👥 Команда: 25 человек',
+    '🚀 Рост: 300% за год',
+  ]),
+];
+
+List<Slide> _buildComparisonSlides() => [
+  Slide(title: 'Сравнение продуктов', content: [
+    '=== Наш продукт ===',
+    '• Цена: 5000 ₽',
+    '• Функции: Все включены',
+    '• Поддержка: 24/7',
+    '• API: Да',
+    '=== Конкурент А ===',
+    '• Цена: 7000 ₽',
+    '• Функции: Ограничены',
+    '• Поддержка: 12/5',
+    '• API: Нет',
+  ]),
+];
+
+List<Slide> _buildMedicalReportSlides() => [
+  Slide(title: 'Медицинский отчёт', content: [
+    'Пациент: Иванов И.И.',
+    'Диагноз: Гипертония',
+    'Период наблюдения: 2023-2024',
+  ]),
+  Slide(title: 'Динамика показателей', content: [
+    '📈 Давление: 140/90 → 125/80',
+    '💓 Пульс: 85 → 72',
+    '⚖️ Вес: 95 кг → 82 кг',
+  ]),
+  Slide(title: 'Рекомендации', content: [
+    'Продолжить приём препаратов',
+    'Диета с низким содержанием соли',
+    'Физическая активность: 30 мин/день',
+  ]),
+];
+
+List<Slide> _buildTechArchitectureSlides() => [
+  Slide(title: 'Архитектура системы', content: [
+    'Frontend: Flutter',
+    'Backend: Node.js',
+    'Database: PostgreSQL',
+    'AI: YandexGPT',
+  ]),
+  Slide(title: 'Схема взаимодействия', content: [
+    'Клиент → API Gateway → Сервисы → БД',
+    'Кэширование: Redis',
+    'Очереди: RabbitMQ',
+    'Мониторинг: Prometheus + Grafana',
+  ]),
+];
+
+List<Slide> _buildEcommerceSlides() => [
+  Slide(title: 'E-commerce стратегия', content: [
+    'Рынок e-commerce: 5 трлн ₽',
+    'Наш сегмент: 10 млрд ₽',
+    'Цель: 5% рынка за 3 года',
+  ]),
+  Slide(title: 'Каналы продаж', content: [
+    '🌐 Собственный интернет-магазин',
+    '📱 Маркетплейсы (Ozon, WB)',
+    '📱 Социальная торговля',
+    '🤝 B2B партнёрства',
+  ]),
+];
+
+List<Slide> _buildRealEstateSlides() => [
+  Slide(title: 'Анализ рынка недвижимости', content: [
+    'Средняя цена: 150k ₽/м²',
+    'Спрос: ▲ 15%',
+    'Предложение: ▼ 8%',
+  ]),
+  Slide(title: 'Прогноз на 2024', content: [
+    'Рост цен: 10-15%',
+    'Спрос: стабилизация',
+    'Ипотека: 12% годовых',
+  ]),
+];
+
+List<Slide> _buildEducationSlides() => [
+  Slide(title: 'Образовательная программа', content: [
+    'Курс: "Цифровой маркетинг"',
+    'Длительность: 3 месяца',
+    'Формат: онлайн',
+  ]),
+  Slide(title: 'Программа курса', content: [
+    'Модуль 1: Введение в маркетинг',
+    'Модуль 2: SEO и контекст',
+    'Модуль 3: SMM и таргет',
+    'Модуль 4: Аналитика и отчёты',
+  ]),
+];
+
+List<Slide> _buildFashionSlides() => [
+  Slide(title: 'Fashion-бренд: запуск коллекции', content: [
+    'Сезон: Осень-Зима 2024',
+    'Концепция: Urban Minimalism',
+    'Капсула: 12 луков',
+  ]),
+  Slide(title: 'План продвижения', content: [
+    '👗 Показ мод: сентябрь',
+    '📸 Инфлюенсеры: 10 человек',
+    '🎯 Таргет: 18-35 лет',
+    '💰 Бюджет: 2 млн ₽',
+  ]),
+];
+
+List<Slide> _buildItSecuritySlides() => [
+  Slide(title: 'IT-безопасность компании', content: [
+    'Угрозы и риски',
+    'Меры защиты',
+    'План реагирования',
+  ]),
+  Slide(title: 'Ключевые угрозы', content: [
+    '🔓 Фишинг: 60% инцидентов',
+    '💻 Вредоносное ПО: 25%',
+    '👤 Инсайдеры: 10%',
+    '🌐 DDoS: 5%',
+  ]),
+  Slide(title: 'Меры защиты', content: [
+    '✅ 2FA для всех сотрудников',
+    '✅ Регулярные аудиты',
+    '✅ Обучение персонала',
+    '✅ Резервное копирование',
+  ]),
+];
+
+List<Slide> _buildHrStrategySlides() => [
+  Slide(title: 'HR-стратегия 2024', content: [
+    'Найм: 50 сотрудников',
+    'Обучение: 2 млн ₽',
+    'Удержание: 85%',
+  ]),
+  Slide(title: 'План найма', content: [
+    '👨‍💻 Разработчики: 20',
+    '📊 Маркетологи: 10',
+    '🤝 Менеджеры: 15',
+    '📈 Аналитики: 5',
+  ]),
+];
+
+List<Slide> _buildEsgReportSlides() => [
+  Slide(title: 'ESG отчёт 2024', content: [
+    'Environmental',
+    'Social',
+    'Governance',
+  ]),
+  Slide(title: 'Экологические показатели', content: [
+    '🌱 Углеродный след: -25%',
+    '♻️ Переработка: 80%',
+    '💡 Энергоэффективность: +30%',
+  ]),
+  Slide(title: 'Социальная ответственность', content: [
+    '👥 Обучение сотрудников: 100%',
+    '🏥 ДМС: все сотрудники',
+    '🤝 Благотворительность: 1 млн ₽',
+  ]),
+];
+
+List<Slide> _buildProductLaunchSlides() => [
+  Slide(title: 'Запуск продукта', content: [
+    'Дата: 15 октября 2024',
+    'Бюджет: 5 млн ₽',
+    'Цель: 1000 продаж',
+  ]),
+  Slide(title: 'План запуска', content: [
+    'T-30: Предзаказы',
+    'T-14: Тизеры',
+    'T-7: Анонс',
+    'T+0: Релиз',
+    'T+14: Аналитика',
+  ]),
+  Slide(title: 'Каналы продвижения', content: [
+    '📺 YouTube обзоры',
+    '📱 TikTok виралки',
+    '✉️ Email рассылка',
+    '🤝 Партнёрства',
+  ]),
+];
+
+List<Slide> _buildInternationalExpansionSlides() => [
+  Slide(title: 'Выход на международный рынок', content: [
+    'Страны: Казахстан, Беларусь',
+    'Старт: Q2 2024',
+    'Бюджет: 10 млн ₽',
+  ]),
+  Slide(title: 'Анализ рынков', content: [
+    '🇰🇿 Казахстан: 10 млн ₽',
+    '🇧🇾 Беларусь: 5 млн ₽',
+    '🇺🇿 Узбекистан: 3 млн ₽',
+  ]),
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ДАННЫЕ (10 БЕСПЛАТНЫХ + 20 ПЛАТНЫХ = 30 ШАБЛОНОВ)
 // ═══════════════════════════════════════════════════════════════════════════════
 final List<Template> _allTemplates = [
+  // БЕСПЛАТНЫЕ (10)
   const Template(
     id: 'empty',
     title: 'Пустой',
     description: 'Начните с чистого листа',
     category: TemplateCategory.all,
-    isPopular: false,
+    isPopular: true,
     isPremium: false,
     color1: '#1A1A1A',
     color2: '#2A2A2A',
     slideCount: 1,
     icon: Icons.crop_original_rounded,
-  ),
-  const Template(
-    id: 'annual_report',
-    title: 'Годовой аналитический отчет',
-    description: 'Полный анализ деятельности за год',
-    category: TemplateCategory.reports,
-    isPopular: true,
-    isPremium: true,
-    color1: '#11998e',
-    color2: '#38ef7d',
-    slideCount: 15,
-    icon: Icons.analytics_rounded,
+    buildSlides: _buildEmptySlides,
   ),
   const Template(
     id: 'business_plan',
     title: 'Бизнес-план',
-    description: 'Структура и финансовые показатели',
+    description: 'Структура бизнес-плана',
     category: TemplateCategory.business,
-    isPopular: false,
+    isPopular: true,
     isPremium: false,
     color1: '#1DB954',
     color2: '#1ED760',
-    slideCount: 12,
+    slideCount: 3,
     icon: Icons.business_center_rounded,
+    buildSlides: _buildBusinessPlanSlides,
   ),
   const Template(
-    id: 'marketing_strategy',
-    title: 'Маркетинговая стратегия',
-    description: 'План продвижения на 2024 год',
-    category: TemplateCategory.marketing,
-    isPopular: false,
-    isPremium: true,
-    color1: '#fa709a',
-    color2: '#fee140',
-    slideCount: 10,
-    icon: Icons.trending_up_rounded,
-  ),
-  const Template(
-    id: 'social_influence',
-    title: 'Влияние соцсетей на продуктивность',
-    description: 'Анализ влияния социальных сетей',
+    id: 'swot_analysis',
+    title: 'SWOT-анализ',
+    description: 'Анализ сильных и слабых сторон',
     category: TemplateCategory.business,
     isPopular: true,
     isPremium: false,
     color1: '#667eea',
     color2: '#764ba2',
-    slideCount: 8,
-    icon: Icons.people_rounded,
+    slideCount: 2,
+    icon: Icons.analytics_rounded,
+    buildSlides: _buildSwotSlides,
   ),
   const Template(
-    id: 'video_report',
-    title: 'Видео-репортаж про продукт',
-    description: 'Презентация продукта в формате видео-отчета',
-    category: TemplateCategory.marketing,
-    isPopular: true,
+    id: 'social_influence',
+    title: 'Влияние соцсетей',
+    description: 'Анализ влияния соцсетей на продуктивность',
+    category: TemplateCategory.reports,
+    isPopular: false,
     isPremium: false,
     color1: '#f093fb',
     color2: '#f5576c',
-    slideCount: 6,
-    icon: Icons.videocam_rounded,
+    slideCount: 3,
+    icon: Icons.people_rounded,
+    buildSlides: _buildSocialInfluenceSlides,
   ),
   const Template(
     id: 'border_collie',
-    title: 'Бордер-колли: ваш активный друг',
-    description: 'Происхождение, характер, дрессировка и уход',
-    category: TemplateCategory.personal,
-    isPopular: true,
-    isPremium: false,
-    color1: '#4facfe',
-    color2: '#00f2fe',
-    slideCount: 10,
-    icon: Icons.pets_rounded,
-  ),
-  const Template(
-    id: 'alexander_volkov',
-    title: 'Александр Волков',
-    description: 'Архитектор цифровых стратегий',
+    title: 'Бордер-колли',
+    description: 'Описание породы собак',
     category: TemplateCategory.personal,
     isPopular: false,
     isPremium: false,
-    color1: '#434343',
-    color2: '#000000',
-    slideCount: 5,
-    icon: Icons.person_rounded,
+    color1: '#4facfe',
+    color2: '#00f2fe',
+    slideCount: 3,
+    icon: Icons.pets_rounded,
+    buildSlides: _buildBorderCollieSlides,
   ),
   const Template(
     id: 'lesson_plan',
@@ -158,8 +612,9 @@ final List<Template> _allTemplates = [
     isPremium: false,
     color1: '#8E2DE2',
     color2: '#4A00E0',
-    slideCount: 8,
+    slideCount: 3,
     icon: Icons.school_rounded,
+    buildSlides: _buildLessonPlanSlides,
   ),
   const Template(
     id: 'project_status',
@@ -170,56 +625,35 @@ final List<Template> _allTemplates = [
     isPremium: false,
     color1: '#FF416C',
     color2: '#FF4B2B',
-    slideCount: 6,
+    slideCount: 2,
     icon: Icons.task_alt_rounded,
+    buildSlides: _buildProjectStatusSlides,
   ),
   const Template(
-    id: 'startup_pitch',
-    title: 'Питч стартапа',
-    description: 'Презентация для инвесторов',
-    category: TemplateCategory.business,
-    isPopular: true,
-    isPremium: true,
-    color1: '#FFE000',
-    color2: '#799F0C',
-    slideCount: 8,
-    icon: Icons.rocket_launch_rounded,
-  ),
-  const Template(
-    id: 'portfolio',
+    id: 'personal_portfolio',
     title: 'Портфолио',
     description: 'Ваши лучшие работы',
     category: TemplateCategory.personal,
     isPopular: false,
-    isPremium: true,
+    isPremium: false,
     color1: '#00b4db',
     color2: '#0083B0',
-    slideCount: 10,
+    slideCount: 2,
     icon: Icons.photo_library_rounded,
+    buildSlides: _buildPersonalPortfolioSlides,
   ),
   const Template(
     id: 'four_columns',
     title: 'Четыре колонки',
-    description: 'Сравнение 4-х показателей',
+    description: 'Сравнение показателей',
     category: TemplateCategory.business,
     isPopular: false,
-    isPremium: true,
-    color1: '#1DB954',
-    color2: '#1ED760',
-    slideCount: 3,
+    isPremium: false,
+    color1: '#434343',
+    color2: '#000000',
+    slideCount: 1,
     icon: Icons.view_quilt_rounded,
-  ),
-  const Template(
-    id: 'swot_analysis',
-    title: 'SWOT-анализ',
-    description: 'Сильные и слабые стороны',
-    category: TemplateCategory.business,
-    isPopular: true,
-    isPremium: true,
-    color1: '#667eea',
-    color2: '#764ba2',
-    slideCount: 4,
-    icon: Icons.analytics_rounded,
+    buildSlides: _buildFourColumnsSlides,
   ),
   const Template(
     id: 'timeline',
@@ -227,71 +661,248 @@ final List<Template> _allTemplates = [
     description: 'Визуализация событий во времени',
     category: TemplateCategory.business,
     isPopular: false,
-    isPremium: true,
-    color1: '#f093fb',
-    color2: '#f5576c',
-    slideCount: 5,
+    isPremium: false,
+    color1: '#11998e',
+    color2: '#38ef7d',
+    slideCount: 1,
     icon: Icons.timeline_rounded,
+    buildSlides: _buildTimelineSlides,
+  ),
+
+  // ПЛАТНЫЕ PREMIUM (20)
+  const Template(
+    id: 'annual_report',
+    title: 'Годовой отчёт',
+    description: 'Полный анализ деятельности за год (Premium)',
+    category: TemplateCategory.reports,
+    isPopular: true,
+    isPremium: true,
+    color1: '#11998e',
+    color2: '#38ef7d',
+    slideCount: 4,
+    icon: Icons.analytics_rounded,
+    buildSlides: _buildAnnualReportSlides,
   ),
   const Template(
-    id: 'team_intro',
-    title: 'Команда',
-    description: 'Представление сотрудников',
+    id: 'marketing_strategy',
+    title: 'Маркетинговая стратегия',
+    description: 'План продвижения с аналитикой (Premium)',
+    category: TemplateCategory.marketing,
+    isPopular: true,
+    isPremium: true,
+    color1: '#fa709a',
+    color2: '#fee140',
+    slideCount: 4,
+    icon: Icons.trending_up_rounded,
+    buildSlides: _buildMarketingStrategySlides,
+  ),
+  const Template(
+    id: 'startup_pitch',
+    title: 'Питч стартапа',
+    description: 'Презентация для инвесторов (Premium)',
     category: TemplateCategory.business,
     isPopular: true,
     isPremium: true,
-    color1: '#4facfe',
-    color2: '#00f2fe',
-    slideCount: 6,
-    icon: Icons.group_rounded,
+    color1: '#FFE000',
+    color2: '#799F0C',
+    slideCount: 5,
+    icon: Icons.rocket_launch_rounded,
+    buildSlides: _buildStartupPitchSlides,
   ),
   const Template(
     id: 'kpi_dashboard',
     title: 'KPI Dashboard',
-    description: 'Отчёт с метриками',
+    description: 'Отчёт с метриками (Premium)',
     category: TemplateCategory.reports,
     isPopular: true,
     isPremium: true,
     color1: '#FF416C',
     color2: '#FF4B2B',
-    slideCount: 7,
+    slideCount: 3,
     icon: Icons.dashboard_rounded,
+    buildSlides: _buildKpiDashboardSlides,
   ),
   const Template(
     id: 'roadmap',
     title: 'Дорожная карта',
-    description: 'План развития продукта',
+    description: 'План развития продукта (Premium)',
     category: TemplateCategory.business,
     isPopular: false,
     isPremium: true,
     color1: '#11998e',
     color2: '#38ef7d',
-    slideCount: 6,
+    slideCount: 3,
     icon: Icons.map_rounded,
+    buildSlides: _buildRoadmapSlides,
   ),
   const Template(
-    id: 'contacts',
-    title: 'Контакты',
-    description: 'Карта и контактная информация',
+    id: 'team_intro',
+    title: 'Команда',
+    description: 'Представление сотрудников (Premium)',
     category: TemplateCategory.business,
-    isPopular: false,
+    isPopular: true,
     isPremium: true,
-    color1: '#8E2DE2',
-    color2: '#4A00E0',
-    slideCount: 4,
-    icon: Icons.contact_phone_rounded,
+    color1: '#4facfe',
+    color2: '#00f2fe',
+    slideCount: 3,
+    icon: Icons.group_rounded,
+    buildSlides: _buildTeamIntroSlides,
   ),
   const Template(
     id: 'comparison',
     title: 'Сравнение продуктов',
-    description: 'Сравнение характеристик',
+    description: 'Детальное сравнение характеристик (Premium)',
     category: TemplateCategory.marketing,
     isPopular: false,
     isPremium: true,
     color1: '#434343',
     color2: '#000000',
-    slideCount: 5,
+    slideCount: 1,
     icon: Icons.compare_arrows_rounded,
+    buildSlides: _buildComparisonSlides,
+  ),
+  const Template(
+    id: 'medical_report',
+    title: 'Медицинский отчёт',
+    description: 'Анализ состояния пациента (Premium)',
+    category: TemplateCategory.reports,
+    isPopular: false,
+    isPremium: true,
+    color1: '#e43a15',
+    color2: '#e65245',
+    slideCount: 3,
+    icon: Icons.medical_services_rounded,
+    buildSlides: _buildMedicalReportSlides,
+  ),
+  const Template(
+    id: 'tech_architecture',
+    title: 'Архитектура системы',
+    description: 'Схема IT-архитектуры (Premium)',
+    category: TemplateCategory.business,
+    isPopular: false,
+    isPremium: true,
+    color1: '#2193b0',
+    color2: '#6dd5ed',
+    slideCount: 2,
+    icon: Icons.architecture_rounded,
+    buildSlides: _buildTechArchitectureSlides,
+  ),
+  const Template(
+    id: 'ecommerce',
+    title: 'E-commerce стратегия',
+    description: 'План развития онлайн-продаж (Premium)',
+    category: TemplateCategory.marketing,
+    isPopular: false,
+    isPremium: true,
+    color1: '#56ab2f',
+    color2: '#a8e063',
+    slideCount: 2,
+    icon: Icons.shopping_cart_rounded,
+    buildSlides: _buildEcommerceSlides,
+  ),
+  const Template(
+    id: 'real_estate',
+    title: 'Недвижимость',
+    description: 'Анализ рынка недвижимости (Premium)',
+    category: TemplateCategory.business,
+    isPopular: false,
+    isPremium: true,
+    color1: '#8E2DE2',
+    color2: '#4A00E0',
+    slideCount: 2,
+    icon: Icons.home_work_rounded,
+    buildSlides: _buildRealEstateSlides,
+  ),
+  const Template(
+    id: 'education_course',
+    title: 'Образовательный курс',
+    description: 'Программа обучения (Premium)',
+    category: TemplateCategory.education,
+    isPopular: false,
+    isPremium: true,
+    color1: '#1CB5E0',
+    color2: '#000046',
+    slideCount: 2,
+    icon: Icons.menu_book_rounded,
+    buildSlides: _buildEducationSlides,
+  ),
+  const Template(
+    id: 'fashion_brand',
+    title: 'Fashion бренд',
+    description: 'Запуск коллекции одежды (Premium)',
+    category: TemplateCategory.marketing,
+    isPopular: false,
+    isPremium: true,
+    color1: '#ff0844',
+    color2: '#ffb199',
+    slideCount: 2,
+    icon: Icons.style_rounded,
+    buildSlides: _buildFashionSlides,
+  ),
+  const Template(
+    id: 'it_security',
+    title: 'IT-безопасность',
+    description: 'Защита информации в компании (Premium)',
+    category: TemplateCategory.business,
+    isPopular: false,
+    isPremium: true,
+    color1: '#00b09b',
+    color2: '#96c93d',
+    slideCount: 3,
+    icon: Icons.security_rounded,
+    buildSlides: _buildItSecuritySlides,
+  ),
+  const Template(
+    id: 'hr_strategy',
+    title: 'HR-стратегия',
+    description: 'План по подбору и развитию персонала (Premium)',
+    category: TemplateCategory.business,
+    isPopular: false,
+    isPremium: true,
+    color1: '#ff6e7f',
+    color2: '#bfe9ff',
+    slideCount: 2,
+    icon: Icons.people_outline_rounded,
+    buildSlides: _buildHrStrategySlides,
+  ),
+  const Template(
+    id: 'esg_report',
+    title: 'ESG отчёт',
+    description: 'Экологическая и социальная ответственность (Premium)',
+    category: TemplateCategory.reports,
+    isPopular: false,
+    isPremium: true,
+    color1: '#11998e',
+    color2: '#38ef7d',
+    slideCount: 3,
+    icon: Icons.eco_rounded,
+    buildSlides: _buildEsgReportSlides,
+  ),
+  const Template(
+    id: 'product_launch',
+    title: 'Запуск продукта',
+    description: 'План вывода продукта на рынок (Premium)',
+    category: TemplateCategory.marketing,
+    isPopular: false,
+    isPremium: true,
+    color1: '#f12711',
+    color2: '#f5af19',
+    slideCount: 3,
+    icon: Icons.rocket_launch_rounded,
+    buildSlides: _buildProductLaunchSlides,
+  ),
+  const Template(
+    id: 'international_expansion',
+    title: 'Международная экспансия',
+    description: 'Выход на зарубежные рынки (Premium)',
+    category: TemplateCategory.business,
+    isPopular: false,
+    isPremium: true,
+    color1: '#141e30',
+    color2: '#243b55',
+    slideCount: 2,
+    icon: Icons.public_rounded,
+    buildSlides: _buildInternationalExpansionSlides,
   ),
 ];
 
@@ -408,24 +1019,58 @@ class _TemplateLibraryScreenState extends ConsumerState<TemplateLibraryScreen> {
   }
 
   void _useTemplate(Template template) {
-    // Создаём презентацию из шаблона
+    // Проверка Premium
+    final isPremium = false; // TODO: взять из UserProvider
+    if (template.isPremium && !isPremium) {
+      _showPremiumDialog();
+      return;
+    }
+    
+    // Создаём презентацию из шаблона с реальными слайдами
     final presentation = Presentation(
       id: DateTime.now().toString(),
       title: template.title,
-      slides: [
-        Slide(
-          title: template.title,
-          content: [template.description],
-        ),
-      ],
+      slides: template.buildSlides(),
       createdAt: DateTime.now(),
     );
     
-    // Открываем редактор ПОЛНОЭКРАННО (не снизу)
+    // Открываем редактор
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => EditorScreen(presentation: presentation),
+      ),
+    );
+  }
+  
+  void _showPremiumDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: _T.bgCard,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Premium шаблон', style: TextStyle(color: _T.txtPrimary)),
+        content: const Text(
+          'Этот шаблон доступен только для Premium пользователей.',
+          style: TextStyle(color: _T.txtSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Отмена', style: TextStyle(color: _T.txtSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: Переход на экран оплаты
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _T.accent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Купить Premium'),
+          ),
+        ],
       ),
     );
   }
@@ -637,6 +1282,22 @@ class _TemplateCardState extends State<_TemplateCard> {
                         child: Icon(t.icon, color: Colors.white, size: 26),
                       ),
                       const Spacer(),
+                      // Premium бейдж
+                      if (t.isPremium)
+                        Align(
+                          alignment: Alignment.topRight,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: _T.gold.withOpacity(0.9),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'PRO',
+                              style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w800),
+                            ),
+                          ),
+                        ),
                       // Заголовок
                       Text(
                         t.title,
@@ -674,7 +1335,7 @@ class _TemplateCardState extends State<_TemplateCard> {
                               style: const TextStyle(color: Colors.white, fontSize: 10),
                             ),
                           ),
-                          if (t.isPopular) ...[
+                          if (t.isPopular && !t.isPremium) ...[
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -685,20 +1346,6 @@ class _TemplateCardState extends State<_TemplateCard> {
                               child: const Text(
                                 'Популярное',
                                 style: TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.w600),
-                              ),
-                            ),
-                          ],
-                          if (t.isPremium) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: _T.accent.withOpacity(0.9),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                'PRO',
-                                style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w800),
                               ),
                             ),
                           ],
