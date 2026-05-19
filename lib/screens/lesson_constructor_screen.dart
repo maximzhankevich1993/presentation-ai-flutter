@@ -111,38 +111,22 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Лимит исчерпан',
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
-        ),
+        title: const Text('Лимит исчерпан', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
         content: const Text(
-          'Вы использовали все 5 бесплатных генераций.\n\n'
-          'Выберите тариф, чтобы продолжить создавать планы уроков без ограничений.',
+          'Вы использовали все 5 бесплатных генераций.\n\nВыберите тариф "Учитель", чтобы продолжить.',
           style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
         ),
         actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pop(context);
-            },
-            child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A))),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A)))),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.pop(context);
-              Navigator.push(
+              Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const TeacherScreen(countryCode: 'US'),
-                ),
+                MaterialPageRoute(builder: (_) => const TeacherScreen(countryCode: 'RU')),
               );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF1DB954),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
             child: const Text('Выбрать тариф'),
           ),
         ],
@@ -224,8 +208,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
         content: Text(message),
         backgroundColor: const Color(0xFFFF3B30),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
       ),
     );
   }
@@ -233,6 +215,8 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
   @override
   Widget build(BuildContext context) {
     final isLoggedIn = context.watch<UserProvider>().isLoggedIn;
+    final isPremium = context.watch<UserProvider>().isPremium;
+    final remaining = isPremium || isLoggedIn ? 999 : 5 - (_usedGenerations ?? 0);
     
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
@@ -250,111 +234,65 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
         centerTitle: true,
       ),
       body: _isGenerating
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(width: 40, height: 40, child: CircularProgressIndicator(color: Color(0xFF1DB954), strokeWidth: 2.5)),
-                  SizedBox(height: 16),
-                  Text('Создаём план урока...', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14)),
-                ],
-              ),
-            )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: const Icon(Icons.school_rounded, color: Colors.white, size: 28),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'Конструктор уроков',
-                          style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Создайте план урока по международным стандартам',
-                          style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  _buildTextField(
-                    controller: _topicController,
-                    hint: 'Тема урока',
-                    icon: Icons.topic_rounded,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildTextField(
-                    controller: _subjectController,
-                    hint: 'Предмет',
-                    icon: Icons.subject_rounded,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildTextField(
-                    controller: _gradeController,
-                    hint: 'Класс',
-                    icon: Icons.numbers_rounded,
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  Row(
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF1DB954)))
+          : Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 700),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(child: _buildStandardDropdown()),
-                      const SizedBox(width: 12),
-                      Expanded(child: _buildDurationSlider()),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  _buildSwitch(
-                    value: _includeAssessments,
-                    onChanged: (v) => setState(() => _includeAssessments = v),
-                    title: 'Включить систему оценивания',
-                    icon: Icons.assessment_rounded,
-                  ),
-                  const SizedBox(height: 8),
-                  _buildSwitch(
-                    value: _includeDifferentiation,
-                    onChanged: (v) => setState(() => _includeDifferentiation = v),
-                    title: 'Включить дифференциацию',
-                    icon: Icons.graphic_eq_rounded,
-                  ),
-                  const SizedBox(height: 8),
-                  _buildSwitch(
-                    value: _includeHomework,
-                    onChanged: (v) => setState(() => _includeHomework = v),
-                    title: 'Включить домашнее задание',
-                    icon: Icons.home_rounded,
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  if (!isLoggedIn) ...[
-                    FutureBuilder<int>(
-                      future: GenerationCounter.getRemainingPresentationsForGuest(),
-                      builder: (context, snapshot) {
-                        final remaining = snapshot.data ?? 5;
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(32),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
+                          borderRadius: BorderRadius.circular(24),
+                        ),
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 64, height: 64,
+                              decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
+                              child: const Icon(Icons.school_rounded, color: Colors.white, size: 32),
+                            ),
+                            const SizedBox(height: 16),
+                            const Text('Конструктор уроков', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
+                            const SizedBox(height: 8),
+                            Text('Создайте план урока по международным стандартам', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      _buildTextField(controller: _topicController, hint: 'Тема урока', icon: Icons.topic_rounded),
+                      const SizedBox(height: 12),
+                      _buildTextField(controller: _subjectController, hint: 'Предмет', icon: Icons.subject_rounded),
+                      const SizedBox(height: 12),
+                      _buildTextField(controller: _gradeController, hint: 'Класс', icon: Icons.numbers_rounded),
+                      const SizedBox(height: 16),
+                      
+                      Row(
+                        children: [
+                          Expanded(child: _buildStandardDropdown()),
+                          const SizedBox(width: 12),
+                          Expanded(child: _buildDurationSlider()),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      _buildSwitch(value: _includeAssessments, onChanged: (v) => setState(() => _includeAssessments = v), title: 'Включить систему оценивания', icon: Icons.assessment_rounded),
+                      const SizedBox(height: 8),
+                      _buildSwitch(value: _includeDifferentiation, onChanged: (v) => setState(() => _includeDifferentiation = v), title: 'Включить дифференциацию', icon: Icons.graphic_eq_rounded),
+                      const SizedBox(height: 8),
+                      _buildSwitch(value: _includeHomework, onChanged: (v) => setState(() => _includeHomework = v), title: 'Включить домашнее задание', icon: Icons.home_rounded),
+                      const SizedBox(height: 24),
+                      
+                      if (!isLoggedIn && !isPremium && remaining < 5)
+                        Container(
+                          padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
                             color: const Color(0xFF1DB954).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
@@ -367,54 +305,35 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                               Expanded(
                                 child: Text(
                                   'Осталось $remaining из 5 бесплатных генераций',
-                                  style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13, fontWeight: FontWeight.w500),
+                                  style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13),
                                 ),
                               ),
                             ],
                           ),
-                        );
-                      },
-                    ),
-                  ],
-                  
-                  MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: GestureDetector(
-                      onTap: _generateLesson,
-                      child: Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
-                          borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.auto_awesome, color: Colors.white, size: 20),
-                            SizedBox(width: 10),
-                            Text(
-                              'Создать план урока',
-                              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
-                            ),
-                          ],
+                      const SizedBox(height: 16),
+                      
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _generateLesson,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1DB954),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          ),
+                          child: const Text('Создать план урока', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
                         ),
                       ),
-                    ),
+                    ],
                   ),
-                  
-                  const SizedBox(height: 32),
-                ],
+                ),
               ),
             ),
     );
   }
   
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String hint,
-    required IconData icon,
-  }) {
+  Widget _buildTextField({required TextEditingController controller, required String hint, required IconData icon}) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF1E1E1E),
@@ -473,10 +392,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Длительность: $_durationMinutes мин',
-          style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13),
-        ),
+        Text('Длительность: $_durationMinutes мин', style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13)),
         Slider(
           value: _durationMinutes.toDouble(),
           min: 20,
@@ -490,12 +406,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
     );
   }
   
-  Widget _buildSwitch({
-    required bool value,
-    required ValueChanged<bool> onChanged,
-    required String title,
-    required IconData icon,
-  }) {
+  Widget _buildSwitch({required bool value, required ValueChanged<bool> onChanged, required String title, required IconData icon}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -508,14 +419,14 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
           Icon(icon, color: const Color(0xFF1DB954), size: 20),
           const SizedBox(width: 12),
           Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 14))),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeColor: const Color(0xFF1DB954),
-            inactiveTrackColor: const Color(0xFF2A2A2A),
-          ),
+          Switch(value: value, onChanged: onChanged, activeColor: const Color(0xFF1DB954), inactiveTrackColor: const Color(0xFF2A2A2A)),
         ],
       ),
     );
+  }
+  
+  int get _usedGenerations {
+    // TODO: получить из GenerationCounter
+    return 0;
   }
 }
