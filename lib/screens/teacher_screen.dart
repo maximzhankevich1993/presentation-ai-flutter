@@ -24,6 +24,11 @@ class _TeacherScreenState extends State<TeacherScreen> {
   String _currency = 'USD';
   String _currencySymbol = '\$';
   double _rate = 1.0;
+  
+  // Цены в USD для учителей (доступные!)
+  final double _teacherPriceUSD = 1.99;    // ≈ 199 ₽
+  final double _schoolPriceUSD = 4.99;     // ≈ 499 ₽
+  final double _universityPriceUSD = 9.99; // ≈ 999 ₽
 
   @override
   void initState() {
@@ -34,7 +39,7 @@ class _TeacherScreenState extends State<TeacherScreen> {
   Future<void> _detectCurrency() async {
     try {
       final response = await http
-          .get(Uri.parse('https://ipapi.co/json/'))
+          .get(Uri.parse('https://ipwho.is/'))
           .timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as Map<String, dynamic>;
@@ -211,9 +216,9 @@ class _TeacherScreenState extends State<TeacherScreen> {
   
   String _getPlanName(String planId) {
     switch (planId) {
-      case 'monthly': return 'Месячная подписка';
-      case 'semiannual': return 'Полугодовая подписка';
-      case 'annual': return 'Годовая подписка';
+      case 'teacher': return 'Учитель';
+      case 'school': return 'Школа';
+      case 'university': return 'Университет';
       default: return 'Premium подписка';
     }
   }
@@ -283,46 +288,62 @@ class _TeacherScreenState extends State<TeacherScreen> {
                       const SizedBox(height: 24),
                       const Text('ВЫБЕРИТЕ ПЛАН', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 12),
+                      
+                      // Тариф "Учитель" (доступный!)
                       _buildTariffCard(
-                        title: 'Бесплатный',
-                        usd: 0,
-                        period: '',
-                        description: 'Для тестирования',
-                        features: const ['5 генераций', 'Конструктор уроков', 'Базовые шаблоны'],
-                        isPopular: true,
-                        onTap: _openConstructor,
-                      ),
-                      const SizedBox(height: 14),
-                      _buildTariffCard(
-                        title: 'Premium месяц',
-                        usd: 9.99,
+                        title: 'Учитель',
+                        usd: _teacherPriceUSD,
                         period: '/мес',
-                        description: 'Безлимитный доступ',
-                        features: const ['∞ генераций', 'Конструктор уроков PRO', 'Все шаблоны', 'Экспорт PDF'],
-                        isPopular: false,
-                        onTap: () => _showPaymentDialog('monthly', 9.99, '/мес'),
+                        description: 'Для индивидуального использования',
+                        features: const [
+                          '∞ генераций',
+                          '30 слайдов',
+                          'Все шаблоны',
+                          'Экспорт PDF',
+                          'Конструктор уроков',
+                        ],
+                        isPopular: true,
+                        onTap: () => _showPaymentDialog('teacher', _teacherPriceUSD, '/мес'),
                       ),
                       const SizedBox(height: 14),
+                      
+                      // Тариф "Школа"
                       _buildTariffCard(
-                        title: 'Premium полгода',
-                        usd: 49.99,
-                        period: '/6 мес',
-                        description: 'Экономия 20%',
-                        features: const ['∞ генераций', 'Конструктор уроков PRO', 'Все шаблоны', 'Экспорт PDF', 'Приоритетная поддержка'],
+                        title: 'Школа',
+                        usd: _schoolPriceUSD,
+                        period: '/мес',
+                        description: 'Для школ и классов',
+                        features: const [
+                          'До 30 учителей',
+                          '∞ генераций',
+                          'Конструктор уроков PRO',
+                          'Бренд-кит',
+                          'Приоритетная поддержка',
+                        ],
                         isPopular: false,
-                        onTap: () => _showPaymentDialog('semiannual', 49.99, '/6 мес'),
+                        onTap: () => _showPaymentDialog('school', _schoolPriceUSD, '/мес'),
                       ),
                       const SizedBox(height: 14),
+                      
+                      // Тариф "Университет"
                       _buildTariffCard(
-                        title: 'Premium год',
-                        usd: 89.99,
-                        period: '/год',
-                        description: 'Экономия 40%',
-                        features: const ['∞ генераций', 'Конструктор уроков PRO', 'Все шаблоны', 'Экспорт PDF', 'Приоритетная поддержка', 'VIP статус'],
+                        title: 'Университет',
+                        usd: _universityPriceUSD,
+                        period: '/мес',
+                        description: 'Для вузов и колледжей',
+                        features: const [
+                          'Неограниченно преподавателей',
+                          '∞ генераций',
+                          'Конструктор уроков PRO',
+                          'VIP поддержка 24/7',
+                          'Индивидуальные настройки',
+                        ],
                         isPopular: false,
-                        onTap: () => _showPaymentDialog('annual', 89.99, '/год'),
+                        onTap: () => _showPaymentDialog('university', _universityPriceUSD, '/мес'),
                       ),
+                      
                       const SizedBox(height: 32),
+                      
                       MouseRegion(
                         cursor: SystemMouseCursors.click,
                         child: GestureDetector(
@@ -343,6 +364,7 @@ class _TeacherScreenState extends State<TeacherScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
+                      
                       MouseRegion(
                         cursor: SystemMouseCursors.click,
                         child: GestureDetector(
@@ -402,7 +424,7 @@ class _TeacherScreenState extends State<TeacherScreen> {
                   Container(
                     width: 44, height: 44,
                     decoration: BoxDecoration(color: isPopular ? const Color(0xFF1DB954) : const Color(0xFF2A2A2A), borderRadius: BorderRadius.circular(12)),
-                    child: Icon(title.contains('Premium') ? Icons.stars_rounded : Icons.person_outline_rounded, color: isPopular ? Colors.white : const Color(0xFF1DB954), size: 22),
+                    child: Icon(title == 'Учитель' ? Icons.person_outline_rounded : Icons.school_rounded, color: isPopular ? Colors.white : const Color(0xFF1DB954), size: 22),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -414,7 +436,12 @@ class _TeacherScreenState extends State<TeacherScreen> {
                       ],
                     ),
                   ),
-                  if (isPopular) Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(12)), child: const Text('Популярный', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700))),
+                  if (isPopular)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(12)),
+                      child: const Text('Популярный', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+                    ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -426,7 +453,12 @@ class _TeacherScreenState extends State<TeacherScreen> {
                     Text(period, style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13)),
                   ],
                   const Spacer(),
-                  if (isSelected) Container(width: 24, height: 24, decoration: BoxDecoration(color: const Color(0xFF1DB954), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.check_rounded, color: Colors.white, size: 14)),
+                  if (isSelected)
+                    Container(
+                      width: 24, height: 24,
+                      decoration: BoxDecoration(color: const Color(0xFF1DB954), borderRadius: BorderRadius.circular(12)),
+                      child: const Icon(Icons.check_rounded, color: Colors.white, size: 14),
+                    ),
                 ],
               ),
               const SizedBox(height: 20),
@@ -436,11 +468,14 @@ class _TeacherScreenState extends State<TeacherScreen> {
               const SizedBox(height: 10),
               Wrap(
                 spacing: 12, runSpacing: 10,
-                children: features.map((feature) => Row(mainAxisSize: MainAxisSize.min, children: [
-                  const Icon(Icons.check_circle_rounded, color: Color(0xFF1DB954), size: 14),
-                  const SizedBox(width: 6),
-                  Text(feature, style: const TextStyle(color: Colors.white70, fontSize: 13)),
-                ])).toList(),
+                children: features.map((feature) => Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.check_circle_rounded, color: Color(0xFF1DB954), size: 14),
+                    const SizedBox(width: 6),
+                    Text(feature, style: const TextStyle(color: Colors.white70, fontSize: 13)),
+                  ],
+                )).toList(),
               ),
             ],
           ),
