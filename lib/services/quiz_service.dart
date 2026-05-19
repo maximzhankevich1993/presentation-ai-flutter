@@ -1,4 +1,6 @@
-import 'dart:math';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'api_service.dart';
 
 class QuizQuestion {
   final String question;
@@ -12,6 +14,22 @@ class QuizQuestion {
     required this.correctIndex,
     required this.explanation,
   });
+
+  Map<String, dynamic> toJson() => {
+    'question': question,
+    'options': options,
+    'correct': correctIndex,
+    'explanation': explanation,
+  };
+
+  factory QuizQuestion.fromJson(Map<String, dynamic> json) {
+    return QuizQuestion(
+      question: json['question'],
+      options: List<String>.from(json['options']),
+      correctIndex: json['correct'],
+      explanation: json['explanation'] ?? '',
+    );
+  }
 }
 
 class Quiz {
@@ -27,14 +45,32 @@ class Quiz {
     required this.timeLimitMinutes,
   });
 
-  /// Возвращает строку с правильными ответами
+  Map<String, dynamic> toJson() => {
+    'title': title,
+    'questions': questions.map((q) => q.toJson()).toList(),
+    'difficulty': difficulty,
+    'timeLimitMinutes': timeLimitMinutes,
+  };
+
+  factory Quiz.fromJson(Map<String, dynamic> json) {
+    return Quiz(
+      title: json['title'],
+      questions: (json['questions'] as List)
+          .map((q) => QuizQuestion.fromJson(q))
+          .toList(),
+      difficulty: json['difficulty'],
+      timeLimitMinutes: json['timeLimitMinutes'],
+    );
+  }
+
   String get answerKey {
     final buffer = StringBuffer();
     buffer.writeln('КЛЮЧ К ТЕСТУ: $title');
     buffer.writeln('');
     for (int i = 0; i < questions.length; i++) {
       final q = questions[i];
-      buffer.writeln('${i + 1}. ${q.options[q.correctIndex]}');
+      final correctLetter = String.fromCharCode(65 + q.correctIndex);
+      buffer.writeln('${i + 1}. $correctLetter) ${q.options[q.correctIndex]}');
     }
     buffer.writeln('');
     buffer.writeln('Критерии оценивания:');
@@ -47,81 +83,104 @@ class Quiz {
 }
 
 class QuizService {
-  static final Random _random = Random();
-
-  /// Генерация теста из презентации
-  static Quiz generateFromPresentation({
+  static const String _baseUrl = 'https://presentation-ai-backend.onrender.com/api';
+  
+  /// Генерация теста из презентации через AI
+  static Future<Quiz> generateFromPresentation({
     required String presentationTitle,
     required List<String> slideContents,
-    String difficulty = 'medium',
+    required String? token,
     int questionCount = 5,
-  }) {
-    final questions = <QuizQuestion>[];
-    for (int i = 0; i < questionCount && i < slideContents.length; i++) {
-      final content = slideContents[i];
-      questions.add(QuizQuestion(
-        question: 'Вопрос по материалу: ${content.length > 50 ? content.substring(0, 50) + '...' : content}',
-        options: _generateOptions(content),
-        correctIndex: 0,
-        explanation: 'См. материал урока.',
-      ));
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/quiz/from-presentation'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          'title': presentationTitle,
+          'slides': slideContents,
+          'questionCount': questionCount,
+        }),
+      );
+      
+      if (response.statusCode == 200) {
+        return Quiz.fromJson(json.decode(response.body));
+      } else if (response.statusCode == 401) {
+        throw Exception('Требуется авторизация');
+      } else if (response.statusCode == 402) {
+        throw Exception('Бесплатные генерации закончились');
+      } else if (response.statusCode == 429) {
+        throw Exception('Превышен лимит генераций');
+      } else {
+        final error = json.decode(response.body);
+        throw Exception(error['message'] ?? 'Ошибка генерации теста');
+      }
+    } catch (e) {
+      print('Error generating quiz from presentation: $e');
+      rethrow;
     }
-    return Quiz(title: 'Тест: $presentationTitle', questions: questions, difficulty: difficulty, timeLimitMinutes: questionCount * 2);
   }
-
-  /// Генерация теста по учебнику и теме
-  static Quiz generateFromTextbook({
-    required String textbook,
+  
+  /// Генерация теста по теме через YandexGPT
+  static Future<Quiz> generateFromTopic({
     required String topic,
-    String grade = '9 класс',
-    int questionCount = 10,
-  }) {
-    final questions = <QuizQuestion>[];
-    final topics = [
-      'Основные понятия по теме "$topic"',
-      'Определения из учебника "$textbook"',
-      'Ключевые даты и события',
-      'Причины и следствия',
-      'Сравнительный анализ',
-      'Практическое применение',
-      'Исторический контекст',
-      'Формулы и законы',
-      'Примеры из учебника',
-      'Обобщающий вопрос',
-    ];
-
-    for (int i = 0; i < questionCount; i++) {
-      final t = topics[i % topics.length];
-      questions.add(QuizQuestion(
-        question: '$t (по учебнику "$textbook", $grade)',
-        options: _generateOptions(t),
-        correctIndex: 0,
-        explanation: 'См. учебник "$textbook", раздел "$topic".',
-      ));
+    required String? textbook,
+    required String grade,
+    required String? token,
+    int questionCount = 5,
+    String? countryCode,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl/quiz/generate'),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token',
+        },
+        body: json.encode({
+          'topic': topic,
+          'textbook': textbook,
+          'grade': grade,
+          'questionCount': questionCount,
+          'countryCode': countryCode,
+        }),
+      );
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final questions = (data['questions'] as List)
+            .map((q) => QuizQuestion.fromJson(q))
+            .toList();
+        
+        return Quiz(
+          title: 'Тест: $topic',
+          questions: questions,
+          difficulty: data['difficulty'] ?? 'medium',
+          timeLimitMinutes: data['timeLimitMinutes'] ?? questionCount * 2,
+        );
+      } else if (response.statusCode == 401) {
+        throw Exception('Требуется авторизация');
+      } else if (response.statusCode == 402) {
+        throw Exception('Бесплатные генерации закончились');
+      } else if (response.statusCode == 429) {
+        throw Exception('Превышен лимит генераций');
+      } else {
+        final error = json.decode(response.body);
+        throw Exception(error['message'] ?? 'Ошибка генерации теста');
+      }
+    } catch (e) {
+      print('Error generating quiz from topic: $e');
+      rethrow;
     }
-
-    return Quiz(
-      title: 'Тест: $topic ($textbook, $grade)',
-      questions: questions,
-      difficulty: 'medium',
-      timeLimitMinutes: questionCount * 2,
-    );
-  }
-
-  static List<String> _generateOptions(String content) {
-    return [
-      content.length > 40 ? content.substring(0, 40) + '...' : content,
-      'Неверный вариант А',
-      'Неверный вариант Б',
-      'Все вышеперечисленное',
-    ];
   }
 
   /// Экспорт теста + ответов для Word
   static String exportToWord(Quiz quiz, {bool includeAnswers = true}) {
     final buffer = StringBuffer();
     
-    // Заголовок
     buffer.writeln('ТЕСТ');
     buffer.writeln(quiz.title);
     buffer.writeln('Уровень: ${quiz.difficulty} | Время: ${quiz.timeLimitMinutes} мин');
@@ -131,7 +190,6 @@ class QuizService {
     buffer.writeln('=' * 50);
     buffer.writeln('');
 
-    // Вопросы
     for (int i = 0; i < quiz.questions.length; i++) {
       final q = quiz.questions[i];
       buffer.writeln('${i + 1}. ${q.question}');
@@ -141,7 +199,6 @@ class QuizService {
       buffer.writeln('');
     }
 
-    // Ответы для учителя
     if (includeAnswers) {
       buffer.writeln('');
       buffer.writeln('=' * 50);
@@ -154,12 +211,7 @@ class QuizService {
     return buffer.toString();
   }
 
-  /// Экспорт только ответов (для печати на отдельном листе)
-  static String exportAnswerKey(Quiz quiz) {
-    return quiz.answerKey;
-  }
-
   static String _letter(int index) {
-    return String.fromCharCode(65 + index); // A, B, C, D
+    return String.fromCharCode(65 + index);
   }
 }
