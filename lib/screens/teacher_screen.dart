@@ -25,10 +25,10 @@ class _TeacherScreenState extends State<TeacherScreen> {
   String _currencySymbol = '\$';
   double _rate = 1.0;
   
-  // Цены в USD для учителей (доступные!)
-  final double _teacherPriceUSD = 1.99;    // ≈ 199 ₽
-  final double _schoolPriceUSD = 4.99;     // ≈ 499 ₽
-  final double _universityPriceUSD = 9.99; // ≈ 999 ₽
+  // Цены в USD для учителей
+  final double _teacherPriceUSD = 1.99;
+  final double _schoolPriceUSD = 4.99;
+  final double _universityPriceUSD = 9.99;
 
   @override
   void initState() {
@@ -41,39 +41,59 @@ class _TeacherScreenState extends State<TeacherScreen> {
       final response = await http
           .get(Uri.parse('https://ipwho.is/'))
           .timeout(const Duration(seconds: 5));
+          
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as Map<String, dynamic>;
         final countryCode = (data['country_code'] as String? ?? 'US').toUpperCase();
         
-        const euroCountries = {
-          'IT', 'FR', 'DE', 'ES', 'NL', 'BE', 'AT', 'PT', 'FI',
-          'IE', 'GR', 'SK', 'SI', 'EE', 'LV', 'LT', 'LU', 'MT', 'CY',
-        };
+        print('📍 Определена страна по IP: $countryCode');
         
         if (countryCode == 'BY') {
-          setState(() { _currency = 'BYN'; _currencySymbol = 'Br'; _rate = 3.25; });
+          setState(() {
+            _currency = 'BYN';
+            _currencySymbol = 'Br';
+            _rate = 3.25;
+          });
+        } else if (countryCode == 'RU') {
+          setState(() {
+            _currency = 'RUB';
+            _currencySymbol = '₽';
+            _rate = 95.0;
+          });
+        } else if (countryCode == 'KZ') {
+          setState(() {
+            _currency = 'KZT';
+            _currencySymbol = '₸';
+            _rate = 460.0;
+          });
+        } else if (countryCode == 'UA') {
+          setState(() {
+            _currency = 'UAH';
+            _currencySymbol = '₴';
+            _rate = 41.0;
+          });
+        } else {
+          setState(() {
+            _currency = 'USD';
+            _currencySymbol = '\$';
+            _rate = 1.0;
+          });
         }
-        else if (countryCode == 'RU') {
-          setState(() { _currency = 'RUB'; _currencySymbol = '₽'; _rate = 95.0; });
-        }
-        else if (countryCode == 'KZ') {
-          setState(() { _currency = 'KZT'; _currencySymbol = '₸'; _rate = 460.0; });
-        }
-        else if (countryCode == 'UA') {
-          setState(() { _currency = 'UAH'; _currencySymbol = '₴'; _rate = 41.0; });
-        }
-        else if (countryCode == 'GB') {
-          setState(() { _currency = 'GBP'; _currencySymbol = '£'; _rate = 0.79; });
-        }
-        else if (euroCountries.contains(countryCode)) {
-          setState(() { _currency = 'EUR'; _currencySymbol = '€'; _rate = 0.92; });
-        }
-        else {
-          setState(() { _currency = 'USD'; _currencySymbol = '\$'; _rate = 1.0; });
-        }
+      } else {
+        // Fallback на USD
+        setState(() {
+          _currency = 'USD';
+          _currencySymbol = '\$';
+          _rate = 1.0;
+        });
       }
     } catch (e) {
-      setState(() { _currency = 'USD'; _currencySymbol = '\$'; _rate = 1.0; });
+      print('❌ Ошибка определения валюты: $e');
+      setState(() {
+        _currency = 'USD';
+        _currencySymbol = '\$';
+        _rate = 1.0;
+      });
     }
     if (mounted) setState(() => _loadingRates = false);
   }
@@ -84,6 +104,7 @@ class _TeacherScreenState extends State<TeacherScreen> {
     if (_currency == 'USD' || _currency == 'EUR' || _currency == 'GBP') {
       return '$_currencySymbol${value.toStringAsFixed(2)}';
     }
+    // Для RUB, BYN, KZT, UAH - округляем до целых
     return '${value.ceil()} $_currencySymbol';
   }
 
@@ -289,7 +310,6 @@ class _TeacherScreenState extends State<TeacherScreen> {
                       const Text('ВЫБЕРИТЕ ПЛАН', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 12),
                       
-                      // Тариф "Учитель" (доступный!)
                       _buildTariffCard(
                         title: 'Учитель',
                         usd: _teacherPriceUSD,
@@ -307,7 +327,6 @@ class _TeacherScreenState extends State<TeacherScreen> {
                       ),
                       const SizedBox(height: 14),
                       
-                      // Тариф "Школа"
                       _buildTariffCard(
                         title: 'Школа',
                         usd: _schoolPriceUSD,
@@ -325,7 +344,6 @@ class _TeacherScreenState extends State<TeacherScreen> {
                       ),
                       const SizedBox(height: 14),
                       
-                      // Тариф "Университет"
                       _buildTariffCard(
                         title: 'Университет',
                         usd: _universityPriceUSD,
