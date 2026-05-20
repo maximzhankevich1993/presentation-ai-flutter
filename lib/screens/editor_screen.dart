@@ -1020,10 +1020,10 @@ class _Canvas extends StatelessWidget {
     final textCol = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _buildText(titleCtrl, true),
       const SizedBox(height: 10),
-      ...contentCtrl.map((c) => Padding(padding: const EdgeInsets.only(bottom: 5), child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Padding(padding: EdgeInsets.only(top: fontSize * 0.4, right: 7), child: Container(width: 5, height: 5, decoration: const BoxDecoration(color: _T.accent, shape: BoxShape.circle))),
-        Expanded(child: _buildText(c, false)),
-      ]))),
+      ...contentCtrl.map((c) => Padding(
+        padding: const EdgeInsets.only(bottom: 5),
+        child: _buildText(c, false),
+      )),
     ]);
     if (image == null) return textCol;
     final imgW = width * imageWidth, imgH = height * imageHeight;
@@ -1047,14 +1047,14 @@ class _Canvas extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (c == 0 && titleCtrl.text.isNotEmpty) 
-                _buildText(titleCtrl, true),
+                Flexible(child: _buildText(titleCtrl, true)),
               const SizedBox(height: 8),
               ...List.generate(2, (i) {
                 final idx = c * 2 + i;
                 return idx < contentCtrl.length 
                   ? Padding(
                       padding: const EdgeInsets.only(bottom: 6),
-                      child: _buildText(contentCtrl[idx], false),
+                      child: Flexible(child: _buildText(contentCtrl[idx], false)),
                     )
                   : const SizedBox.shrink();
               }),
