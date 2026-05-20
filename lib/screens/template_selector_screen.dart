@@ -181,7 +181,7 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
                             child: _TemplateCard(
                               template: template,
                               isPremiumUser: isPremiumUser,
-                              onTap: () => _applyTemplate(template),
+                              onTap: () => _selectTemplate(template),
                             ),
                           );
                         },
@@ -194,7 +194,8 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
     );
   }
 
-  void _applyTemplate(DesignTemplate template) {
+  void _selectTemplate(DesignTemplate template) {
+    // Проверка Premium
     if (template.isPremium) {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       if (!userProvider.isPremium) {
@@ -203,44 +204,8 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
       }
     }
     
-    final slides = <Slide>[
-      Slide(title: template.name, content: [
-        'Презентация в стиле "${template.name}"',
-        'Создано в Презентатор ИИ',
-      ]),
-      Slide(title: 'О компании', content: [
-        'Напишите здесь о своей компании',
-        'Ключевые преимущества',
-        'Достижения и планы',
-      ]),
-      Slide(title: 'Наши услуги', content: [
-        'Услуга 1 с подробным описанием',
-        'Услуга 2 с преимуществами',
-        'Услуга 3 с примерами работ',
-      ]),
-      Slide(title: 'Почему мы?', content: [
-        'Профессионализм и опыт',
-        'Индивидуальный подход',
-        'Гарантия качества',
-      ]),
-      Slide(title: 'Контакты', content: [
-        'Телефон: +7 (XXX) XXX-XX-XX',
-        'Email: info@company.ru',
-        'Сайт: www.company.ru',
-      ]),
-    ];
-    
-    final presentation = Presentation(
-      id: DateTime.now().toString(),
-      title: template.name,
-      slides: slides,
-      createdAt: DateTime.now(),
-    );
-    
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => EditorScreen(presentation: presentation)),
-    );
+    // Возвращаем выбранный шаблон в редактор
+    Navigator.pop(context, template);
   }
   
   void _showPremiumDialog() {
