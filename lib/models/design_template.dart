@@ -63,6 +63,13 @@ class SlideLayout {
     required this.type,
     this.decorations = const [],
   });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'type': type,
+    'decorations': decorations,
+  };
 }
 
 class DesignTemplate {
