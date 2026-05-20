@@ -508,7 +508,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   const SizedBox(width: 10),
                   _ExtraBtn(Icons.image_outlined, 'Загрузить логотип', _uploadLogo),
                   const SizedBox(width: 10),
-                  _ExtraBtn(Icons.template_rounded, 'Шаблоны', () => _push(const TemplateSelectorScreen())),
+                  _ExtraBtn(Icons.style_rounded, 'Шаблоны', () => _push(const TemplateSelectorScreen())),
                 ]),
 
                 if (logo != null) ...[
