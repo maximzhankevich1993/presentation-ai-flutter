@@ -62,3 +62,34 @@ flutter:
   assets:
     - assets/icons/
     - assets/templates/
+    # Явно перечисляем все файлы шаблонов для надежности
+    - assets/templates/women_business.jpg
+    - assets/templates/tech_minimal.jpg
+    - assets/templates/party_event.jpg
+    - assets/templates/clean_academic.jpg
+    - assets/templates/nature_fresh.jpg
+    - assets/templates/dark_elegance.jpg
+    - assets/templates/pastel_dream.jpg
+    - assets/templates/urban_street.jpg
+    - assets/templates/medical_clean.jpg
+    - assets/templates/creative_agency.jpg
+    - assets/templates/live_webinar.jpg
+    - assets/templates/corporate_luxury.jpg
+    - assets/templates/modern_gradient.jpg
+    - assets/templates/bauhaus_style.jpg
+    - assets/templates/cyber_punk.jpg
+    - assets/templates/eco_green.jpg
+    - assets/templates/luxury_fashion.jpg
+    - assets/templates/space_exploration.jpg
+    - assets/templates/food_beverage.jpg
+    - assets/templates/architecture_portfolio.jpg
+    - assets/templates/sports_motivation.jpg
+    - assets/templates/travel_adventure.jpg
+    - assets/templates/art_gallery.jpg
+    - assets/templates/science_research.jpg
+    - assets/templates/startup_pitch.jpg
+    - assets/templates/legal_law.jpg
+    - assets/templates/music_festival.jpg
+    - assets/templates/real_estate.jpg
+    - assets/templates/fitness_wellness.jpg
+    - assets/templates/charity_nonprofit.jpg
