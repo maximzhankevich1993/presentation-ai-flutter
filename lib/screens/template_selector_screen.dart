@@ -20,7 +20,7 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
   bool _showOnlyFree = false;
 
   final List<String> _categories = [
-    'all', 'business', 'technology', 'creative', 'education', 'events', 'nature', 'medical', 'health'
+    'all', 'business', 'technology', 'creative', 'education', 'events', 'nature', 'medical'
   ];
 
   final Map<String, String> _categoryNames = {
@@ -32,7 +32,6 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
     'events': 'Мероприятия',
     'nature': 'Природа',
     'medical': 'Медицина',
-    'health': 'Здоровье',
   };
 
   List<DesignTemplate> get _filteredTemplates {
@@ -64,8 +63,8 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Дизайнерские шаблоны',
-          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
+          'Шаблоны',
+          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
         actions: [
@@ -73,9 +72,9 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
             margin: const EdgeInsets.only(right: 12),
             child: Row(
               children: [
-                const Text('Только бесплатные', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 12)),
+                const Text('Бесплатные', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 11)),
                 const SizedBox(width: 4),
-                Switch(
+                                Switch(
                   value: _showOnlyFree,
                   onChanged: (value) => setState(() => _showOnlyFree = value),
                   activeColor: const Color(0xFF1DB954),
@@ -89,29 +88,29 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
         children: [
           // Поиск
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Container(
               decoration: BoxDecoration(
                 color: const Color(0xFF1E1E1E),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFF2A2A2A)),
               ),
               child: TextField(
                 onChanged: (value) => setState(() => _searchQuery = value),
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.white, fontSize: 14),
                 decoration: InputDecoration(
-                  hintText: 'Поиск шаблонов...',
-                  hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
-                  prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF1DB954)),
+                  hintText: 'Поиск...',
+                  hintStyle: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 13),
+                  prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF1DB954), size: 18),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 ),
               ),
             ),
           ),
           // Категории
           SizedBox(
-            height: 44,
+            height: 36,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -120,15 +119,14 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
                 final category = _categories[i];
                 final isSelected = _selectedCategory == category;
                 return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 3),
                   child: GestureDetector(
                     onTap: () => setState(() => _selectedCategory = category),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: isSelected ? const Color(0xFF1DB954) : const Color(0xFF1E1E1E),
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: isSelected ? Colors.transparent : const Color(0xFF2A2A2A),
                         ),
@@ -137,7 +135,7 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
                         _categoryNames[category]!,
                         style: TextStyle(
                           color: isSelected ? Colors.white : const Color(0xFF9A9A9A),
-                          fontSize: 13,
+                          fontSize: 11,
                           fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                         ),
                       ),
@@ -151,27 +149,27 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
           // Список шаблонов
           Expanded(
             child: _filteredTemplates.isEmpty
-                ? Center(
+                ? const Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.search_off_rounded, size: 48, color: const Color(0xFF4A4A4A)),
-                        const SizedBox(height: 12),
-                        const Text(
+                        Icon(Icons.search_off_rounded, size: 40, color: Color(0xFF4A4A4A)),
+                        SizedBox(height: 8),
+                        Text(
                           'Ничего не найдено',
-                          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
+                          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 13),
                         ),
                       ],
                     ),
                   )
                 : GridView.builder(
                     controller: ScrollController(),
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.75,
+                      crossAxisSpacing: 10,
+                      mainAxisSpacing: 10,
+                      childAspectRatio: 0.65,
                     ),
                     itemCount: _filteredTemplates.length,
                     itemBuilder: (_, i) {
@@ -200,34 +198,43 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
       }
     }
     
-    // Создаём презентацию
+    // Создаём презентацию с 5 слайдами на основе шаблона
+    final slides = <Slide>[
+      Slide(title: template.name, content: [
+        'Презентация в стиле "${template.name}"',
+        'Создано в Презентатор ИИ',
+        'Профессиональный дизайн',
+      ]),
+      Slide(title: 'О компании', content: [
+        'Напишите здесь о своей компании',
+        'Ключевые преимущества',
+        'Достижения и планы',
+      ]),
+      Slide(title: 'Наши услуги', content: [
+        'Услуга 1 с подробным описанием',
+        'Услуга 2 с преимуществами',
+        'Услуга 3 с примерами работ',
+      ]),
+      Slide(title: 'Почему мы?', content: [
+        'Профессионализм и опыт',
+        'Индивидуальный подход',
+        'Гарантия качества',
+      ]),
+      Slide(title: 'Контакты', content: [
+        'Телефон: +7 (XXX) XXX-XX-XX',
+        'Email: info@company.ru',
+        'Сайт: www.company.ru',
+      ]),
+    ];
+    
     final presentation = Presentation(
       id: DateTime.now().toString(),
       title: template.name,
-      slides: [
-        Slide(title: template.name, content: [
-          'Создано в Презентатор ИИ',
-          'Профессиональный дизайн',
-          'Легко редактируется',
-        ]),
-        Slide(title: 'Ключевые преимущества', content: [
-          'Современный дизайн',
-          'Готовые макеты',
-          'Простота редактирования',
-        ]),
-        Slide(title: 'Ваш заголовок', content: [
-          'Добавьте свой текст',
-          'Измените содержимое',
-          'Настройте под себя',
-        ]),
-        Slide(title: 'Спасибо за внимание!', content: [
-          'Ваше имя',
-          'Контактная информация',
-        ]),
-      ],
+      slides: slides,
       createdAt: DateTime.now(),
     );
     
+    // Переход в редактор
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -242,10 +249,10 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Premium шаблон', style: TextStyle(color: Colors.white)),
+        title: const Text('Premium шаблон', style: TextStyle(color: Colors.white, fontSize: 16)),
         content: const Text(
-          'Этот шаблон доступен только по подписке Premium.\n\nОформите подписку, чтобы получить доступ ко всем 30 дизайнерским шаблонам.',
-          style: TextStyle(color: Color(0xFF9A9A9A)),
+          'Этот шаблон доступен только по подписке Premium.',
+          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 13),
         ),
         actions: [
           TextButton(
@@ -261,7 +268,7 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
               );
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
-            child: const Text('Выбрать тариф'),
+            child: const Text('Купить Premium'),
           ),
         ],
       ),
@@ -288,41 +295,31 @@ class _TemplateCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: cs.gradient.isNotEmpty ? cs.gradient : [cs.background, cs.surface],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
+          color: const Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: cs.accent.withOpacity(0.3)),
-          boxShadow: [
-            BoxShadow(
-              color: cs.primary.withOpacity(0.1),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Превью
+            // Превью (верхняя часть)
             Container(
-              height: 120,
+              height: 90,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: cs.gradient.isNotEmpty ? cs.gradient : [cs.background, cs.surface],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
               ),
               child: Center(
-                child: Icon(template.icon, color: cs.primary, size: 48),
+                child: Icon(template.icon, color: cs.primary, size: 36),
               ),
             ),
+            // Информация
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -333,8 +330,8 @@ class _TemplateCard extends StatelessWidget {
                           template.name,
                           style: TextStyle(
                             color: cs.textPrimary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -342,47 +339,47 @@ class _TemplateCard extends StatelessWidget {
                       ),
                       if (template.isPremium)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFD700).withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(4),
                           ),
                           child: const Text(
                             'PRO',
-                            style: TextStyle(color: Color(0xFFFFD700), fontSize: 9, fontWeight: FontWeight.w700),
+                            style: TextStyle(color: Color(0xFFFFD700), fontSize: 8, fontWeight: FontWeight.w700),
                           ),
                         ),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     template.description,
                     style: TextStyle(
                       color: cs.textSecondary,
-                      fontSize: 11,
+                      fontSize: 9,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
-                      Icon(Icons.slideshow_rounded, color: cs.accent, size: 12),
-                      const SizedBox(width: 4),
+                      Icon(Icons.slideshow_rounded, color: cs.accent, size: 10),
+                      const SizedBox(width: 3),
                       Text(
                         '${template.slideCount} слайдов',
-                        style: TextStyle(color: cs.accent, fontSize: 10),
+                        style: TextStyle(color: cs.accent, fontSize: 8),
                       ),
                       const Spacer(),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                         decoration: BoxDecoration(
                           color: cs.accent.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           _getCategoryName(template.category),
-                          style: TextStyle(color: cs.accent, fontSize: 9),
+                          style: TextStyle(color: cs.accent, fontSize: 8),
                         ),
                       ),
                     ],
@@ -405,7 +402,6 @@ class _TemplateCard extends StatelessWidget {
       case 'events': return 'Мероприятия';
       case 'nature': return 'Природа';
       case 'medical': return 'Медицина';
-      case 'health': return 'Здоровье';
       default: return category;
     }
   }
