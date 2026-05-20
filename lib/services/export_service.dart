@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/presentation.dart';
 
 class ExportService {
-  // Экспорт в PPTX (работает без бэкенда)
+  // Экспорт в PPTX (HTML файл)
   static void exportToPPTX({
     required BuildContext context,
     required Presentation presentation,
@@ -12,13 +12,9 @@ class ExportService {
   }) {
     _showLoading(context, 'Создание PPTX...');
     
-    // Небольшая задержка для отображения загрузки
     Future.delayed(const Duration(milliseconds: 100), () {
       try {
-        // Создаем HTML содержимое для презентации
-        final htmlContent = _generateHtmlContent(presentation, isPremium, 'pptx');
-        
-        // Скачиваем файл
+        final htmlContent = _generateHtmlContent(presentation, isPremium);
         _downloadFile(htmlContent, '${_sanitizeFilename(presentation.title)}.html', 'text/html');
         
         if (context.mounted) Navigator.pop(context);
@@ -30,7 +26,7 @@ class ExportService {
     });
   }
 
-  // Экспорт в PDF (работает через печать)
+  // Экспорт в PDF через печать
   static void exportToPDF({
     required BuildContext context,
     required Presentation presentation,
@@ -45,21 +41,20 @@ class ExportService {
     
     Future.delayed(const Duration(milliseconds: 100), () {
       try {
-        // Создаем HTML для печати
-        final htmlContent = _generateHtmlContent(presentation, isPremium, 'pdf');
+        final htmlContent = _generateHtmlContent(presentation, isPremium);
         
-        // Открываем в новом окне для печати -> сохранения в PDF
-        final newWindow = html.window.open('', '_blank');
-        newWindow.document.write(htmlContent);
-        newWindow.document.close();
+        // Создаем Blob и открываем в новом окне
+        final blob = html.Blob([htmlContent], 'text/html');
+        final url = html.Url.createObjectUrlFromBlob(blob);
         
-        // Ждем загрузки и вызываем печать
-        Future.delayed(const Duration(milliseconds: 500), () {
-          newWindow.print();
-        });
+        // Открываем в новом окне
+        html.window.open(url, '_blank');
+        
+        // Освобождаем URL
+        html.Url.revokeObjectUrl(url);
         
         if (context.mounted) Navigator.pop(context);
-        _showSuccess(context, 'PDF создан');
+        _showSuccess(context, 'PDF открыт в новом окне. Нажмите Ctrl+P для печати и сохранения как PDF');
       } catch (e) {
         if (context.mounted) Navigator.pop(context);
         _showError(context, 'Ошибка экспорта PDF: $e');
@@ -68,7 +63,7 @@ class ExportService {
   }
   
   // Генерация HTML содержимого
-  static String _generateHtmlContent(Presentation presentation, bool isPremium, String format) {
+  static String _generateHtmlContent(Presentation presentation, bool isPremium) {
     final slidesHtml = StringBuffer();
     
     for (int i = 0; i < presentation.slides.length; i++) {
@@ -76,7 +71,7 @@ class ExportService {
       final isFirst = i == 0;
       
       slidesHtml.write('''
-      <div class="slide" style="page-break-after: ${i < presentation.slides.length - 1 ? 'always' : 'auto'}">
+      <div class="slide">
         <div class="slide-number">${i + 1} / ${presentation.slides.length}</div>
         <h1 class="${isFirst ? 'title' : 'slide-title'}">${_escapeHtml(slide.title)}</h1>
         <div class="content">
@@ -108,7 +103,7 @@ class ExportService {
           border-radius: 16px;
           box-shadow: 0 4px 20px rgba(0,0,0,0.15);
           position: relative;
-          ${format == 'pdf' ? 'page-break-after: always;' : ''}
+          page-break-after: always;
         }
         .slide-number {
           position: absolute;
@@ -147,12 +142,12 @@ class ExportService {
           .slide { box-shadow: none; margin: 0; border-radius: 0; min-height: auto; }
           .slide-number { display: none; }
         }
-        ${!isPremium && format == 'pptx' ? '.watermark { position: fixed; bottom: 20px; right: 20px; opacity: 0.3; font-size: 12px; color: #999; }' : ''}
+        ${!isPremium ? '.watermark { position: fixed; bottom: 20px; right: 20px; opacity: 0.3; font-size: 12px; color: #999; }' : ''}
       </style>
     </head>
     <body>
       ${slidesHtml.toString()}
-      ${!isPremium && format == 'pptx' ? '<div class="watermark">Created with Presentation AI</div>' : ''}
+      ${!isPremium ? '<div class="watermark">Created with Presentation AI</div>' : ''}
     </body>
     </html>
     ''';
