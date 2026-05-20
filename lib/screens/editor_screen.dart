@@ -124,7 +124,7 @@ class SlideShape {
 
 class SlideChart {
   final String id;
-  final String type; // bar, pie, line
+  final String type;
   double x, y, width, height;
   List<Map<String, dynamic>> data;
   SlideChart({
@@ -321,14 +321,11 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
       _appliedTemplate = template;
       final cs = template.colorScheme;
       
-      // Применяем цвета текста и шрифт
       _globalFontColor = cs.textPrimary;
       _globalFont = template.fontPair.body;
       
-      // Применяем фон из картинки превью
       _applyTemplateBackground(template.previewUrl);
       
-      // СОЗДАЕМ НОВЫЕ СЛАЙДЫ ПО СТРУКТУРЕ ШАБЛОНА
       final newSlides = <Slide>[];
       for (final layout in template.layouts) {
         newSlides.add(Slide(
@@ -337,14 +334,11 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
         ));
       }
       
-      // Заменяем существующие слайды
       _presentation.slides.clear();
       _presentation.slides.addAll(newSlides);
       
-      // Пересоздаем контроллеры
       _initControllers();
       
-      // Обновляем все списки под новый размер
       final newLen = _presentation.slides.length;
       _customImages = List.filled(newLen, null);
       _customBgs = List.filled(newLen, _templateBackgroundImage);
@@ -490,8 +484,8 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
       _shapes[_activeSlide].add(SlideShape(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         type: type,
-        x: 100 + Random().nextInt(100),
-        y: 100 + Random().nextInt(100),
+        x: 100.0 + Random().nextInt(100).toDouble(),
+        y: 100.0 + Random().nextInt(100).toDouble(),
         width: 80,
         height: 80,
         color: _globalFontColor,
@@ -502,9 +496,12 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
   
   void _updateShapePosition(String id, double dx, double dy) {
     setState(() {
-      final shape = _shapes[_activeSlide].firstWhere((s) => s.id == id);
-      shape.x += dx;
-      shape.y += dy;
+      final shapeIndex = _shapes[_activeSlide].indexWhere((s) => s.id == id);
+      if (shapeIndex != -1) {
+        final shape = _shapes[_activeSlide][shapeIndex];
+        shape.x += dx;
+        shape.y += dy;
+      }
     });
   }
   
@@ -515,8 +512,8 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
       _charts[_activeSlide].add(SlideChart(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         type: type,
-        x: 100 + Random().nextInt(100),
-        y: 100 + Random().nextInt(100),
+        x: 100.0 + Random().nextInt(100).toDouble(),
+        y: 100.0 + Random().nextInt(100).toDouble(),
         width: 200,
         height: 150,
         data: [
@@ -530,20 +527,16 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
   
   void _updateChartPosition(String id, double dx, double dy) {
     setState(() {
-      final chart = _charts[_activeSlide].firstWhere((c) => c.id == id);
-      chart.x += dx;
-      chart.y += dy;
+      final chartIndex = _charts[_activeSlide].indexWhere((c) => c.id == id);
+      if (chartIndex != -1) {
+        final chart = _charts[_activeSlide][chartIndex];
+        chart.x += dx;
+        chart.y += dy;
+      }
     });
   }
   
   void _removeChart(String id) => setState(() => _charts[_activeSlide].removeWhere((c) => c.id == id));
-  
-  void _updateChartData(String id, List<Map<String, dynamic>> data) {
-    setState(() {
-      final chart = _charts[_activeSlide].firstWhere((c) => c.id == id);
-      chart.data = data;
-    });
-  }
   
   void _updateImageWidth(double w) => setState(() => _imageWidths[_activeSlide] = w);
   void _updateImageHeight(double h) => setState(() => _imageHeights[_activeSlide] = h);
@@ -790,7 +783,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
                 onRemoveItem: (i) => _removeContentItem(_activeSlide, i),
                 onShapeDrag: _updateShapePosition,
                 onChartDrag: _updateChartPosition,
-                onChartDataChange: _updateChartData,
               ),
             ),
             const _ThinDivider(direction: Axis.vertical),
@@ -821,6 +813,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
                   imagePosition: _imagePositions[_activeSlide],
                   imageTextWrap: _imageTextWrap[_activeSlide],
                   hasImage: _customImages[_activeSlide] != null || _autoImages[_activeSlide] != null,
+                  uploadsUsed: _imageUploadsUsed,
                   onTabChange: (t) => setState(() => _activePropTab = t),
                   onBgSelect: (i) => setState(() { _selectedBgIndex = i; _customBgs = List.filled(_presentation.slides.length, null); }),
                   onBgUpload: () => _uploadBg(_activeSlide),
@@ -1089,9 +1082,8 @@ class _Canvas extends StatelessWidget {
   final bool hasCustomImage;
   final Function(String, double, double) onShapeDrag;
   final Function(String, double, double) onChartDrag;
-  final Function(String, List<Map<String, dynamic>>) onChartDataChange;
   
-  const _Canvas({super.key, required this.index, required this.titleCtrl, required this.contentCtrl, required this.decoration, required this.font, required this.fontSize, required this.fontColor, required this.slideCount, required this.textStyle, required this.textAlign, required this.columnsCount, this.image, required this.shapes, required this.charts, required this.imageWidth, required this.imageHeight, required this.imagePosition, required this.imageTextWrap, required this.onAddItem, required this.onRemoveItem, required this.onRemoveImage, required this.hasCustomImage, required this.onShapeDrag, required this.onChartDrag, required this.onChartDataChange});
+  const _Canvas({super.key, required this.index, required this.titleCtrl, required this.contentCtrl, required this.decoration, required this.font, required this.fontSize, required this.fontColor, required this.slideCount, required this.textStyle, required this.textAlign, required this.columnsCount, this.image, required this.shapes, required this.charts, required this.imageWidth, required this.imageHeight, required this.imagePosition, required this.imageTextWrap, required this.onAddItem, required this.onRemoveItem, required this.onRemoveImage, required this.hasCustomImage, required this.onShapeDrag, required this.onChartDrag});
   
   @override
   Widget build(BuildContext context) {
@@ -1107,16 +1099,13 @@ class _Canvas extends StatelessWidget {
               final width = (MediaQuery.of(context).size.width - 504).clamp(360.0, 900.0);
               final height = width * 9 / 16;
               return GestureDetector(
-                onTap: () {
-                  // Снять выделение с фигур
-                },
                 child: Container(
                   width: width, height: height,
                   decoration: decoration,
                   clipBehavior: Clip.antiAlias,
                   child: Stack(
+                    clipBehavior: Clip.none,
                     children: [
-                      // Фигуры
                       ...shapes.map((s) => Positioned(
                         left: s.x.clamp(0.0, width - s.width),
                         top: s.y.clamp(0.0, height - s.height),
@@ -1127,7 +1116,6 @@ class _Canvas extends StatelessWidget {
                           child: _buildShape(s),
                         ),
                       )),
-                      // Графики
                       ...charts.map((c) => Positioned(
                         left: c.x.clamp(0.0, width - c.width),
                         top: c.y.clamp(0.0, height - c.height),
@@ -1284,15 +1272,14 @@ class _Canvas extends StatelessWidget {
       ]),
     );
     
-    // Обтекание текстом вокруг изображения
     if (imageTextWrap == 'around') {
       return Wrap(
         spacing: 18,
         runSpacing: 10,
         crossAxisAlignment: WrapCrossAlignment.start,
         children: imagePosition == 'left' 
-            ? [img, Expanded(child: textCol)]
-            : [Expanded(child: textCol), img],
+            ? [img, SizedBox(width: 18, child: textCol)]
+            : [SizedBox(width: 18, child: textCol), img],
       );
     }
     
