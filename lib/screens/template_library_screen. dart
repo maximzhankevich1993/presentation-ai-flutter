@@ -20,7 +20,7 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
   bool _showOnlyFree = false;
 
   final List<String> _categories = [
-    'all', 'business', 'technology', 'creative', 'education', 'events', 'nature', 'medical', 'health'
+    'all', 'business', 'technology', 'creative', 'education', 'events', 'nature', 'medical'
   ];
 
   final Map<String, String> _categoryNames = {
@@ -32,7 +32,6 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
     'events': 'Мероприятия',
     'nature': 'Природа',
     'medical': 'Медицина',
-    'health': 'Здоровье',
   };
 
   List<DesignTemplate> get _filteredTemplates {
@@ -51,9 +50,8 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isPremium = Provider.of<UserProvider>(context).isPremium;
-    final isVip = Provider.of<UserProvider>(context).isVip;
-    final isPremiumUser = isPremium || isVip;
+    final userProvider = Provider.of<UserProvider>(context);
+    final isPremiumUser = userProvider.isPremium;
     
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
@@ -65,7 +63,7 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          'Дизайнерские шаблоны',
+          'Шаблоны',
           style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
         ),
         centerTitle: true,
@@ -74,7 +72,7 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
             margin: const EdgeInsets.only(right: 12),
             child: Row(
               children: [
-                const Text('Только бесплатные', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 12)),
+                const Text('Бесплатные', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 12)),
                 const SizedBox(width: 4),
                 Switch(
                   value: _showOnlyFree,
@@ -86,105 +84,117 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Поиск
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF2A2A2A)),
-              ),
-              child: TextField(
-                onChanged: (value) => setState(() => _searchQuery = value),
-                style: const TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  hintText: 'Поиск шаблонов...',
-                  hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
-                  prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF1DB954)),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      body: Center(
+        child: SizedBox(
+          width: 900,
+          child: Column(
+            children: [
+              // Поиск
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E1E1E),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFF2A2A2A)),
+                  ),
+                  child: TextField(
+                    onChanged: (value) => setState(() => _searchQuery = value),
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                    decoration: InputDecoration(
+                      hintText: 'Поиск шаблонов...',
+                      hintStyle: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 14),
+                      prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF1DB954), size: 20),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-          // Категории
-          SizedBox(
-            height: 44,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: _categories.length,
-              itemBuilder: (_, i) {
-                final category = _categories[i];
-                final isSelected = _selectedCategory == category;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: GestureDetector(
-                    onTap: () => setState(() => _selectedCategory = category),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 200),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF1DB954) : const Color(0xFF1E1E1E),
-                        borderRadius: BorderRadius.circular(24),
-                        border: Border.all(
-                          color: isSelected ? Colors.transparent : const Color(0xFF2A2A2A),
+              // Категории
+              SizedBox(
+                height: 44,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  itemCount: _categories.length,
+                  itemBuilder: (_, i) {
+                    final category = _categories[i];
+                    final isSelected = _selectedCategory == category;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: () => setState(() => _selectedCategory = category),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: isSelected ? const Color(0xFF1DB954) : const Color(0xFF1E1E1E),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: isSelected ? Colors.transparent : const Color(0xFF2A2A2A),
+                              ),
+                            ),
+                            child: Text(
+                              _categoryNames[category]!,
+                              style: TextStyle(
+                                color: isSelected ? Colors.white : const Color(0xFF9A9A9A),
+                                fontSize: 13,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                      child: Text(
-                        _categoryNames[category]!,
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : const Color(0xFF9A9A9A),
-                          fontSize: 13,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+              // Список шаблонов
+              Expanded(
+                child: _filteredTemplates.isEmpty
+                    ? const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.search_off_rounded, size: 48, color: Color(0xFF4A4A4A)),
+                            SizedBox(height: 12),
+                            Text(
+                              'Ничего не найдено',
+                              style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
+                            ),
+                          ],
                         ),
+                      )
+                    : GridView.builder(
+                        controller: ScrollController(),
+                        padding: const EdgeInsets.all(16),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                          childAspectRatio: 0.8,
+                        ),
+                        itemCount: _filteredTemplates.length,
+                        itemBuilder: (_, i) {
+                          final template = _filteredTemplates[i];
+                          return MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: _TemplateCard(
+                              template: template,
+                              isPremiumUser: isPremiumUser,
+                              onTap: () => _applyTemplate(template),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                  ),
-                );
-              },
-            ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          // Список шаблонов
-          Expanded(
-            child: _filteredTemplates.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.search_off_rounded, size: 48, color: const Color(0xFF4A4A4A)),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Ничего не найдено',
-                          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
-                        ),
-                      ],
-                    ),
-                  )
-                : GridView.builder(
-                    padding: const EdgeInsets.all(16),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      childAspectRatio: 0.75,
-                    ),
-                    itemCount: _filteredTemplates.length,
-                    itemBuilder: (_, i) {
-                      final template = _filteredTemplates[i];
-                      return _TemplateCard(
-                        template: template,
-                        isPremiumUser: isPremiumUser,
-                        onTap: () => _applyTemplate(template),
-                      );
-                    },
-                  ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -192,21 +202,52 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
   void _applyTemplate(DesignTemplate template) {
     // Проверка Premium
     if (template.isPremium) {
-      final isPremium = Provider.of<UserProvider>(context, listen: false).isPremium;
-      final isVip = Provider.of<UserProvider>(context, listen: false).isVip;
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
       
-      if (!isPremium && !isVip) {
+      if (!userProvider.isPremium) {
         _showPremiumDialog();
         return;
       }
     }
     
-    // Создаём презентацию с цветами шаблона
+    // Создаём презентацию
+    final slides = <Slide>[
+      Slide(title: template.name, content: [
+        'Презентация в стиле "${template.name}"',
+        'Создано в Презентатор ИИ',
+      ]),
+      Slide(title: 'О компании', content: [
+        'Напишите здесь о своей компании',
+        'Ключевые преимущества',
+        'Достижения и планы',
+      ]),
+      Slide(title: 'Наши услуги', content: [
+        'Услуга 1 с подробным описанием',
+        'Услуга 2 с преимуществами',
+        'Услуга 3 с примерами работ',
+      ]),
+      Slide(title: 'Почему мы?', content: [
+        'Профессионализм и опыт',
+        'Индивидуальный подход',
+        'Гарантия качества',
+      ]),
+      Slide(title: 'Контакты', content: [
+        'Телефон: +7 (XXX) XXX-XX-XX',
+        'Email: info@company.ru',
+        'Сайт: www.company.ru',
+      ]),
+    ];
+    
     final presentation = Presentation(
       id: DateTime.now().toString(),
       title: template.name,
-      slides: _createDefaultSlides(template),
+      slides: slides,
       createdAt: DateTime.now(),
+      metadata: {
+        'templateId': template.id,
+        'colorScheme': template.colorScheme.toJson(),
+        'fontPair': template.fontPair.toJson(),
+      },
     );
     
     Navigator.pushReplacement(
@@ -217,41 +258,16 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
     );
   }
   
-  List<Slide> _createDefaultSlides(DesignTemplate template) {
-    return [
-      Slide(title: template.name, content: [
-        'Создано в Презентатор ИИ',
-        'Профессиональный дизайн',
-        'Легко редактируется',
-      ]),
-      Slide(title: 'Ключевые преимущества', content: [
-        'Современный дизайн',
-        'Готовые макеты',
-        'Простота редактирования',
-      ]),
-      Slide(title: 'Ваш заголовок', content: [
-        'Добавьте свой текст',
-        'Измените содержимое',
-        'Настройте под себя',
-      ]),
-      Slide(title: 'Спасибо за внимание!', content: [
-        'Ваше имя',
-        'Контактная информация',
-      ]),
-    ];
-  }
-  
   void _showPremiumDialog() {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Premium шаблон', style: TextStyle(color: Colors.white)),
+        title: const Text('Premium шаблон', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
         content: const Text(
-          'Этот шаблон доступен только по подписке Premium.\n\nОформите подписку, чтобы получить доступ ко всем 30 дизайнерским шаблонам.',
-          style: TextStyle(color: Color(0xFF9A9A9A)),
-        ),
+          'Этот шаблон доступен только по подписке Premium.\n\nОформите подписку, чтобы получить доступ ко всем шаблонам.',
+          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -293,39 +309,51 @@ class _TemplateCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: cs.gradient.isNotEmpty ? cs.gradient : [cs.background, cs.surface],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
+          color: const Color(0xFF1E1E1E),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: cs.accent.withOpacity(0.3)),
-          boxShadow: [
-            BoxShadow(
-              color: cs.primary.withOpacity(0.1),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Превью
-            Container(
-              height: 120,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: cs.gradient.isNotEmpty ? cs.gradient : [cs.background, cs.surface],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              child: Center(
-                child: Icon(template.icon, color: cs.primary, size: 48),
-              ),
+            // Превью с изображением
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              child: template.previewUrl.isNotEmpty
+                  ? Image.asset(
+                      template.previewUrl,
+                      height: 120,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        height: 120,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: cs.gradient.isNotEmpty ? cs.gradient : [cs.background, cs.surface],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                        child: Center(
+                          child: Icon(template.icon, color: cs.primary, size: 48),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      height: 120,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: cs.gradient.isNotEmpty ? cs.gradient : [cs.background, cs.surface],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(template.icon, color: cs.primary, size: 48),
+                      ),
+                    ),
             ),
+            // Информация
             Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
@@ -347,14 +375,14 @@ class _TemplateCard extends StatelessWidget {
                       ),
                       if (template.isPremium)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFFD700).withOpacity(0.2),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: const Text(
                             'PRO',
-                            style: TextStyle(color: Color(0xFFFFD700), fontSize: 9, fontWeight: FontWeight.w700),
+                            style: TextStyle(color: Color(0xFFFFD700), fontSize: 10, fontWeight: FontWeight.w700),
                           ),
                         ),
                     ],
@@ -376,14 +404,14 @@ class _TemplateCard extends StatelessWidget {
                       const SizedBox(width: 4),
                       Text(
                         '${template.slideCount} слайдов',
-                        style: TextStyle(color: cs.accent, fontSize: 10),
+                        style: TextStyle(color: cs.accent, fontSize: 10, fontWeight: FontWeight.w500),
                       ),
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: cs.accent.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(4),
                         ),
                         child: Text(
                           _getCategoryName(template.category),
@@ -410,7 +438,6 @@ class _TemplateCard extends StatelessWidget {
       case 'events': return 'Мероприятия';
       case 'nature': return 'Природа';
       case 'medical': return 'Медицина';
-      case 'health': return 'Здоровье';
       default: return category;
     }
   }
