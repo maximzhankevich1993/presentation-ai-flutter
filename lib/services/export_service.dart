@@ -2,41 +2,40 @@ import 'dart:convert';
 import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import '../models/presentation.dart';
-import 'api_service.dart';
 
 class ExportService {
-  static Future<void> exportToPPTX({
+  // Экспорт в PPTX (работает без бэкенда)
+  static void exportToPPTX({
     required BuildContext context,
     required Presentation presentation,
     required bool isPremium,
-  }) async {
+  }) {
     _showLoading(context, 'Создание PPTX...');
     
-    try {
-      final result = await ApiService.exportToPPTX(presentation.toJson());
-      
-      if (context.mounted) Navigator.pop(context);
-      
-      if (result.containsKey('url')) {
-        _downloadFromUrl(result['url'], '${presentation.title}.pptx');
-      } else if (result.containsKey('data')) {
-        _downloadFromBase64(result['data'], '${presentation.title}.pptx');
-      } else {
-        throw Exception('Некорректный ответ сервера');
+    // Небольшая задержка для отображения загрузки
+    Future.delayed(const Duration(milliseconds: 100), () {
+      try {
+        // Создаем HTML содержимое для презентации
+        final htmlContent = _generateHtmlContent(presentation, isPremium, 'pptx');
+        
+        // Скачиваем файл
+        _downloadFile(htmlContent, '${_sanitizeFilename(presentation.title)}.html', 'text/html');
+        
+        if (context.mounted) Navigator.pop(context);
+        _showSuccess(context, 'Презентация экспортирована');
+      } catch (e) {
+        if (context.mounted) Navigator.pop(context);
+        _showError(context, 'Ошибка экспорта: $e');
       }
-      
-      _showSuccess(context, 'PPTX успешно создан');
-    } catch (e) {
-      if (context.mounted) Navigator.pop(context);
-      _showError(context, 'Ошибка экспорта PPTX: $e');
-    }
+    });
   }
 
-  static Future<void> exportToPDF({
+  // Экспорт в PDF (работает через печать)
+  static void exportToPDF({
     required BuildContext context,
     required Presentation presentation,
     required bool isPremium,
-  }) async {
+  }) {
     if (!isPremium) {
       _showError(context, 'PDF доступен только для Premium пользователей');
       return;
@@ -44,39 +43,124 @@ class ExportService {
     
     _showLoading(context, 'Создание PDF...');
     
-    try {
-      final result = await ApiService.exportToPDF(presentation.toJson());
-      
-      if (context.mounted) Navigator.pop(context);
-      
-      if (result.containsKey('url')) {
-        _downloadFromUrl(result['url'], '${presentation.title}.pdf');
-      } else if (result.containsKey('data')) {
-        _downloadFromBase64(result['data'], '${presentation.title}.pdf');
-      } else {
-        throw Exception('Некорректный ответ сервера');
+    Future.delayed(const Duration(milliseconds: 100), () {
+      try {
+        // Создаем HTML для печати
+        final htmlContent = _generateHtmlContent(presentation, isPremium, 'pdf');
+        
+        // Открываем в новом окне для печати -> сохранения в PDF
+        final newWindow = html.window.open('', '_blank');
+        newWindow.document.write(htmlContent);
+        newWindow.document.close();
+        
+        // Ждем загрузки и вызываем печать
+        Future.delayed(const Duration(milliseconds: 500), () {
+          newWindow.print();
+        });
+        
+        if (context.mounted) Navigator.pop(context);
+        _showSuccess(context, 'PDF создан');
+      } catch (e) {
+        if (context.mounted) Navigator.pop(context);
+        _showError(context, 'Ошибка экспорта PDF: $e');
       }
+    });
+  }
+  
+  // Генерация HTML содержимого
+  static String _generateHtmlContent(Presentation presentation, bool isPremium, String format) {
+    final slidesHtml = StringBuffer();
+    
+    for (int i = 0; i < presentation.slides.length; i++) {
+      final slide = presentation.slides[i];
+      final isFirst = i == 0;
       
-      _showSuccess(context, 'PDF успешно создан');
-    } catch (e) {
-      if (context.mounted) Navigator.pop(context);
-      _showError(context, 'Ошибка экспорта PDF: $e');
+      slidesHtml.write('''
+      <div class="slide" style="page-break-after: ${i < presentation.slides.length - 1 ? 'always' : 'auto'}">
+        <div class="slide-number">${i + 1} / ${presentation.slides.length}</div>
+        <h1 class="${isFirst ? 'title' : 'slide-title'}">${_escapeHtml(slide.title)}</h1>
+        <div class="content">
+          ${slide.content.map((c) => '<p>${_escapeHtml(c)}</p>').join('')}
+        </div>
+      </div>
+      ''');
     }
+    
+    return '''
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>${_escapeHtml(presentation.title)}</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+          font-family: 'Segoe UI', 'Roboto', 'Inter', Arial, sans-serif;
+          background: ${isPremium ? '#f5f5f5' : '#1a1a1a'};
+          padding: 20px;
+        }
+        .slide {
+          background: white;
+          margin: 0 auto 20px auto;
+          padding: 50px;
+          width: 900px;
+          min-height: 600px;
+          border-radius: 16px;
+          box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+          position: relative;
+          ${format == 'pdf' ? 'page-break-after: always;' : ''}
+        }
+        .slide-number {
+          position: absolute;
+          top: 20px;
+          right: 30px;
+          font-size: 12px;
+          color: #999;
+        }
+        h1 {
+          font-size: 42px;
+          color: #222;
+          margin-bottom: 30px;
+          font-weight: 700;
+        }
+        h1.title {
+          font-size: 56px;
+          text-align: center;
+          margin-top: 150px;
+          color: #1DB954;
+        }
+        .slide-title {
+          font-size: 36px;
+          border-left: 4px solid #1DB954;
+          padding-left: 20px;
+        }
+        .content {
+          font-size: 18px;
+          line-height: 1.6;
+          color: #444;
+        }
+        .content p {
+          margin-bottom: 15px;
+        }
+        @media print {
+          body { background: white; padding: 0; margin: 0; }
+          .slide { box-shadow: none; margin: 0; border-radius: 0; min-height: auto; }
+          .slide-number { display: none; }
+        }
+        ${!isPremium && format == 'pptx' ? '.watermark { position: fixed; bottom: 20px; right: 20px; opacity: 0.3; font-size: 12px; color: #999; }' : ''}
+      </style>
+    </head>
+    <body>
+      ${slidesHtml.toString()}
+      ${!isPremium && format == 'pptx' ? '<div class="watermark">Created with Presentation AI</div>' : ''}
+    </body>
+    </html>
+    ''';
   }
   
-  static void _downloadFromUrl(String url, String filename) {
-    final anchor = html.AnchorElement(href: url)
-      ..setAttribute('download', filename)
-      ..click();
-  }
-  
-  static void _downloadFromBase64(String base64Data, String filename) {
-    String rawData = base64Data;
-    if (rawData.contains(',')) {
-      rawData = rawData.split(',').last;
-    }
-    final bytes = base64Decode(rawData);
-    final blob = html.Blob([bytes]);
+  // Скачивание файла
+  static void _downloadFile(String content, String filename, String mimeType) {
+    final blob = html.Blob([content], mimeType);
     final url = html.Url.createObjectUrlFromBlob(blob);
     final anchor = html.AnchorElement(href: url)
       ..setAttribute('download', filename)
@@ -84,6 +168,22 @@ class ExportService {
     html.Url.revokeObjectUrl(url);
   }
   
+  // Очистка имени файла
+  static String _sanitizeFilename(String name) {
+    return name.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
+  }
+  
+  // Экранирование HTML
+  static String _escapeHtml(String text) {
+    return text
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+  }
+  
+  // Показать загрузку
   static void _showLoading(BuildContext context, String message) {
     showDialog(
       context: context,
@@ -102,6 +202,7 @@ class ExportService {
     );
   }
   
+  // Показать успех
   static void _showSuccess(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -115,6 +216,7 @@ class ExportService {
     );
   }
   
+  // Показать ошибку
   static void _showError(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
