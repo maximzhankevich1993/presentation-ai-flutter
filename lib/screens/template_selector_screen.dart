@@ -37,15 +37,12 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
 
   List<DesignTemplate> get _filteredTemplates {
     return allDesignTemplates.where((template) {
-      // Поиск
       final matchesSearch = _searchQuery.isEmpty ||
           template.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
           template.description.toLowerCase().contains(_searchQuery.toLowerCase());
       
-      // Категория
       final matchesCategory = _selectedCategory == 'all' || template.category == _selectedCategory;
       
-      // Бесплатные/все
       final matchesPrice = !_showOnlyFree || !template.isPremium;
       
       return matchesSearch && matchesCategory && matchesPrice;
@@ -54,8 +51,8 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isPremium = Provider.of<UserProvider>(context).isPremium;
-    final isVip = Provider.of<UserProvider>(context).isVip;
+    final userProvider = Provider.of<UserProvider>(context);
+    final isPremiumUser = userProvider.isPremium;
     
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
@@ -72,12 +69,11 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
         ),
         centerTitle: true,
         actions: [
-          // Переключатель "Только бесплатные"
           Container(
             margin: const EdgeInsets.only(right: 12),
             child: Row(
               children: [
-                const Text('Бесплатные', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 12)),
+                const Text('Только бесплатные', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 12)),
                 const SizedBox(width: 4),
                 Switch(
                   value: _showOnlyFree,
@@ -174,14 +170,14 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
                       crossAxisCount: 2,
                       crossAxisSpacing: 12,
                       mainAxisSpacing: 12,
-                      childAspectRatio: 0.8,
+                      childAspectRatio: 0.75,
                     ),
                     itemCount: _filteredTemplates.length,
                     itemBuilder: (_, i) {
                       final template = _filteredTemplates[i];
                       return _TemplateCard(
                         template: template,
-                        isPremiumUser: isPremium || isVip,
+                        isPremiumUser: isPremiumUser,
                         onTap: () => _applyTemplate(template),
                       );
                     },
@@ -195,24 +191,41 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
   void _applyTemplate(DesignTemplate template) {
     // Проверка Premium
     if (template.isPremium) {
-      final isPremium = Provider.of<UserProvider>(context, listen: false).isPremium;
-      final isVip = Provider.of<UserProvider>(context, listen: false).isVip;
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
       
-      if (!isPremium && !isVip) {
+      if (!userProvider.isPremium && !userProvider.isVip) {
         _showPremiumDialog();
         return;
       }
     }
     
-    // Создаём презентацию с цветами шаблона
+    // Создаём презентацию
     final presentation = Presentation(
       id: DateTime.now().toString(),
       title: template.name,
-      slides: _createDefaultSlides(template),
+      slides: [
+        Slide(title: template.name, content: [
+          'Создано в Презентатор ИИ',
+          'Профессиональный дизайн',
+          'Легко редактируется',
+        ]),
+        Slide(title: 'Ключевые преимущества', content: [
+          'Современный дизайн',
+          'Готовые макеты',
+          'Простота редактирования',
+        ]),
+        Slide(title: 'Ваш заголовок', content: [
+          'Добавьте свой текст',
+          'Измените содержимое',
+          'Настройте под себя',
+        ]),
+        Slide(title: 'Спасибо за внимание!', content: [
+          'Ваше имя',
+          'Контактная информация',
+        ]),
+      ],
       createdAt: DateTime.now(),
     );
-    
-    // TODO: Сохранить выбранный шаблон в настройках презентации
     
     Navigator.pushReplacement(
       context,
@@ -220,30 +233,6 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
         builder: (_) => EditorScreen(presentation: presentation),
       ),
     );
-  }
-  
-  List<Slide> _createDefaultSlides(DesignTemplate template) {
-    return [
-      Slide(title: template.name, content: [
-        'Создано в Презентатор ИИ',
-        'Профессиональный дизайн',
-        'Легко редактируется',
-      ]),
-      Slide(title: 'Ключевые преимущества', content: [
-        'Современный дизайн',
-        'Готовые макеты',
-        'Простота редактирования',
-      ]),
-      Slide(title: 'Ваш заголовок', content: [
-        'Добавьте свой текст',
-        'Измените содержимое',
-        'Настройте под себя',
-      ]),
-      Slide(title: 'Спасибо за внимание!', content: [
-        'Ваше имя',
-        'Контактная информация',
-      ]),
-    ];
   }
   
   void _showPremiumDialog() {
@@ -299,7 +288,7 @@ class _TemplateCard extends StatelessWidget {
       child: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [cs.background, cs.surface],
+            colors: cs.gradient.isNotEmpty ? cs.gradient : [cs.background, cs.surface],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -391,7 +380,7 @@ class _TemplateCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
-                          template.category,
+                          _getCategoryName(template.category),
                           style: TextStyle(color: cs.accent, fontSize: 9),
                         ),
                       ),
@@ -400,9 +389,23 @@ class _TemplateCard extends StatelessWidget {
                 ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );
+  }
+  
+  String _getCategoryName(String category) {
+    switch (category) {
+      case 'business': return 'Бизнес';
+      case 'technology': return 'Технологии';
+      case 'creative': return 'Креатив';
+      case 'education': return 'Образование';
+      case 'events': return 'Мероприятия';
+      case 'nature': return 'Природа';
+      case 'medical': return 'Медицина';
+      case 'health': return 'Здоровье';
+      default: return category;
+    }
   }
 }
