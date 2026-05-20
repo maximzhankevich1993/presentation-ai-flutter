@@ -20,6 +20,17 @@ class TemplateColorScheme {
     required this.textSecondary,
     this.gradient = const [],
   });
+
+  Map<String, dynamic> toJson() => {
+    'background': background.value,
+    'surface': surface.value,
+    'primary': primary.value,
+    'secondary': secondary.value,
+    'accent': accent.value,
+    'textPrimary': textPrimary.value,
+    'textSecondary': textSecondary.value,
+    'gradient': gradient.map((c) => c.value).toList(),
+  };
 }
 
 class FontPair {
@@ -32,6 +43,12 @@ class FontPair {
     required this.body,
     required this.accent,
   });
+
+  Map<String, dynamic> toJson() => {
+    'heading': heading,
+    'body': body,
+    'accent': accent,
+  };
 }
 
 class SlideLayout {
@@ -74,4 +91,17 @@ class DesignTemplate {
     required this.slideCount,
     required this.icon,
   });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'description': description,
+    'category': category,
+    'previewUrl': previewUrl,
+    'isPremium': isPremium,
+    'colorScheme': colorScheme.toJson(),
+    'fontPair': fontPair.toJson(),
+    'layouts': layouts.map((l) => l.toJson()).toList(),
+    'slideCount': slideCount,
+  };
 }
