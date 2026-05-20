@@ -54,22 +54,21 @@ class FontPair {
 class SlideLayout {
   final String id;
   final String name;
-  final String type;
-  final List<dynamic> decorations;
+  final String type; // title, content, two_columns, image_left, image_right, image_top, image_bottom, quote, thanks
+  final String? imagePosition;
+  final int columns;
+  final String sampleTitle;
+  final List<String> sampleContent;
 
   const SlideLayout({
     required this.id,
     required this.name,
     required this.type,
-    this.decorations = const [],
+    this.imagePosition,
+    this.columns = 1,
+    required this.sampleTitle,
+    required this.sampleContent,
   });
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'type': type,
-    'decorations': decorations,
-  };
 }
 
 class DesignTemplate {
@@ -98,17 +97,4 @@ class DesignTemplate {
     required this.slideCount,
     required this.icon,
   });
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'name': name,
-    'description': description,
-    'category': category,
-    'previewUrl': previewUrl,
-    'isPremium': isPremium,
-    'colorScheme': colorScheme.toJson(),
-    'fontPair': fontPair.toJson(),
-    'layouts': layouts.map((l) => l.toJson()).toList(),
-    'slideCount': slideCount,
-  };
 }
