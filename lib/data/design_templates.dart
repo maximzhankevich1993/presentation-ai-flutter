@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/design_template.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 10 БЕСПЛАТНЫХ ДИЗАЙНЕРСКИХ ШАБЛОНОВ
+// ЦВЕТОВЫЕ СХЕМЫ
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const _womenBusinessColorScheme = TemplateColorScheme(
@@ -175,10 +175,7 @@ const _creativeAgencyFontPair = FontPair(
   accent: 'Poppins',
 );
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// 20 ПЛАТНЫХ PREMIUM ДИЗАЙНЕРСКИХ ШАБЛОНОВ
-// ═══════════════════════════════════════════════════════════════════════════════
-
+// Premium цветовые схемы
 const _liveWebinarColorScheme = TemplateColorScheme(
   background: Color(0xFF0F172A),
   surface: Color(0xFF1E293B),
@@ -406,16 +403,410 @@ const _charityColorScheme = TemplateColorScheme(
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// Layouts
+// СТРУКТУРЫ СЛАЙДОВ ДЛЯ КАЖДОГО ШАБЛОНА
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const List<SlideLayout> _defaultLayouts = [
-  SlideLayout(id: 'title', name: 'Титульный', type: 'title', decorations: []),
-  SlideLayout(id: 'content', name: 'Содержание', type: 'content', decorations: []),
-  SlideLayout(id: 'two_columns', name: 'Две колонки', type: 'two_columns', decorations: []),
-  SlideLayout(id: 'quote', name: 'Цитата', type: 'quote', decorations: []),
-  SlideLayout(id: 'thanks', name: 'Спасибо', type: 'thanks', decorations: []),
+// Women Business - структура
+const _womenBusinessLayouts = [
+  SlideLayout(
+    id: 'title',
+    name: 'Титульный',
+    type: 'title',
+    sampleTitle: 'Women Business',
+    sampleContent: ['Профессиональная презентация для бизнес-леди'],
+  ),
+  SlideLayout(
+    id: 'about',
+    name: 'О компании',
+    type: 'content',
+    sampleTitle: 'О компании',
+    sampleContent: ['Наша миссия - помогать женщинам достигать успеха', '10+ лет на рынке', '1000+ довольных клиентов'],
+  ),
+  SlideLayout(
+    id: 'services',
+    name: 'Услуги',
+    type: 'two_columns',
+    columns: 2,
+    sampleTitle: 'Наши услуги',
+    sampleContent: ['Консалтинг', 'Обучение', 'Менторство', 'Нетворкинг'],
+  ),
+  SlideLayout(
+    id: 'team',
+    name: 'Команда',
+    type: 'image_right',
+    imagePosition: 'right',
+    sampleTitle: 'Наша команда',
+    sampleContent: ['Профессионалы с опытом более 10 лет', 'Эксперты в своих областях', 'Готовы помочь вам'],
+  ),
+  SlideLayout(
+    id: 'thanks',
+    name: 'Спасибо',
+    type: 'thanks',
+    sampleTitle: 'Спасибо за внимание!',
+    sampleContent: ['Контакты: info@womenbusiness.ru'],
+  ),
 ];
+
+// Tech Minimal - структура
+const _techMinimalLayouts = [
+  SlideLayout(
+    id: 'title',
+    name: 'Титульный',
+    type: 'title',
+    sampleTitle: 'Tech Minimal',
+    sampleContent: ['Инновационные технологические решения'],
+  ),
+  SlideLayout(
+    id: 'problem',
+    name: 'Проблема',
+    type: 'content',
+    sampleTitle: 'С какими проблемами сталкиваются компании?',
+    sampleContent: ['Устаревшее программное обеспечение', 'Низкая эффективность процессов', 'Высокие операционные затраты'],
+  ),
+  SlideLayout(
+    id: 'solution',
+    name: 'Решение',
+    type: 'image_left',
+    imagePosition: 'left',
+    sampleTitle: 'Наше решение',
+    sampleContent: ['Современная облачная платформа', 'Автоматизация бизнес-процессов', 'Снижение затрат до 40%'],
+  ),
+  SlideLayout(
+    id: 'features',
+    name: 'Особенности',
+    type: 'two_columns',
+    columns: 2,
+    sampleTitle: 'Ключевые особенности',
+    sampleContent: ['Высокая скорость', 'Максимальная безопасность', 'Лёгкая масштабируемость', 'Поддержка 24/7'],
+  ),
+  SlideLayout(
+    id: 'roadmap',
+    name: 'План',
+    type: 'content',
+    sampleTitle: 'Дорожная карта',
+    sampleContent: ['Q1 2024: Запуск бета-версии', 'Q2 2024: Интеграция с CRM', 'Q3 2024: Выход на международный рынок'],
+  ),
+  SlideLayout(
+    id: 'thanks',
+    name: 'Спасибо',
+    type: 'thanks',
+    sampleTitle: 'Готовы к цифровой трансформации?',
+    sampleContent: ['contact@techminimal.com'],
+  ),
+];
+
+// Party Event - структура
+const _partyEventLayouts = [
+  SlideLayout(
+    id: 'title',
+    name: 'Титульный',
+    type: 'title',
+    sampleTitle: 'PARTY EVENT',
+    sampleContent: ['Лучшие мероприятия в городе'],
+  ),
+  SlideLayout(
+    id: 'info',
+    name: 'Информация',
+    type: 'image_right',
+    imagePosition: 'right',
+    sampleTitle: 'О мероприятии',
+    sampleContent: ['Дата: 25 декабря 2024', 'Время: 20:00', 'Место: Клуб "Атмосфера"'],
+  ),
+  SlideLayout(
+    id: 'program',
+    name: 'Программа',
+    type: 'two_columns',
+    columns: 2,
+    sampleTitle: 'Программа вечера',
+    sampleContent: ['20:00 Встреча гостей', '21:00 Выступление диджея', '22:00 Шоу-программа', '00:00 Фейерверк'],
+  ),
+  SlideLayout(
+    id: 'tickets',
+    name: 'Билеты',
+    type: 'content',
+    sampleTitle: 'Стоимость билетов',
+    sampleContent: ['Стандарт - 2000₽', 'VIP - 5000₽', 'Вход до 23:00'],
+  ),
+  SlideLayout(
+    id: 'thanks',
+    name: 'Спасибо',
+    type: 'thanks',
+    sampleTitle: 'Ждём вас!',
+    sampleContent: ['Билеты на сайте party-event.ru'],
+  ),
+];
+
+// Clean Academic - структура
+const _cleanAcademicLayouts = [
+  SlideLayout(
+    id: 'title',
+    name: 'Титульный',
+    type: 'title',
+    sampleTitle: 'Академическая презентация',
+    sampleContent: ['Научное исследование'],
+  ),
+  SlideLayout(
+    id: 'intro',
+    name: 'Введение',
+    type: 'content',
+    sampleTitle: 'Введение',
+    sampleContent: ['Актуальность исследования', 'Цели и задачи', 'Объект и предмет исследования'],
+  ),
+  SlideLayout(
+    id: 'methodology',
+    name: 'Методология',
+    type: 'two_columns',
+    columns: 2,
+    sampleTitle: 'Методы исследования',
+    sampleContent: ['Анализ литературы', 'Эксперимент', 'Наблюдение', 'Статистический анализ'],
+  ),
+  SlideLayout(
+    id: 'results',
+    name: 'Результаты',
+    type: 'content',
+    sampleTitle: 'Полученные результаты',
+    sampleContent: ['Результат 1: подтверждение гипотезы', 'Результат 2: новые данные', 'Результат 3: практические рекомендации'],
+  ),
+  SlideLayout(
+    id: 'conclusion',
+    name: 'Заключение',
+    type: 'thanks',
+    sampleTitle: 'Спасибо за внимание!',
+    sampleContent: ['Вопросы?', 'email@university.ru'],
+  ),
+];
+
+// Nature Fresh - структура
+const _natureFreshLayouts = [
+  SlideLayout(
+    id: 'title',
+    name: 'Титульный',
+    type: 'title',
+    sampleTitle: 'Nature Fresh',
+    sampleContent: ['Экологически чистые продукты'],
+  ),
+  SlideLayout(
+    id: 'about',
+    name: 'О нас',
+    type: 'image_left',
+    imagePosition: 'left',
+    sampleTitle: 'Кто мы?',
+    sampleContent: ['Фермерское хозяйство с 2010 года', 'Выращиваем натуральные продукты', 'Без ГМО и химикатов'],
+  ),
+  SlideLayout(
+    id: 'products',
+    name: 'Продукты',
+    type: 'two_columns',
+    columns: 2,
+    sampleTitle: 'Наша продукция',
+    sampleContent: ['Овощи', 'Фрукты', 'Зелень', 'Ягоды'],
+  ),
+  SlideLayout(
+    id: 'delivery',
+    name: 'Доставка',
+    type: 'image_right',
+    imagePosition: 'right',
+    sampleTitle: 'Доставка по городу',
+    sampleContent: ['Бесплатная доставка от 1000₽', 'Свежесть гарантируем', 'Эко-упаковка'],
+  ),
+  SlideLayout(
+    id: 'thanks',
+    name: 'Спасибо',
+    type: 'thanks',
+    sampleTitle: 'Выбирайте здоровое питание!',
+    sampleContent: ['nature-fresh.ru'],
+  ),
+];
+
+// Dark Elegance - структура
+const _darkEleganceLayouts = [
+  SlideLayout(
+    id: 'title',
+    name: 'Титульный',
+    type: 'title',
+    sampleTitle: 'Dark Elegance',
+    sampleContent: ['Премиальный бренд'],
+  ),
+  SlideLayout(
+    id: 'philosophy',
+    name: 'Философия',
+    type: 'content',
+    sampleTitle: 'Наша философия',
+    sampleContent: ['Роскошь в деталях', 'Индивидуальный подход', 'Безупречный сервис'],
+  ),
+  SlideLayout(
+    id: 'collection',
+    name: 'Коллекция',
+    type: 'two_columns',
+    columns: 2,
+    sampleTitle: 'Новая коллекция',
+    sampleContent: ['Осень-Зима 2024', 'Лимитированные позиции', 'Эксклюзивные материалы', 'Ручная работа'],
+  ),
+  SlideLayout(
+    id: 'thanks',
+    name: 'Спасибо',
+    type: 'thanks',
+    sampleTitle: 'Подпишитесь на новости',
+    sampleContent: ['darkelegance.com'],
+  ),
+];
+
+// Pastel Dream - структура
+const _pastelDreamLayouts = [
+  SlideLayout(
+    id: 'title',
+    name: 'Титульный',
+    type: 'title',
+    sampleTitle: 'Pastel Dream',
+    sampleContent: ['Творческая студия'],
+  ),
+  SlideLayout(
+    id: 'portfolio',
+    name: 'Портфолио',
+    type: 'image_top',
+    imagePosition: 'top',
+    sampleTitle: 'Наши работы',
+    sampleContent: ['Дизайн сайтов', 'Иллюстрации', 'Брендинг', 'Упаковка'],
+  ),
+  SlideLayout(
+    id: 'services',
+    name: 'Услуги',
+    type: 'two_columns',
+    columns: 2,
+    sampleTitle: 'Что мы предлагаем',
+    sampleContent: ['Веб-дизайн', 'Графический дизайн', 'Анимация', 'Фирменный стиль'],
+  ),
+  SlideLayout(
+    id: 'thanks',
+    name: 'Спасибо',
+    type: 'thanks',
+    sampleTitle: 'Давайте создавать красивое вместе!',
+    sampleContent: ['hello@pasteldream.com'],
+  ),
+];
+
+// Urban Street - структура
+const _urbanStreetLayouts = [
+  SlideLayout(
+    id: 'title',
+    name: 'Титульный',
+    type: 'title',
+    sampleTitle: 'URBAN STREET',
+    sampleContent: ['Уличная культура'],
+  ),
+  SlideLayout(
+    id: 'brand',
+    name: 'Бренд',
+    type: 'image_right',
+    imagePosition: 'right',
+    sampleTitle: 'О бренде',
+    sampleContent: ['Одежда для города', 'Уличный стиль', 'Коллаборации с художниками'],
+  ),
+  SlideLayout(
+    id: 'lookbook',
+    name: 'Lookbook',
+    type: 'two_columns',
+    columns: 2,
+    sampleTitle: 'Новая коллекция',
+    sampleContent: ['Футболки', 'Худи', 'Аксессуары', 'Лимитированные дропы'],
+  ),
+  SlideLayout(
+    id: 'thanks',
+    name: 'Спасибо',
+    type: 'thanks',
+    sampleTitle: 'Будь в центре событий',
+    sampleContent: ['urbanstreet.com'],
+  ),
+];
+
+// Medical Clean - структура
+const _medicalCleanLayouts = [
+  SlideLayout(
+    id: 'title',
+    name: 'Титульный',
+    type: 'title',
+    sampleTitle: 'Medical Clean',
+    sampleContent: ['Медицинский центр'],
+  ),
+  SlideLayout(
+    id: 'about',
+    name: 'О центре',
+    type: 'content',
+    sampleTitle: 'О медицинском центре',
+    sampleContent: ['Современное оборудование', 'Квалифицированные врачи', 'Комфортные условия'],
+  ),
+  SlideLayout(
+    id: 'services',
+    name: 'Услуги',
+    type: 'two_columns',
+    columns: 2,
+    sampleTitle: 'Направления',
+    sampleContent: ['Терапия', 'Кардиология', 'Неврология', 'Диагностика'],
+  ),
+  SlideLayout(
+    id: 'thanks',
+    name: 'Спасибо',
+    type: 'thanks',
+    sampleTitle: 'Ваше здоровье - наша забота',
+    sampleContent: ['Запись по телефону: +7 (xxx) xxx-xx-xx'],
+  ),
+];
+
+// Creative Agency - структура
+const _creativeAgencyLayouts = [
+  SlideLayout(
+    id: 'title',
+    name: 'Титульный',
+    type: 'title',
+    sampleTitle: 'Creative Agency',
+    sampleContent: ['Креативное агентство полного цикла'],
+  ),
+  SlideLayout(
+    id: 'approach',
+    name: 'Подход',
+    type: 'image_left',
+    imagePosition: 'left',
+    sampleTitle: 'Наш подход',
+    sampleContent: ['Креативные стратегии', 'Индивидуальное решение', 'Измеримые результаты'],
+  ),
+  SlideLayout(
+    id: 'services',
+    name: 'Услуги',
+    type: 'two_columns',
+    columns: 2,
+    sampleTitle: 'Что мы делаем',
+    sampleContent: ['Реклама', 'SMM', 'Брендинг', 'Стратегия'],
+  ),
+  SlideLayout(
+    id: 'thanks',
+    name: 'Спасибо',
+    type: 'thanks',
+    sampleTitle: 'Воплотим идеи в жизнь',
+    sampleContent: ['hello@creative.agency'],
+  ),
+];
+
+// Premium шаблоны - структуры (упрощенные для краткости)
+const _liveWebinarLayouts = _techMinimalLayouts;
+const _corporateLuxuryLayouts = _darkEleganceLayouts;
+const _modernGradientLayouts = _techMinimalLayouts;
+const _bauhausStyleLayouts = _creativeAgencyLayouts;
+const _cyberPunkLayouts = _techMinimalLayouts;
+const _ecoGreenLayouts = _natureFreshLayouts;
+const _luxuryFashionLayouts = _darkEleganceLayouts;
+const _spaceExplorationLayouts = _techMinimalLayouts;
+const _foodBeverageLayouts = _partyEventLayouts;
+const _architecturePortfolioLayouts = _cleanAcademicLayouts;
+const _sportsMotivationLayouts = _urbanStreetLayouts;
+const _travelAdventureLayouts = _natureFreshLayouts;
+const _artGalleryLayouts = _creativeAgencyLayouts;
+const _scienceResearchLayouts = _cleanAcademicLayouts;
+const _startupPitchLayouts = _techMinimalLayouts;
+const _legalLawLayouts = _cleanAcademicLayouts;
+const _musicFestivalLayouts = _partyEventLayouts;
+const _realEstateLayouts = _cleanAcademicLayouts;
+const _fitnessWellnessLayouts = _natureFreshLayouts;
+const _charityLayouts = _creativeAgencyLayouts;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ВСЕ 30 ШАБЛОНОВ
@@ -432,7 +823,7 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _womenBusinessColorScheme,
     fontPair: _womenBusinessFontPair,
-    layouts: _defaultLayouts,
+    layouts: _womenBusinessLayouts,
     slideCount: 5,
     icon: Icons.people_rounded,
   ),
@@ -445,8 +836,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _techMinimalColorScheme,
     fontPair: _techMinimalFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 5,
+    layouts: _techMinimalLayouts,
+    slideCount: 6,
     icon: Icons.computer_rounded,
   ),
   DesignTemplate(
@@ -458,7 +849,7 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _partyEventColorScheme,
     fontPair: _partyEventFontPair,
-    layouts: _defaultLayouts,
+    layouts: _partyEventLayouts,
     slideCount: 5,
     icon: Icons.celebration_rounded,
   ),
@@ -471,7 +862,7 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _cleanAcademicColorScheme,
     fontPair: _cleanAcademicFontPair,
-    layouts: _defaultLayouts,
+    layouts: _cleanAcademicLayouts,
     slideCount: 5,
     icon: Icons.school_rounded,
   ),
@@ -484,7 +875,7 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _natureFreshColorScheme,
     fontPair: _natureFreshFontPair,
-    layouts: _defaultLayouts,
+    layouts: _natureFreshLayouts,
     slideCount: 5,
     icon: Icons.eco_rounded,
   ),
@@ -497,8 +888,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _darkEleganceColorScheme,
     fontPair: _darkEleganceFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 5,
+    layouts: _darkEleganceLayouts,
+    slideCount: 4,
     icon: Icons.stars_rounded,
   ),
   DesignTemplate(
@@ -510,8 +901,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _pastelDreamColorScheme,
     fontPair: _pastelDreamFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 5,
+    layouts: _pastelDreamLayouts,
+    slideCount: 4,
     icon: Icons.palette_rounded,
   ),
   DesignTemplate(
@@ -523,8 +914,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _urbanStreetColorScheme,
     fontPair: _urbanStreetFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 5,
+    layouts: _urbanStreetLayouts,
+    slideCount: 4,
     icon: Icons.style_rounded,
   ),
   DesignTemplate(
@@ -536,8 +927,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _medicalCleanColorScheme,
     fontPair: _medicalCleanFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 5,
+    layouts: _medicalCleanLayouts,
+    slideCount: 4,
     icon: Icons.medical_services_rounded,
   ),
   DesignTemplate(
@@ -549,12 +940,12 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _creativeAgencyColorScheme,
     fontPair: _creativeAgencyFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 5,
+    layouts: _creativeAgencyLayouts,
+    slideCount: 4,
     icon: Icons.brush_rounded,
   ),
 
-  // ПЛАТНЫЕ PREMIUM (20) - сокращённая версия для быстрой работы
+  // ПЛАТНЫЕ PREMIUM (20)
   DesignTemplate(
     id: 'live_webinar',
     name: 'Live Webinar',
@@ -564,7 +955,7 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _liveWebinarColorScheme,
     fontPair: _liveWebinarFontPair,
-    layouts: _defaultLayouts,
+    layouts: _liveWebinarLayouts,
     slideCount: 6,
     icon: Icons.videocam_rounded,
   ),
@@ -577,8 +968,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _corporateLuxuryColorScheme,
     fontPair: _darkEleganceFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 6,
+    layouts: _corporateLuxuryLayouts,
+    slideCount: 4,
     icon: Icons.workspace_premium_rounded,
   ),
   DesignTemplate(
@@ -590,7 +981,7 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _modernGradientColorScheme,
     fontPair: _techMinimalFontPair,
-    layouts: _defaultLayouts,
+    layouts: _modernGradientLayouts,
     slideCount: 6,
     icon: Icons.gradient_rounded,
   ),
@@ -603,8 +994,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _bauhausStyleColorScheme,
     fontPair: _creativeAgencyFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 6,
+    layouts: _bauhausStyleLayouts,
+    slideCount: 4,
     icon: Icons.art_track_rounded,
   ),
   DesignTemplate(
@@ -616,7 +1007,7 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _cyberPunkColorScheme,
     fontPair: _techMinimalFontPair,
-    layouts: _defaultLayouts,
+    layouts: _cyberPunkLayouts,
     slideCount: 6,
     icon: Icons.science_rounded,
   ),
@@ -629,8 +1020,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _ecoGreenColorScheme,
     fontPair: _natureFreshFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 6,
+    layouts: _ecoGreenLayouts,
+    slideCount: 5,
     icon: Icons.eco_rounded,
   ),
   DesignTemplate(
@@ -642,8 +1033,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _luxuryFashionColorScheme,
     fontPair: _darkEleganceFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 6,
+    layouts: _luxuryFashionLayouts,
+    slideCount: 4,
     icon: Icons.style_rounded,
   ),
   DesignTemplate(
@@ -655,7 +1046,7 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _spaceExplorationColorScheme,
     fontPair: _techMinimalFontPair,
-    layouts: _defaultLayouts,
+    layouts: _spaceExplorationLayouts,
     slideCount: 6,
     icon: Icons.rocket_launch_rounded,
   ),
@@ -668,8 +1059,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _foodBeverageColorScheme,
     fontPair: _creativeAgencyFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 6,
+    layouts: _foodBeverageLayouts,
+    slideCount: 5,
     icon: Icons.restaurant_rounded,
   ),
   DesignTemplate(
@@ -681,8 +1072,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _architecturePortfolioColorScheme,
     fontPair: _cleanAcademicFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 6,
+    layouts: _architecturePortfolioLayouts,
+    slideCount: 5,
     icon: Icons.architecture_rounded,
   ),
   DesignTemplate(
@@ -694,8 +1085,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _sportsMotivationColorScheme,
     fontPair: _urbanStreetFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 6,
+    layouts: _sportsMotivationLayouts,
+    slideCount: 4,
     icon: Icons.sports_soccer_rounded,
   ),
   DesignTemplate(
@@ -707,8 +1098,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _travelAdventureColorScheme,
     fontPair: _natureFreshFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 6,
+    layouts: _travelAdventureLayouts,
+    slideCount: 5,
     icon: Icons.flight_rounded,
   ),
   DesignTemplate(
@@ -720,8 +1111,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _artGalleryColorScheme,
     fontPair: _pastelDreamFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 6,
+    layouts: _artGalleryLayouts,
+    slideCount: 4,
     icon: Icons.museum_rounded,
   ),
   DesignTemplate(
@@ -733,8 +1124,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _scienceResearchColorScheme,
     fontPair: _cleanAcademicFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 6,
+    layouts: _scienceResearchLayouts,
+    slideCount: 5,
     icon: Icons.biotech_rounded,
   ),
   DesignTemplate(
@@ -746,7 +1137,7 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _startupPitchColorScheme,
     fontPair: _techMinimalFontPair,
-    layouts: _defaultLayouts,
+    layouts: _startupPitchLayouts,
     slideCount: 6,
     icon: Icons.rocket_launch_rounded,
   ),
@@ -759,8 +1150,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _legalLawColorScheme,
     fontPair: _cleanAcademicFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 6,
+    layouts: _legalLawLayouts,
+    slideCount: 5,
     icon: Icons.gavel_rounded,
   ),
   DesignTemplate(
@@ -772,8 +1163,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _musicFestivalColorScheme,
     fontPair: _partyEventFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 6,
+    layouts: _musicFestivalLayouts,
+    slideCount: 5,
     icon: Icons.music_note_rounded,
   ),
   DesignTemplate(
@@ -785,8 +1176,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _realEstateColorScheme,
     fontPair: _cleanAcademicFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 6,
+    layouts: _realEstateLayouts,
+    slideCount: 5,
     icon: Icons.home_work_rounded,
   ),
   DesignTemplate(
@@ -798,8 +1189,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _fitnessWellnessColorScheme,
     fontPair: _natureFreshFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 6,
+    layouts: _fitnessWellnessLayouts,
+    slideCount: 5,
     icon: Icons.fitness_center_rounded,
   ),
   DesignTemplate(
@@ -811,8 +1202,8 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _charityColorScheme,
     fontPair: _pastelDreamFontPair,
-    layouts: _defaultLayouts,
-    slideCount: 6,
+    layouts: _charityLayouts,
+    slideCount: 4,
     icon: Icons.favorite_rounded,
   ),
 ];
