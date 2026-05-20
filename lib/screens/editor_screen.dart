@@ -136,6 +136,17 @@ class SlideChart {
     this.height = 150,
     this.data = const [],
   });
+  SlideChart copyWith({double? x, double? y, double? width, double? height, List<Map<String, dynamic>>? data}) {
+    return SlideChart(
+      id: id,
+      type: type,
+      x: x ?? this.x,
+      y: y ?? this.y,
+      width: width ?? this.width,
+      height: height ?? this.height,
+      data: data ?? this.data,
+    );
+  }
 }
 
 class SlideTemplate {
@@ -211,6 +222,14 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
   final _scrollCtrl = ScrollController();
   DesignTemplate? _appliedTemplate;
   String? _templateBackgroundImage;
+  
+  // Для ресайза фигур и графиков
+  String? _selectedResizeItemId;
+  String? _selectedResizeItemType; // 'shape' или 'chart'
+  double _startWidth = 0;
+  double _startHeight = 0;
+  double _startX = 0;
+  double _startY = 0;
 
   final List<Map<String, dynamic>> _freeBgs = [
     {'type': 'solid', 'color': const Color(0xFF1A1A1A), 'label': 'Тёмный', 'premium': false},
@@ -278,7 +297,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     _imageWidths = List.filled(len, 0.28);
     _imageHeights = List.filled(len, 0.55);
     _imagePositions = List.filled(len, 'right');
-    _imageTextWrap = List.filled(len, 'around');
+    _imageTextWrap = List.filled(len, 'top'); // только сверху или снизу
     _initControllers();
     _loadAutoImages();
     _countUploads();
@@ -313,6 +332,12 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
       });
     } catch (e) {
       print('Ошибка загрузки фона: $e');
+      // Пробуем использовать NetworkImage
+      setState(() {
+        for (int i = 0; i < _customBgs.length; i++) {
+          _customBgs[i] = previewUrl;
+        }
+      });
     }
   }
 
@@ -321,43 +346,20 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
       _appliedTemplate = template;
       final cs = template.colorScheme;
       
+      // 1. Применяем цвета текста и шрифт ко всем слайдам
       _globalFontColor = cs.textPrimary;
       _globalFont = template.fontPair.body;
       
+      // 2. Применяем фон из картинки превью ко ВСЕМ существующим слайдам
       _applyTemplateBackground(template.previewUrl);
       
-      final newSlides = <Slide>[];
-      for (final layout in template.layouts) {
-        newSlides.add(Slide(
-          title: layout.sampleTitle,
-          content: List.from(layout.sampleContent),
-        ));
+      // 3. Применяем шрифты и цвета ко всем существующим слайдам (текст пользователя не трогаем)
+      for (int i = 0; i < _presentation.slides.length; i++) {
+        _slideFontColors[i] = cs.textPrimary;
+        _fonts[i] = template.fontPair.body;
       }
       
-      _presentation.slides.clear();
-      _presentation.slides.addAll(newSlides);
-      
-      _initControllers();
-      
-      final newLen = _presentation.slides.length;
-      _customImages = List.filled(newLen, null);
-      _customBgs = List.filled(newLen, _templateBackgroundImage);
-      _fontSizes = List.filled(newLen, 16.0);
-      _fonts = List.filled(newLen, template.fontPair.body);
-      _slideFontColors = List.filled(newLen, cs.textPrimary);
-      _transitions = List.filled(newLen, 'fade');
-      _shapes = List.generate(newLen, (_) => []);
-      _charts = List.generate(newLen, (_) => []);
-      _imageWidths = List.filled(newLen, 0.28);
-      _imageHeights = List.filled(newLen, 0.55);
-      _imagePositions = List.filled(newLen, 'right');
-      _imageTextWrap = List.filled(newLen, 'around');
-      
-      _activeSlide = 0;
-      _columnsCount = 1;
-      _currentTextStyle = 'body';
-      _currentTextAlign = 'left';
-      
+      // 4. Сохраняем метаданные
       if (saveToPresentation) {
         _presentation.metadata = {
           'templateId': template.id,
@@ -366,7 +368,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
         };
       }
     });
-    _toast('Шаблон "${template.name}" применён', success: true);
+    _toast('Шаблон "${template.name}" применён (фон, цвета и шрифты обновлены)', success: true);
   }
 
   void _openTemplateLibrary() async {
@@ -408,7 +410,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
       _imageWidths.insert(idx, 0.28);
       _imageHeights.insert(idx, 0.55);
       _imagePositions.insert(idx, 'right');
-      _imageTextWrap.insert(idx, 'around');
+      _imageTextWrap.insert(idx, 'top');
       _activeSlide = idx;
     });
   }
@@ -505,6 +507,26 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     });
   }
   
+  void _resizeShape(String id, double deltaWidth, double deltaHeight) {
+    setState(() {
+      final shapeIndex = _shapes[_activeSlide].indexWhere((s) => s.id == id);
+      if (shapeIndex != -1) {
+        final shape = _shapes[_activeSlide][shapeIndex];
+        shape.width = (shape.width + deltaWidth).clamp(20.0, 300.0);
+        shape.height = (shape.height + deltaHeight).clamp(20.0, 300.0);
+      }
+    });
+  }
+  
+  void _startResize(String id, String type, double startWidth, double startHeight, double startX, double startY) {
+    _selectedResizeItemId = id;
+    _selectedResizeItemType = type;
+    _startWidth = startWidth;
+    _startHeight = startHeight;
+    _startX = startX;
+    _startY = startY;
+  }
+  
   void _removeShape(String id) => setState(() => _shapes[_activeSlide].removeWhere((s) => s.id == id));
   
   void _addChart(String type) {
@@ -536,7 +558,27 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     });
   }
   
+  void _resizeChart(String id, double deltaWidth, double deltaHeight) {
+    setState(() {
+      final chartIndex = _charts[_activeSlide].indexWhere((c) => c.id == id);
+      if (chartIndex != -1) {
+        final chart = _charts[_activeSlide][chartIndex];
+        chart.width = (chart.width + deltaWidth).clamp(100.0, 500.0);
+        chart.height = (chart.height + deltaHeight).clamp(80.0, 400.0);
+      }
+    });
+  }
+  
   void _removeChart(String id) => setState(() => _charts[_activeSlide].removeWhere((c) => c.id == id));
+  
+  void _updateChartData(String id, List<Map<String, dynamic>> data) {
+    setState(() {
+      final chartIndex = _charts[_activeSlide].indexWhere((c) => c.id == id);
+      if (chartIndex != -1) {
+        _charts[_activeSlide][chartIndex].data = data;
+      }
+    });
+  }
   
   void _updateImageWidth(double w) => setState(() => _imageWidths[_activeSlide] = w);
   void _updateImageHeight(double h) => setState(() => _imageHeights[_activeSlide] = h);
@@ -602,7 +644,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
             _imageWidths.insert(idx, 0.28);
             _imageHeights.insert(idx, 0.55);
             _imagePositions.insert(idx, 'right');
-            _imageTextWrap.insert(idx, 'around');
+            _imageTextWrap.insert(idx, 'top');
             _activeSlide = idx;
           });
         },
@@ -778,11 +820,16 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
                 imageWidth: _imageWidths[_activeSlide] ?? 0.28,
                 imageHeight: _imageHeights[_activeSlide] ?? 0.55,
                 imagePosition: _imagePositions[_activeSlide] ?? 'right',
-                imageTextWrap: _imageTextWrap[_activeSlide] ?? 'around',
+                imageTextWrap: _imageTextWrap[_activeSlide] ?? 'top',
                 onAddItem: () => _addContentItem(_activeSlide),
                 onRemoveItem: (i) => _removeContentItem(_activeSlide, i),
                 onShapeDrag: _updateShapePosition,
+                onShapeResize: _resizeShape,
                 onChartDrag: _updateChartPosition,
+                onChartResize: _resizeChart,
+                onChartDataChange: _updateChartData,
+                onStartResize: _startResize,
+                selectedResizeId: _selectedResizeItemId,
               ),
             ),
             const _ThinDivider(direction: Axis.vertical),
@@ -1081,9 +1128,14 @@ class _Canvas extends StatelessWidget {
   final ValueChanged<int> onRemoveItem;
   final bool hasCustomImage;
   final Function(String, double, double) onShapeDrag;
+  final Function(String, double, double) onShapeResize;
   final Function(String, double, double) onChartDrag;
+  final Function(String, double, double) onChartResize;
+  final Function(String, List<Map<String, dynamic>>) onChartDataChange;
+  final Function(String, String, double, double, double, double) onStartResize;
+  final String? selectedResizeId;
   
-  const _Canvas({super.key, required this.index, required this.titleCtrl, required this.contentCtrl, required this.decoration, required this.font, required this.fontSize, required this.fontColor, required this.slideCount, required this.textStyle, required this.textAlign, required this.columnsCount, this.image, required this.shapes, required this.charts, required this.imageWidth, required this.imageHeight, required this.imagePosition, required this.imageTextWrap, required this.onAddItem, required this.onRemoveItem, required this.onRemoveImage, required this.hasCustomImage, required this.onShapeDrag, required this.onChartDrag});
+  const _Canvas({super.key, required this.index, required this.titleCtrl, required this.contentCtrl, required this.decoration, required this.font, required this.fontSize, required this.fontColor, required this.slideCount, required this.textStyle, required this.textAlign, required this.columnsCount, this.image, required this.shapes, required this.charts, required this.imageWidth, required this.imageHeight, required this.imagePosition, required this.imageTextWrap, required this.onAddItem, required this.onRemoveItem, required this.onRemoveImage, required this.hasCustomImage, required this.onShapeDrag, required this.onShapeResize, required this.onChartDrag, required this.onChartResize, required this.onChartDataChange, required this.onStartResize, this.selectedResizeId});
   
   @override
   Widget build(BuildContext context) {
@@ -1106,33 +1158,98 @@ class _Canvas extends StatelessWidget {
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
+                      // Фигуры с возможностью ресайза
                       ...shapes.map((s) => Positioned(
                         left: s.x.clamp(0.0, width - s.width),
                         top: s.y.clamp(0.0, height - s.height),
-                        child: GestureDetector(
-                          onPanUpdate: (details) {
-                            onShapeDrag(s.id, details.delta.dx, details.delta.dy);
-                          },
-                          child: _buildShape(s),
+                        child: Stack(
+                          children: [
+                            GestureDetector(
+                              onPanUpdate: (details) {
+                                onShapeDrag(s.id, details.delta.dx, details.delta.dy);
+                              },
+                              child: _buildShape(s),
+                            ),
+                            // Уголок для ресайза
+                            Positioned(
+                              right: -4,
+                              bottom: -4,
+                              child: GestureDetector(
+                                onPanUpdate: (details) {
+                                  onShapeResize(s.id, details.delta.dx, details.delta.dy);
+                                },
+                                child: Container(
+                                  width: 12,
+                                  height: 12,
+                                  decoration: BoxDecoration(
+                                    color: _T.accent,
+                                    borderRadius: BorderRadius.circular(2),
+                                    border: Border.all(color: Colors.white, width: 1),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       )),
+                      // Графики с возможностью ресайза
                       ...charts.map((c) => Positioned(
                         left: c.x.clamp(0.0, width - c.width),
                         top: c.y.clamp(0.0, height - c.height),
-                        child: GestureDetector(
-                          onPanUpdate: (details) {
-                            onChartDrag(c.id, details.delta.dx, details.delta.dy);
-                          },
-                          child: Container(
-                            width: c.width,
-                            height: c.height,
-                            decoration: BoxDecoration(
-                              color: _T.bgCard.withOpacity(0.8),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: _T.accent.withOpacity(0.3)),
+                        child: Stack(
+                          children: [
+                            GestureDetector(
+                              onPanUpdate: (details) {
+                                onChartDrag(c.id, details.delta.dx, details.delta.dy);
+                              },
+                              child: Container(
+                                width: c.width,
+                                height: c.height,
+                                decoration: BoxDecoration(
+                                  color: _T.bgCard.withOpacity(0.8),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: _T.accent.withOpacity(0.3)),
+                                ),
+                                child: _buildChartWidget(c),
+                              ),
                             ),
-                            child: _buildChartWidget(c),
-                          ),
+                            // Уголок для ресайза
+                            Positioned(
+                              right: -4,
+                              bottom: -4,
+                              child: GestureDetector(
+                                onPanUpdate: (details) {
+                                  onChartResize(c.id, details.delta.dx, details.delta.dy);
+                                },
+                                child: Container(
+                                  width: 12,
+                                  height: 12,
+                                  decoration: BoxDecoration(
+                                    color: _T.accent,
+                                    borderRadius: BorderRadius.circular(2),
+                                    border: Border.all(color: Colors.white, width: 1),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Кнопка редактирования данных
+                            Positioned(
+                              top: -4,
+                              right: -4,
+                              child: GestureDetector(
+                                onTap: () => _showChartDataDialog(context, c),
+                                child: Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    color: _T.accent,
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Icon(Icons.edit, color: Colors.white, size: 12),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       )),
                       Positioned(top: 10, left: 12, child: Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Colors.black.withOpacity(0.3), borderRadius: BorderRadius.circular(4)), child: Text('${index + 1}', style: const TextStyle(color: Colors.white54, fontSize: 9, fontWeight: FontWeight.w700)))),
@@ -1147,6 +1264,67 @@ class _Canvas extends StatelessWidget {
             _buildContentEditor(MediaQuery.of(context).size.width),
           ]),
         ),
+      ),
+    );
+  }
+  
+  void _showChartDataDialog(BuildContext context, SlideChart chart) {
+    final controllers = <TextEditingController>[];
+    for (var i = 0; i < chart.data.length; i++) {
+      controllers.add(TextEditingController(text: chart.data[i]['value'].toString()));
+    }
+    
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: _T.bgSurface,
+        title: const Text('Редактировать данные графика', style: TextStyle(color: _T.txtPrimary)),
+        content: SizedBox(
+          width: 300,
+          height: 300,
+          child: ListView.builder(
+            itemCount: chart.data.length,
+            itemBuilder: (_, i) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(children: [
+                SizedBox(
+                  width: 80,
+                  child: Text(chart.data[i]['label'], style: const TextStyle(color: _T.txtPrimary)),
+                ),
+                Expanded(
+                  child: TextField(
+                    controller: controllers[i],
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(color: _T.txtPrimary),
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: _T.bgCard,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+              ]),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Отмена', style: TextStyle(color: _T.txtSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final newData = List<Map<String, dynamic>>.from(chart.data);
+              for (var i = 0; i < newData.length; i++) {
+                newData[i]['value'] = double.tryParse(controllers[i].text) ?? 0;
+              }
+              onChartDataChange(chart.id, newData);
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: _T.accent),
+            child: const Text('Сохранить', style: TextStyle(color: Colors.white)),
+          ),
+        ],
       ),
     );
   }
@@ -1272,26 +1450,14 @@ class _Canvas extends StatelessWidget {
       ]),
     );
     
-    if (imageTextWrap == 'around') {
-      return Wrap(
-        spacing: 18,
-        runSpacing: 10,
-        crossAxisAlignment: WrapCrossAlignment.start,
-        children: imagePosition == 'left' 
-            ? [img, SizedBox(width: 18, child: textCol)]
-            : [SizedBox(width: 18, child: textCol), img],
-      );
-    }
-    
-    switch (imagePosition) {
-      case 'left':
-        return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [img, const SizedBox(width: 18), Expanded(child: textCol)]);
+    // Только два варианта: сверху или снизу (убрали "вокруг")
+    switch (imageTextWrap) {
       case 'top':
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [img, const SizedBox(height: 18), textCol]);
       case 'bottom':
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [textCol, const SizedBox(height: 18), img]);
       default:
-        return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(child: textCol), const SizedBox(width: 18), img]);
+        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [img, const SizedBox(height: 18), textCol]);
     }
   }
   
@@ -1591,7 +1757,7 @@ class _PropertiesPanel extends StatelessWidget {
         _PropSection('ВЫСОТА', child: _SliderRow(value: imageHeight ?? 0.55, min: 0.1, max: 0.8, label: '${((imageHeight ?? 0.55) * 100).round()}%', onChanged: onImageHeightChange)),
         const SizedBox(height: 12),
         _PropSection('ПОЗИЦИЯ', child: Row(children: [
-          for (final pair in [('left', Icons.format_align_left_rounded), ('right', Icons.format_align_right_rounded), ('top', Icons.vertical_align_top_rounded), ('bottom', Icons.vertical_align_bottom_rounded)])
+          for (final pair in [('left', Icons.format_align_left_rounded), ('right', Icons.format_align_right_rounded)])
             Expanded(child: GestureDetector(
               onTap: () => onImagePositionChange(pair.$1),
               child: AnimatedContainer(
@@ -1608,8 +1774,8 @@ class _PropertiesPanel extends StatelessWidget {
             )),
         ])),
         const SizedBox(height: 12),
-        _PropSection('ОБТЕКАНИЕ', child: Row(children: [
-          for (final entry in {'around': 'Вокруг', 'top': 'Сверху', 'bottom': 'Снизу'}.entries)
+        _PropSection('РАСПОЛОЖЕНИЕ ОТНОСИТЕЛЬНО ТЕКСТА', child: Row(children: [
+          for (final entry in {'top': 'Сверху', 'bottom': 'Снизу'}.entries)
             Expanded(child: GestureDetector(
               onTap: () => onImageTextWrapChange(entry.key),
               child: AnimatedContainer(
