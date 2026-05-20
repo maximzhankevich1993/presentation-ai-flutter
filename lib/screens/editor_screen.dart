@@ -195,7 +195,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
   final _scrollCtrl = ScrollController();
   DesignTemplate? _appliedTemplate;
 
-  // Расширенные фоны (10 бесплатных + 10 платных)
   final List<Map<String, dynamic>> _freeBgs = [
     {'type': 'solid', 'color': const Color(0xFF1A1A1A), 'label': 'Тёмный', 'premium': false},
     {'type': 'solid', 'color': Colors.white, 'label': 'Белый', 'premium': false},
@@ -219,7 +218,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     {'type': 'gradient', 'colors': [const Color(0xFF0B8793), const Color(0xFF360033)], 'label': 'Тёмный', 'premium': true},
   ];
 
-  // Расширенные переходы (3 бесплатных + 5 платных)
   final List<Map<String, dynamic>> _allTransitions = [
     {'id': 'none', 'label': 'Нет', 'premium': false},
     {'id': 'fade', 'label': 'Затухание', 'premium': false},
@@ -319,11 +317,14 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     _toast('Шаблон "${template.name}" применён', success: true);
   }
 
-  void _openTemplateLibrary() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const TemplateSelectorScreen())).then((_) {
-      _loadAppliedTemplate();
-      setState(() {});
-    });
+  void _openTemplateLibrary() async {
+    final DesignTemplate? selectedTemplate = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const TemplateSelectorScreen()),
+    );
+    if (selectedTemplate != null) {
+      _applyDesignTemplate(selectedTemplate, saveToPresentation: true);
+    }
   }
 
   void _saveAll() {
@@ -446,14 +447,12 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     setState(() {
       _currentTextStyle = style;
     });
-    _toast('Стиль текста: ${_textStyles[style]?.name}', success: true);
   }
 
   void _applyTextAlignToCurrentSlide(String align) {
     setState(() {
       _currentTextAlign = align;
     });
-    _toast('Выравнивание: ${align == 'left' ? 'по левому краю' : align == 'center' ? 'по центру' : 'по правому краю'}', success: true);
   }
 
   void _applyFontToCurrentSlide(String font) {
@@ -461,14 +460,12 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
       _globalFont = font;
       _fonts[_activeSlide] = font;
     });
-    _toast('Шрифт: $font', success: true);
   }
 
   void _applyFontSizeToCurrentSlide(double size) {
     setState(() {
       _fontSizes[_activeSlide] = size;
     });
-    _toast('Размер шрифта: ${size.round()}px', success: true);
   }
 
   static Slide _buildCoverLeft() => Slide(title: 'Заголовок', content: ['Подзаголовок']);
@@ -1042,31 +1039,31 @@ class _Canvas extends StatelessWidget {
     }
   }
   Widget _buildColumns() {
-  return Row(
-    children: List.generate(columnsCount, (c) => Expanded(
-      child: Padding(
-        padding: EdgeInsets.only(right: c < columnsCount - 1 ? 12 : 0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (c == 0 && titleCtrl.text.isNotEmpty) 
-              _buildText(titleCtrl, true),
-            const SizedBox(height: 8),
-            ...List.generate(2, (i) {
-              final idx = c * 2 + i;
-              return idx < contentCtrl.length 
-                ? Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: _buildText(contentCtrl[idx], false),
-                  )
-                : const SizedBox.shrink();
-            }),
-          ],
+    return Row(
+      children: List.generate(columnsCount, (c) => Expanded(
+        child: Padding(
+          padding: EdgeInsets.only(right: c < columnsCount - 1 ? 12 : 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (c == 0 && titleCtrl.text.isNotEmpty) 
+                _buildText(titleCtrl, true),
+              const SizedBox(height: 8),
+              ...List.generate(2, (i) {
+                final idx = c * 2 + i;
+                return idx < contentCtrl.length 
+                  ? Padding(
+                      padding: const EdgeInsets.only(bottom: 6),
+                      child: _buildText(contentCtrl[idx], false),
+                    )
+                  : const SizedBox.shrink();
+              }),
+            ],
+          ),
         ),
-      ),
-    )),
-  );
-}
+      )),
+    );
+  }
   Widget _buildChart(double w, double h) {
     if (chartData.isEmpty) {
       return Center(child: Container(width: w * 0.55, height: h * 0.55, decoration: BoxDecoration(color: _T.bgCard, borderRadius: _T.r12, border: Border.all(color: _T.border)), child: const Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.show_chart_rounded, color: _T.txtMuted, size: 40), SizedBox(height: 10), Text('Добавьте данные', style: TextStyle(color: _T.txtMuted, fontSize: 13))])));
