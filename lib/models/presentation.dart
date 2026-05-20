@@ -6,6 +6,7 @@ class Presentation {
   String? fontPair;
   String? themeId;
   String transitionType;
+  Map<String, dynamic>? metadata;  // ← ДОБАВЛЕНО
 
   Presentation({
     required this.id,
@@ -15,6 +16,7 @@ class Presentation {
     this.fontPair,
     this.themeId,
     this.transitionType = 'fade',
+    this.metadata,  // ← ДОБАВЛЕНО
   });
 
   factory Presentation.fromJson(Map<String, dynamic> json) {
@@ -34,6 +36,9 @@ class Presentation {
       fontPair: json['fontPair']?.toString(),
       themeId: json['themeId']?.toString(),
       transitionType: json['transitionType']?.toString() ?? 'fade',
+      metadata: json['metadata'] is Map<String, dynamic>
+          ? json['metadata']
+          : null,  // ← ДОБАВЛЕНО
     );
   }
 
@@ -45,6 +50,7 @@ class Presentation {
         'fontPair': fontPair,
         'themeId': themeId,
         'transitionType': transitionType,
+        'metadata': metadata,  // ← ДОБАВЛЕНО
       };
 }
 
