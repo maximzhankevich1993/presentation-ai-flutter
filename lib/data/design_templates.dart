@@ -5,8 +5,7 @@ import '../models/design_template.dart';
 // 10 БЕСПЛАТНЫХ ДИЗАЙНЕРСКИХ ШАБЛОНОВ
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// 1. Women Business (профессиональный, женский)
-const _womenBusinessColorScheme = ColorScheme(
+const _womenBusinessColorScheme = TemplateColorScheme(
   background: Color(0xFFF7F5F0),
   surface: Color(0xFFFFFFFF),
   primary: Color(0xFF8B5F5C),
@@ -23,16 +22,7 @@ const _womenBusinessFontPair = FontPair(
   accent: 'Montserrat',
 );
 
-const _womenBusinessLayouts = [
-  SlideLayout(id: 'title', name: 'Титульный', type: 'title', decorations: []),
-  SlideLayout(id: 'content', name: 'Содержание', type: 'content', decorations: []),
-  SlideLayout(id: 'two_columns', name: 'Две колонки', type: 'two_columns', decorations: []),
-  SlideLayout(id: 'quote', name: 'Цитата', type: 'quote', decorations: []),
-  SlideLayout(id: 'thanks', name: 'Спасибо', type: 'thanks', decorations: []),
-];
-
-// 2. Tech Minimal (технологичный, минималистичный)
-const _techMinimalColorScheme = ColorScheme(
+const _techMinimalColorScheme = TemplateColorScheme(
   background: Color(0xFF0A0E27),
   surface: Color(0xFF1A1F3A),
   primary: Color(0xFF3B82F6),
@@ -49,16 +39,7 @@ const _techMinimalFontPair = FontPair(
   accent: 'JetBrains Mono',
 );
 
-const _techMinimalLayouts = [
-  SlideLayout(id: 'title', name: 'Титульный', type: 'title', decorations: []),
-  SlideLayout(id: 'content', name: 'Содержание', type: 'content', decorations: []),
-  SlideLayout(id: 'stats', name: 'Статистика', type: 'stats', decorations: []),
-  SlideLayout(id: 'timeline', name: 'Таймлайн', type: 'timeline', decorations: []),
-  SlideLayout(id: 'thanks', name: 'Спасибо', type: 'thanks', decorations: []),
-];
-
-// 3. Party Event (праздничный, яркий)
-const _partyEventColorScheme = ColorScheme(
+const _partyEventColorScheme = TemplateColorScheme(
   background: Color(0xFF1A0B2E),
   surface: Color(0xFF2D1B4E),
   primary: Color(0xFFEAB308),
@@ -75,16 +56,7 @@ const _partyEventFontPair = FontPair(
   accent: 'Montserrat',
 );
 
-const _partyEventLayouts = [
-  SlideLayout(id: 'title', name: 'Титульный', type: 'title', decorations: []),
-  SlideLayout(id: 'content', name: 'Содержание', type: 'content', decorations: []),
-  SlideLayout(id: 'image_text', name: 'Изображение + текст', type: 'image_text', decorations: []),
-  SlideLayout(id: 'quote', name: 'Цитата', type: 'quote', decorations: []),
-  SlideLayout(id: 'thanks', name: 'Спасибо', type: 'thanks', decorations: []),
-];
-
-// 4. Clean Academic (академический, чистый)
-const _cleanAcademicColorScheme = ColorScheme(
+const _cleanAcademicColorScheme = TemplateColorScheme(
   background: Color(0xFFF8FAFC),
   surface: Color(0xFFFFFFFF),
   primary: Color(0xFF1E40AF),
@@ -101,16 +73,7 @@ const _cleanAcademicFontPair = FontPair(
   accent: 'Lato',
 );
 
-const _cleanAcademicLayouts = [
-  SlideLayout(id: 'title', name: 'Титульный', type: 'title', decorations: []),
-  SlideLayout(id: 'content', name: 'Содержание', type: 'content', decorations: []),
-  SlideLayout(id: 'two_columns', name: 'Две колонки', type: 'two_columns', decorations: []),
-  SlideLayout(id: 'quote', name: 'Цитата', type: 'quote', decorations: []),
-  SlideLayout(id: 'thanks', name: 'Спасибо', type: 'thanks', decorations: []),
-];
-
-// 5. Nature Fresh (природный, свежий)
-const _natureFreshColorScheme = ColorScheme(
+const _natureFreshColorScheme = TemplateColorScheme(
   background: Color(0xFFF0FDF4),
   surface: Color(0xFFFFFFFF),
   primary: Color(0xFF166534),
@@ -127,16 +90,7 @@ const _natureFreshFontPair = FontPair(
   accent: 'Montserrat',
 );
 
-const _natureFreshLayouts = [
-  SlideLayout(id: 'title', name: 'Титульный', type: 'title', decorations: []),
-  SlideLayout(id: 'content', name: 'Содержание', type: 'content', decorations: []),
-  SlideLayout(id: 'image_text', name: 'Изображение + текст', type: 'image_text', decorations: []),
-  SlideLayout(id: 'stats', name: 'Статистика', type: 'stats', decorations: []),
-  SlideLayout(id: 'thanks', name: 'Спасибо', type: 'thanks', decorations: []),
-];
-
-// 6. Dark Elegance (тёмный, элегантный)
-const _darkEleganceColorScheme = ColorScheme(
+const _darkEleganceColorScheme = TemplateColorScheme(
   background: Color(0xFF0F0F0F),
   surface: Color(0xFF1C1C1C),
   primary: Color(0xFFD4AF37),
@@ -153,16 +107,7 @@ const _darkEleganceFontPair = FontPair(
   accent: 'Montserrat',
 );
 
-const _darkEleganceLayouts = [
-  SlideLayout(id: 'title', name: 'Титульный', type: 'title', decorations: []),
-  SlideLayout(id: 'content', name: 'Содержание', type: 'content', decorations: []),
-  SlideLayout(id: 'quote', name: 'Цитата', type: 'quote', decorations: []),
-  SlideLayout(id: 'timeline', name: 'Таймлайн', type: 'timeline', decorations: []),
-  SlideLayout(id: 'thanks', name: 'Спасибо', type: 'thanks', decorations: []),
-];
-
-// 7. Pastel Dream (пастельный, мягкий)
-const _pastelDreamColorScheme = ColorScheme(
+const _pastelDreamColorScheme = TemplateColorScheme(
   background: Color(0xFFFDF4F5),
   surface: Color(0xFFFFFFFF),
   primary: Color(0xFFF472B6),
@@ -179,16 +124,7 @@ const _pastelDreamFontPair = FontPair(
   accent: 'Nunito',
 );
 
-const _pastelDreamLayouts = [
-  SlideLayout(id: 'title', name: 'Титульный', type: 'title', decorations: []),
-  SlideLayout(id: 'content', name: 'Содержание', type: 'content', decorations: []),
-  SlideLayout(id: 'image_text', name: 'Изображение + текст', type: 'image_text', decorations: []),
-  SlideLayout(id: 'quote', name: 'Цитата', type: 'quote', decorations: []),
-  SlideLayout(id: 'thanks', name: 'Спасибо', type: 'thanks', decorations: []),
-];
-
-// 8. Urban Street (урбанистический, смелый)
-const _urbanStreetColorScheme = ColorScheme(
+const _urbanStreetColorScheme = TemplateColorScheme(
   background: Color(0xFF1A1A1A),
   surface: Color(0xFF2A2A2A),
   primary: Color(0xFFEF4444),
@@ -205,16 +141,7 @@ const _urbanStreetFontPair = FontPair(
   accent: 'Montserrat',
 );
 
-const _urbanStreetLayouts = [
-  SlideLayout(id: 'title', name: 'Титульный', type: 'title', decorations: []),
-  SlideLayout(id: 'content', name: 'Содержание', type: 'content', decorations: []),
-  SlideLayout(id: 'stats', name: 'Статистика', type: 'stats', decorations: []),
-  SlideLayout(id: 'two_columns', name: 'Две колонки', type: 'two_columns', decorations: []),
-  SlideLayout(id: 'thanks', name: 'Спасибо', type: 'thanks', decorations: []),
-];
-
-// 9. Medical Clean (медицинский, чистый)
-const _medicalCleanColorScheme = ColorScheme(
+const _medicalCleanColorScheme = TemplateColorScheme(
   background: Color(0xFFF0F9FF),
   surface: Color(0xFFFFFFFF),
   primary: Color(0xFF0284C7),
@@ -231,16 +158,7 @@ const _medicalCleanFontPair = FontPair(
   accent: 'Open Sans',
 );
 
-const _medicalCleanLayouts = [
-  SlideLayout(id: 'title', name: 'Титульный', type: 'title', decorations: []),
-  SlideLayout(id: 'content', name: 'Содержание', type: 'content', decorations: []),
-  SlideLayout(id: 'stats', name: 'Статистика', type: 'stats', decorations: []),
-  SlideLayout(id: 'two_columns', name: 'Две колонки', type: 'two_columns', decorations: []),
-  SlideLayout(id: 'thanks', name: 'Спасибо', type: 'thanks', decorations: []),
-];
-
-// 10. Creative Agency (креативный, агентский)
-const _creativeAgencyColorScheme = ColorScheme(
+const _creativeAgencyColorScheme = TemplateColorScheme(
   background: Color(0xFFFFFDF5),
   surface: Color(0xFFFFFFFF),
   primary: Color(0xFF8B5CF6),
@@ -257,20 +175,11 @@ const _creativeAgencyFontPair = FontPair(
   accent: 'Poppins',
 );
 
-const _creativeAgencyLayouts = [
-  SlideLayout(id: 'title', name: 'Титульный', type: 'title', decorations: []),
-  SlideLayout(id: 'content', name: 'Содержание', type: 'content', decorations: []),
-  SlideLayout(id: 'image_text', name: 'Изображение + текст', type: 'image_text', decorations: []),
-  SlideLayout(id: 'quote', name: 'Цитата', type: 'quote', decorations: []),
-  SlideLayout(id: 'thanks', name: 'Спасибо', type: 'thanks', decorations: []),
-];
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // 20 ПЛАТНЫХ PREMIUM ДИЗАЙНЕРСКИХ ШАБЛОНОВ
 // ═══════════════════════════════════════════════════════════════════════════════
 
-// 11. Live Webinar (технологичный, для вебинаров)
-const _liveWebinarColorScheme = ColorScheme(
+const _liveWebinarColorScheme = TemplateColorScheme(
   background: Color(0xFF0F172A),
   surface: Color(0xFF1E293B),
   primary: Color(0xFF3B82F6),
@@ -287,8 +196,7 @@ const _liveWebinarFontPair = FontPair(
   accent: 'Space Grotesk',
 );
 
-// 12. Corporate Luxury (корпоративный, люкс)
-const _corporateLuxuryColorScheme = ColorScheme(
+const _corporateLuxuryColorScheme = TemplateColorScheme(
   background: Color(0xFF0A0A0A),
   surface: Color(0xFF1A1A1A),
   primary: Color(0xFFD4AF37),
@@ -299,8 +207,7 @@ const _corporateLuxuryColorScheme = ColorScheme(
   gradient: [Color(0xFF0A0A0A), Color(0xFF1A1A1A), Color(0xFF2D2D2D)],
 );
 
-// 13. Modern Gradient (современный градиент)
-const _modernGradientColorScheme = ColorScheme(
+const _modernGradientColorScheme = TemplateColorScheme(
   background: Color(0xFF4F46E5),
   surface: Color(0xFF6366F1),
   primary: Color(0xFF22D3EE),
@@ -311,8 +218,7 @@ const _modernGradientColorScheme = ColorScheme(
   gradient: [Color(0xFF4F46E5), Color(0xFF7C3AED), Color(0xFF22D3EE)],
 );
 
-// 14. Bauhaus Style (Баухаус)
-const _bauhausStyleColorScheme = ColorScheme(
+const _bauhausStyleColorScheme = TemplateColorScheme(
   background: Color(0xFFFFF5E6),
   surface: Color(0xFFFFFFFF),
   primary: Color(0xFFE53935),
@@ -323,8 +229,7 @@ const _bauhausStyleColorScheme = ColorScheme(
   gradient: [Color(0xFFFFF5E6), Color(0xFFFFF0D4)],
 );
 
-// 15. Cyber Punk (киберпанк)
-const _cyberPunkColorScheme = ColorScheme(
+const _cyberPunkColorScheme = TemplateColorScheme(
   background: Color(0xFF0D0D0D),
   surface: Color(0xFF1A1A2E),
   primary: Color(0xFF00FF9D),
@@ -335,8 +240,7 @@ const _cyberPunkColorScheme = ColorScheme(
   gradient: [Color(0xFF0D0D0D), Color(0xFF1A1A2E), Color(0xFF2D0A4C)],
 );
 
-// 16. Eco Green (эко, зелёный)
-const _ecoGreenColorScheme = ColorScheme(
+const _ecoGreenColorScheme = TemplateColorScheme(
   background: Color(0xFFF4F9F4),
   surface: Color(0xFFFFFFFF),
   primary: Color(0xFF2E7D32),
@@ -347,8 +251,7 @@ const _ecoGreenColorScheme = ColorScheme(
   gradient: [Color(0xFFF4F9F4), Color(0xFFE8F5E9)],
 );
 
-// 17. Luxury Fashion (люкс, мода)
-const _luxuryFashionColorScheme = ColorScheme(
+const _luxuryFashionColorScheme = TemplateColorScheme(
   background: Color(0xFF1A1A1A),
   surface: Color(0xFF2D2D2D),
   primary: Color(0xFFE91E63),
@@ -359,8 +262,7 @@ const _luxuryFashionColorScheme = ColorScheme(
   gradient: [Color(0xFF1A1A1A), Color(0xFF2D2D2D), Color(0xFF3E2723)],
 );
 
-// 18. Space Exploration (космос)
-const _spaceExplorationColorScheme = ColorScheme(
+const _spaceExplorationColorScheme = TemplateColorScheme(
   background: Color(0xFF0A0E27),
   surface: Color(0xFF1A1F3A),
   primary: Color(0xFF7C3AED),
@@ -371,8 +273,7 @@ const _spaceExplorationColorScheme = ColorScheme(
   gradient: [Color(0xFF0A0E27), Color(0xFF1A1F3A), Color(0xFF3B0764)],
 );
 
-// 19. Food & Beverage (еда и напитки)
-const _foodBeverageColorScheme = ColorScheme(
+const _foodBeverageColorScheme = TemplateColorScheme(
   background: Color(0xFFFFF8F0),
   surface: Color(0xFFFFFFFF),
   primary: Color(0xFFF97316),
@@ -383,8 +284,7 @@ const _foodBeverageColorScheme = ColorScheme(
   gradient: [Color(0xFFFFF8F0), Color(0xFFFFF3E8)],
 );
 
-// 20. Architecture Portfolio (архитектура)
-const _architecturePortfolioColorScheme = ColorScheme(
+const _architecturePortfolioColorScheme = TemplateColorScheme(
   background: Color(0xFFF5F5F0),
   surface: Color(0xFFFFFFFF),
   primary: Color(0xFF374151),
@@ -395,8 +295,7 @@ const _architecturePortfolioColorScheme = ColorScheme(
   gradient: [Color(0xFFF5F5F0), Color(0xFFE5E5E0)],
 );
 
-// 21. Sports Motivation (спорт, мотивация)
-const _sportsMotivationColorScheme = ColorScheme(
+const _sportsMotivationColorScheme = TemplateColorScheme(
   background: Color(0xFF0F172A),
   surface: Color(0xFF1E293B),
   primary: Color(0xFFEF4444),
@@ -407,8 +306,7 @@ const _sportsMotivationColorScheme = ColorScheme(
   gradient: [Color(0xFF0F172A), Color(0xFF1E293B), Color(0xFF7F1D1D)],
 );
 
-// 22. Travel Adventure (путешествия)
-const _travelAdventureColorScheme = ColorScheme(
+const _travelAdventureColorScheme = TemplateColorScheme(
   background: Color(0xFFE8F4F8),
   surface: Color(0xFFFFFFFF),
   primary: Color(0xFF0891B2),
@@ -419,8 +317,7 @@ const _travelAdventureColorScheme = ColorScheme(
   gradient: [Color(0xFFE8F4F8), Color(0xFFD9F1F5)],
 );
 
-// 23. Art Gallery (галерея)
-const _artGalleryColorScheme = ColorScheme(
+const _artGalleryColorScheme = TemplateColorScheme(
   background: Color(0xFFFDFBF7),
   surface: Color(0xFFFFFFFF),
   primary: Color(0xFFD4AF37),
@@ -431,8 +328,7 @@ const _artGalleryColorScheme = ColorScheme(
   gradient: [Color(0xFFFDFBF7), Color(0xFFF5F0E8)],
 );
 
-// 24. Science & Research (наука)
-const _scienceResearchColorScheme = ColorScheme(
+const _scienceResearchColorScheme = TemplateColorScheme(
   background: Color(0xFFE8EAF6),
   surface: Color(0xFFFFFFFF),
   primary: Color(0xFF1E88E5),
@@ -443,8 +339,7 @@ const _scienceResearchColorScheme = ColorScheme(
   gradient: [Color(0xFFE8EAF6), Color(0xFFE3F2FD)],
 );
 
-// 25. Startup Pitch (стартап)
-const _startupPitchColorScheme = ColorScheme(
+const _startupPitchColorScheme = TemplateColorScheme(
   background: Color(0xFFFFFFFF),
   surface: Color(0xFFF8FAFC),
   primary: Color(0xFF10B981),
@@ -455,8 +350,7 @@ const _startupPitchColorScheme = ColorScheme(
   gradient: [Color(0xFFFFFFFF), Color(0xFFF0FDF4)],
 );
 
-// 26. Legal & Law (юридический)
-const _legalLawColorScheme = ColorScheme(
+const _legalLawColorScheme = TemplateColorScheme(
   background: Color(0xFFF5F2EB),
   surface: Color(0xFFFFFFFF),
   primary: Color(0xFF1E3A5F),
@@ -467,8 +361,7 @@ const _legalLawColorScheme = ColorScheme(
   gradient: [Color(0xFFF5F2EB), Color(0xFFEDE8E3)],
 );
 
-// 27. Music Festival (музыкальный фестиваль)
-const _musicFestivalColorScheme = ColorScheme(
+const _musicFestivalColorScheme = TemplateColorScheme(
   background: Color(0xFF1A0B2E),
   surface: Color(0xFF2D1B4E),
   primary: Color(0xFFD946EF),
@@ -479,8 +372,7 @@ const _musicFestivalColorScheme = ColorScheme(
   gradient: [Color(0xFF1A0B2E), Color(0xFF2D1B4E), Color(0xFF701A75)],
 );
 
-// 28. Real Estate (недвижимость)
-const _realEstateColorScheme = ColorScheme(
+const _realEstateColorScheme = TemplateColorScheme(
   background: Color(0xFFF8FAFC),
   surface: Color(0xFFFFFFFF),
   primary: Color(0xFF1E40AF),
@@ -491,8 +383,7 @@ const _realEstateColorScheme = ColorScheme(
   gradient: [Color(0xFFF8FAFC), Color(0xFFEFF6FF)],
 );
 
-// 29. Fitness & Wellness (фитнес)
-const _fitnessWellnessColorScheme = ColorScheme(
+const _fitnessWellnessColorScheme = TemplateColorScheme(
   background: Color(0xFFF0FDF4),
   surface: Color(0xFFFFFFFF),
   primary: Color(0xFF059669),
@@ -503,8 +394,7 @@ const _fitnessWellnessColorScheme = ColorScheme(
   gradient: [Color(0xFFF0FDF4), Color(0xFFDCFCE7)],
 );
 
-// 30. Charity & Non-profit (благотворительность)
-const _charityColorScheme = ColorScheme(
+const _charityColorScheme = TemplateColorScheme(
   background: Color(0xFFFEFCE8),
   surface: Color(0xFFFFFFFF),
   primary: Color(0xFFEAB308),
@@ -516,7 +406,19 @@ const _charityColorScheme = ColorScheme(
 );
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// СПИСОК ВСЕХ 30 ШАБЛОНОВ
+// Layouts
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const _defaultLayouts = [
+  SlideLayout(id: 'title', name: 'Титульный', type: 'title', decorations: []),
+  SlideLayout(id: 'content', name: 'Содержание', type: 'content', decorations: []),
+  SlideLayout(id: 'two_columns', name: 'Две колонки', type: 'two_columns', decorations: []),
+  SlideLayout(id: 'quote', name: 'Цитата', type: 'quote', decorations: []),
+  SlideLayout(id: 'thanks', name: 'Спасибо', type: 'thanks', decorations: []),
+];
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ВСЕ 30 ШАБЛОНОВ
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const List<DesignTemplate> allDesignTemplates = [
@@ -530,7 +432,7 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _womenBusinessColorScheme,
     fontPair: _womenBusinessFontPair,
-    layouts: _womenBusinessLayouts,
+    layouts: _defaultLayouts,
     slideCount: 5,
     icon: Icons.people_rounded,
   ),
@@ -543,7 +445,7 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _techMinimalColorScheme,
     fontPair: _techMinimalFontPair,
-    layouts: _techMinimalLayouts,
+    layouts: _defaultLayouts,
     slideCount: 5,
     icon: Icons.computer_rounded,
   ),
@@ -556,7 +458,7 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _partyEventColorScheme,
     fontPair: _partyEventFontPair,
-    layouts: _partyEventLayouts,
+    layouts: _defaultLayouts,
     slideCount: 5,
     icon: Icons.celebration_rounded,
   ),
@@ -569,7 +471,7 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _cleanAcademicColorScheme,
     fontPair: _cleanAcademicFontPair,
-    layouts: _cleanAcademicLayouts,
+    layouts: _defaultLayouts,
     slideCount: 5,
     icon: Icons.school_rounded,
   ),
@@ -582,7 +484,7 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _natureFreshColorScheme,
     fontPair: _natureFreshFontPair,
-    layouts: _natureFreshLayouts,
+    layouts: _defaultLayouts,
     slideCount: 5,
     icon: Icons.eco_rounded,
   ),
@@ -595,7 +497,7 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _darkEleganceColorScheme,
     fontPair: _darkEleganceFontPair,
-    layouts: _darkEleganceLayouts,
+    layouts: _defaultLayouts,
     slideCount: 5,
     icon: Icons.stars_rounded,
   ),
@@ -608,7 +510,7 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _pastelDreamColorScheme,
     fontPair: _pastelDreamFontPair,
-    layouts: _pastelDreamLayouts,
+    layouts: _defaultLayouts,
     slideCount: 5,
     icon: Icons.palette_rounded,
   ),
@@ -621,7 +523,7 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _urbanStreetColorScheme,
     fontPair: _urbanStreetFontPair,
-    layouts: _urbanStreetLayouts,
+    layouts: _defaultLayouts,
     slideCount: 5,
     icon: Icons.style_rounded,
   ),
@@ -634,7 +536,7 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _medicalCleanColorScheme,
     fontPair: _medicalCleanFontPair,
-    layouts: _medicalCleanLayouts,
+    layouts: _defaultLayouts,
     slideCount: 5,
     icon: Icons.medical_services_rounded,
   ),
@@ -647,12 +549,12 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: false,
     colorScheme: _creativeAgencyColorScheme,
     fontPair: _creativeAgencyFontPair,
-    layouts: _creativeAgencyLayouts,
+    layouts: _defaultLayouts,
     slideCount: 5,
     icon: Icons.brush_rounded,
   ),
 
-  // ПЛАТНЫЕ PREMIUM (20)
+  // ПЛАТНЫЕ PREMIUM (20) - упрощённая версия для быстрой работы
   DesignTemplate(
     id: 'live_webinar',
     name: 'Live Webinar',
@@ -662,7 +564,7 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _liveWebinarColorScheme,
     fontPair: _liveWebinarFontPair,
-    layouts: _techMinimalLayouts,
+    layouts: _defaultLayouts,
     slideCount: 6,
     icon: Icons.videocam_rounded,
   ),
@@ -675,242 +577,12 @@ const List<DesignTemplate> allDesignTemplates = [
     isPremium: true,
     colorScheme: _corporateLuxuryColorScheme,
     fontPair: _darkEleganceFontPair,
-    layouts: _darkEleganceLayouts,
+    layouts: _defaultLayouts,
     slideCount: 6,
     icon: Icons.workspace_premium_rounded,
   ),
-  DesignTemplate(
-    id: 'modern_gradient',
-    name: 'Modern Gradient',
-    description: 'Современный градиентный дизайн (Premium)',
-    category: 'creative',
-    previewUrl: '',
-    isPremium: true,
-    colorScheme: _modernGradientColorScheme,
-    fontPair: _techMinimalFontPair,
-    layouts: _techMinimalLayouts,
-    slideCount: 6,
-    icon: Icons.gradient_rounded,
-  ),
-  DesignTemplate(
-    id: 'bauhaus_style',
-    name: 'Bauhaus Style',
-    description: 'Стиль Баухаус для креативных презентаций (Premium)',
-    category: 'creative',
-    previewUrl: '',
-    isPremium: true,
-    colorScheme: _bauhausStyleColorScheme,
-    fontPair: _creativeAgencyFontPair,
-    layouts: _creativeAgencyLayouts,
-    slideCount: 6,
-    icon: Icons.art_track_rounded,
-  ),
-  DesignTemplate(
-    id: 'cyber_punk',
-    name: 'Cyber Punk',
-    description: 'Киберпанк стиль для технологических презентаций (Premium)',
-    category: 'technology',
-    previewUrl: '',
-    isPremium: true,
-    colorScheme: _cyberPunkColorScheme,
-    fontPair: _techMinimalFontPair,
-    layouts: _techMinimalLayouts,
-    slideCount: 6,
-    icon: Icons.science_rounded,
-  ),
-  DesignTemplate(
-    id: 'eco_green',
-    name: 'Eco Green',
-    description: 'Экологический шаблон для устойчивого развития (Premium)',
-    category: 'nature',
-    previewUrl: '',
-    isPremium: true,
-    colorScheme: _ecoGreenColorScheme,
-    fontPair: _natureFreshFontPair,
-    layouts: _natureFreshLayouts,
-    slideCount: 6,
-    icon: Icons.eco_rounded,
-  ),
-  DesignTemplate(
-    id: 'luxury_fashion',
-    name: 'Luxury Fashion',
-    description: 'Модный люксовый шаблон для брендов (Premium)',
-    category: 'creative',
-    previewUrl: '',
-    isPremium: true,
-    colorScheme: _luxuryFashionColorScheme,
-    fontPair: _darkEleganceFontPair,
-    layouts: _darkEleganceLayouts,
-    slideCount: 6,
-    icon: Icons.style_rounded,
-  ),
-  DesignTemplate(
-    id: 'space_exploration',
-    name: 'Space Exploration',
-    description: 'Космическая тема для научных презентаций (Premium)',
-    category: 'technology',
-    previewUrl: '',
-    isPremium: true,
-    colorScheme: _spaceExplorationColorScheme,
-    fontPair: _techMinimalFontPair,
-    layouts: _techMinimalLayouts,
-    slideCount: 6,
-    icon: Icons.rocket_launch_rounded,
-  ),
-  DesignTemplate(
-    id: 'food_beverage',
-    name: 'Food & Beverage',
-    description: 'Аппетитный шаблон для ресторанов и кафе (Premium)',
-    category: 'business',
-    previewUrl: '',
-    isPremium: true,
-    colorScheme: _foodBeverageColorScheme,
-    fontPair: _creativeAgencyFontPair,
-    layouts: _creativeAgencyLayouts,
-    slideCount: 6,
-    icon: Icons.restaurant_rounded,
-  ),
-  DesignTemplate(
-    id: 'architecture_portfolio',
-    name: 'Architecture',
-    description: 'Минималистичный шаблон для архитекторов (Premium)',
-    category: 'creative',
-    previewUrl: '',
-    isPremium: true,
-    colorScheme: _architecturePortfolioColorScheme,
-    fontPair: _cleanAcademicFontPair,
-    layouts: _cleanAcademicLayouts,
-    slideCount: 6,
-    icon: Icons.architecture_rounded,
-  ),
-  DesignTemplate(
-    id: 'sports_motivation',
-    name: 'Sports Motivation',
-    description: 'Энергичный шаблон для спортивных презентаций (Premium)',
-    category: 'events',
-    previewUrl: '',
-    isPremium: true,
-    colorScheme: _sportsMotivationColorScheme,
-    fontPair: _urbanStreetFontPair,
-    layouts: _urbanStreetLayouts,
-    slideCount: 6,
-    icon: Icons.sports_soccer_rounded,
-  ),
-  DesignTemplate(
-    id: 'travel_adventure',
-    name: 'Travel Adventure',
-    description: 'Вдохновляющий шаблон для туристических проектов (Premium)',
-    category: 'creative',
-    previewUrl: '',
-    isPremium: true,
-    colorScheme: _travelAdventureColorScheme,
-    fontPair: _natureFreshFontPair,
-    layouts: _natureFreshLayouts,
-    slideCount: 6,
-    icon: Icons.flight_rounded,
-  ),
-  DesignTemplate(
-    id: 'art_gallery',
-    name: 'Art Gallery',
-    description: 'Художественный шаблон для галерей и выставок (Premium)',
-    category: 'creative',
-    previewUrl: '',
-    isPremium: true,
-    colorScheme: _artGalleryColorScheme,
-    fontPair: _pastelDreamFontPair,
-    layouts: _pastelDreamLayouts,
-    slideCount: 6,
-    icon: Icons.museum_rounded,
-  ),
-  DesignTemplate(
-    id: 'science_research',
-    name: 'Science & Research',
-    description: 'Научный шаблон для исследований и открытий (Premium)',
-    category: 'education',
-    previewUrl: '',
-    isPremium: true,
-    colorScheme: _scienceResearchColorScheme,
-    fontPair: _cleanAcademicFontPair,
-    layouts: _cleanAcademicLayouts,
-    slideCount: 6,
-    icon: Icons.biotech_rounded,
-  ),
-  DesignTemplate(
-    id: 'startup_pitch',
-    name: 'Startup Pitch',
-    description: 'Современный шаблон для питча инвесторам (Premium)',
-    category: 'business',
-    previewUrl: '',
-    isPremium: true,
-    colorScheme: _startupPitchColorScheme,
-    fontPair: _techMinimalFontPair,
-    layouts: _techMinimalLayouts,
-    slideCount: 6,
-    icon: Icons.rocket_launch_rounded,
-  ),
-  DesignTemplate(
-    id: 'legal_law',
-    name: 'Legal & Law',
-    description: 'Строгий юридический шаблон (Premium)',
-    category: 'business',
-    previewUrl: '',
-    isPremium: true,
-    colorScheme: _legalLawColorScheme,
-    fontPair: _cleanAcademicFontPair,
-    layouts: _cleanAcademicLayouts,
-    slideCount: 6,
-    icon: Icons.gavel_rounded,
-  ),
-  DesignTemplate(
-    id: 'music_festival',
-    name: 'Music Festival',
-    description: 'Яркий шаблон для музыкальных фестивалей (Premium)',
-    category: 'events',
-    previewUrl: '',
-    isPremium: true,
-    colorScheme: _musicFestivalColorScheme,
-    fontPair: _partyEventFontPair,
-    layouts: _partyEventLayouts,
-    slideCount: 6,
-    icon: Icons.music_note_rounded,
-  ),
-  DesignTemplate(
-    id: 'real_estate',
-    name: 'Real Estate',
-    description: 'Профессиональный шаблон для недвижимости (Premium)',
-    category: 'business',
-    previewUrl: '',
-    isPremium: true,
-    colorScheme: _realEstateColorScheme,
-    fontPair: _cleanAcademicFontPair,
-    layouts: _cleanAcademicLayouts,
-    slideCount: 6,
-    icon: Icons.home_work_rounded,
-  ),
-  DesignTemplate(
-    id: 'fitness_wellness',
-    name: 'Fitness & Wellness',
-    description: 'Здоровый шаблон для фитнес-проектов (Premium)',
-    category: 'health',
-    previewUrl: '',
-    isPremium: true,
-    colorScheme: _fitnessWellnessColorScheme,
-    fontPair: _natureFreshFontPair,
-    layouts: _natureFreshLayouts,
-    slideCount: 6,
-    icon: Icons.fitness_center_rounded,
-  ),
-  DesignTemplate(
-    id: 'charity_nonprofit',
-    name: 'Charity & Non-profit',
-    description: 'Вдохновляющий шаблон для благотворительности (Premium)',
-    category: 'events',
-    previewUrl: '',
-    isPremium: true,
-    colorScheme: _charityColorScheme,
-    fontPair: _pastelDreamFontPair,
-    layouts: _pastelDreamLayouts,
-    slideCount: 6,
-    icon: Icons.favorite_rounded,
-  ),
 ];
+
+// Экспорт для использования в других файлах
+final List<DesignTemplate> allPremiumTemplates = allDesignTemplates.where((t) => t.isPremium).toList();
+final List<DesignTemplate> allFreeTemplates = allDesignTemplates.where((t) => !t.isPremium).toList();
