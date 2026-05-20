@@ -165,6 +165,7 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
                     ),
                   )
                 : GridView.builder(
+                    controller: ScrollController(),
                     padding: const EdgeInsets.all(16),
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
@@ -193,7 +194,7 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
     if (template.isPremium) {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       
-      if (!userProvider.isPremium && !userProvider.isVip) {
+      if (!userProvider.isPremium) {
         _showPremiumDialog();
         return;
       }
@@ -389,7 +390,7 @@ class _TemplateCard extends StatelessWidget {
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
