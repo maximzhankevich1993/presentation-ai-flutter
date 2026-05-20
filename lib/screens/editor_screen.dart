@@ -1042,15 +1042,31 @@ class _Canvas extends StatelessWidget {
     }
   }
   Widget _buildColumns() {
-    return Row(children: List.generate(columnsCount, (c) => Expanded(child: Padding(padding: EdgeInsets.only(right: c < columnsCount - 1 ? 12 : 0), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      if (c == 0 && titleCtrl.text.isNotEmpty) _buildText(titleCtrl, true),
-      const SizedBox(height: 8),
-      ...List.generate(2, (i) {
-        final idx = c * 2 + i;
-        return idx < contentCtrl.length ? Padding(padding: const EdgeInsets.only(bottom: 6), child: _buildText(contentCtrl[idx], false)) : const SizedBox.shrink();
-      }),
-    ]))));
-  }
+  return Row(
+    children: List.generate(columnsCount, (c) => Expanded(
+      child: Padding(
+        padding: EdgeInsets.only(right: c < columnsCount - 1 ? 12 : 0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (c == 0 && titleCtrl.text.isNotEmpty) 
+              _buildText(titleCtrl, true),
+            const SizedBox(height: 8),
+            ...List.generate(2, (i) {
+              final idx = c * 2 + i;
+              return idx < contentCtrl.length 
+                ? Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: _buildText(contentCtrl[idx], false),
+                  )
+                : const SizedBox.shrink();
+            }),
+          ],
+        ),
+      ),
+    )),
+  );
+}
   Widget _buildChart(double w, double h) {
     if (chartData.isEmpty) {
       return Center(child: Container(width: w * 0.55, height: h * 0.55, decoration: BoxDecoration(color: _T.bgCard, borderRadius: _T.r12, border: Border.all(color: _T.border)), child: const Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.show_chart_rounded, color: _T.txtMuted, size: 40), SizedBox(height: 10), Text('Добавьте данные', style: TextStyle(color: _T.txtMuted, fontSize: 13))])));
