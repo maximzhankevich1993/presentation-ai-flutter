@@ -300,12 +300,55 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     setState(() {
       _appliedTemplate = template;
       final cs = template.colorScheme;
+      
+      // Применяем цвет текста и шрифт
       _globalFontColor = cs.textPrimary;
       _globalFont = template.fontPair.body;
+      
+      // Применяем фон из шаблона
+      final gradientColors = cs.gradient;
+      if (gradientColors.isNotEmpty && gradientColors.length >= 2) {
+        int foundIndex = -1;
+        for (int i = 0; i < _freeBgs.length; i++) {
+          final bg = _freeBgs[i];
+          if (bg['type'] == 'gradient' && bg['colors'] is List) {
+            final bgColors = bg['colors'] as List<Color>;
+            if (bgColors.length == gradientColors.length &&
+                bgColors[0] == gradientColors[0] &&
+                bgColors.last == gradientColors.last) {
+              foundIndex = i;
+              break;
+            }
+          }
+        }
+        if (foundIndex != -1) {
+          _selectedBgIndex = foundIndex;
+        }
+      } else {
+        int foundIndex = -1;
+        for (int i = 0; i < _freeBgs.length; i++) {
+          final bg = _freeBgs[i];
+          if (bg['type'] == 'solid' && bg['color'] == cs.background) {
+            foundIndex = i;
+            break;
+          }
+        }
+        if (foundIndex != -1) {
+          _selectedBgIndex = foundIndex;
+        }
+      }
+      
+      // Очищаем кастомные фоны
+      for (int i = 0; i < _customBgs.length; i++) {
+        _customBgs[i] = null;
+      }
+      
+      // Применяем ко всем слайдам
       for (int i = 0; i < _presentation.slides.length; i++) {
         _slideFontColors[i] = cs.textPrimary;
         _fonts[i] = template.fontPair.body;
       }
+      
       if (saveToPresentation) {
         _presentation.metadata = {
           'templateId': template.id,
@@ -458,7 +501,9 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
   void _applyFontToCurrentSlide(String font) {
     setState(() {
       _globalFont = font;
-      _fonts[_activeSlide] = font;
+      for (int i = 0; i < _fonts.length; i++) {
+        _fonts[i] = font;
+      }
     });
   }
 
@@ -657,7 +702,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
                 titleCtrl: _titleCtrl[_activeSlide],
                 contentCtrl: _contentCtrl[_activeSlide],
                 decoration: _slideDeco(_activeSlide),
-                font: _fonts[_activeSlide] != 'Inter' ? _fonts[_activeSlide] : _globalFont,
+                font: _fonts[_activeSlide],
                 fontSize: _fontSizes[_activeSlide],
                 fontColor: _slideFontColors[_activeSlide] ?? _globalFontColor,
                 slideCount: _presentation.slides.length,
@@ -1115,6 +1160,10 @@ class _Canvas extends StatelessWidget {
   }
   Widget _buildText(TextEditingController c, bool isTitle) {
     final preset = _getStyle();
+    final effectiveFontSize = isTitle 
+        ? (preset.fontSize * 1.5).clamp(24.0, 72.0)
+        : fontSize;
+    
     return TextField(
       controller: c,
       maxLines: null,
@@ -1122,7 +1171,7 @@ class _Canvas extends StatelessWidget {
       textAlign: _getAlign(),
       style: TextStyle(
         fontFamily: font,
-        fontSize: isTitle ? preset.fontSize * 1.5 : preset.fontSize,
+        fontSize: effectiveFontSize,
         fontWeight: isTitle ? FontWeight.w800 : preset.fontWeight,
         color: fontColor,
         height: 1.3,
@@ -1284,7 +1333,9 @@ class _PropertiesPanel extends StatelessWidget {
         for (final f in ['Inter', 'Roboto', 'Playfair Display', 'Montserrat', 'Open Sans'])
           _FontChip(name: f, selected: globalFont == f, onTap: () => onFontChange(f)),
       ])),
+      const SizedBox(height: 8),
       _PropSection('РАЗМЕР ТЕКСТА', child: _SliderRow(value: fontSize, min: 10, max: 32, label: '${fontSize.round()}px', onChanged: onFontSizeChange)),
+      const SizedBox(height: 8),
       _PropSection('СТИЛЬ ТЕКСТА', child: Wrap(spacing: 6, runSpacing: 6, children: textStyles.entries.map((e) {
         final isSelected = currentTextStyle == e.key;
         return GestureDetector(
@@ -1292,18 +1343,22 @@ class _PropertiesPanel extends StatelessWidget {
           child: AnimatedContainer(duration: _T.fast, padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), decoration: BoxDecoration(color: isSelected ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(8), border: Border.all(color: isSelected ? _T.accent.withOpacity(0.35) : _T.border)), child: Text(e.value.name, style: TextStyle(fontSize: 11, color: isSelected ? _T.accentLight : _T.txtSecondary, fontWeight: FontWeight.w500))),
         );
       }).toList())),
+      const SizedBox(height: 8),
       _PropSection('ВЫРАВНИВАНИЕ', child: Row(children: [
         for (final pair in [('left', Icons.format_align_left_rounded), ('center', Icons.format_align_center_rounded), ('right', Icons.format_align_right_rounded)])
           Expanded(child: GestureDetector(onTap: () => onTextAlignChange(pair.$1), child: AnimatedContainer(duration: _T.fast, margin: const EdgeInsets.only(right: 4), height: 36, decoration: BoxDecoration(color: currentTextAlign == pair.$1 ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(7), border: Border.all(color: currentTextAlign == pair.$1 ? _T.accent.withOpacity(0.4) : _T.border)), child: Icon(pair.$2, size: 18, color: currentTextAlign == pair.$1 ? _T.accent : _T.txtSecondary)))),
       ])),
+      const SizedBox(height: 8),
       _PropSection('КОЛОНКИ', child: Row(children: [
         for (int i = 1; i <= 4; i++)
           Expanded(child: GestureDetector(onTap: () => onColumnsChange(i), child: AnimatedContainer(duration: _T.fast, margin: const EdgeInsets.only(right: 4), height: 36, decoration: BoxDecoration(color: columnsCount == i ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(7), border: Border.all(color: columnsCount == i ? _T.accent.withOpacity(0.4) : _T.border)), child: Center(child: Text('$i', style: TextStyle(color: columnsCount == i ? _T.accentLight : _T.txtSecondary, fontWeight: FontWeight.w600)))))),
       ])),
+      const SizedBox(height: 8),
       _PropSection('ЦВЕТ ТЕКСТА', child: Wrap(spacing: 7, children: [
         for (final c in [Colors.white, Colors.black, _T.accent, Colors.blue, Colors.red, _T.gold, Colors.purple, Colors.orange])
           _ColorDot(color: c, selected: fontColor == c, onTap: () => onFontColorChange(c)),
       ])),
+      const SizedBox(height: 8),
       _PropSection('ФОН СЛАЙДА', child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Wrap(spacing: 8, runSpacing: 8, children: freeBgs.asMap().entries.map((e) {
           final isSelected = selectedBgIndex == e.key && customBg == null;
@@ -1319,6 +1374,7 @@ class _PropertiesPanel extends StatelessWidget {
         const SizedBox(height: 8),
         _UploadButton(label: 'Загрузить фон', onTap: onBgUpload),
       ])),
+      const SizedBox(height: 8),
       _PropSection('ПЕРЕХОД', child: Wrap(spacing: 6, runSpacing: 6, children: allTransitions.map((t) {
         final isPremiumTrans = t['premium'] as bool;
         final isSelected = transition == t['id'];
@@ -1356,8 +1412,11 @@ class _PropertiesPanel extends StatelessWidget {
         ),
       )),
       if (hasImage) ...[
+        const SizedBox(height: 8),
         _PropSection('ШИРИНА', child: _SliderRow(value: imageWidth ?? 0.28, min: 0.1, max: 0.6, label: '${((imageWidth ?? 0.28) * 100).round()}%', onChanged: onImageWidthChange)),
+        const SizedBox(height: 8),
         _PropSection('ВЫСОТА', child: _SliderRow(value: imageHeight ?? 0.55, min: 0.1, max: 0.8, label: '${((imageHeight ?? 0.55) * 100).round()}%', onChanged: onImageHeightChange)),
+        const SizedBox(height: 8),
         _PropSection('ПОЗИЦИЯ', child: Row(children: [
           for (final pair in [('left', Icons.format_align_left_rounded), ('right', Icons.format_align_right_rounded), ('top', Icons.vertical_align_top_rounded), ('bottom', Icons.vertical_align_bottom_rounded)])
             Expanded(child: GestureDetector(
@@ -1375,6 +1434,7 @@ class _PropertiesPanel extends StatelessWidget {
               ),
             )),
         ])),
+        const SizedBox(height: 8),
         _PropSection('ОБТЕКАНИЕ', child: Row(children: [
           for (final entry in {'around': 'Вокруг', 'top': 'Сверху', 'bottom': 'Снизу'}.entries)
             Expanded(child: GestureDetector(
@@ -1401,14 +1461,20 @@ class _PropertiesPanel extends StatelessWidget {
         for (final pair in [('circle', Icons.circle_outlined), ('square', Icons.square_outlined), ('rectangle', Icons.rectangle_outlined), ('triangle', Icons.change_history_rounded), ('star', Icons.star_outline_rounded)])
           GestureDetector(onTap: () => onAddShape(pair.$1), child: Container(width: 48, height: 48, decoration: BoxDecoration(color: _T.bgCard, borderRadius: _T.r10, border: Border.all(color: _T.border)), child: Icon(pair.$2, color: _T.accent, size: 24))),
       ])),
-      if (shapes.isNotEmpty) _PropSection('НА СЛАЙДЕ', child: Column(children: shapes.map((s) => Container(margin: const EdgeInsets.only(bottom: 6), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8), decoration: BoxDecoration(color: _T.bgCard, borderRadius: _T.r8, border: Border.all(color: _T.border)), child: Row(children: [ Icon(_shapeIcon(s.type), color: s.color, size: 18), const SizedBox(width: 10), Expanded(child: Text(s.type, style: const TextStyle(color: _T.txtPrimary, fontSize: 12))), GestureDetector(onTap: () => onRemoveShape(s.id), child: const Icon(Icons.close_rounded, color: _T.txtMuted, size: 14)), ]))).toList())),
+      if (shapes.isNotEmpty) ...[
+        const SizedBox(height: 8),
+        _PropSection('НА СЛАЙДЕ', child: Column(children: shapes.map((s) => Container(margin: const EdgeInsets.only(bottom: 6), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8), decoration: BoxDecoration(color: _T.bgCard, borderRadius: _T.r8, border: Border.all(color: _T.border)), child: Row(children: [ Icon(_shapeIcon(s.type), color: s.color, size: 18), const SizedBox(width: 10), Expanded(child: Text(s.type, style: const TextStyle(color: _T.txtPrimary, fontSize: 12))), GestureDetector(onTap: () => onRemoveShape(s.id), child: const Icon(Icons.close_rounded, color: _T.txtMuted, size: 14)), ]))).toList())),
+      ],
     ]);
   }
   IconData _shapeIcon(String t) { switch (t) { case 'circle': return Icons.circle_outlined; case 'square': return Icons.square_outlined; case 'rectangle': return Icons.rectangle_outlined; case 'triangle': return Icons.change_history_rounded; default: return Icons.star_outline_rounded; } }
   Widget _buildChartsTab() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _PropSection('ТИП ГРАФИКА', child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [ _ChartTypeBtn(icon: Icons.bar_chart_rounded, label: 'Столб.', selected: chartType == 'bar', onTap: () => onChartTypeChange('bar')), _ChartTypeBtn(icon: Icons.pie_chart_rounded, label: 'Круг.', selected: chartType == 'pie', onTap: () => onChartTypeChange('pie')), _ChartTypeBtn(icon: Icons.show_chart_rounded, label: 'Линия', selected: chartType == 'line', onTap: () => onChartTypeChange('line')), _ChartTypeBtn(icon: Icons.close_rounded, label: 'Убрать', selected: chartType == null, onTap: () => onChartTypeChange(null)), ])),
-      if (chartType != null) _PropSection('ДАННЫЕ', child: Column(children: [ ...chartData.asMap().entries.map((e) => Padding(padding: const EdgeInsets.only(bottom: 6), child: Row(children: [ Expanded(child: _EditorField(controller: TextEditingController(text: e.value['label'] as String), hint: 'Метка')), const SizedBox(width: 8), SizedBox(width: 72, child: _EditorField(controller: TextEditingController(text: (e.value['value'] as double).toString()), hint: '0')), ]))), const SizedBox(height: 6), GestureDetector(onTap: () { final d = List<Map<String, dynamic>>.from(chartData)..add({'label': 'Новый', 'value': 100.0}); onChartDataChange(d); }, child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 8), decoration: BoxDecoration(color: _T.accentDim, borderRadius: _T.r8), child: const Center(child: Text('+ Добавить', style: TextStyle(color: _T.accent, fontSize: 12, fontWeight: FontWeight.w600))))), ])),
+      if (chartType != null) ...[
+        const SizedBox(height: 8),
+        _PropSection('ДАННЫЕ', child: Column(children: [ ...chartData.asMap().entries.map((e) => Padding(padding: const EdgeInsets.only(bottom: 6), child: Row(children: [ Expanded(child: _EditorField(controller: TextEditingController(text: e.value['label'] as String), hint: 'Метка')), const SizedBox(width: 8), SizedBox(width: 72, child: _EditorField(controller: TextEditingController(text: (e.value['value'] as double).toString()), hint: '0')), ]))), const SizedBox(height: 6), GestureDetector(onTap: () { final d = List<Map<String, dynamic>>.from(chartData)..add({'label': 'Новый', 'value': 100.0}); onChartDataChange(d); }, child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 8), decoration: BoxDecoration(color: _T.accentDim, borderRadius: _T.r8), child: const Center(child: Text('+ Добавить', style: TextStyle(color: _T.accent, fontSize: 12, fontWeight: FontWeight.w600))))), ])),
+      ],
     ]);
   }
   Widget _buildAiTab() {
