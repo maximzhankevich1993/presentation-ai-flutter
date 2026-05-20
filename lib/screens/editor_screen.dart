@@ -207,7 +207,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     {'type': 'gradient', 'colors': [const Color(0xFF8E2DE2), const Color(0xFF4A00E0)], 'label': 'Космос', 'premium': false},
     {'type': 'gradient', 'colors': [const Color(0xFFFF416C), const Color(0xFFFF4B2B)], 'label': 'Огонь', 'premium': false},
     {'type': 'gradient', 'colors': [const Color(0xFF434343), const Color(0xFF000000)], 'label': 'Мрамор', 'premium': false},
-    // Платные фоны (10)
     {'type': 'gradient', 'colors': [const Color(0xFFFFD700), const Color(0xFFFF8C00)], 'label': 'Золото', 'premium': true},
     {'type': 'gradient', 'colors': [const Color(0xFF00D2FF), const Color(0xFF3A7BD5)], 'label': 'Океан', 'premium': true},
     {'type': 'gradient', 'colors': [const Color(0xFFF53844), const Color(0xFF42378F)], 'label': 'Закат', 'premium': true},
@@ -443,7 +442,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
   void _updateImagePosition(String p) => setState(() => _imagePositions[_activeSlide] = p);
   void _updateImageTextWrap(String w) => setState(() => _imageTextWrap[_activeSlide] = w);
 
-  // Применение стиля текста ко всем слайдам
   void _applyTextStyleToCurrentSlide(String style) {
     setState(() {
       _currentTextStyle = style;
@@ -451,7 +449,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     _toast('Стиль текста: ${_textStyles[style]?.name}', success: true);
   }
 
-  // Применение выравнивания
   void _applyTextAlignToCurrentSlide(String align) {
     setState(() {
       _currentTextAlign = align;
@@ -459,7 +456,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     _toast('Выравнивание: ${align == 'left' ? 'по левому краю' : align == 'center' ? 'по центру' : 'по правому краю'}', success: true);
   }
 
-  // Применение шрифта
   void _applyFontToCurrentSlide(String font) {
     setState(() {
       _globalFont = font;
@@ -468,7 +464,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     _toast('Шрифт: $font', success: true);
   }
 
-  // Применение размера шрифта
   void _applyFontSizeToCurrentSlide(double size) {
     setState(() {
       _fontSizes[_activeSlide] = size;
@@ -846,7 +841,7 @@ class _TemplateSheet extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// SLIDE NAVIGATOR (сокращён)
+// SLIDE NAVIGATOR
 // ═══════════════════════════════════════════════════════════════════════════════
 class _SlideNavigator extends StatelessWidget {
   final List<Slide> slides;
@@ -1217,7 +1212,7 @@ class _StarPainter extends CustomPainter {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PROPERTIES PANEL (полная версия)
+// PROPERTIES PANEL
 // ═══════════════════════════════════════════════════════════════════════════════
 class _PropertiesPanel extends StatelessWidget {
   final int index;
@@ -1326,18 +1321,73 @@ class _PropertiesPanel extends StatelessWidget {
   }
   Widget _buildMediaTab() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _PropSection('ИЗОБРАЖЕНИЕ', child: GestureDetector(onTap: onImageUpload, child: Container(height: 72, decoration: BoxDecoration(color: _T.bgCard, borderRadius: _T.r10, border: Border.all(color: hasImage ? _T.accent.withOpacity(0.3) : _T.border)), child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [ Icon(hasImage ? Icons.swap_horiz_rounded : Icons.add_photo_alternate_outlined, color: _T.accent, size: 22), const SizedBox(height: 4), Text(hasImage ? 'Заменить' : 'Загрузить', style: const TextStyle(color: _T.accent, fontSize: 12, fontWeight: FontWeight.w500)), ])))),
+      _PropSection('ИЗОБРАЖЕНИЕ', child: GestureDetector(
+        onTap: onImageUpload,
+        child: Container(
+          height: 72,
+          decoration: BoxDecoration(
+            color: _T.bgCard,
+            borderRadius: _T.r10,
+            border: Border.all(color: hasImage ? _T.accent.withOpacity(0.3) : _T.border),
+          ),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(hasImage ? Icons.swap_horiz_rounded : Icons.add_photo_alternate_outlined, color: _T.accent, size: 22),
+                const SizedBox(height: 4),
+                Text(hasImage ? 'Заменить' : 'Загрузить', style: const TextStyle(color: _T.accent, fontSize: 12, fontWeight: FontWeight.w500)),
+              ],
+            ),
+          ),
+        ),
+      )),
       if (hasImage) ...[
         _PropSection('ШИРИНА', child: _SliderRow(value: imageWidth ?? 0.28, min: 0.1, max: 0.6, label: '${((imageWidth ?? 0.28) * 100).round()}%', onChanged: onImageWidthChange)),
         _PropSection('ВЫСОТА', child: _SliderRow(value: imageHeight ?? 0.55, min: 0.1, max: 0.8, label: '${((imageHeight ?? 0.55) * 100).round()}%', onChanged: onImageHeightChange)),
-        _PropSection('ПОЗИЦИЯ', child: Row(children: [ for (final pair in [('left', Icons.format_align_left_rounded), ('right', Icons.format_align_right_rounded), ('top', Icons.vertical_align_top_rounded), ('bottom', Icons.vertical_align_bottom_rounded)]) Expanded(child: GestureDetector(onTap: () => onImagePositionChange(pair.$1), child: AnimatedContainer(duration: _T.fast, margin: const EdgeInsets.only(right: 4), height: 36, decoration: BoxDecoration(color: imagePosition == pair.$1 ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(7), border: Border.all(color: imagePosition == pair.$1 ? _T.accent.withOpacity(0.4) : _T.border)), child: Icon(pair.$2, size: 16, color: imagePosition == pair.$1 ? _T.accent : _T.txtSecondary)))), ])),
-        _PropSection('ОБТЕКАНИЕ', child: Row(children: [ for (final pair in [('around', 'Вокруг'), ('top', 'Сверху'), ('bottom', 'Снизу')]) Expanded(child: GestureDetector(onTap: () => onImageTextWrapChange(pair.$1), child: AnimatedContainer(duration: _T.fast, margin: const EdgeInsets.only(right: 4), height: 32, decoration: BoxDecoration(color: imageTextWrap == pair.$1 ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(7), border: Border.all(color: imageTextWrap == pair.$1 ? _T.accent.withOpacity(0.4) : _T.border)), child: Center(child: Text(pair.$2, style: TextStyle(fontSize: 11, color: imageTextWrap == pair.$1 ? _T.accentLight : _T.txtSecondary))))), ])),
+        _PropSection('ПОЗИЦИЯ', child: Row(children: [
+          for (final pair in [('left', Icons.format_align_left_rounded), ('right', Icons.format_align_right_rounded), ('top', Icons.vertical_align_top_rounded), ('bottom', Icons.vertical_align_bottom_rounded)])
+            Expanded(child: GestureDetector(
+              onTap: () => onImagePositionChange(pair.$1),
+              child: AnimatedContainer(
+                duration: _T.fast,
+                margin: const EdgeInsets.only(right: 4),
+                height: 36,
+                decoration: BoxDecoration(
+                  color: imagePosition == pair.$1 ? _T.accentDim : _T.bgCard,
+                  borderRadius: BorderRadius.circular(7),
+                  border: Border.all(color: imagePosition == pair.$1 ? _T.accent.withOpacity(0.4) : _T.border),
+                ),
+                child: Icon(pair.$2, size: 16, color: imagePosition == pair.$1 ? _T.accent : _T.txtSecondary),
+              ),
+            )),
+        ])),
+        _PropSection('ОБТЕКАНИЕ', child: Row(children: [
+          for (final entry in {'around': 'Вокруг', 'top': 'Сверху', 'bottom': 'Снизу'}.entries)
+            Expanded(child: GestureDetector(
+              onTap: () => onImageTextWrapChange(entry.key),
+              child: AnimatedContainer(
+                duration: _T.fast,
+                margin: const EdgeInsets.only(right: 4),
+                height: 32,
+                decoration: BoxDecoration(
+                  color: imageTextWrap == entry.key ? _T.accentDim : _T.bgCard,
+                  borderRadius: BorderRadius.circular(7),
+                  border: Border.all(color: imageTextWrap == entry.key ? _T.accent.withOpacity(0.4) : _T.border),
+                ),
+                child: Center(child: Text(entry.value, style: TextStyle(fontSize: 11, color: imageTextWrap == entry.key ? _T.accentLight : _T.txtSecondary))),
+              ),
+            )),
+        ])),
       ],
     ]);
   }
   Widget _buildShapesTab() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _PropSection('ДОБАВИТЬ ФИГУРУ', child: Wrap(spacing: 8, runSpacing: 8, children: [ for (final pair in [('circle', Icons.circle_outlined), ('square', Icons.square_outlined), ('rectangle', Icons.rectangle_outlined), ('triangle', Icons.change_history_rounded), ('star', Icons.star_outline_rounded)]) GestureDetector(onTap: () => onAddShape(pair.$1), child: Container(width: 48, height: 48, decoration: BoxDecoration(color: _T.bgCard, borderRadius: _T.r10, border: Border.all(color: _T.border)), child: Icon(pair.$2, color: _T.accent, size: 24))), ])),
+      _PropSection('ДОБАВИТЬ ФИГУРУ', child: Wrap(spacing: 8, runSpacing: 8, children: [
+        for (final pair in [('circle', Icons.circle_outlined), ('square', Icons.square_outlined), ('rectangle', Icons.rectangle_outlined), ('triangle', Icons.change_history_rounded), ('star', Icons.star_outline_rounded)])
+          GestureDetector(onTap: () => onAddShape(pair.$1), child: Container(width: 48, height: 48, decoration: BoxDecoration(color: _T.bgCard, borderRadius: _T.r10, border: Border.all(color: _T.border)), child: Icon(pair.$2, color: _T.accent, size: 24))),
+      ])),
       if (shapes.isNotEmpty) _PropSection('НА СЛАЙДЕ', child: Column(children: shapes.map((s) => Container(margin: const EdgeInsets.only(bottom: 6), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8), decoration: BoxDecoration(color: _T.bgCard, borderRadius: _T.r8, border: Border.all(color: _T.border)), child: Row(children: [ Icon(_shapeIcon(s.type), color: s.color, size: 18), const SizedBox(width: 10), Expanded(child: Text(s.type, style: const TextStyle(color: _T.txtPrimary, fontSize: 12))), GestureDetector(onTap: () => onRemoveShape(s.id), child: const Icon(Icons.close_rounded, color: _T.txtMuted, size: 14)), ]))).toList())),
     ]);
   }
