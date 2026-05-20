@@ -19,6 +19,7 @@ import 'referral_screen.dart';
 import 'vip_screen.dart';
 import 'login_screen.dart';
 import 'quiz_screen.dart';
+import 'template_selector_screen.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // THEME
@@ -424,7 +425,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 700),
+            constraints: const BoxConstraints(maxWidth: 900),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -506,6 +507,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   _ExtraBtn(Icons.article_outlined, 'Из текста', _showTextInput),
                   const SizedBox(width: 10),
                   _ExtraBtn(Icons.image_outlined, 'Загрузить логотип', _uploadLogo),
+                  const SizedBox(width: 10),
+                  _ExtraBtn(Icons.template_rounded, 'Шаблоны', () => _push(const TemplateSelectorScreen())),
                 ]),
 
                 if (logo != null) ...[
@@ -556,14 +559,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
                   decoration: BoxDecoration(color: _T.bgSurface, borderRadius: BorderRadius.circular(20), border: Border.all(color: _T.border)),
-                  child: Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                    _NavItem(Icons.school_outlined, 'Учителям', () => _push(TeacherScreen(countryCode: _countryCode))),
-                    _NavItem(Icons.business_center_outlined, 'Бизнесу', () => _push(CorporateScreen(countryCode: _countryCode))),
-                    _NavItem(Icons.group_outlined, 'Команда', () => _push(WorkspaceScreen(countryCode: _countryCode))),
-                    _NavItem(Icons.quiz_outlined, 'Тесты', () => _push(const QuizScreen())),
-                    _NavItem(Icons.card_giftcard_outlined, 'Друзья', () => _push(const ReferralScreen())),
-                    _NavItem(Icons.person_outline, 'Профиль', () => _push(const ProfileScreen())),
-                  ]),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _NavItem(Icons.school_outlined, 'Учителям', () => _push(TeacherScreen(countryCode: _countryCode))),
+                      _NavItem(Icons.business_center_outlined, 'Бизнесу', () => _push(CorporateScreen(countryCode: _countryCode))),
+                      _NavItem(Icons.group_outlined, 'Команда', () => _push(WorkspaceScreen(countryCode: _countryCode))),
+                      _NavItem(Icons.quiz_outlined, 'Тесты', () => _push(const QuizScreen())),
+                      _NavItem(Icons.card_giftcard_outlined, 'Друзья', () => _push(const ReferralScreen())),
+                      _NavItem(Icons.person_outline, 'Профиль', () => _push(const ProfileScreen())),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 28),
               ],
