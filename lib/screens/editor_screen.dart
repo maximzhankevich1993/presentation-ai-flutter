@@ -136,17 +136,6 @@ class SlideChart {
     this.height = 150,
     this.data = const [],
   });
-  SlideChart copyWith({double? x, double? y, double? width, double? height, List<Map<String, dynamic>>? data}) {
-    return SlideChart(
-      id: id,
-      type: type,
-      x: x ?? this.x,
-      y: y ?? this.y,
-      width: width ?? this.width,
-      height: height ?? this.height,
-      data: data ?? this.data,
-    );
-  }
 }
 
 class SlideTemplate {
@@ -217,6 +206,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
   late List<List<SlideShape>> _shapes;
   late List<List<SlideChart>> _charts;
   late List<double?> _imageWidths, _imageHeights;
+  late List<double> _imageX, _imageY;
   late List<String?> _imagePositions, _imageTextWrap;
   final Map<int, String?> _autoImages = {};
   final _scrollCtrl = ScrollController();
@@ -288,6 +278,8 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     _charts = List.generate(len, (_) => []);
     _imageWidths = List.filled(len, 0.28);
     _imageHeights = List.filled(len, 0.55);
+    _imageX = List.filled(len, 50.0);
+    _imageY = List.filled(len, 50.0);
     _imagePositions = List.filled(len, 'right');
     _imageTextWrap = List.filled(len, 'top');
     _initControllers();
@@ -355,7 +347,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
         };
       }
     });
-    _toast('Шаблон "${template.name}" применён', success: true);
   }
 
   void _openTemplateLibrary() async {
@@ -378,7 +369,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
   void _addSlide() {
     final isPremium = Provider.of<UserProvider>(context, listen: false).isPremium;
     if (_presentation.slides.length >= 15 && !isPremium) {
-      _toast('Бесплатная версия: максимум 15 слайдов', warning: true);
       return;
     }
     setState(() {
@@ -396,6 +386,8 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
       _charts.insert(idx, []);
       _imageWidths.insert(idx, 0.28);
       _imageHeights.insert(idx, 0.55);
+      _imageX.insert(idx, 50.0);
+      _imageY.insert(idx, 50.0);
       _imagePositions.insert(idx, 'right');
       _imageTextWrap.insert(idx, 'top');
       _activeSlide = idx;
@@ -421,6 +413,8 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
       _charts.removeAt(i);
       _imageWidths.removeAt(i);
       _imageHeights.removeAt(i);
+      _imageX.removeAt(i);
+      _imageY.removeAt(i);
       _imagePositions.removeAt(i);
       _imageTextWrap.removeAt(i);
       if (_activeSlide >= _presentation.slides.length) {
@@ -433,7 +427,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
   void _duplicateSlide(int i) {
     final isPremium = Provider.of<UserProvider>(context, listen: false).isPremium;
     if (_presentation.slides.length >= 15 && !isPremium) {
-      _toast('Бесплатная версия: максимум 15 слайдов', warning: true);
       return;
     }
     setState(() {
@@ -451,6 +444,8 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
       _charts.insert(idx, _charts[i].map((c) => SlideChart(id: c.id, type: c.type, x: c.x, y: c.y, width: c.width, height: c.height, data: List.from(c.data))).toList());
       _imageWidths.insert(idx, _imageWidths[i]);
       _imageHeights.insert(idx, _imageHeights[i]);
+      _imageX.insert(idx, _imageX[i]);
+      _imageY.insert(idx, _imageY[i]);
       _imagePositions.insert(idx, _imagePositions[i]);
       _imageTextWrap.insert(idx, _imageTextWrap[i]);
       _activeSlide = idx;
@@ -564,9 +559,25 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     });
   }
   
+  void _updateImagePosition(int slideIndex, double dx, double dy) {
+    setState(() {
+      _imageX[slideIndex] += dx;
+      _imageY[slideIndex] += dy;
+    });
+  }
+  
+  void _resizeImage(int slideIndex, double dw, double dh) {
+    setState(() {
+      _imageWidths[slideIndex] = (_imageWidths[slideIndex] ?? 0.28) + dw / 500;
+      _imageHeights[slideIndex] = (_imageHeights[slideIndex] ?? 0.55) + dh / 500;
+      _imageWidths[slideIndex] = _imageWidths[slideIndex]!.clamp(0.1, 0.8);
+      _imageHeights[slideIndex] = _imageHeights[slideIndex]!.clamp(0.1, 0.8);
+    });
+  }
+  
   void _updateImageWidth(double w) => setState(() => _imageWidths[_activeSlide] = w);
   void _updateImageHeight(double h) => setState(() => _imageHeights[_activeSlide] = h);
-  void _updateImagePosition(String p) => setState(() => _imagePositions[_activeSlide] = p);
+  void _updateImagePositionOption(String p) => setState(() => _imagePositions[_activeSlide] = p);
   void _updateImageTextWrap(String w) => setState(() => _imageTextWrap[_activeSlide] = w);
 
   void _applyTextStyleToCurrentSlide(String style) {
@@ -627,6 +638,8 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
             _charts.insert(idx, []);
             _imageWidths.insert(idx, 0.28);
             _imageHeights.insert(idx, 0.55);
+            _imageX.insert(idx, 50.0);
+            _imageY.insert(idx, 50.0);
             _imagePositions.insert(idx, 'right');
             _imageTextWrap.insert(idx, 'top');
             _activeSlide = idx;
@@ -651,9 +664,8 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
           _contentCtrl[index][i].text = cs[i];
         }
       });
-      _toast('Текст улучшен', success: true);
     } catch (e) {
-      _toast('Ошибка: $e', error: true);
+      // Ошибка
     } finally {
       if (mounted) setState(() => _isImproving = false);
     }
@@ -671,7 +683,8 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
         _customImages[idx] = reader.result as String;
         _imageWidths[idx] = 0.28;
         _imageHeights[idx] = 0.55;
-        _imagePositions[idx] = 'right';
+        _imageX[idx] = 50.0;
+        _imageY[idx] = 50.0;
         _countUploads();
       }));
     });
@@ -711,17 +724,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
       borderRadius: _T.r16,
       boxShadow: const [shadow],
     );
-  }
-
-  void _toast(String msg, {bool success = false, bool error = false, bool warning = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(msg, style: const TextStyle(fontWeight: FontWeight.w600)),
-      backgroundColor: success ? _T.success : error ? _T.danger : warning ? _T.gold : _T.bgCard,
-      behavior: SnackBarBehavior.floating,
-      shape: RoundedRectangleBorder(borderRadius: _T.r10),
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-      duration: const Duration(seconds: 2),
-    ));
   }
 
   void _export() {
@@ -803,7 +805,8 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
                 charts: _charts[_activeSlide],
                 imageWidth: _imageWidths[_activeSlide] ?? 0.28,
                 imageHeight: _imageHeights[_activeSlide] ?? 0.55,
-                imagePosition: _imagePositions[_activeSlide] ?? 'right',
+                imageX: _imageX[_activeSlide],
+                imageY: _imageY[_activeSlide],
                 imageTextWrap: _imageTextWrap[_activeSlide] ?? 'top',
                 onAddItem: () => _addContentItem(_activeSlide),
                 onRemoveItem: (i) => _removeContentItem(_activeSlide, i),
@@ -812,6 +815,8 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
                 onChartDrag: _updateChartPosition,
                 onChartResize: _resizeChart,
                 onChartDataChange: _updateChartData,
+                onImageDrag: _updateImagePosition,
+                onImageResize: _resizeImage,
               ),
             ),
             const _ThinDivider(direction: Axis.vertical),
@@ -839,7 +844,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
                   charts: _charts[_activeSlide],
                   imageWidth: _imageWidths[_activeSlide],
                   imageHeight: _imageHeights[_activeSlide],
-                  imagePosition: _imagePositions[_activeSlide],
                   imageTextWrap: _imageTextWrap[_activeSlide],
                   hasImage: _customImages[_activeSlide] != null || _autoImages[_activeSlide] != null,
                   uploadsUsed: _imageUploadsUsed,
@@ -860,7 +864,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
                   onRemoveChart: _removeChart,
                   onImageWidthChange: _updateImageWidth,
                   onImageHeightChange: _updateImageHeight,
-                  onImagePositionChange: _updateImagePosition,
                   onImageTextWrapChange: _updateImageTextWrap,
                   onImprove: () => _improveSlide(_activeSlide),
                 ),
@@ -1104,8 +1107,8 @@ class _Canvas extends StatelessWidget {
   final String? image;
   final List<SlideShape> shapes;
   final List<SlideChart> charts;
-  final double imageWidth, imageHeight;
-  final String imagePosition, imageTextWrap;
+  final double imageWidth, imageHeight, imageX, imageY;
+  final String imageTextWrap;
   final VoidCallback onAddItem, onRemoveImage;
   final ValueChanged<int> onRemoveItem;
   final bool hasCustomImage;
@@ -1114,8 +1117,10 @@ class _Canvas extends StatelessWidget {
   final Function(String, double, double) onChartDrag;
   final Function(String, double, double) onChartResize;
   final Function(String, List<Map<String, dynamic>>) onChartDataChange;
+  final Function(int, double, double) onImageDrag;
+  final Function(int, double, double) onImageResize;
   
-  const _Canvas({super.key, required this.index, required this.titleCtrl, required this.contentCtrl, required this.decoration, required this.font, required this.fontSize, required this.fontColor, required this.slideCount, required this.textStyle, required this.textAlign, required this.columnsCount, this.image, required this.shapes, required this.charts, required this.imageWidth, required this.imageHeight, required this.imagePosition, required this.imageTextWrap, required this.onAddItem, required this.onRemoveItem, required this.onRemoveImage, required this.hasCustomImage, required this.onShapeDrag, required this.onShapeResize, required this.onChartDrag, required this.onChartResize, required this.onChartDataChange});
+  const _Canvas({super.key, required this.index, required this.titleCtrl, required this.contentCtrl, required this.decoration, required this.font, required this.fontSize, required this.fontColor, required this.slideCount, required this.textStyle, required this.textAlign, required this.columnsCount, this.image, required this.shapes, required this.charts, required this.imageWidth, required this.imageHeight, required this.imageX, required this.imageY, required this.imageTextWrap, required this.onAddItem, required this.onRemoveItem, required this.onRemoveImage, required this.hasCustomImage, required this.onShapeDrag, required this.onShapeResize, required this.onChartDrag, required this.onChartResize, required this.onChartDataChange, required this.onImageDrag, required this.onImageResize});
   
   @override
   Widget build(BuildContext context) {
@@ -1138,6 +1143,7 @@ class _Canvas extends StatelessWidget {
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
+                      // Фигуры
                       ...shapes.map((s) => Positioned(
                         left: s.x.clamp(0.0, width - s.width),
                         top: s.y.clamp(0.0, height - s.height),
@@ -1170,6 +1176,7 @@ class _Canvas extends StatelessWidget {
                           ],
                         ),
                       )),
+                      // Графики
                       ...charts.map((c) => Positioned(
                         left: c.x.clamp(0.0, width - c.width),
                         top: c.y.clamp(0.0, height - c.height),
@@ -1227,9 +1234,86 @@ class _Canvas extends StatelessWidget {
                           ],
                         ),
                       )),
-                      Positioned(top: 10, left: 12, child: Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Colors.black.withOpacity(0.3), borderRadius: BorderRadius.circular(4)), child: Text('${index + 1}', style: const TextStyle(color: Colors.white54, fontSize: 9, fontWeight: FontWeight.w700)))),
-                      Padding(padding: const EdgeInsets.fromLTRB(28, 34, 28, 18), child: _buildContent(width, height)),
-                      if (logo != null) Positioned(bottom: 10, right: 12, child: Opacity(opacity: 0.65, child: ClipRRect(borderRadius: BorderRadius.circular(4), child: Image.network(logo, width: 48, height: 18, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const SizedBox())))),
+                      // Контент (текст + колонки)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(28, 34, 28, 18),
+                        child: _buildContent(width, height),
+                      ),
+                      // Изображение поверх всего
+                      if (image != null)
+                        Positioned(
+                          left: imageX.clamp(0.0, width - (width * imageWidth)),
+                          top: imageY.clamp(0.0, height - (height * imageHeight)),
+                          child: GestureDetector(
+                            onPanUpdate: (details) {
+                              onImageDrag(index, details.delta.dx, details.delta.dy);
+                            },
+                            child: Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Image.network(
+                                    image!,
+                                    width: width * imageWidth,
+                                    height: height * imageHeight,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => const SizedBox(),
+                                  ),
+                                ),
+                                if (hasCustomImage)
+                                  Positioned(
+                                    top: 4,
+                                    right: 4,
+                                    child: GestureDetector(
+                                      onTap: onRemoveImage,
+                                      child: Container(
+                                        width: 18,
+                                        height: 18,
+                                        decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(9)),
+                                        child: const Icon(Icons.close_rounded, color: Colors.white, size: 11),
+                                      ),
+                                    ),
+                                  ),
+                                Positioned(
+                                  right: -4,
+                                  bottom: -4,
+                                  child: GestureDetector(
+                                    onPanUpdate: (details) {
+                                      onImageResize(index, details.delta.dx, details.delta.dy);
+                                    },
+                                    child: Container(
+                                      width: 12,
+                                      height: 12,
+                                      decoration: BoxDecoration(
+                                        color: _T.accent,
+                                        borderRadius: BorderRadius.circular(2),
+                                        border: Border.all(color: Colors.white, width: 1),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      if (logo != null)
+                        Positioned(
+                          bottom: 10,
+                          right: 12,
+                          child: Opacity(
+                            opacity: 0.65,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(4),
+                              child: Image.network(
+                                logo,
+                                width: 48,
+                                height: 18,
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, __, ___) => const SizedBox(),
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -1389,50 +1473,38 @@ class _Canvas extends StatelessWidget {
   }
   
   Widget _buildContent(double width, double height) {
-    if (columnsCount > 1) return _buildColumns();
-    
-    final textCol = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _buildText(titleCtrl, true),
-      const SizedBox(height: 10),
-      ...contentCtrl.map((c) => Padding(
-        padding: const EdgeInsets.only(bottom: 5),
-        child: _buildText(c, false),
-      )),
-    ]);
-    
-    if (image == null) return textCol;
-    
-    final imgW = width * imageWidth;
-    final imgH = height * imageHeight;
-    final img = ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: Stack(children: [
-        Image.network(image!, width: imgW, height: imgH, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox()),
-        if (hasCustomImage)
-          Positioned(
-            top: 4,
-            right: 4,
-            child: GestureDetector(
-              onTap: onRemoveImage,
-              child: Container(
-                width: 18,
-                height: 18,
-                decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(9)),
-                child: const Icon(Icons.close_rounded, color: Colors.white, size: 11),
-              ),
-            ),
-          ),
-      ]),
-    );
-    
-    switch (imageTextWrap) {
-      case 'top':
-        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [img, const SizedBox(height: 18), textCol]);
-      case 'bottom':
-        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [textCol, const SizedBox(height: 18), img]);
-      default:
-        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [img, const SizedBox(height: 18), textCol]);
+    // Текстовая часть (может быть в колонках или обычная)
+    Widget textWidget;
+    if (columnsCount > 1) {
+      textWidget = _buildColumns();
+    } else {
+      textWidget = Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildText(titleCtrl, true),
+          const SizedBox(height: 10),
+          ...contentCtrl.map((c) => Padding(
+            padding: const EdgeInsets.only(bottom: 5),
+            child: _buildText(c, false),
+          )),
+        ],
+      );
     }
+    
+    // Если изображение есть, то в зависимости от расположения
+    if (image != null) {
+      final imgH = height * imageHeight;
+      switch (imageTextWrap) {
+        case 'top':
+          return Padding(padding: EdgeInsets.only(top: imgH + 18), child: textWidget);
+        case 'bottom':
+          return Padding(padding: EdgeInsets.only(bottom: imgH + 18), child: textWidget);
+        default:
+          return Padding(padding: EdgeInsets.only(top: imgH + 18), child: textWidget);
+      }
+    }
+    
+    return textWidget;
   }
   
   Widget _buildColumns() {
@@ -1478,7 +1550,7 @@ class _Canvas extends StatelessWidget {
         fontSize: effectiveFontSize,
         fontWeight: isTitle ? FontWeight.w800 : preset.fontWeight,
         color: fontColor,
-        height: 1.3,
+        height: 1.4,
         letterSpacing: preset.letterSpacing,
         fontStyle: preset.isItalic ? FontStyle.italic : FontStyle.normal,
       ),
@@ -1598,8 +1670,8 @@ class _PropertiesPanel extends StatelessWidget {
   final List<SlideChart> charts;
   final Map<String, TextStylePreset> textStyles;
   final bool isImproving, hasImage;
-  final String? imagePosition, imageTextWrap;
-  final ValueChanged<String> onTabChange, onFontChange, onTransitionChange, onTextStyleChange, onTextAlignChange, onImagePositionChange, onImageTextWrapChange;
+  final String? imageTextWrap;
+  final ValueChanged<String> onTabChange, onFontChange, onTransitionChange, onTextStyleChange, onTextAlignChange, onImageTextWrapChange;
   final ValueChanged<int> onBgSelect, onColumnsChange;
   final VoidCallback onBgUpload, onImageUpload, onImprove;
   final ValueChanged<double> onFontSizeChange, onImageWidthChange, onImageHeightChange;
@@ -1607,7 +1679,7 @@ class _PropertiesPanel extends StatelessWidget {
   final ValueChanged<String> onAddShape, onRemoveShape;
   final ValueChanged<String> onAddChart, onRemoveChart;
   
-  const _PropertiesPanel({super.key, required this.index, required this.isPremium, required this.activeTab, required this.globalFont, required this.selectedBgIndex, required this.freeBgs, required this.customBg, required this.fontSize, required this.fontColor, required this.transition, required this.allTransitions, required this.isImproving, required this.currentTextStyle, required this.currentTextAlign, required this.columnsCount, required this.textStyles, required this.shapes, required this.charts, this.imageWidth, this.imageHeight, this.imagePosition, this.imageTextWrap, required this.hasImage, required this.uploadsUsed, required this.onTabChange, required this.onBgSelect, required this.onBgUpload, required this.onImageUpload, required this.onFontChange, required this.onFontSizeChange, required this.onFontColorChange, required this.onTransitionChange, required this.onTextStyleChange, required this.onTextAlignChange, required this.onColumnsChange, required this.onAddShape, required this.onRemoveShape, required this.onAddChart, required this.onRemoveChart, required this.onImageWidthChange, required this.onImageHeightChange, required this.onImagePositionChange, required this.onImageTextWrapChange, required this.onImprove});
+  const _PropertiesPanel({super.key, required this.index, required this.isPremium, required this.activeTab, required this.globalFont, required this.selectedBgIndex, required this.freeBgs, required this.customBg, required this.fontSize, required this.fontColor, required this.transition, required this.allTransitions, required this.isImproving, required this.currentTextStyle, required this.currentTextAlign, required this.columnsCount, required this.textStyles, required this.shapes, required this.charts, this.imageWidth, this.imageHeight, this.imageTextWrap, required this.hasImage, required this.uploadsUsed, required this.onTabChange, required this.onBgSelect, required this.onBgUpload, required this.onImageUpload, required this.onFontChange, required this.onFontSizeChange, required this.onFontColorChange, required this.onTransitionChange, required this.onTextStyleChange, required this.onTextAlignChange, required this.onColumnsChange, required this.onAddShape, required this.onRemoveShape, required this.onAddChart, required this.onRemoveChart, required this.onImageWidthChange, required this.onImageHeightChange, required this.onImageTextWrapChange, required this.onImprove});
   
   @override
   Widget build(BuildContext context) {
@@ -1729,24 +1801,6 @@ class _PropertiesPanel extends StatelessWidget {
         _PropSection('ШИРИНА', child: _SliderRow(value: imageWidth ?? 0.28, min: 0.1, max: 0.6, label: '${((imageWidth ?? 0.28) * 100).round()}%', onChanged: onImageWidthChange)),
         const SizedBox(height: 8),
         _PropSection('ВЫСОТА', child: _SliderRow(value: imageHeight ?? 0.55, min: 0.1, max: 0.8, label: '${((imageHeight ?? 0.55) * 100).round()}%', onChanged: onImageHeightChange)),
-        const SizedBox(height: 8),
-        _PropSection('ПОЗИЦИЯ', child: Row(children: [
-          for (final pair in [('left', Icons.format_align_left_rounded), ('right', Icons.format_align_right_rounded)])
-            Expanded(child: GestureDetector(
-              onTap: () => onImagePositionChange(pair.$1),
-              child: AnimatedContainer(
-                duration: _T.fast,
-                margin: const EdgeInsets.only(right: 4),
-                height: 36,
-                decoration: BoxDecoration(
-                  color: imagePosition == pair.$1 ? _T.accentDim : _T.bgCard,
-                  borderRadius: BorderRadius.circular(7),
-                  border: Border.all(color: imagePosition == pair.$1 ? _T.accent.withOpacity(0.4) : _T.border),
-                ),
-                child: Icon(pair.$2, size: 16, color: imagePosition == pair.$1 ? _T.accent : _T.txtSecondary),
-              ),
-            )),
-        ])),
         const SizedBox(height: 8),
         _PropSection('РАСПОЛОЖЕНИЕ ОТНОСИТЕЛЬНО ТЕКСТА', child: Row(children: [
           for (final entry in {'top': 'Сверху', 'bottom': 'Снизу'}.entries)
