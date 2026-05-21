@@ -603,7 +603,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
 
   void _applyFontSizeToCurrentSlide(double size) {
     setState(() {
-      _fontSizes[_activeSlide] = size.clamp(10.0, 32.0);
+      _fontSizes[_activeSlide] = size;
     });
   }
 
@@ -857,7 +857,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
                   onTransitionChange: (t) => setState(() => _transitions[_activeSlide] = t),
                   onTextStyleChange: _applyTextStyleToCurrentSlide,
                   onTextAlignChange: _applyTextAlignToCurrentSlide,
-                  onColumnsChange: (c) => setState(() => _columnsCount = c),
+                  onColumnsChange: (c) => setState(() => _columnsCount = c.clamp(1, 2)),
                   onAddShape: _addShape,
                   onRemoveShape: _removeShape,
                   onAddChart: _addChart,
@@ -1143,7 +1143,6 @@ class _Canvas extends StatelessWidget {
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
-                      // Фигуры
                       ...shapes.map((s) => Positioned(
                         left: s.x.clamp(0.0, width - s.width),
                         top: s.y.clamp(0.0, height - s.height),
@@ -1176,7 +1175,6 @@ class _Canvas extends StatelessWidget {
                           ],
                         ),
                       )),
-                      // Графики
                       ...charts.map((c) => Positioned(
                         left: c.x.clamp(0.0, width - c.width),
                         top: c.y.clamp(0.0, height - c.height),
@@ -1473,7 +1471,7 @@ class _Canvas extends StatelessWidget {
   }
   
   Widget _buildContent(double width, double height) {
-    // Если колонки > 1, показываем только колонки
+    // Если колонки > 1, показываем колонки
     if (columnsCount > 1) {
       return _buildColumns();
     }
@@ -1493,11 +1491,12 @@ class _Canvas extends StatelessWidget {
     
     // Если нет изображения, возвращаем только текст
     if (image == null) {
-      return textWidget;
+      return SingleChildScrollView(
+        child: textWidget,
+      );
     }
     
     final imgH = height * imageHeight;
-    final availableHeight = height - imgH - 18;
     
     // Изображение
     final imgWidget = ClipRRect(
@@ -1527,10 +1526,7 @@ class _Canvas extends StatelessWidget {
         children: [
           imgWidget,
           const SizedBox(height: 18),
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: availableHeight.clamp(100.0, 400.0),
-            ),
+          Expanded(
             child: SingleChildScrollView(
               child: textWidget,
             ),
@@ -1541,10 +1537,7 @@ class _Canvas extends StatelessWidget {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: availableHeight.clamp(100.0, 400.0),
-            ),
+          Expanded(
             child: SingleChildScrollView(
               child: textWidget,
             ),
@@ -1557,41 +1550,35 @@ class _Canvas extends StatelessWidget {
   }
   
   Widget _buildColumns() {
-    // Для колонок ограничиваем количество до 2 для лучшего отображения
     final effectiveColumns = columnsCount.clamp(1, 2);
     final itemsPerColumn = (contentCtrl.length / effectiveColumns).ceil();
     
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: List.generate(effectiveColumns, (c) => Expanded(
-        child: Padding(
-          padding: EdgeInsets.only(right: c < effectiveColumns - 1 ? 12 : 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (c == 0 && titleCtrl.text.isNotEmpty) 
-                Flexible(child: _buildText(titleCtrl, true)),
-              const SizedBox(height: 8),
-              ...List.generate(itemsPerColumn, (i) {
-                final idx = c * itemsPerColumn + i;
-                return idx < contentCtrl.length 
-                  ? Padding(
-                      padding: const EdgeInsets.only(bottom: 6),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          maxHeight: 150,
-                        ),
-                        child: SingleChildScrollView(
-                          child: _buildText(contentCtrl[idx], false),
-                        ),
-                      ),
-                    )
-                  : const SizedBox.shrink();
-              }),
-            ],
+    return SingleChildScrollView(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: List.generate(effectiveColumns, (c) => Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(right: c < effectiveColumns - 1 ? 12 : 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (c == 0 && titleCtrl.text.isNotEmpty) 
+                  _buildText(titleCtrl, true),
+                const SizedBox(height: 8),
+                ...List.generate(itemsPerColumn, (i) {
+                  final idx = c * itemsPerColumn + i;
+                  return idx < contentCtrl.length 
+                    ? Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: _buildText(contentCtrl[idx], false),
+                      )
+                    : const SizedBox.shrink();
+                }),
+              ],
+            ),
           ),
-        ),
-      )),
+        )),
+      ),
     );
   }
   
@@ -1599,7 +1586,7 @@ class _Canvas extends StatelessWidget {
     final preset = _getStyle();
     final effectiveFontSize = isTitle 
         ? (preset.fontSize * 1.5).clamp(20.0, 48.0)
-        : fontSize.clamp(10.0, 24.0);
+        : fontSize;
     
     return TextField(
       controller: c,
@@ -1611,7 +1598,7 @@ class _Canvas extends StatelessWidget {
         fontSize: effectiveFontSize,
         fontWeight: isTitle ? FontWeight.w800 : preset.fontWeight,
         color: fontColor,
-        height: 1.3,
+        height: 1.4,
         letterSpacing: preset.letterSpacing,
         fontStyle: preset.isItalic ? FontStyle.italic : FontStyle.normal,
       ),
@@ -1799,7 +1786,7 @@ class _PropertiesPanel extends StatelessWidget {
       ])),
       const SizedBox(height: 8),
       _PropSection('КОЛОНКИ', child: Row(children: [
-        for (int i = 1; i <= 2; i++)  // Ограничиваем до 2 колонок для лучшего отображения
+        for (int i = 1; i <= 2; i++)
           Expanded(child: GestureDetector(onTap: () => onColumnsChange(i), child: AnimatedContainer(duration: _T.fast, margin: const EdgeInsets.only(right: 4), height: 36, decoration: BoxDecoration(color: columnsCount == i ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(7), border: Border.all(color: columnsCount == i ? _T.accent.withOpacity(0.4) : _T.border)), child: Center(child: Text('$i', style: TextStyle(color: columnsCount == i ? _T.accentLight : _T.txtSecondary, fontWeight: FontWeight.w600)))))),
       ])),
       const SizedBox(height: 8),
