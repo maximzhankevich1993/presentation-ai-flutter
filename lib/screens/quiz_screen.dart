@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/quiz_service.dart';
 import '../providers/user_provider.dart';
 import '../models/presentation.dart';
+import '../services/api_service.dart';
+import 'premium_screen.dart';
 import 'teacher_screen.dart';
 
 class QuizScreen extends StatefulWidget {
@@ -41,8 +43,6 @@ class _QuizScreenState extends State<QuizScreen> {
   Quiz? _currentQuiz;
   Map<int, int?> _userAnswers = {};
   int _score = 0;
-  int _usedGenerations = 0;
-  final int _maxGenerations = 5;
   
   int _currentQuestionIndex = 0;
   bool _quizFinished = false;
@@ -52,7 +52,6 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   void initState() {
     super.initState();
-    _loadGenerationCount();
     _loadUserPresentations();
     _detectCountry();
   }
@@ -74,16 +73,6 @@ class _QuizScreenState extends State<QuizScreen> {
         setState(() => _countryCode = data['country_code'] ?? 'RU');
       }
     } catch (e) {}
-  }
-
-  Future<void> _loadGenerationCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() => _usedGenerations = prefs.getInt('quiz_generations') ?? 0);
-  }
-
-  Future<void> _saveGenerationCount() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('quiz_generations', _usedGenerations);
   }
 
   Future<void> _loadUserPresentations() async {
@@ -122,14 +111,29 @@ class _QuizScreenState extends State<QuizScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Лимит исчерпан', style: TextStyle(color: Colors.white)),
-        content: const Text('Вы использовали все 5 бесплатных генераций тестов.\n\nВыберите тариф "Учитель" для безлимитного доступа.'),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Color(0xFFFFD700), size: 24),
+            SizedBox(width: 8),
+            Text('Лимит генераций исчерпан', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+          ],
+        ),
+        content: const Text(
+          'У вас закончились бесплатные генерации.\n\nОформите подписку, чтобы продолжить создавать тесты без ограничений.',
+          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14, height: 1.4),
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A)))),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A))),
+          ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const TeacherScreen(countryCode: 'RU')));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PremiumScreen()),
+              );
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
             child: const Text('Выбрать тариф'),
@@ -148,11 +152,17 @@ class _QuizScreenState extends State<QuizScreen> {
         title: const Text('Premium доступ', style: TextStyle(color: Color(0xFFFFD700))),
         content: const Text('Экспорт в PDF доступен только по подписке Premium.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A)))),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A))),
+          ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const TeacherScreen(countryCode: 'RU')));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PremiumScreen()),
+              );
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
             child: const Text('Выбрать тариф'),
@@ -162,103 +172,173 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFFFF3B30),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      ),
+    );
+  }
+
+  void _showSnackBar(String message, bool isSuccess) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isSuccess ? const Color(0xFF1DB954) : const Color(0xFFFF3B30),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
   Future<void> _generateQuizFromFile() async {
-    if (_uploadedFileContent == null) { _showError('Загрузите файл'); return; }
+    if (_uploadedFileContent == null) {
+      _showError('Загрузите файл');
+      return;
+    }
     
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final isPremium = userProvider.isPremium;
-    final isLoggedIn = userProvider.isLoggedIn;
     
-    if (!isPremium && !isLoggedIn && _usedGenerations >= _maxGenerations) { _showLimitDialog(); return; }
+    // Проверка лимита
+    if (userProvider.freeGenerationsLeft <= 0) {
+      _showLimitDialog();
+      return;
+    }
     
     setState(() => _isLoading = true);
     try {
-      final quiz = await QuizService.generateFromPresentation(
-        presentationTitle: _uploadedFileName ?? 'презентация',
-        slideContents: [_uploadedFileContent!],
-        token: userProvider.token,
+      final quiz = await ApiService.generateQuizFromPresentation(
+        title: _uploadedFileName ?? 'презентация',
+        slides: [_uploadedFileContent!],
         questionCount: 5,
       );
+      
+      // Обновляем данные пользователя
+      await userProvider.loadUser();
+      
+      if (!mounted) return;
+      
       setState(() {
-        _currentQuiz = quiz;
+        _currentQuiz = Quiz.fromJson(quiz);
         _showQuiz = true;
         _quizFinished = false;
         _currentQuestionIndex = 0;
         _userAnswers.clear();
         _score = 0;
-        if (!isPremium && !isLoggedIn) _usedGenerations++;
       });
-      if (!isPremium && !isLoggedIn) await _saveGenerationCount();
-    } catch (e) { _showError('Ошибка: $e'); }
-    finally { setState(() => _isLoading = false); }
+    } on LimitReachedException catch (_) {
+      if (mounted) {
+        _showLimitDialog();
+        await userProvider.loadUser();
+      }
+    } catch (e) {
+      _showError('Ошибка: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _generateQuizFromSelectedPresentation() async {
-    if (_selectedPresentation == null) { _showError('Выберите презентацию'); return; }
+    if (_selectedPresentation == null) {
+      _showError('Выберите презентацию');
+      return;
+    }
     
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final isPremium = userProvider.isPremium;
-    final isLoggedIn = userProvider.isLoggedIn;
     
-    if (!isPremium && !isLoggedIn && _usedGenerations >= _maxGenerations) { _showLimitDialog(); return; }
+    if (userProvider.freeGenerationsLeft <= 0) {
+      _showLimitDialog();
+      return;
+    }
     
     setState(() => _isLoading = true);
     try {
       final slideContents = _selectedPresentation!.slides.map((s) => s.title + ' ' + s.content.join(' ')).toList();
-      final quiz = await QuizService.generateFromPresentation(
-        presentationTitle: _selectedPresentation!.title,
-        slideContents: slideContents,
-        token: userProvider.token,
+      final quiz = await ApiService.generateQuizFromPresentation(
+        title: _selectedPresentation!.title,
+        slides: slideContents,
         questionCount: 5,
       );
+      
+      await userProvider.loadUser();
+      
+      if (!mounted) return;
+      
       setState(() {
-        _currentQuiz = quiz;
+        _currentQuiz = Quiz.fromJson(quiz);
         _showQuiz = true;
         _quizFinished = false;
         _currentQuestionIndex = 0;
         _userAnswers.clear();
         _score = 0;
-        if (!isPremium && !isLoggedIn) _usedGenerations++;
       });
-      if (!isPremium && !isLoggedIn) await _saveGenerationCount();
-    } catch (e) { _showError('Ошибка: $e'); }
-    finally { setState(() => _isLoading = false); }
+    } on LimitReachedException catch (_) {
+      if (mounted) {
+        _showLimitDialog();
+        await userProvider.loadUser();
+      }
+    } catch (e) {
+      _showError('Ошибка: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _generateQuizFromTopic() async {
     final topic = _topicController.text.trim();
     final questionCount = int.tryParse(_questionCountController.text.trim()) ?? 5;
-    if (topic.isEmpty) { _showError('Введите тему'); return; }
-    if (questionCount < 3 || questionCount > 10) { _showError('Вопросов от 3 до 10'); return; }
+    
+    if (topic.isEmpty) {
+      _showError('Введите тему');
+      return;
+    }
+    if (questionCount < 3 || questionCount > 10) {
+      _showError('Вопросов от 3 до 10');
+      return;
+    }
     
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final isPremium = userProvider.isPremium;
-    final isLoggedIn = userProvider.isLoggedIn;
     
-    if (!isPremium && !isLoggedIn && _usedGenerations >= _maxGenerations) { _showLimitDialog(); return; }
+    if (userProvider.freeGenerationsLeft <= 0) {
+      _showLimitDialog();
+      return;
+    }
     
     setState(() => _isLoading = true);
     try {
-      final quiz = await QuizService.generateFromTopic(
+      final quiz = await ApiService.generateQuiz(
         topic: topic,
-        textbook: _textbookController.text.trim().isNotEmpty ? _textbookController.text.trim() : null,
-        grade: _gradeController.text.trim(),
-        token: userProvider.token,
         questionCount: questionCount,
-        countryCode: _countryCode,
       );
+      
+      await userProvider.loadUser();
+      
+      if (!mounted) return;
+      
       setState(() {
-        _currentQuiz = quiz;
+        _currentQuiz = Quiz.fromJson(quiz);
         _showQuiz = true;
         _quizFinished = false;
         _currentQuestionIndex = 0;
         _userAnswers.clear();
         _score = 0;
-        if (!isPremium && !isLoggedIn) _usedGenerations++;
       });
-      if (!isPremium && !isLoggedIn) await _saveGenerationCount();
-    } catch (e) { _showError('Ошибка: $e'); }
-    finally { setState(() => _isLoading = false); }
+    } on LimitReachedException catch (_) {
+      if (mounted) {
+        _showLimitDialog();
+        await userProvider.loadUser();
+      }
+    } catch (e) {
+      _showError('Ошибка: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
   
   void _answerQuestion(int selectedIndex) {
@@ -300,7 +380,10 @@ class _QuizScreenState extends State<QuizScreen> {
   void _exportToPdf() async {
     if (_currentQuiz == null) return;
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    if (!userProvider.isPremium) { _showPremiumDialog(); return; }
+    if (!userProvider.isPremium) {
+      _showPremiumDialog();
+      return;
+    }
     final content = QuizService.exportToWord(_currentQuiz!, includeAnswers: true);
     final fullHtml = '''
     <!DOCTYPE html>
@@ -313,21 +396,12 @@ class _QuizScreenState extends State<QuizScreen> {
     html.window.open(url, '_blank');
     html.Url.revokeObjectUrl(url);
   }
-  
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: const Color(0xFFFF3B30), behavior: SnackBarBehavior.floating));
-  }
-  
-  void _showSnackBar(String message, bool isSuccess) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message), backgroundColor: isSuccess ? const Color(0xFF1DB954) : const Color(0xFFFF3B30), behavior: SnackBarBehavior.floating, duration: const Duration(seconds: 2)));
-  }
 
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
+    final remaining = userProvider.freeGenerationsLeft;
     final isPremium = userProvider.isPremium;
-    final isLoggedIn = userProvider.isLoggedIn;
-    final remaining = isPremium || isLoggedIn ? 999 : _maxGenerations - _usedGenerations;
     
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
@@ -397,7 +471,9 @@ class _QuizScreenState extends State<QuizScreen> {
                           const SizedBox(height: 24),
                           
                           // Содержимое вкладок
-                          _currentTab == 0 ? _buildPresentationTab(remaining) : _buildTopicTab(remaining),
+                          _currentTab == 0 
+                              ? _buildPresentationTab(remaining, isPremium) 
+                              : _buildTopicTab(remaining, isPremium),
                         ],
                       ),
                     ),
@@ -433,7 +509,9 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
   
-  Widget _buildPresentationTab(int remaining) {
+  Widget _buildPresentationTab(int remaining, bool isPremium) {
+    final canGenerate = remaining > 0 || isPremium;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -478,16 +556,79 @@ class _QuizScreenState extends State<QuizScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
+                
+                // Индикатор лимита
+                if (!isPremium && remaining <= 3)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: remaining <= 0 
+                          ? const Color(0xFFFF3B30).withOpacity(0.1)
+                          : const Color(0xFF1DB954).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: remaining <= 0 
+                            ? const Color(0xFFFF3B30).withOpacity(0.3)
+                            : const Color(0xFF1DB954).withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          remaining <= 0 ? Icons.warning_amber_rounded : Icons.info_outline_rounded,
+                          color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954),
+                          size: 18,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            remaining <= 0 
+                                ? 'Бесплатные генерации закончились. Оформите подписку, чтобы продолжить.'
+                                : 'Осталось $remaining из 5 бесплатных генераций',
+                            style: TextStyle(
+                              color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                        if (remaining <= 0)
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const PremiumScreen()),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Text(
+                                'Купить',
+                                style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                
+                const SizedBox(height: 16),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _generateQuizFromFile,
+                    onPressed: canGenerate ? _generateQuizFromFile : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1DB954),
+                      backgroundColor: canGenerate ? const Color(0xFF1DB954) : const Color(0xFF4A4A4A),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('Сгенерировать тест из файла'),
+                    child: Text(
+                      canGenerate ? 'Сгенерировать тест из файла' : 'Лимит исчерпан',
+                      style: const TextStyle(color: Colors.white),
+                    ),
                   ),
                 ),
               ],
@@ -525,33 +666,79 @@ class _QuizScreenState extends State<QuizScreen> {
                       hint: const Text('Выберите презентацию', style: TextStyle(color: Color(0xFF9A9A9A))),
                     ),
               const SizedBox(height: 20),
-              if (remaining < 5)
+              
+              // Индикатор лимита
+              if (!isPremium && remaining <= 3)
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1DB954).withOpacity(0.1),
+                    color: remaining <= 0 
+                        ? const Color(0xFFFF3B30).withOpacity(0.1)
+                        : const Color(0xFF1DB954).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.3)),
+                    border: Border.all(
+                      color: remaining <= 0 
+                          ? const Color(0xFFFF3B30).withOpacity(0.3)
+                          : const Color(0xFF1DB954).withOpacity(0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline_rounded, color: Color(0xFF1DB954), size: 18),
+                      Icon(
+                        remaining <= 0 ? Icons.warning_amber_rounded : Icons.info_outline_rounded,
+                        color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954),
+                        size: 18,
+                      ),
                       const SizedBox(width: 10),
-                      Expanded(child: Text('Осталось $remaining из $_maxGenerations бесплатных генераций', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13))),
+                      Expanded(
+                        child: Text(
+                          remaining <= 0 
+                              ? 'Бесплатные генерации закончились. Оформите подписку, чтобы продолжить.'
+                              : 'Осталось $remaining из 5 бесплатных генераций',
+                          style: TextStyle(
+                            color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      if (remaining <= 0)
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const PremiumScreen()),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              'Купить',
+                              style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
+              
               const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _generateQuizFromSelectedPresentation,
+                  onPressed: canGenerate ? _generateQuizFromSelectedPresentation : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1DB954),
+                    backgroundColor: canGenerate ? const Color(0xFF1DB954) : const Color(0xFF4A4A4A),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Сгенерировать тест из презентации'),
+                  child: Text(
+                    canGenerate ? 'Сгенерировать тест из презентации' : 'Лимит исчерпан',
+                    style: const TextStyle(color: Colors.white),
+                  ),
                 ),
               ),
             ],
@@ -561,7 +748,9 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
   
-  Widget _buildTopicTab(int remaining) {
+  Widget _buildTopicTab(int remaining, bool isPremium) {
+    final canGenerate = remaining > 0 || isPremium;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -637,34 +826,78 @@ class _QuizScreenState extends State<QuizScreen> {
               ),
               const SizedBox(height: 20),
               
-              if (remaining < 5)
+              // Индикатор лимита
+              if (!isPremium && remaining <= 3)
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1DB954).withOpacity(0.1),
+                    color: remaining <= 0 
+                        ? const Color(0xFFFF3B30).withOpacity(0.1)
+                        : const Color(0xFF1DB954).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.3)),
+                    border: Border.all(
+                      color: remaining <= 0 
+                          ? const Color(0xFFFF3B30).withOpacity(0.3)
+                          : const Color(0xFF1DB954).withOpacity(0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.info_outline_rounded, color: Color(0xFF1DB954), size: 18),
+                      Icon(
+                        remaining <= 0 ? Icons.warning_amber_rounded : Icons.info_outline_rounded,
+                        color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954),
+                        size: 18,
+                      ),
                       const SizedBox(width: 10),
-                      Expanded(child: Text('Осталось $remaining из $_maxGenerations бесплатных генераций', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13))),
+                      Expanded(
+                        child: Text(
+                          remaining <= 0 
+                              ? 'Бесплатные генерации закончились. Оформите подписку, чтобы продолжить.'
+                              : 'Осталось $remaining из 5 бесплатных генераций',
+                          style: TextStyle(
+                            color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954),
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                      if (remaining <= 0)
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const PremiumScreen()),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              'Купить',
+                              style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
-              const SizedBox(height: 16),
               
+              const SizedBox(height: 16),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _generateQuizFromTopic,
+                  onPressed: canGenerate ? _generateQuizFromTopic : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1DB954),
+                    backgroundColor: canGenerate ? const Color(0xFF1DB954) : const Color(0xFF4A4A4A),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: const Text('Сгенерировать тест'),
+                  child: Text(
+                    canGenerate ? 'Сгенерировать тест' : 'Лимит исчерпан',
+                    style: const TextStyle(color: Colors.white),
+                  ),
                 ),
               ),
             ],
