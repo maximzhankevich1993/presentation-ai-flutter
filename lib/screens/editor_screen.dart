@@ -222,14 +222,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
   final _scrollCtrl = ScrollController();
   DesignTemplate? _appliedTemplate;
   String? _templateBackgroundImage;
-  
-  // Для ресайза фигур и графиков
-  String? _selectedResizeItemId;
-  String? _selectedResizeItemType; // 'shape' или 'chart'
-  double _startWidth = 0;
-  double _startHeight = 0;
-  double _startX = 0;
-  double _startY = 0;
 
   final List<Map<String, dynamic>> _freeBgs = [
     {'type': 'solid', 'color': const Color(0xFF1A1A1A), 'label': 'Тёмный', 'premium': false},
@@ -297,7 +289,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     _imageWidths = List.filled(len, 0.28);
     _imageHeights = List.filled(len, 0.55);
     _imagePositions = List.filled(len, 'right');
-    _imageTextWrap = List.filled(len, 'top'); // только сверху или снизу
+    _imageTextWrap = List.filled(len, 'top');
     _initControllers();
     _loadAutoImages();
     _countUploads();
@@ -332,7 +324,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
       });
     } catch (e) {
       print('Ошибка загрузки фона: $e');
-      // Пробуем использовать NetworkImage
       setState(() {
         for (int i = 0; i < _customBgs.length; i++) {
           _customBgs[i] = previewUrl;
@@ -346,20 +337,16 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
       _appliedTemplate = template;
       final cs = template.colorScheme;
       
-      // 1. Применяем цвета текста и шрифт ко всем слайдам
       _globalFontColor = cs.textPrimary;
       _globalFont = template.fontPair.body;
       
-      // 2. Применяем фон из картинки превью ко ВСЕМ существующим слайдам
       _applyTemplateBackground(template.previewUrl);
       
-      // 3. Применяем шрифты и цвета ко всем существующим слайдам (текст пользователя не трогаем)
       for (int i = 0; i < _presentation.slides.length; i++) {
         _slideFontColors[i] = cs.textPrimary;
         _fonts[i] = template.fontPair.body;
       }
       
-      // 4. Сохраняем метаданные
       if (saveToPresentation) {
         _presentation.metadata = {
           'templateId': template.id,
@@ -368,7 +355,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
         };
       }
     });
-    _toast('Шаблон "${template.name}" применён (фон, цвета и шрифты обновлены)', success: true);
+    _toast('Шаблон "${template.name}" применён', success: true);
   }
 
   void _openTemplateLibrary() async {
@@ -483,11 +470,14 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
 
   void _addShape(String type) {
     setState(() {
+      final slideWidth = 800.0;
+      final slideHeight = 450.0;
+      
       _shapes[_activeSlide].add(SlideShape(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         type: type,
-        x: 100.0 + Random().nextInt(100).toDouble(),
-        y: 100.0 + Random().nextInt(100).toDouble(),
+        x: slideWidth / 2 - 40,
+        y: slideHeight / 2 - 40,
         width: 80,
         height: 80,
         color: _globalFontColor,
@@ -518,24 +508,18 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     });
   }
   
-  void _startResize(String id, String type, double startWidth, double startHeight, double startX, double startY) {
-    _selectedResizeItemId = id;
-    _selectedResizeItemType = type;
-    _startWidth = startWidth;
-    _startHeight = startHeight;
-    _startX = startX;
-    _startY = startY;
-  }
-  
   void _removeShape(String id) => setState(() => _shapes[_activeSlide].removeWhere((s) => s.id == id));
   
   void _addChart(String type) {
     setState(() {
+      final slideWidth = 800.0;
+      final slideHeight = 450.0;
+      
       _charts[_activeSlide].add(SlideChart(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         type: type,
-        x: 100.0 + Random().nextInt(100).toDouble(),
-        y: 100.0 + Random().nextInt(100).toDouble(),
+        x: slideWidth / 2 - 100,
+        y: slideHeight / 2 - 75,
         width: 200,
         height: 150,
         data: [
@@ -828,8 +812,6 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
                 onChartDrag: _updateChartPosition,
                 onChartResize: _resizeChart,
                 onChartDataChange: _updateChartData,
-                onStartResize: _startResize,
-                selectedResizeId: _selectedResizeItemId,
               ),
             ),
             const _ThinDivider(direction: Axis.vertical),
@@ -1132,10 +1114,8 @@ class _Canvas extends StatelessWidget {
   final Function(String, double, double) onChartDrag;
   final Function(String, double, double) onChartResize;
   final Function(String, List<Map<String, dynamic>>) onChartDataChange;
-  final Function(String, String, double, double, double, double) onStartResize;
-  final String? selectedResizeId;
   
-  const _Canvas({super.key, required this.index, required this.titleCtrl, required this.contentCtrl, required this.decoration, required this.font, required this.fontSize, required this.fontColor, required this.slideCount, required this.textStyle, required this.textAlign, required this.columnsCount, this.image, required this.shapes, required this.charts, required this.imageWidth, required this.imageHeight, required this.imagePosition, required this.imageTextWrap, required this.onAddItem, required this.onRemoveItem, required this.onRemoveImage, required this.hasCustomImage, required this.onShapeDrag, required this.onShapeResize, required this.onChartDrag, required this.onChartResize, required this.onChartDataChange, required this.onStartResize, this.selectedResizeId});
+  const _Canvas({super.key, required this.index, required this.titleCtrl, required this.contentCtrl, required this.decoration, required this.font, required this.fontSize, required this.fontColor, required this.slideCount, required this.textStyle, required this.textAlign, required this.columnsCount, this.image, required this.shapes, required this.charts, required this.imageWidth, required this.imageHeight, required this.imagePosition, required this.imageTextWrap, required this.onAddItem, required this.onRemoveItem, required this.onRemoveImage, required this.hasCustomImage, required this.onShapeDrag, required this.onShapeResize, required this.onChartDrag, required this.onChartResize, required this.onChartDataChange});
   
   @override
   Widget build(BuildContext context) {
@@ -1158,7 +1138,6 @@ class _Canvas extends StatelessWidget {
                   child: Stack(
                     clipBehavior: Clip.none,
                     children: [
-                      // Фигуры с возможностью ресайза
                       ...shapes.map((s) => Positioned(
                         left: s.x.clamp(0.0, width - s.width),
                         top: s.y.clamp(0.0, height - s.height),
@@ -1170,7 +1149,6 @@ class _Canvas extends StatelessWidget {
                               },
                               child: _buildShape(s),
                             ),
-                            // Уголок для ресайза
                             Positioned(
                               right: -4,
                               bottom: -4,
@@ -1192,7 +1170,6 @@ class _Canvas extends StatelessWidget {
                           ],
                         ),
                       )),
-                      // Графики с возможностью ресайза
                       ...charts.map((c) => Positioned(
                         left: c.x.clamp(0.0, width - c.width),
                         top: c.y.clamp(0.0, height - c.height),
@@ -1213,7 +1190,6 @@ class _Canvas extends StatelessWidget {
                                 child: _buildChartWidget(c),
                               ),
                             ),
-                            // Уголок для ресайза
                             Positioned(
                               right: -4,
                               bottom: -4,
@@ -1232,7 +1208,6 @@ class _Canvas extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            // Кнопка редактирования данных
                             Positioned(
                               top: -4,
                               right: -4,
@@ -1450,7 +1425,6 @@ class _Canvas extends StatelessWidget {
       ]),
     );
     
-    // Только два варианта: сверху или снизу (убрали "вокруг")
     switch (imageTextWrap) {
       case 'top':
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [img, const SizedBox(height: 18), textCol]);
@@ -1671,9 +1645,9 @@ class _PropertiesPanel extends StatelessWidget {
         for (final f in ['Inter', 'Roboto', 'Playfair Display', 'Montserrat', 'Open Sans'])
           _FontChip(name: f, selected: globalFont == f, onTap: () => onFontChange(f)),
       ])),
-      const SizedBox(height: 12),
+      const SizedBox(height: 8),
       _PropSection('РАЗМЕР ТЕКСТА', child: _SliderRow(value: fontSize, min: 10, max: 32, label: '${fontSize.round()}px', onChanged: onFontSizeChange)),
-      const SizedBox(height: 12),
+      const SizedBox(height: 8),
       _PropSection('СТИЛЬ ТЕКСТА', child: Wrap(spacing: 6, runSpacing: 6, children: textStyles.entries.map((e) {
         final isSelected = currentTextStyle == e.key;
         return GestureDetector(
@@ -1681,22 +1655,22 @@ class _PropertiesPanel extends StatelessWidget {
           child: AnimatedContainer(duration: _T.fast, padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), decoration: BoxDecoration(color: isSelected ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(8), border: Border.all(color: isSelected ? _T.accent.withOpacity(0.35) : _T.border)), child: Text(e.value.name, style: TextStyle(fontSize: 11, color: isSelected ? _T.accentLight : _T.txtSecondary, fontWeight: FontWeight.w500))),
         );
       }).toList())),
-      const SizedBox(height: 12),
+      const SizedBox(height: 8),
       _PropSection('ВЫРАВНИВАНИЕ', child: Row(children: [
         for (final pair in [('left', Icons.format_align_left_rounded), ('center', Icons.format_align_center_rounded), ('right', Icons.format_align_right_rounded)])
           Expanded(child: GestureDetector(onTap: () => onTextAlignChange(pair.$1), child: AnimatedContainer(duration: _T.fast, margin: const EdgeInsets.only(right: 4), height: 36, decoration: BoxDecoration(color: currentTextAlign == pair.$1 ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(7), border: Border.all(color: currentTextAlign == pair.$1 ? _T.accent.withOpacity(0.4) : _T.border)), child: Icon(pair.$2, size: 18, color: currentTextAlign == pair.$1 ? _T.accent : _T.txtSecondary)))),
       ])),
-      const SizedBox(height: 12),
+      const SizedBox(height: 8),
       _PropSection('КОЛОНКИ', child: Row(children: [
         for (int i = 1; i <= 4; i++)
           Expanded(child: GestureDetector(onTap: () => onColumnsChange(i), child: AnimatedContainer(duration: _T.fast, margin: const EdgeInsets.only(right: 4), height: 36, decoration: BoxDecoration(color: columnsCount == i ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(7), border: Border.all(color: columnsCount == i ? _T.accent.withOpacity(0.4) : _T.border)), child: Center(child: Text('$i', style: TextStyle(color: columnsCount == i ? _T.accentLight : _T.txtSecondary, fontWeight: FontWeight.w600)))))),
       ])),
-      const SizedBox(height: 12),
+      const SizedBox(height: 8),
       _PropSection('ЦВЕТ ТЕКСТА', child: Wrap(spacing: 7, children: [
         for (final c in [Colors.white, Colors.black, _T.accent, Colors.blue, Colors.red, _T.gold, Colors.purple, Colors.orange])
           _ColorDot(color: c, selected: fontColor == c, onTap: () => onFontColorChange(c)),
       ])),
-      const SizedBox(height: 12),
+      const SizedBox(height: 8),
       _PropSection('ФОН СЛАЙДА', child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Wrap(spacing: 8, runSpacing: 8, children: freeBgs.asMap().entries.map((e) {
           final isSelected = selectedBgIndex == e.key && customBg == null;
@@ -1712,7 +1686,7 @@ class _PropertiesPanel extends StatelessWidget {
         const SizedBox(height: 8),
         _UploadButton(label: 'Загрузить фон', onTap: onBgUpload),
       ])),
-      const SizedBox(height: 12),
+      const SizedBox(height: 8),
       _PropSection('ПЕРЕХОД', child: Wrap(spacing: 6, runSpacing: 6, children: allTransitions.map((t) {
         final isPremiumTrans = t['premium'] as bool;
         final isSelected = transition == t['id'];
@@ -1751,11 +1725,11 @@ class _PropertiesPanel extends StatelessWidget {
         ),
       )),
       if (hasImage) ...[
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         _PropSection('ШИРИНА', child: _SliderRow(value: imageWidth ?? 0.28, min: 0.1, max: 0.6, label: '${((imageWidth ?? 0.28) * 100).round()}%', onChanged: onImageWidthChange)),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         _PropSection('ВЫСОТА', child: _SliderRow(value: imageHeight ?? 0.55, min: 0.1, max: 0.8, label: '${((imageHeight ?? 0.55) * 100).round()}%', onChanged: onImageHeightChange)),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         _PropSection('ПОЗИЦИЯ', child: Row(children: [
           for (final pair in [('left', Icons.format_align_left_rounded), ('right', Icons.format_align_right_rounded)])
             Expanded(child: GestureDetector(
@@ -1773,7 +1747,7 @@ class _PropertiesPanel extends StatelessWidget {
               ),
             )),
         ])),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         _PropSection('РАСПОЛОЖЕНИЕ ОТНОСИТЕЛЬНО ТЕКСТА', child: Row(children: [
           for (final entry in {'top': 'Сверху', 'bottom': 'Снизу'}.entries)
             Expanded(child: GestureDetector(
@@ -1802,7 +1776,7 @@ class _PropertiesPanel extends StatelessWidget {
           GestureDetector(onTap: () => onAddShape(pair.$1), child: Container(width: 48, height: 48, decoration: BoxDecoration(color: _T.bgCard, borderRadius: _T.r10, border: Border.all(color: _T.border)), child: Icon(pair.$2, color: _T.accent, size: 24))),
       ])),
       if (shapes.isNotEmpty) ...[
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         _PropSection('НА СЛАЙДЕ', child: Column(children: shapes.map((s) => Container(margin: const EdgeInsets.only(bottom: 6), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8), decoration: BoxDecoration(color: _T.bgCard, borderRadius: _T.r8, border: Border.all(color: _T.border)), child: Row(children: [ Icon(_shapeIcon(s.type), color: s.color, size: 18), const SizedBox(width: 10), Expanded(child: Text(s.type, style: const TextStyle(color: _T.txtPrimary, fontSize: 12))), GestureDetector(onTap: () => onRemoveShape(s.id), child: const Icon(Icons.close_rounded, color: _T.txtMuted, size: 14)), ]))).toList())),
       ],
     ]);
@@ -1826,7 +1800,7 @@ class _PropertiesPanel extends StatelessWidget {
         _ChartTypeBtn(icon: Icons.show_chart_rounded, label: 'Линейный', onTap: () => onAddChart('line')),
       ])),
       if (charts.isNotEmpty) ...[
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         _PropSection('НА СЛАЙДЕ', child: Column(children: charts.map((c) => Container(margin: const EdgeInsets.only(bottom: 6), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8), decoration: BoxDecoration(color: _T.bgCard, borderRadius: _T.r8, border: Border.all(color: _T.border)), child: Row(children: [ Icon(_chartIcon(c.type), color: _T.accent, size: 18), const SizedBox(width: 10), Expanded(child: Text(c.type, style: const TextStyle(color: _T.txtPrimary, fontSize: 12))), GestureDetector(onTap: () => onRemoveChart(c.id), child: const Icon(Icons.close_rounded, color: _T.txtMuted, size: 14)), ]))).toList())),
       ],
     ]);
