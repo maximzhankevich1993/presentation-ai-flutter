@@ -11,7 +11,7 @@ class ApiService {
   static String? _authToken;
   
   // ============================================
-  // УПРАВЛЕНИЕ ТОКЕНОМ (С СОХРАНЕНИЕМ)
+  // УПРАВЛЕНИЕ ТОКЕНОМ
   // ============================================
   
   static Future<void> loadToken() async {
@@ -90,7 +90,7 @@ class ApiService {
       }
       return data;
     } else {
-      throw Exception(data['message'] ?? 'Ошибка регистрации');
+      throw Exception(data['error'] ?? 'Ошибка регистрации');
     }
   }
   
@@ -114,7 +114,7 @@ class ApiService {
       }
       return data;
     } else {
-      throw Exception(data['message'] ?? 'Ошибка входа');
+      throw Exception(data['error'] ?? 'Ошибка входа');
     }
   }
   
@@ -136,7 +136,7 @@ class ApiService {
       }
       return data;
     } else {
-      throw Exception(data['message'] ?? 'Ошибка социального входа');
+      throw Exception(data['error'] ?? 'Ошибка социального входа');
     }
   }
   
@@ -169,7 +169,7 @@ class ApiService {
     
     if (response.statusCode != 200) {
       final data = json.decode(response.body);
-      throw Exception(data['message'] ?? 'Ошибка обновления профиля');
+      throw Exception(data['error'] ?? 'Ошибка обновления профиля');
     }
   }
   
@@ -182,7 +182,7 @@ class ApiService {
     
     if (response.statusCode != 200) {
       final data = json.decode(response.body);
-      throw Exception(data['message'] ?? 'Ошибка сброса пароля');
+      throw Exception(data['error'] ?? 'Ошибка сброса пароля');
     }
   }
   
@@ -224,15 +224,19 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return Presentation.fromJson(data);
+      } else if (response.statusCode == 402) {
+        final data = json.decode(response.body);
+        throw LimitReachedException(data['message'] ?? 'Бесплатные генерации закончились');
       } else if (response.statusCode == 401) {
         throw Exception('Требуется авторизация');
       } else if (response.statusCode == 429) {
         throw Exception('Превышен лимит генераций');
       } else {
         final error = json.decode(response.body);
-        throw Exception(error['message'] ?? 'Ошибка генерации');
+        throw Exception(error['error'] ?? 'Ошибка генерации');
       }
     } catch (e) {
+      if (e is LimitReachedException) rethrow;
       throw Exception('Ошибка соединения: $e');
     }
   }
@@ -246,17 +250,17 @@ class ApiService {
     
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      return data['improvedText'] ?? data['text'] ?? text;
+      return data['improved'] ?? data['original'] ?? text;
     } else if (response.statusCode == 401) {
       throw Exception('Требуется авторизация');
     } else {
       final error = json.decode(response.body);
-      throw Exception(error['message'] ?? 'Ошибка улучшения текста');
+      throw Exception(error['error'] ?? 'Ошибка улучшения текста');
     }
   }
 
   // ============================================
-  // ⭐ НОВЫЙ МЕТОД: ГЕНЕРАЦИЯ ПЛАНА УРОКА ⭐
+  // ГЕНЕРАЦИЯ ПЛАНА УРОКА
   // ============================================
   
   static Future<Map<String, dynamic>> generateLessonPlan({
@@ -285,16 +289,144 @@ class ApiService {
         final data = json.decode(response.body);
         print('✅ Lesson Plan получен успешно');
         return data;
+      } else if (response.statusCode == 402) {
+        final data = json.decode(response.body);
+        throw LimitReachedException(data['message'] ?? 'Бесплатные генерации закончились');
       } else if (response.statusCode == 401) {
         throw Exception('Требуется авторизация');
       } else if (response.statusCode == 429) {
         throw Exception('Превышен лимит генераций');
       } else {
         final error = json.decode(response.body);
-        throw Exception(error['message'] ?? 'Ошибка генерации плана урока');
+        throw Exception(error['error'] ?? 'Ошибка генерации плана урока');
       }
     } catch (e) {
+      if (e is LimitReachedException) rethrow;
       print('❌ Ошибка генерации плана урока: $e');
+      throw Exception('Ошибка соединения: $e');
+    }
+  }
+  
+  // ============================================
+  // ГЕНЕРАЦИЯ ТЕСТА
+  // ============================================
+  
+  static Future<Map<String, dynamic>> generateQuiz({
+    required String topic,
+    required int questionCount,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/quiz/generate'),
+        headers: _getHeaders(),
+        body: json.encode({
+          'topic': topic,
+          'questionCount': questionCount,
+        }),
+      );
+      
+      print('📝 Quiz API response status: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('✅ Тест получен успешно');
+        return data;
+      } else if (response.statusCode == 402) {
+        final data = json.decode(response.body);
+        throw LimitReachedException(data['message'] ?? 'Бесплатные генерации закончились');
+      } else if (response.statusCode == 401) {
+        throw Exception('Требуется авторизация');
+      } else if (response.statusCode == 429) {
+        throw Exception('Превышен лимит генераций');
+      } else {
+        final error = json.decode(response.body);
+        throw Exception(error['error'] ?? 'Ошибка генерации теста');
+      }
+    } catch (e) {
+      if (e is LimitReachedException) rethrow;
+      print('❌ Ошибка генерации теста: $e');
+      throw Exception('Ошибка соединения: $e');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> generateQuizFromPresentation({
+    required String title,
+    required List<dynamic> slides,
+    required int questionCount,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/quiz/from-presentation'),
+        headers: _getHeaders(),
+        body: json.encode({
+          'title': title,
+          'slides': slides,
+          'questionCount': questionCount,
+        }),
+      );
+      
+      print('📝 Quiz from presentation API response status: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('✅ Тест из презентации получен успешно');
+        return data;
+      } else if (response.statusCode == 402) {
+        final data = json.decode(response.body);
+        throw LimitReachedException(data['message'] ?? 'Бесплатные генерации закончились');
+      } else if (response.statusCode == 401) {
+        throw Exception('Требуется авторизация');
+      } else {
+        final error = json.decode(response.body);
+        throw Exception(error['error'] ?? 'Ошибка генерации теста');
+      }
+    } catch (e) {
+      if (e is LimitReachedException) rethrow;
+      print('❌ Ошибка генерации теста из презентации: $e');
+      throw Exception('Ошибка соединения: $e');
+    }
+  }
+  
+  // ============================================
+  // ГЕНЕРАЦИЯ ОТЧЁТА
+  // ============================================
+  
+  static Future<Map<String, dynamic>> generateReport({
+    required String company,
+    required String period,
+    required String standard,
+    required String reportType,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/report/generate'),
+        headers: _getHeaders(),
+        body: json.encode({
+          'company': company,
+          'period': period,
+          'standard': standard,
+          'reportType': reportType,
+        }),
+      );
+      
+      print('📊 Report API response status: ${response.statusCode}');
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        print('✅ Отчёт получен успешно');
+        return data;
+      } else if (response.statusCode == 402) {
+        final data = json.decode(response.body);
+        throw LimitReachedException(data['message'] ?? 'Бесплатные генерации закончились');
+      } else if (response.statusCode == 401) {
+        throw Exception('Требуется авторизация');
+      } else {
+        final error = json.decode(response.body);
+        throw Exception(error['error'] ?? 'Ошибка генерации отчёта');
+      }
+    } catch (e) {
+      if (e is LimitReachedException) rethrow;
+      print('❌ Ошибка генерации отчёта: $e');
       throw Exception('Ошибка соединения: $e');
     }
   }
@@ -409,4 +541,40 @@ class ApiService {
       return false;
     }
   }
+  
+  // ============================================
+  // ПОЛУЧЕНИЕ ОСТАВШИХСЯ ГЕНЕРАЦИЙ
+  // ============================================
+  
+  static Future<int> getRemainingGenerations() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/user/generations'),
+        headers: _getHeaders(),
+      );
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['freeGenerationsLeft'] ?? 5;
+      } else {
+        return 5; // По умолчанию для гостей
+      }
+    } catch (e) {
+      return 5;
+    }
+  }
+}
+
+// ============================================
+// КЛАСС ИСКЛЮЧЕНИЯ ДЛЯ ЛИМИТА
+// ============================================
+
+class LimitReachedException implements Exception {
+  final String message;
+  final bool needPayment;
+  
+  LimitReachedException(this.message, {this.needPayment = true});
+  
+  @override
+  String toString() => message;
 }
