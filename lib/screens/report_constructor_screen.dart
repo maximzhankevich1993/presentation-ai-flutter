@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/presentation.dart';
-import '../services/generation_counter.dart';
 import '../providers/user_provider.dart';
+import '../services/api_service.dart';
 import 'editor_screen.dart';
+import 'premium_screen.dart';
 import 'corporate_screen.dart';
 
 class ReportConstructorScreen extends StatefulWidget {
@@ -42,100 +43,35 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
     super.dispose();
   }
 
-  Future<void> _generateReport() async {
-    final company = _companyController.text.trim();
-    final period = _periodController.text.trim();
-    
-    if (company.isEmpty || period.isEmpty) {
-      _showError('Заполните все поля');
-      return;
-    }
-    
-    setState(() => _isGenerating = true);
-    
-    try {
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-      final isLoggedIn = userProvider.isLoggedIn;
-      final isPremium = userProvider.isPremium;
-      
-      final canGenerate = await GenerationCounter.canGenerateReport(isLoggedIn, isPremium);
-      if (!canGenerate) {
-        if (mounted) {
-          _showLimitAndRedirect();
-        }
-        setState(() => _isGenerating = false);
-        return;
-      }
-      
-      final presentation = await _generateReportViaAPI(
-        company: company,
-        period: period,
-        standard: _selectedStandard,
-        reportType: _selectedReportType,
-      );
-      
-      if (!isLoggedIn) {
-        await GenerationCounter.incrementReport();
-      }
-      
-      if (!mounted) return;
-      
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => EditorScreen(presentation: presentation),
-        ),
-      );
-    } catch (e) {
-      _showError('Ошибка создания отчёта: $e');
-      setState(() => _isGenerating = false);
-    }
-  }
-  
-  Future<Presentation> _generateReportViaAPI({
-    required String company,
-    required String period,
-    required String standard,
-    required String reportType,
-  }) async {
-    await Future.delayed(const Duration(seconds: 1));
-    
-    final standardName = _standards.firstWhere((s) => s['code'] == standard)['name'] ?? standard;
-    final reportName = _reportTypes.firstWhere((t) => t['id'] == reportType)['name'] ?? reportType;
-    
-    return Presentation(
-      id: DateTime.now().toString(),
-      title: '$reportName: $company',
-      slides: [
-        Slide(title: 'Титульный лист', content: [reportName, company, 'Период: $period', 'Стандарт: $standardName']),
-        Slide(title: 'Ключевые показатели', content: ['📊 Выручка: _________', '💰 Прибыль: _________', '📈 Рентабельность: _________', '💵 Денежный поток: _________']),
-        Slide(title: 'Анализ', content: ['• Отклонения от плана:', '• Тренды и динамика:', '• Ключевые риски:']),
-        Slide(title: 'Заключение', content: ['Основные выводы:', 'Рекомендации:', 'План действий:']),
-      ],
-      createdAt: DateTime.now(),
-    );
-  }
-  
-  void _showLimitAndRedirect() {
+  void _showLimitDialog() {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Лимит исчерпан', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Color(0xFFFFD700), size: 24),
+            SizedBox(width: 8),
+            Text('Лимит генераций исчерпан', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+          ],
+        ),
         content: const Text(
-          'Вы использовали все 3 бесплатных отчёта.\n\nВыберите тариф "Бизнес" или "Корпоративный", чтобы продолжить.',
-          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
+          'У вас закончились бесплатные генерации.\n\nОформите подписку, чтобы продолжить создавать отчёты без ограничений.',
+          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14, height: 1.4),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A)))),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A))),
+          ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              Navigator.pushReplacement(
+              Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const CorporateScreen(countryCode: 'RU')),
+                MaterialPageRoute(builder: (_) => const PremiumScreen()),
               );
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
@@ -145,18 +81,138 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
       ),
     );
   }
-  
+
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: const Color(0xFFFF3B30), behavior: SnackBarBehavior.floating),
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFFFF3B30),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      ),
     );
+  }
+
+  Future<void> _generateReport() async {
+    final company = _companyController.text.trim();
+    final period = _periodController.text.trim();
+    
+    if (company.isEmpty || period.isEmpty) {
+      _showError('Заполните все поля');
+      return;
+    }
+    
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    
+    // Проверка лимита перед генерацией
+    if (userProvider.freeGenerationsLeft <= 0) {
+      _showLimitDialog();
+      return;
+    }
+    
+    setState(() => _isGenerating = true);
+    
+    try {
+      final reportData = await ApiService.generateReport(
+        company: company,
+        period: period,
+        standard: _selectedStandard,
+        reportType: _selectedReportType,
+      );
+      
+      // Обновляем данные пользователя после генерации
+      await userProvider.loadUser();
+      
+      if (!mounted) return;
+      
+      final presentation = _convertToPresentation(reportData);
+      
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => EditorScreen(presentation: presentation),
+        ),
+      );
+    } on LimitReachedException catch (_) {
+      if (mounted) {
+        _showLimitDialog();
+        await userProvider.loadUser();
+      }
+    } catch (e) {
+      _showError('Ошибка создания отчёта: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isGenerating = false);
+      }
+    }
+  }
+  
+  Presentation _convertToPresentation(Map<String, dynamic> reportData) {
+    final slides = <Slide>[];
+    
+    // Титульный слайд
+    if (reportData['slides'] != null && reportData['slides'].isNotEmpty) {
+      for (final slide in reportData['slides']) {
+        slides.add(Slide(
+          title: slide['title'] ?? 'Слайд',
+          content: List<String>.from(slide['content'] ?? []),
+        ));
+      }
+    } else {
+      // Fallback структура
+      slides.add(Slide(
+        title: reportData['title'] ?? 'Отчёт',
+        content: [
+          'Компания: ${_companyController.text}',
+          'Период: ${_periodController.text}',
+          'Стандарт: ${_getStandardName(_selectedStandard)}',
+        ],
+      ));
+      slides.add(Slide(
+        title: 'Ключевые показатели',
+        content: ['📊 Выручка: _________', '💰 Прибыль: _________', '📈 Рентабельность: _________'],
+      ));
+      slides.add(Slide(
+        title: 'Анализ',
+        content: ['• Отклонения от плана:', '• Тренды и динамика:', '• Ключевые риски:'],
+      ));
+      slides.add(Slide(
+        title: 'Заключение',
+        content: ['Основные выводы:', 'Рекомендации:', 'План действий:'],
+      ));
+    }
+    
+    return Presentation(
+      id: DateTime.now().toString(),
+      title: reportData['title'] ?? '${_getReportTypeName(_selectedReportType)}: ${_companyController.text}',
+      slides: slides,
+      createdAt: DateTime.now(),
+    );
+  }
+  
+  String _getStandardName(String code) {
+    final standard = _standards.firstWhere(
+      (s) => s['code'] == code,
+      orElse: () => {'name': code},
+    );
+    return standard['name'] ?? code;
+  }
+  
+  String _getReportTypeName(String id) {
+    final type = _reportTypes.firstWhere(
+      (t) => t['id'] == id,
+      orElse: () => {'name': id},
+    );
+    return type['name'] ?? id;
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLoggedIn = context.watch<UserProvider>().isLoggedIn;
-    final isPremium = context.watch<UserProvider>().isPremium;
-    final remaining = isPremium || isLoggedIn ? 999 : 3 - (_usedGenerations ?? 0);
+    final userProvider = Provider.of<UserProvider>(context);
+    final remaining = userProvider.freeGenerationsLeft;
+    final isPremium = userProvider.isPremium;
+    final canGenerate = remaining > 0 || isPremium;
     
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
@@ -181,6 +237,7 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Заголовок
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(32),
@@ -215,34 +272,79 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                       _buildStandardDropdown(),
                       const SizedBox(height: 24),
                       
-                      if (!isLoggedIn && !isPremium && remaining < 3)
+                      // Индикатор оставшихся генераций
+                      if (!isPremium && remaining <= 3)
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1DB954).withOpacity(0.1),
+                            color: remaining <= 0 
+                                ? const Color(0xFFFF3B30).withOpacity(0.1)
+                                : const Color(0xFF1DB954).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.3)),
+                            border: Border.all(
+                              color: remaining <= 0 
+                                  ? const Color(0xFFFF3B30).withOpacity(0.3)
+                                  : const Color(0xFF1DB954).withOpacity(0.3),
+                            ),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.info_outline_rounded, color: Color(0xFF1DB954), size: 18),
+                              Icon(
+                                remaining <= 0 ? Icons.warning_amber_rounded : Icons.info_outline_rounded,
+                                color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954),
+                                size: 18,
+                              ),
                               const SizedBox(width: 10),
-                              Expanded(child: Text('Осталось $remaining из 3 бесплатных отчётов', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13))),
+                              Expanded(
+                                child: Text(
+                                  remaining <= 0 
+                                      ? 'Бесплатные генерации закончились. Оформите подписку, чтобы продолжить.'
+                                      : 'Осталось $remaining из 5 бесплатных генераций',
+                                  style: TextStyle(
+                                    color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                              if (remaining <= 0)
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => const PremiumScreen()),
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Text(
+                                      'Купить',
+                                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ),
                       const SizedBox(height: 16),
                       
+                      // Кнопка создания
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _generateReport,
+                          onPressed: canGenerate ? _generateReport : null,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1DB954),
+                            backgroundColor: canGenerate ? const Color(0xFF1DB954) : const Color(0xFF4A4A4A),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
-                          child: const Text('Создать отчёт', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                          child: Text(
+                            canGenerate ? 'Создать отчёт' : 'Лимит исчерпан',
+                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                          ),
                         ),
                       ),
                     ],
@@ -277,7 +379,11 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
   Widget _buildReportTypeSelector() {
     return Container(
       padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF2A2A2A))),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF2A2A2A)),
+      ),
       child: Row(
         children: _reportTypes.map((type) {
           final isSelected = _selectedReportType == type['id'];
@@ -296,7 +402,14 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                   children: [
                     Icon(type['icon'] as IconData, color: isSelected ? Colors.white : const Color(0xFF9A9A9A), size: 16),
                     const SizedBox(width: 6),
-                    Text(type['name'] as String, style: TextStyle(color: isSelected ? Colors.white : const Color(0xFF9A9A9A), fontSize: 12, fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400)),
+                    Text(
+                      type['name'] as String,
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : const Color(0xFF9A9A9A),
+                        fontSize: 12,
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -310,7 +423,11 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
   Widget _buildStandardDropdown() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF2A2A2A))),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF2A2A2A)),
+      ),
       child: DropdownButtonFormField<String>(
         value: _selectedStandard,
         items: _standards.map((standard) {
@@ -335,10 +452,5 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
         style: const TextStyle(color: Colors.white),
       ),
     );
-  }
-  
-  int get _usedGenerations {
-    // TODO: получить из GenerationCounter
-    return 0;
   }
 }
