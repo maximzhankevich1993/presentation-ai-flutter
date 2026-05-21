@@ -603,7 +603,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
 
   void _applyFontSizeToCurrentSlide(double size) {
     setState(() {
-      _fontSizes[_activeSlide] = size;
+      _fontSizes[_activeSlide] = size.clamp(10.0, 32.0);
     });
   }
 
@@ -1473,57 +1473,118 @@ class _Canvas extends StatelessWidget {
   }
   
   Widget _buildContent(double width, double height) {
-    // Текстовая часть (может быть в колонках или обычная)
-    Widget textWidget;
+    // Если колонки > 1, показываем только колонки
     if (columnsCount > 1) {
-      textWidget = _buildColumns();
-    } else {
-      textWidget = Column(
+      return _buildColumns();
+    }
+    
+    // Текстовая часть
+    final textWidget = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildText(titleCtrl, true),
+        const SizedBox(height: 10),
+        ...contentCtrl.map((c) => Padding(
+          padding: const EdgeInsets.only(bottom: 5),
+          child: _buildText(c, false),
+        )),
+      ],
+    );
+    
+    // Если нет изображения, возвращаем только текст
+    if (image == null) {
+      return textWidget;
+    }
+    
+    final imgH = height * imageHeight;
+    final availableHeight = height - imgH - 18;
+    
+    // Изображение
+    final imgWidget = ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Stack(children: [
+        Image.network(image!, width: width * imageWidth, height: imgH, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox()),
+        if (hasCustomImage)
+          Positioned(
+            top: 4,
+            right: 4,
+            child: GestureDetector(
+              onTap: onRemoveImage,
+              child: Container(
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(9)),
+                child: const Icon(Icons.close_rounded, color: Colors.white, size: 11),
+              ),
+            ),
+          ),
+      ]),
+    );
+    
+    if (imageTextWrap == 'top') {
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildText(titleCtrl, true),
-          const SizedBox(height: 10),
-          ...contentCtrl.map((c) => Padding(
-            padding: const EdgeInsets.only(bottom: 5),
-            child: _buildText(c, false),
-          )),
+          imgWidget,
+          const SizedBox(height: 18),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: availableHeight.clamp(100.0, 400.0),
+            ),
+            child: SingleChildScrollView(
+              child: textWidget,
+            ),
+          ),
+        ],
+      );
+    } else {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: availableHeight.clamp(100.0, 400.0),
+            ),
+            child: SingleChildScrollView(
+              child: textWidget,
+            ),
+          ),
+          const SizedBox(height: 18),
+          imgWidget,
         ],
       );
     }
-    
-    // Если изображение есть, то в зависимости от расположения
-    if (image != null) {
-      final imgH = height * imageHeight;
-      switch (imageTextWrap) {
-        case 'top':
-          return Padding(padding: EdgeInsets.only(top: imgH + 18), child: textWidget);
-        case 'bottom':
-          return Padding(padding: EdgeInsets.only(bottom: imgH + 18), child: textWidget);
-        default:
-          return Padding(padding: EdgeInsets.only(top: imgH + 18), child: textWidget);
-      }
-    }
-    
-    return textWidget;
   }
   
   Widget _buildColumns() {
+    // Для колонок ограничиваем количество до 2 для лучшего отображения
+    final effectiveColumns = columnsCount.clamp(1, 2);
+    final itemsPerColumn = (contentCtrl.length / effectiveColumns).ceil();
+    
     return Row(
-      children: List.generate(columnsCount, (c) => Expanded(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: List.generate(effectiveColumns, (c) => Expanded(
         child: Padding(
-          padding: EdgeInsets.only(right: c < columnsCount - 1 ? 12 : 0),
+          padding: EdgeInsets.only(right: c < effectiveColumns - 1 ? 12 : 0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (c == 0 && titleCtrl.text.isNotEmpty) 
                 Flexible(child: _buildText(titleCtrl, true)),
               const SizedBox(height: 8),
-              ...List.generate(2, (i) {
-                final idx = c * 2 + i;
+              ...List.generate(itemsPerColumn, (i) {
+                final idx = c * itemsPerColumn + i;
                 return idx < contentCtrl.length 
                   ? Padding(
                       padding: const EdgeInsets.only(bottom: 6),
-                      child: Flexible(child: _buildText(contentCtrl[idx], false)),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxHeight: 150,
+                        ),
+                        child: SingleChildScrollView(
+                          child: _buildText(contentCtrl[idx], false),
+                        ),
+                      ),
                     )
                   : const SizedBox.shrink();
               }),
@@ -1537,8 +1598,8 @@ class _Canvas extends StatelessWidget {
   Widget _buildText(TextEditingController c, bool isTitle) {
     final preset = _getStyle();
     final effectiveFontSize = isTitle 
-        ? (preset.fontSize * 1.5).clamp(24.0, 72.0)
-        : fontSize;
+        ? (preset.fontSize * 1.5).clamp(20.0, 48.0)
+        : fontSize.clamp(10.0, 24.0);
     
     return TextField(
       controller: c,
@@ -1550,11 +1611,15 @@ class _Canvas extends StatelessWidget {
         fontSize: effectiveFontSize,
         fontWeight: isTitle ? FontWeight.w800 : preset.fontWeight,
         color: fontColor,
-        height: 1.4,
+        height: 1.3,
         letterSpacing: preset.letterSpacing,
         fontStyle: preset.isItalic ? FontStyle.italic : FontStyle.normal,
       ),
-      decoration: const InputDecoration(border: InputBorder.none, isCollapsed: true, contentPadding: EdgeInsets.zero),
+      decoration: const InputDecoration(
+        border: InputBorder.none,
+        isCollapsed: true,
+        contentPadding: EdgeInsets.zero,
+      ),
     );
   }
   
@@ -1734,7 +1799,7 @@ class _PropertiesPanel extends StatelessWidget {
       ])),
       const SizedBox(height: 8),
       _PropSection('КОЛОНКИ', child: Row(children: [
-        for (int i = 1; i <= 4; i++)
+        for (int i = 1; i <= 2; i++)  // Ограничиваем до 2 колонок для лучшего отображения
           Expanded(child: GestureDetector(onTap: () => onColumnsChange(i), child: AnimatedContainer(duration: _T.fast, margin: const EdgeInsets.only(right: 4), height: 36, decoration: BoxDecoration(color: columnsCount == i ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(7), border: Border.all(color: columnsCount == i ? _T.accent.withOpacity(0.4) : _T.border)), child: Center(child: Text('$i', style: TextStyle(color: columnsCount == i ? _T.accentLight : _T.txtSecondary, fontWeight: FontWeight.w600)))))),
       ])),
       const SizedBox(height: 8),
