@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../providers/logo_provider.dart';
 import '../providers/history_provider.dart';
+import '../services/api_service.dart';
 import 'loading_screen.dart';
 import 'premium_screen.dart';
 import 'settings_screen.dart';
@@ -85,6 +86,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _detectCurrency();
     _detectCountry();
     _loadVipStats();
+    _loadUserData();
   }
 
   @override
@@ -93,6 +95,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _focusNode.dispose();
     _pulseController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadUserData() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    await userProvider.loadUser();
+    setState(() {});
   }
 
   Future<void> _detectCountry() async {
@@ -174,7 +182,46 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   void _push(Widget screen) =>
       Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
 
-  void _generate({String? overrideTopic}) {
+  void _showLimitDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        backgroundColor: _T.bgSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: _T.gold, size: 24),
+            SizedBox(width: 8),
+            Text('Лимит генераций исчерпан', style: TextStyle(color: _T.txtPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
+          ],
+        ),
+        content: const Text(
+          'У вас закончились бесплатные генерации.\n\nОформите подписку, чтобы продолжить создавать презентации, уроки, тесты и отчёты без ограничений.',
+          style: TextStyle(color: _T.txtSecondary, fontSize: 14, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Позже', style: TextStyle(color: _T.txtSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _push(const PremiumScreen());
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _T.accent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Выбрать тариф', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _generate({String? overrideTopic}) async {
     final topic = (overrideTopic ?? _topicController.text).trim();
     if (topic.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -186,10 +233,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ));
       return;
     }
+
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    
+    // Проверка лимита перед генерацией
+    if (userProvider.freeGenerationsLeft <= 0) {
+      _showLimitDialog();
+      return;
+    }
+
     try {
       Provider.of<UserHistoryProvider>(context, listen: false)
           .add(topic, slideCount: _maxSlides);
     } catch (_) {}
+    
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -199,6 +256,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   void _showTextInput() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    
+    if (userProvider.freeGenerationsLeft <= 0) {
+      _showLimitDialog();
+      return;
+    }
+
     final controller = TextEditingController();
     showDialog(
       context: context,
@@ -337,7 +401,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       trailing: MouseRegion(
                         cursor: SystemMouseCursors.click,
                         child: GestureDetector(
-                          onTap: () { Navigator.pop(ctx); _generate(overrideTopic: rec.topic); },
+                          onTap: () { 
+                            Navigator.pop(ctx); 
+                            _generate(overrideTopic: rec.topic); 
+                          },
                           child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5), decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(8)), child: const Text('Повторить', style: TextStyle(color: _T.accent, fontSize: 11, fontWeight: FontWeight.w600))),
                         ),
                       ),
@@ -467,16 +534,27 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ),
                 const SizedBox(height: 10),
 
+                // Кнопка создания с проверкой лимита
                 ScaleTransition(
                   scale: _pulseAnimation,
                   child: MouseRegion(
-                    cursor: SystemMouseCursors.click,
+                    cursor: left > 0 ? SystemMouseCursors.click : SystemMouseCursors.forbidden,
                     child: GestureDetector(
-                      onTap: _generate,
+                      onTap: left > 0 ? _generate : null,
                       child: Container(
                         width: double.infinity, height: 48,
-                        decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF169C46), _T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(16), boxShadow: [BoxShadow(color: _T.accent.withOpacity(0.25), blurRadius: 16, offset: const Offset(0, 4))]),
-                        child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.auto_awesome, color: Colors.white, size: 16), SizedBox(width: 8), Text('Создать', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15))]),
+                        decoration: BoxDecoration(
+                          gradient: left > 0 
+                              ? const LinearGradient(colors: [Color(0xFF169C46), _T.accent, _T.accentLight])
+                              : const LinearGradient(colors: [_T.bgCard, _T.bgCard]),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: left > 0 ? [BoxShadow(color: _T.accent.withOpacity(0.25), blurRadius: 16, offset: const Offset(0, 4))] : null,
+                        ),
+                        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                          Icon(Icons.auto_awesome, color: left > 0 ? Colors.white : _T.txtMuted, size: 16),
+                          const SizedBox(width: 8),
+                          Text(left > 0 ? 'Создать' : 'Лимит исчерпан', style: TextStyle(color: left > 0 ? Colors.white : _T.txtMuted, fontWeight: FontWeight.w800, fontSize: 15)),
+                        ]),
                       ),
                     ),
                   ),
@@ -488,14 +566,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   children: _examples.map((example) {
                     final selected = _topicController.text == example;
                     return MouseRegion(
-                      cursor: SystemMouseCursors.click,
+                      cursor: left > 0 ? SystemMouseCursors.click : SystemMouseCursors.forbidden,
                       child: GestureDetector(
-                        onTap: () => setState(() => _topicController.text = example),
+                        onTap: left > 0 ? () => setState(() => _topicController.text = example) : null,
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 150),
                           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                           decoration: BoxDecoration(color: selected ? _T.accentDim : _T.bgSurface, borderRadius: BorderRadius.circular(20), border: Border.all(color: selected ? _T.accent.withOpacity(0.5) : _T.border)),
-                          child: Text(example, style: TextStyle(fontSize: 12, color: selected ? _T.accent : _T.txtSecondary, fontWeight: selected ? FontWeight.w600 : FontWeight.w400)),
+                          child: Text(example, style: TextStyle(fontSize: 12, color: selected ? _T.accent : left > 0 ? _T.txtSecondary : _T.txtMuted, fontWeight: selected ? FontWeight.w600 : FontWeight.w400)),
                         ),
                       ),
                     );
@@ -504,7 +582,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 const SizedBox(height: 16),
 
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  _ExtraBtn(Icons.article_outlined, 'Из текста', _showTextInput),
+                  _ExtraBtn(Icons.article_outlined, 'Из текста', left > 0 ? _showTextInput : _showLimitDialog),
                   const SizedBox(width: 10),
                   _ExtraBtn(Icons.image_outlined, 'Загрузить логотип', _uploadLogo),
                   const SizedBox(width: 10),
@@ -527,14 +605,40 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ],
                 const SizedBox(height: 20),
 
+                // Индикатор оставшихся генераций
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                  decoration: BoxDecoration(color: _T.bgSurface, borderRadius: BorderRadius.circular(14), border: Border.all(color: _T.border)),
+                  decoration: BoxDecoration(
+                    color: left <= 0 ? _T.accentDim : _T.bgSurface,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: left <= 0 ? _T.accent.withOpacity(0.3) : _T.border),
+                  ),
                   child: Column(children: [
-                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [const Icon(Icons.bolt, color: _T.accent, size: 14), const SizedBox(width: 4), const Text('Осталось генераций: ', style: TextStyle(color: _T.txtSecondary, fontSize: 11)), Text('$left из 5', style: const TextStyle(color: _T.accent, fontWeight: FontWeight.w700, fontSize: 12))]),
-                    const SizedBox(height: 8),
-                    SizedBox(width: 160, height: 4, child: ClipRRect(borderRadius: BorderRadius.circular(2), child: LinearProgressIndicator(value: left / 5.0, backgroundColor: _T.border, valueColor: const AlwaysStoppedAnimation<Color>(_T.accent)))),
+                    Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                      Icon(left <= 0 ? Icons.warning_amber_rounded : Icons.bolt, color: _T.accent, size: 14),
+                      const SizedBox(width: 4),
+                      Text(left <= 0 ? 'Бесплатные генерации закончились' : 'Осталось генераций: ', style: TextStyle(color: _T.txtSecondary, fontSize: 11)),
+                      if (left > 0) Text('$left из 5', style: const TextStyle(color: _T.accent, fontWeight: FontWeight.w700, fontSize: 12)),
+                    ]),
+                    if (left <= 0) ...[
+                      const SizedBox(height: 8),
+                      GestureDetector(
+                        onTap: () => _push(const PremiumScreen()),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Text('Купить тариф', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                        ),
+                      ),
+                    ],
+                    if (left > 0) ...[
+                      const SizedBox(height: 8),
+                      SizedBox(width: 160, height: 4, child: ClipRRect(borderRadius: BorderRadius.circular(2), child: LinearProgressIndicator(value: left / 5.0, backgroundColor: _T.border, valueColor: const AlwaysStoppedAnimation<Color>(_T.accent)))),
+                    ],
                   ]),
                 ),
                 const SizedBox(height: 28),
