@@ -3,10 +3,11 @@ import 'package:provider/provider.dart';
 import '../models/presentation.dart';
 import '../models/lesson_plan.dart';
 import '../services/lesson_plan_service.dart';
-import '../services/generation_counter.dart';
 import '../providers/user_provider.dart';
+import '../services/api_service.dart';
 import 'editor_screen.dart';
 import 'teacher_screen.dart';
+import 'premium_screen.dart';
 
 class LessonConstructorScreen extends StatefulWidget {
   const LessonConstructorScreen({super.key});
@@ -47,6 +48,57 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
     super.dispose();
   }
 
+  void _showLimitDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1C1C1C),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: Color(0xFFFFD700), size: 24),
+            SizedBox(width: 8),
+            Text('Лимит генераций исчерпан', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+          ],
+        ),
+        content: const Text(
+          'У вас закончились бесплатные генерации.\n\nОформите подписку, чтобы продолжить создавать планы уроков без ограничений.',
+          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A))),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PremiumScreen()),
+              );
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
+            child: const Text('Выбрать тариф'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFFFF3B30),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      ),
+    );
+  }
+
   Future<void> _generateLesson() async {
     final topic = _topicController.text.trim();
     final subject = _subjectController.text.trim();
@@ -57,40 +109,31 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       return;
     }
     
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    
+    // Проверка лимита перед генерацией
+    if (userProvider.freeGenerationsLeft <= 0) {
+      _showLimitDialog();
+      return;
+    }
+    
     setState(() => _isGenerating = true);
     
     try {
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-      final isLoggedIn = userProvider.isLoggedIn;
-      final isPremium = userProvider.isPremium;
-      
-      final canGenerate = await GenerationCounter.canGeneratePresentation(isLoggedIn, isPremium);
-      if (!canGenerate) {
-        if (mounted) {
-          _showLimitAndRedirect();
-        }
-        setState(() => _isGenerating = false);
-        return;
-      }
-      
-      final token = userProvider.token;
-      
-      final lessonPlan = await LessonPlanService.generate(
+      final lessonPlan = await ApiService.generateLessonPlan(
         topic: topic,
         subject: subject,
         standard: _selectedStandard,
         grade: grade,
         durationMinutes: _durationMinutes,
-        token: token,
       );
       
-      if (!isLoggedIn) {
-        await GenerationCounter.incrementPresentation();
-      }
-      
-      final presentation = _convertToPresentation(lessonPlan);
+      // Обновляем данные пользователя после генерации
+      await userProvider.loadUser();
       
       if (!mounted) return;
+      
+      final presentation = _convertToPresentation(lessonPlan);
       
       Navigator.pushReplacement(
         context,
@@ -98,69 +141,50 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
           builder: (_) => EditorScreen(presentation: presentation),
         ),
       );
+    } on LimitReachedException catch (_) {
+      if (mounted) {
+        _showLimitDialog();
+        await userProvider.loadUser();
+      }
     } catch (e) {
-      _showError('Ошибка создания плана урока: $e');
-      setState(() => _isGenerating = false);
+      if (mounted) {
+        _showError('Ошибка создания плана урока: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isGenerating = false);
+      }
     }
   }
   
-  void _showLimitAndRedirect() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1C),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Лимит исчерпан', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
-        content: const Text(
-          'Вы использовали все 5 бесплатных генераций.\n\nВыберите тариф "Учитель", чтобы продолжить.',
-          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A)))),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const TeacherScreen(countryCode: 'RU')),
-              );
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
-            child: const Text('Выбрать тариф'),
-          ),
-        ],
-      ),
-    );
-  }
-  
-  Presentation _convertToPresentation(LessonPlan lessonPlan) {
+  Presentation _convertToPresentation(Map<String, dynamic> lessonPlan) {
     final List<Slide> slides = [];
     
     slides.add(Slide(
       title: 'План урока',
       content: [
-        '📚 Предмет: ${lessonPlan.subject}',
-        '📖 Тема: ${lessonPlan.topic}',
-        '🎓 Класс: ${lessonPlan.grade}',
-        '🌍 Стандарт: ${_getStandardName(lessonPlan.standard)}',
-        '⏱️ Длительность: ${lessonPlan.duration}',
+        '📚 Предмет: ${lessonPlan['subject']}',
+        '📖 Тема: ${lessonPlan['topic']}',
+        '🎓 Класс: ${lessonPlan['grade']}',
+        '🌍 Стандарт: ${_getStandardName(lessonPlan['standard'])}',
+        '⏱️ Длительность: ${lessonPlan['duration']}',
       ],
     ));
     
     slides.add(Slide(
       title: 'Цели урока',
-      content: lessonPlan.objectives.map((obj) => '• $obj').toList(),
+      content: (lessonPlan['objectives'] as List).map((obj) => '• $obj').toList(),
     ));
     
-    for (final stage in lessonPlan.stages) {
+    final stages = lessonPlan['stages'] as List;
+    for (final stage in stages) {
       slides.add(Slide(
-        title: stage.name,
+        title: stage['name'],
         content: [
-          '⏰ Время: ${stage.minutes} мин',
-          '👩‍🏫 Учитель: ${stage.teacherActions}',
-          '👨‍🎓 Ученики: ${stage.studentActions}',
-          '📁 Ресурсы: ${stage.resources}',
+          '⏰ Время: ${stage['minutes']} мин',
+          '👩‍🏫 Учитель: ${stage['teacherActions']}',
+          '👨‍🎓 Ученики: ${stage['studentActions']}',
+          '📁 Ресурсы: ${stage['resources']}',
         ],
       ));
     }
@@ -168,27 +192,27 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
     if (_includeHomework) {
       slides.add(Slide(
         title: 'Домашнее задание',
-        content: [lessonPlan.homework],
+        content: [lessonPlan['homework']],
       ));
     }
     
     if (_includeAssessments) {
       slides.add(Slide(
         title: 'Оценивание',
-        content: [lessonPlan.assessment],
+        content: [lessonPlan['assessment']],
       ));
     }
     
     if (_includeDifferentiation) {
       slides.add(Slide(
         title: 'Дифференциация',
-        content: lessonPlan.differentiation.map((d) => '• $d').toList(),
+        content: (lessonPlan['differentiation'] as List).map((d) => '• $d').toList(),
       ));
     }
     
     return Presentation(
       id: DateTime.now().toString(),
-      title: 'План урока: ${lessonPlan.topic}',
+      title: 'План урока: ${lessonPlan['topic']}',
       slides: slides,
       createdAt: DateTime.now(),
     );
@@ -201,22 +225,12 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
     );
     return standard['name'] ?? code;
   }
-  
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: const Color(0xFFFF3B30),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
-    final isLoggedIn = context.watch<UserProvider>().isLoggedIn;
-    final isPremium = context.watch<UserProvider>().isPremium;
-    final remaining = isPremium || isLoggedIn ? 999 : 5 - (_usedGenerations ?? 0);
+    final userProvider = Provider.of<UserProvider>(context);
+    final remaining = userProvider.freeGenerationsLeft;
+    final isPremium = userProvider.isPremium;
     
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
@@ -290,39 +304,79 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                       _buildSwitch(value: _includeHomework, onChanged: (v) => setState(() => _includeHomework = v), title: 'Включить домашнее задание', icon: Icons.home_rounded),
                       const SizedBox(height: 24),
                       
-                      if (!isLoggedIn && !isPremium && remaining < 5)
+                      // Индикатор оставшихся генераций
+                      if (!isPremium && remaining <= 3)
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF1DB954).withOpacity(0.1),
+                            color: remaining <= 0 
+                                ? const Color(0xFFFF3B30).withOpacity(0.1)
+                                : const Color(0xFF1DB954).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.3)),
+                            border: Border.all(
+                              color: remaining <= 0 
+                                  ? const Color(0xFFFF3B30).withOpacity(0.3)
+                                  : const Color(0xFF1DB954).withOpacity(0.3),
+                            ),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.info_outline_rounded, color: Color(0xFF1DB954), size: 18),
+                              Icon(
+                                remaining <= 0 ? Icons.warning_amber_rounded : Icons.info_outline_rounded,
+                                color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954),
+                                size: 18,
+                              ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  'Осталось $remaining из 5 бесплатных генераций',
-                                  style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13),
+                                  remaining <= 0 
+                                      ? 'Бесплатные генерации закончились. Оформите подписку, чтобы продолжить.'
+                                      : 'Осталось $remaining из 5 бесплатных генераций',
+                                  style: TextStyle(
+                                    color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954),
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ),
+                              if (remaining <= 0)
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => const PremiumScreen()),
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Text(
+                                      'Купить',
+                                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                         ),
                       const SizedBox(height: 16),
                       
+                      // Кнопка создания
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: _generateLesson,
+                          onPressed: remaining <= 0 ? null : _generateLesson,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF1DB954),
+                            backgroundColor: remaining <= 0 ? const Color(0xFF4A4A4A) : const Color(0xFF1DB954),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
-                          child: const Text('Создать план урока', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                          child: Text(
+                            remaining <= 0 ? 'Лимит исчерпан' : 'Создать план урока',
+                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                          ),
                         ),
                       ),
                     ],
@@ -423,10 +477,5 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
         ],
       ),
     );
-  }
-  
-  int get _usedGenerations {
-    // TODO: получить из GenerationCounter
-    return 0;
   }
 }
