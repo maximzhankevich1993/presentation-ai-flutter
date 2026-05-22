@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
@@ -21,6 +22,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   final List<String> _languages = ['Русский', 'English', 'Қазақша'];
   final List<String> _themes = ['Тёмная', 'Светлая', 'Системная'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTheme();
+  }
+
+  Future<void> _loadTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedTheme = prefs.getString('app_theme') ?? 'Тёмная';
+    setState(() {
+      _selectedTheme = savedTheme;
+    });
+  }
+
+  Future<void> _saveTheme(String theme) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('app_theme', theme);
+    // Применяем тему через MaterialApp (нужно перезагрузить приложение)
+    // Для простоты перезагружаем весь виджет
+    if (mounted) {
+      // Можно использовать для перезагрузки:
+      // (context as Element).reassemble(); // работает только в dev
+      // Либо выбросить событие через ChangeNotifier
+      // Временное решение: перезапустить приложение
+      // Но лучше использовать ThemeProvider (см. ниже)
+    }
+  }
+
+  void _applyTheme(String theme) {
+    // Здесь будет логика реального переключения темы
+    // Рекомендуется использовать Provider или Riverpod для глобального состояния темы
+    // Для демонстрации просто меняем переменную и сохраняем
+    setState(() {
+      _selectedTheme = theme;
+    });
+    _saveTheme(theme);
+    // Уведомляем об изменении (можно через отдельный ThemeProvider)
+    // Пример: Provider.of<ThemeProvider>(context, listen: false).setTheme(theme);
+    _showSuccess('Тема изменена на $theme. Перезапустите приложение для полного применения.');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,95 +103,97 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       body: _isLoggingOut
           ? const Center(child: CircularProgressIndicator(color: Color(0xFF1DB954)))
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 700),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Профиль
-                    _buildSectionHeader('ПРОФИЛЬ'),
-                    const SizedBox(height: 12),
-                    _buildSettingsCard([
-                      _SettingsItem(
-                        icon: Icons.person_outline,
-                        title: 'Имя пользователя',
-                        value: up.userName,
-                        onTap: () => _editUserName(up),
-                      ),
-                      _SettingsItem(
-                        icon: Icons.email_outlined,
-                        title: 'Email',
-                        value: up.userEmail,
-                        onTap: () => _editEmail(up),
-                      ),
-                      _SettingsItem(
-                        icon: Icons.logout_rounded,
-                        title: 'Выйти',
-                        value: '',
-                        isDanger: true,
-                        onTap: () => _logout(),
-                      ),
-                    ]),
-                    const SizedBox(height: 24),
+          : Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 700),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Профиль
+                      _buildSectionHeader('ПРОФИЛЬ'),
+                      const SizedBox(height: 12),
+                      _buildSettingsCard([
+                        _SettingsItem(
+                          icon: Icons.person_outline,
+                          title: 'Имя пользователя',
+                          value: up.userName,
+                          onTap: () => _editUserName(up),
+                        ),
+                        _SettingsItem(
+                          icon: Icons.email_outlined,
+                          title: 'Email',
+                          value: up.userEmail,
+                          onTap: () => _editEmail(up),
+                        ),
+                        _SettingsItem(
+                          icon: Icons.logout_rounded,
+                          title: 'Выйти',
+                          value: '',
+                          isDanger: true,
+                          onTap: () => _logout(),
+                        ),
+                      ]),
+                      const SizedBox(height: 24),
 
-                    // Настройки приложения
-                    _buildSectionHeader('ПРИЛОЖЕНИЕ'),
-                    const SizedBox(height: 12),
-                    _buildSettingsCard([
-                      _SettingsSwitch(
-                        icon: Icons.notifications_none,
-                        title: 'Уведомления',
-                        value: _notificationsEnabled,
-                        onChanged: (v) => setState(() => _notificationsEnabled = v),
-                      ),
-                      _SettingsSwitch(
-                        icon: Icons.save_outlined,
-                        title: 'Автосохранение',
-                        value: _autoSaveEnabled,
-                        onChanged: (v) => setState(() => _autoSaveEnabled = v),
-                      ),
-                      _SettingsItem(
-                        icon: Icons.language_outlined,
-                        title: 'Язык',
-                        value: _selectedLanguage,
-                        onTap: () => _showLanguagePicker(),
-                      ),
-                      _SettingsItem(
-                        icon: Icons.dark_mode_outlined,
-                        title: 'Тема',
-                        value: _selectedTheme,
-                        onTap: () => _showThemePicker(),
-                      ),
-                    ]),
-                    const SizedBox(height: 24),
+                      // Настройки приложения
+                      _buildSectionHeader('ПРИЛОЖЕНИЕ'),
+                      const SizedBox(height: 12),
+                      _buildSettingsCard([
+                        _SettingsSwitch(
+                          icon: Icons.notifications_none,
+                          title: 'Уведомления',
+                          value: _notificationsEnabled,
+                          onChanged: (v) => setState(() => _notificationsEnabled = v),
+                        ),
+                        _SettingsSwitch(
+                          icon: Icons.save_outlined,
+                          title: 'Автосохранение',
+                          value: _autoSaveEnabled,
+                          onChanged: (v) => setState(() => _autoSaveEnabled = v),
+                        ),
+                        _SettingsItem(
+                          icon: Icons.language_outlined,
+                          title: 'Язык',
+                          value: _selectedLanguage,
+                          onTap: () => _showLanguagePicker(),
+                        ),
+                        _SettingsItem(
+                          icon: Icons.dark_mode_outlined,
+                          title: 'Тема',
+                          value: _selectedTheme,
+                          onTap: () => _showThemePicker(),
+                        ),
+                      ]),
+                      const SizedBox(height: 24),
 
-                    // О приложении
-                    _buildSectionHeader('О ПРИЛОЖЕНИИ'),
-                    const SizedBox(height: 12),
-                    _buildSettingsCard([
-                      _SettingsItem(
-                        icon: Icons.info_outline,
-                        title: 'Версия',
-                        value: '1.0.0',
-                        onTap: null,
-                      ),
-                      _SettingsItem(
-                        icon: Icons.description_outlined,
-                        title: 'Пользовательское соглашение',
-                        value: '',
-                        onTap: () => _showTerms(),
-                      ),
-                      _SettingsItem(
-                        icon: Icons.privacy_tip_outlined,
-                        title: 'Политика конфиденциальности',
-                        value: '',
-                        onTap: () => _showPrivacy(),
-                      ),
-                    ]),
-                    const SizedBox(height: 32),
-                  ],
+                      // О приложении
+                      _buildSectionHeader('О ПРИЛОЖЕНИИ'),
+                      const SizedBox(height: 12),
+                      _buildSettingsCard([
+                        _SettingsItem(
+                          icon: Icons.info_outline,
+                          title: 'Версия',
+                          value: '1.0.0',
+                          onTap: null,
+                        ),
+                        _SettingsItem(
+                          icon: Icons.description_outlined,
+                          title: 'Пользовательское соглашение',
+                          value: '',
+                          onTap: () => _showTerms(),
+                        ),
+                        _SettingsItem(
+                          icon: Icons.privacy_tip_outlined,
+                          title: 'Политика конфиденциальности',
+                          value: '',
+                          onTap: () => _showPrivacy(),
+                        ),
+                      ]),
+                      const SizedBox(height: 32),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -157,15 +201,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildSectionHeader(String title) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Text(
-        title,
-        style: const TextStyle(
-          color: Color(0xFF4A4A4A),
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.8,
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Text(
+          title,
+          style: const TextStyle(
+            color: Color(0xFF4A4A4A),
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.8,
+          ),
         ),
       ),
     );
@@ -173,6 +220,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildSettingsCard(List<Widget> items) {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(16),
@@ -372,6 +420,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               setState(() => _selectedLanguage = lang);
               Navigator.pop(ctx);
               _showSuccess('Язык изменён');
+              // Здесь будет логика смены языка (i18n)
             },
           )),
           const SizedBox(height: 16),
@@ -415,10 +464,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ? const Icon(Icons.check_rounded, color: Color(0xFF1DB954))
                 : null,
             onTap: () {
-              setState(() => _selectedTheme = theme);
               Navigator.pop(ctx);
-              _showSuccess('Тема изменена');
-              // Здесь будет логика смены темы
+              _applyTheme(theme);
             },
           )),
           const SizedBox(height: 16),
