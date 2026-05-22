@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
 import 'login_screen.dart';
+import 'home_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -16,6 +17,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _autoSaveEnabled = true;
   String _selectedLanguage = 'Русский';
   String _selectedTheme = 'Тёмная';
+  bool _isLoggingOut = false;
 
   final List<String> _languages = ['Русский', 'English', 'Қазақша'];
   final List<String> _themes = ['Тёмная', 'Светлая', 'Системная'];
@@ -29,9 +31,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF121212),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+        leading: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 34,
+              height: 34,
+              margin: const EdgeInsets.only(left: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFF2A2A2A)),
+              ),
+              child: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 18),
+            ),
+          ),
         ),
         title: const Text(
           'Настройки',
@@ -39,99 +54,105 @@ class _SettingsScreenState extends State<SettingsScreen> {
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.w700,
+            letterSpacing: -0.3,
           ),
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Профиль
-            _buildSectionHeader('ПРОФИЛЬ'),
-            const SizedBox(height: 12),
-            _buildSettingsCard([
-              _SettingsItem(
-                icon: Icons.person_outline,
-                title: 'Имя пользователя',
-                value: up.userName,
-                onTap: () => _editUserName(up),
-              ),
-              _SettingsItem(
-                icon: Icons.email_outlined,
-                title: 'Email',
-                value: up.userEmail,
-                onTap: () => _editEmail(up),
-              ),
-              _SettingsItem(
-                icon: Icons.logout_rounded,
-                title: 'Выйти',
-                value: '',
-                isDanger: true,
-                onTap: () => _logout(),
-              ),
-            ]),
-            const SizedBox(height: 24),
+      body: _isLoggingOut
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF1DB954)))
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 700),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Профиль
+                    _buildSectionHeader('ПРОФИЛЬ'),
+                    const SizedBox(height: 12),
+                    _buildSettingsCard([
+                      _SettingsItem(
+                        icon: Icons.person_outline,
+                        title: 'Имя пользователя',
+                        value: up.userName,
+                        onTap: () => _editUserName(up),
+                      ),
+                      _SettingsItem(
+                        icon: Icons.email_outlined,
+                        title: 'Email',
+                        value: up.userEmail,
+                        onTap: () => _editEmail(up),
+                      ),
+                      _SettingsItem(
+                        icon: Icons.logout_rounded,
+                        title: 'Выйти',
+                        value: '',
+                        isDanger: true,
+                        onTap: () => _logout(),
+                      ),
+                    ]),
+                    const SizedBox(height: 24),
 
-            // Настройки приложения
-            _buildSectionHeader('ПРИЛОЖЕНИЕ'),
-            const SizedBox(height: 12),
-            _buildSettingsCard([
-              _SettingsSwitch(
-                icon: Icons.notifications_none,
-                title: 'Уведомления',
-                value: _notificationsEnabled,
-                onChanged: (v) => setState(() => _notificationsEnabled = v),
-              ),
-              _SettingsSwitch(
-                icon: Icons.save_outlined,
-                title: 'Автосохранение',
-                value: _autoSaveEnabled,
-                onChanged: (v) => setState(() => _autoSaveEnabled = v),
-              ),
-              _SettingsItem(
-                icon: Icons.language_outlined,
-                title: 'Язык',
-                value: _selectedLanguage,
-                onTap: () => _showLanguagePicker(),
-              ),
-              _SettingsItem(
-                icon: Icons.dark_mode_outlined,
-                title: 'Тема',
-                value: _selectedTheme,
-                onTap: () => _showThemePicker(),
-              ),
-            ]),
-            const SizedBox(height: 24),
+                    // Настройки приложения
+                    _buildSectionHeader('ПРИЛОЖЕНИЕ'),
+                    const SizedBox(height: 12),
+                    _buildSettingsCard([
+                      _SettingsSwitch(
+                        icon: Icons.notifications_none,
+                        title: 'Уведомления',
+                        value: _notificationsEnabled,
+                        onChanged: (v) => setState(() => _notificationsEnabled = v),
+                      ),
+                      _SettingsSwitch(
+                        icon: Icons.save_outlined,
+                        title: 'Автосохранение',
+                        value: _autoSaveEnabled,
+                        onChanged: (v) => setState(() => _autoSaveEnabled = v),
+                      ),
+                      _SettingsItem(
+                        icon: Icons.language_outlined,
+                        title: 'Язык',
+                        value: _selectedLanguage,
+                        onTap: () => _showLanguagePicker(),
+                      ),
+                      _SettingsItem(
+                        icon: Icons.dark_mode_outlined,
+                        title: 'Тема',
+                        value: _selectedTheme,
+                        onTap: () => _showThemePicker(),
+                      ),
+                    ]),
+                    const SizedBox(height: 24),
 
-            // О приложении
-            _buildSectionHeader('О ПРИЛОЖЕНИИ'),
-            const SizedBox(height: 12),
-            _buildSettingsCard([
-              _SettingsItem(
-                icon: Icons.info_outline,
-                title: 'Версия',
-                value: '1.0.0',
-                onTap: null,
+                    // О приложении
+                    _buildSectionHeader('О ПРИЛОЖЕНИИ'),
+                    const SizedBox(height: 12),
+                    _buildSettingsCard([
+                      _SettingsItem(
+                        icon: Icons.info_outline,
+                        title: 'Версия',
+                        value: '1.0.0',
+                        onTap: null,
+                      ),
+                      _SettingsItem(
+                        icon: Icons.description_outlined,
+                        title: 'Пользовательское соглашение',
+                        value: '',
+                        onTap: () => _showTerms(),
+                      ),
+                      _SettingsItem(
+                        icon: Icons.privacy_tip_outlined,
+                        title: 'Политика конфиденциальности',
+                        value: '',
+                        onTap: () => _showPrivacy(),
+                      ),
+                    ]),
+                    const SizedBox(height: 32),
+                  ],
+                ),
               ),
-              _SettingsItem(
-                icon: Icons.description_outlined,
-                title: 'Пользовательское соглашение',
-                value: '',
-                onTap: () => _showTerms(),
-              ),
-              _SettingsItem(
-                icon: Icons.privacy_tip_outlined,
-                title: 'Политика конфиденциальности',
-                value: '',
-                onTap: () => _showPrivacy(),
-              ),
-            ]),
-            const SizedBox(height: 32),
-          ],
-        ),
-      ),
+            ),
     );
   }
 
@@ -142,7 +163,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title,
         style: const TextStyle(
           color: Color(0xFF4A4A4A),
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.8,
         ),
@@ -178,11 +199,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Изменить имя',
-          style: TextStyle(color: Colors.white, fontSize: 18),
+          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
         ),
         content: TextField(
           controller: controller,
@@ -201,17 +222,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              'Отмена',
-              style: TextStyle(color: Color(0xFF9A9A9A)),
-            ),
+            child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A))),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(ctx, controller.text),
-            child: const Text(
-              'Сохранить',
-              style: TextStyle(color: Color(0xFF1DB954)),
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
+            child: const Text('Сохранить', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -219,15 +235,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     
     if (result != null && result.isNotEmpty && result != up.userName) {
       up.setUserName(result);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Имя обновлено'),
-            backgroundColor: Color(0xFF1DB954),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      _showSuccess('Имя обновлено');
     }
   }
 
@@ -236,11 +244,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Изменить Email',
-          style: TextStyle(color: Colors.white, fontSize: 18),
+          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
         ),
         content: TextField(
           controller: controller,
@@ -260,17 +268,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              'Отмена',
-              style: TextStyle(color: Color(0xFF9A9A9A)),
-            ),
+            child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A))),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(ctx, controller.text),
-            child: const Text(
-              'Сохранить',
-              style: TextStyle(color: Color(0xFF1DB954)),
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
+            child: const Text('Сохранить', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -278,15 +281,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     
     if (result != null && result.isNotEmpty && result != up.userEmail) {
       up.setUserEmail(result);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Email обновлён'),
-            backgroundColor: Color(0xFF1DB954),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      _showSuccess('Email обновлён');
     }
   }
 
@@ -294,11 +289,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Выход',
-          style: TextStyle(color: Colors.white, fontSize: 18),
+          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
         ),
         content: const Text(
           'Вы уверены, что хотите выйти?',
@@ -307,45 +302,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(
-              'Отмена',
-              style: TextStyle(color: Color(0xFF9A9A9A)),
-            ),
+            child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A))),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
-              'Выйти',
-              style: TextStyle(color: Color(0xFFFF3B30)),
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF3B30)),
+            child: const Text('Выйти', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
     
     if (confirmed == true) {
+      setState(() => _isLoggingOut = true);
+      
       try {
-        await ApiService.logout();
         final up = Provider.of<UserProvider>(context, listen: false);
-        up.logout();
+        await up.logout();
         
         if (mounted) {
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            MaterialPageRoute(builder: (_) => const HomeScreen()),
             (route) => false,
           );
         }
       } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ошибка выхода'),
-              backgroundColor: Color(0xFFFF3B30),
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
+        setState(() => _isLoggingOut = false);
+        _showError('Ошибка выхода');
       }
     }
   }
@@ -365,7 +349,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Color(0xFF2A2A2A),
+              color: const Color(0xFF2A2A2A),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -387,6 +371,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: () {
               setState(() => _selectedLanguage = lang);
               Navigator.pop(ctx);
+              _showSuccess('Язык изменён');
             },
           )),
           const SizedBox(height: 16),
@@ -410,7 +395,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Color(0xFF2A2A2A),
+              color: const Color(0xFF2A2A2A),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -432,6 +417,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: () {
               setState(() => _selectedTheme = theme);
               Navigator.pop(ctx);
+              _showSuccess('Тема изменена');
+              // Здесь будет логика смены темы
             },
           )),
           const SizedBox(height: 16),
@@ -444,11 +431,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Пользовательское соглашение',
-          style: TextStyle(color: Colors.white, fontSize: 18),
+          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
         ),
         content: const SingleChildScrollView(
           child: Text(
@@ -459,10 +446,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              'Закрыть',
-              style: TextStyle(color: Color(0xFF1DB954)),
-            ),
+            child: const Text('Закрыть', style: TextStyle(color: Color(0xFF1DB954))),
           ),
         ],
       ),
@@ -473,11 +457,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E1E1E),
+        backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text(
           'Политика конфиденциальности',
-          style: TextStyle(color: Colors.white, fontSize: 18),
+          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
         ),
         content: const SingleChildScrollView(
           child: Text(
@@ -488,12 +472,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              'Закрыть',
-              style: TextStyle(color: Color(0xFF1DB954)),
-            ),
+            child: const Text('Закрыть', style: TextStyle(color: Color(0xFF1DB954))),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFF1DB954),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: const Color(0xFFFF3B30),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -529,7 +536,15 @@ class _SettingsItem extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
-              Icon(icon, size: 22, color: isDanger ? const Color(0xFFFF3B30) : const Color(0xFF1DB954)),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: isDanger ? const Color(0xFFFF3B30).withOpacity(0.1) : const Color(0xFF1DB954).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 18, color: isDanger ? const Color(0xFFFF3B30) : const Color(0xFF1DB954)),
+              ),
               const SizedBox(width: 14),
               Expanded(
                 child: Text(
@@ -578,7 +593,15 @@ class _SettingsSwitch extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          Icon(icon, size: 22, color: const Color(0xFF1DB954)),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1DB954).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, size: 18, color: const Color(0xFF1DB954)),
+          ),
           const SizedBox(width: 14),
           Expanded(
             child: Text(
