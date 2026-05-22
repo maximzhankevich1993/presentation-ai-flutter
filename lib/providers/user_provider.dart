@@ -7,11 +7,13 @@ class UserProvider extends ChangeNotifier {
   String? _token;
   bool _isLoading = false;
   String? _error;
+  String? _avatarUrl;
 
   User? get user => _user;
   String? get token => _token;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  String? get avatarUrl => _avatarUrl;
   
   bool get isLoggedIn => _user != null && _token != null;
   bool get isPremium => _user?.isPremium ?? false;
@@ -39,9 +41,15 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setAvatarUrl(String url) {
+    _avatarUrl = url;
+    notifyListeners();
+  }
+
   void clearUser() {
     _user = null;
     _token = null;
+    _avatarUrl = null;
     notifyListeners();
   }
 
@@ -79,6 +87,16 @@ class UserProvider extends ChangeNotifier {
 
   Future<void> refreshUser() async {
     await loadUser();
+  }
+
+  Future<void> logout() async {
+    try {
+      await ApiService.logout();
+    } catch (e) {
+      print('Logout error: $e');
+    } finally {
+      clearUser();
+    }
   }
 
   void _setLoading(bool loading) {
