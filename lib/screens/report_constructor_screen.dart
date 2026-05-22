@@ -19,7 +19,7 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
   
   String _selectedStandard = 'ifrs';
   String _selectedReportType = 'financial';
-  int _slideCount = 6; // НОВОЕ: количество слайдов
+  int _slideCount = 6;
   bool _isGenerating = false;
   
   final List<Map<String, String>> _standards = [
@@ -118,7 +118,7 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
         period: period,
         standard: _selectedStandard,
         reportType: _selectedReportType,
-        slideCount: _slideCount, // НОВОЕ: передаём количество слайдов
+        slideCount: _slideCount,
       );
       
       await userProvider.loadUser();
@@ -150,17 +150,17 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
   Presentation _convertToPresentation(Map<String, dynamic> reportData) {
     final slides = <Slide>[];
     
-    // Слайды отчёта
     final slidesData = reportData['slides'] as List? ?? [];
     for (final slideData in slidesData) {
       final content = slideData['content'] as List? ?? [];
-      slides.add(Slide(
-        title: slideData['title'] ?? 'Слайд',
-        content: content.map((c) => c.toString()).toList(),
-      ));
+      if (content.isNotEmpty) {
+        slides.add(Slide(
+          title: slideData['title'] ?? 'Слайд',
+          content: content.map((c) => c.toString()).toList(),
+        ));
+      }
     }
     
-    // Если нет слайдов — создаём структуру по умолчанию
     if (slides.isEmpty) {
       slides.add(Slide(
         title: reportData['title'] ?? 'Отчёт',
@@ -197,25 +197,45 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
     return type['name'] ?? id;
   }
 
+  int get _maxSlideCount {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    return (userProvider.isPremium || userProvider.isVip) ? 15 : 10;
+  }
+
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
     final remaining = userProvider.freeGenerationsLeft;
     final isPremium = userProvider.isPremium;
-    final canGenerate = remaining > 0 || isPremium;
+    final isVip = userProvider.isVip;
+    final maxSlides = _maxSlideCount;
+    final canGenerate = remaining > 0 || isPremium || isVip;
     
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         backgroundColor: const Color(0xFF121212),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
+        leading: MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 34,
+              height: 34,
+              margin: const EdgeInsets.only(left: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E1E1E),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFF2A2A2A)),
+              ),
+              child: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white, size: 18),
+            ),
+          ),
         ),
         title: const Text(
           'Конструктор отчётов',
-          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
+          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.3),
         ),
         centerTitle: true,
       ),
@@ -228,7 +248,7 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 700),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       // Заголовок
                       Container(
@@ -269,7 +289,7 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                       _buildStandardDropdown(),
                       const SizedBox(height: 16),
                       
-                      // НОВОЕ: Слайдер выбора количества слайдов
+                      // Слайдер выбора количества слайдов
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
@@ -298,21 +318,30 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                             Slider(
                               value: _slideCount.toDouble(),
                               min: 3,
-                              max: 15,
-                              divisions: 12,
+                              max: maxSlides.toDouble(),
+                              divisions: maxSlides - 3,
                               activeColor: const Color(0xFF1DB954),
                               inactiveColor: const Color(0xFF2A2A2A),
                               onChanged: (v) => setState(() => _slideCount = v.round()),
                             ),
                             const SizedBox(height: 4),
-                            const Text('Рекомендуем: 6-10 слайдов для оптимального отчёта', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 10)),
+                            if (!isPremium && !isVip && _slideCount > 10)
+                              const Text(
+                                '⚠️ Для бесплатного тарифа максимум 10 слайдов',
+                                style: TextStyle(color: Color(0xFFFFD700), fontSize: 10),
+                              ),
+                            if (isPremium || isVip)
+                              const Text(
+                                '✨ Premium: до 15 слайдов',
+                                style: TextStyle(color: Color(0xFF1DB954), fontSize: 10),
+                              ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 24),
                       
                       // Индикатор оставшихся генераций
-                      if (!isPremium && remaining <= 3)
+                      if (!isPremium && !isVip && remaining <= 3)
                         Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
