@@ -3,7 +3,6 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/presentation.dart';
 import '../models/user.dart';
-import '../models/social_user.dart';
 
 class ApiService {
   static const String baseUrl = 'https://presentation-ai-backend.onrender.com/api';
@@ -115,28 +114,6 @@ class ApiService {
       return data;
     } else {
       throw Exception(data['error'] ?? 'Ошибка входа');
-    }
-  }
-  
-  // ============================================
-  // СОЦИАЛЬНАЯ АВТОРИЗАЦИЯ
-  // ============================================
-  
-  static Future<Map<String, dynamic>> socialLogin(SocialUser socialUser) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/auth/social'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(socialUser.toJson()),
-    );
-    
-    final data = json.decode(response.body);
-    if (response.statusCode == 200) {
-      if (data.containsKey('token')) {
-        await saveToken(data['token']);
-      }
-      return data;
-    } else {
-      throw Exception(data['error'] ?? 'Ошибка социального входа');
     }
   }
   
@@ -269,6 +246,7 @@ class ApiService {
     required String standard,
     required String grade,
     required int durationMinutes,
+    int slideCount = 5,
   }) async {
     try {
       final response = await http.post(
@@ -280,6 +258,7 @@ class ApiService {
           'standard': standard,
           'grade': grade,
           'durationMinutes': durationMinutes,
+          'slideCount': slideCount,
         }),
       );
       
@@ -557,7 +536,7 @@ class ApiService {
         final data = json.decode(response.body);
         return data['freeGenerationsLeft'] ?? 5;
       } else {
-        return 5; // По умолчанию для гостей
+        return 5;
       }
     } catch (e) {
       return 5;
