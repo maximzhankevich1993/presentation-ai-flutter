@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/presentation.dart';
-import '../models/lesson_plan.dart';
-import '../services/lesson_plan_service.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
 import 'editor_screen.dart';
-import 'teacher_screen.dart';
 import 'premium_screen.dart';
 
 class LessonConstructorScreen extends StatefulWidget {
@@ -23,11 +20,8 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
   
   String _selectedStandard = 'common_core';
   int _durationMinutes = 45;
+  int _slideCount = 5; // НОВОЕ: количество слайдов
   bool _isGenerating = false;
-  
-  bool _includeAssessments = true;
-  bool _includeDifferentiation = true;
-  bool _includeHomework = true;
   
   final List<Map<String, String>> _standards = [
     {'code': 'common_core', 'name': 'Common Core (USA)', 'region': 'США'},
@@ -63,7 +57,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
           ],
         ),
         content: const Text(
-          'У вас закончились бесплатные генерации.\n\nОформите подписку, чтобы продолжить создавать планы уроков без ограничений.',
+          'У вас закончились бесплатные генерации.\n\nОформите подписку, чтобы продолжить создавать уроки без ограничений.',
           style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14, height: 1.4),
         ),
         actions: [
@@ -111,7 +105,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
     
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     
-    // Проверка лимита перед генерацией
     if (userProvider.freeGenerationsLeft <= 0) {
       _showLimitDialog();
       return;
@@ -120,20 +113,20 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
     setState(() => _isGenerating = true);
     
     try {
-      final lessonPlan = await ApiService.generateLessonPlan(
+      final lessonData = await ApiService.generateLessonPlan(
         topic: topic,
         subject: subject,
         standard: _selectedStandard,
         grade: grade,
         durationMinutes: _durationMinutes,
+        slideCount: _slideCount, // НОВОЕ: передаём количество слайдов
       );
       
-      // Обновляем данные пользователя после генерации
       await userProvider.loadUser();
       
       if (!mounted) return;
       
-      final presentation = _convertToPresentation(lessonPlan);
+      final presentation = _convertToPresentation(lessonData);
       
       Navigator.pushReplacement(
         context,
@@ -148,7 +141,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showError('Ошибка создания плана урока: $e');
+        _showError('Ошибка создания урока: $e');
       }
     } finally {
       if (mounted) {
@@ -157,73 +150,54 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
     }
   }
   
-  Presentation _convertToPresentation(Map<String, dynamic> lessonPlan) {
+  Presentation _convertToPresentation(Map<String, dynamic> lessonData) {
     final List<Slide> slides = [];
     
+    // Титульный слайд
     slides.add(Slide(
-      title: 'План урока',
+      title: lessonData['topic'] ?? 'Урок',
       content: [
-        '📚 Предмет: ${lessonPlan['subject']}',
-        '📖 Тема: ${lessonPlan['topic']}',
-        '🎓 Класс: ${lessonPlan['grade']}',
-        '🌍 Стандарт: ${_getStandardName(lessonPlan['standard'])}',
-        '⏱️ Длительность: ${lessonPlan['duration']}',
+        '📚 Предмет: ${lessonData['subject'] ?? ''}',
+        '🎓 Класс: ${lessonData['grade'] ?? ''}',
+        '⏱️ Длительность: ${_durationMinutes} минут',
       ],
     ));
     
-    slides.add(Slide(
-      title: 'Цели урока',
-      content: (lessonPlan['objectives'] as List).map((obj) => '• $obj').toList(),
-    ));
-    
-    final stages = lessonPlan['stages'] as List;
-    for (final stage in stages) {
+    // Слайды урока
+    final slidesData = lessonData['slides'] as List? ?? [];
+    for (final slideData in slidesData) {
+      final content = slideData['content'] as List? ?? [];
       slides.add(Slide(
-        title: stage['name'],
-        content: [
-          '⏰ Время: ${stage['minutes']} мин',
-          '👩‍🏫 Учитель: ${stage['teacherActions']}',
-          '👨‍🎓 Ученики: ${stage['studentActions']}',
-          '📁 Ресурсы: ${stage['resources']}',
-        ],
+        title: slideData['title'] ?? 'Слайд',
+        content: content.map((c) => c.toString()).toList(),
       ));
     }
     
-    if (_includeHomework) {
+    // Домашнее задание (если есть)
+    if (lessonData['homework'] != null && lessonData['homework'].toString().isNotEmpty) {
       slides.add(Slide(
         title: 'Домашнее задание',
-        content: [lessonPlan['homework']],
+        content: [lessonData['homework']],
       ));
     }
     
-    if (_includeAssessments) {
-      slides.add(Slide(
-        title: 'Оценивание',
-        content: [lessonPlan['assessment']],
-      ));
-    }
-    
-    if (_includeDifferentiation) {
-      slides.add(Slide(
-        title: 'Дифференциация',
-        content: (lessonPlan['differentiation'] as List).map((d) => '• $d').toList(),
-      ));
+    // Материалы (если есть)
+    if (lessonData['materials'] != null) {
+      final materials = lessonData['materials'] as List? ?? [];
+      if (materials.isNotEmpty) {
+        slides.add(Slide(
+          title: 'Дополнительные материалы',
+          content: materials.map((m) => '📖 $m').toList(),
+        ));
+      }
     }
     
     return Presentation(
       id: DateTime.now().toString(),
-      title: 'План урока: ${lessonPlan['topic']}',
+      title: 'Урок: ${lessonData['topic'] ?? ''}',
       slides: slides,
       createdAt: DateTime.now(),
     );
-  }
-  
-  String _getStandardName(String code) {
-    final standard = _standards.firstWhere(
-      (s) => s['code'] == code,
-      orElse: () => {'name': code},
-    );
-    return standard['name'] ?? code;
   }
 
   @override
@@ -258,6 +232,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Заголовок
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(32),
@@ -275,7 +250,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                             const SizedBox(height: 16),
                             const Text('Конструктор уроков', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
                             const SizedBox(height: 8),
-                            Text('Создайте план урока по международным стандартам', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
+                            Text('Создайте полноценный урок по вашей теме', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
                           ],
                         ),
                       ),
@@ -295,13 +270,46 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                           Expanded(child: _buildDurationSlider()),
                         ],
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
                       
-                      _buildSwitch(value: _includeAssessments, onChanged: (v) => setState(() => _includeAssessments = v), title: 'Включить систему оценивания', icon: Icons.assessment_rounded),
-                      const SizedBox(height: 8),
-                      _buildSwitch(value: _includeDifferentiation, onChanged: (v) => setState(() => _includeDifferentiation = v), title: 'Включить дифференциацию', icon: Icons.graphic_eq_rounded),
-                      const SizedBox(height: 8),
-                      _buildSwitch(value: _includeHomework, onChanged: (v) => setState(() => _includeHomework = v), title: 'Включить домашнее задание', icon: Icons.home_rounded),
+                      // НОВОЕ: Слайдер выбора количества слайдов
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E1E1E),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFF2A2A2A)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('Количество слайдов', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 11)),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1DB954).withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text('$_slideCount', style: const TextStyle(color: Color(0xFF1DB954), fontWeight: FontWeight.w700, fontSize: 12)),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Slider(
+                              value: _slideCount.toDouble(),
+                              min: 3,
+                              max: 10,
+                              divisions: 7,
+                              activeColor: const Color(0xFF1DB954),
+                              inactiveColor: const Color(0xFF2A2A2A),
+                              onChanged: (v) => setState(() => _slideCount = v.round()),
+                            ),
+                          ],
+                        ),
+                      ),
                       const SizedBox(height: 24),
                       
                       // Индикатор оставшихся генераций
@@ -374,7 +382,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
                           child: Text(
-                            remaining <= 0 ? 'Лимит исчерпан' : 'Создать план урока',
+                            remaining <= 0 ? 'Лимит исчерпан' : 'Создать урок',
                             style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
                           ),
                         ),
@@ -457,25 +465,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
           inactiveColor: const Color(0xFF2A2A2A),
         ),
       ],
-    );
-  }
-  
-  Widget _buildSwitch({required bool value, required ValueChanged<bool> onChanged, required String title, required IconData icon}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF2A2A2A)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: const Color(0xFF1DB954), size: 20),
-          const SizedBox(width: 12),
-          Expanded(child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 14))),
-          Switch(value: value, onChanged: onChanged, activeColor: const Color(0xFF1DB954), inactiveTrackColor: const Color(0xFF2A2A2A)),
-        ],
-      ),
     );
   }
 }
