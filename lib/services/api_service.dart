@@ -375,6 +375,7 @@ class ApiService {
     required String period,
     required String standard,
     required String reportType,
+    int slideCount = 6,
   }) async {
     try {
       final response = await http.post(
@@ -385,6 +386,7 @@ class ApiService {
           'period': period,
           'standard': standard,
           'reportType': reportType,
+          'slideCount': slideCount,
         }),
       );
       
