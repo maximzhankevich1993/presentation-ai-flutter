@@ -14,6 +14,8 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  bool _isLoggingOut = false;
+
   @override
   Widget build(BuildContext context) {
     final up = Provider.of<UserProvider>(context);
@@ -56,250 +58,260 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
         centerTitle: true,
       ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 700),
-            child: Column(
-              children: [
-                // Аватар
-                Center(
-                  child: Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
-                      ),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF1DB954).withOpacity(0.3),
-                          blurRadius: 20,
-                        ),
-                      ],
-                    ),
-                    child: CircleAvatar(
-                      radius: 48,
-                      backgroundColor: const Color(0xFF121212),
-                      backgroundImage: up.avatarUrl != null
-                          ? NetworkImage(up.avatarUrl!)
-                          : null,
-                      child: up.avatarUrl == null
-                          ? Text(
-                              up.userName.isNotEmpty ? up.userName[0].toUpperCase() : 'U',
-                              style: const TextStyle(
-                                fontSize: 40,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF1DB954),
-                              ),
-                            )
-                          : null,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                // Имя
-                Text(
-                  up.userName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                
-                // Email
-                Text(
-                  up.userEmail,
-                  style: const TextStyle(
-                    color: Color(0xFF9A9A9A),
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                
-                // Premium статус
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    gradient: up.isPremium
-                        ? const LinearGradient(
-                            colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
-                          )
-                        : null,
-                    color: up.isPremium ? null : const Color(0xFF1E1E1E),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: up.isPremium ? Colors.transparent : const Color(0xFF2A2A2A),
-                    ),
-                  ),
-                  child: Row(
+      body: _isLoggingOut
+          ? const Center(child: CircularProgressIndicator(color: Color(0xFF1DB954)))
+          : Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 700),
+                  child: Column(
                     children: [
-                      Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: up.isPremium
-                              ? Colors.white.withOpacity(0.2)
-                              : const Color(0xFF2A2A2A),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Icon(
-                          up.isPremium ? Icons.star_rounded : Icons.star_outline_rounded,
-                          color: up.isPremium ? Colors.white : const Color(0xFFFFD700),
-                          size: 24,
+                      // Аватар
+                      Center(
+                        child: Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
+                            ),
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF1DB954).withOpacity(0.3),
+                                blurRadius: 20,
+                              ),
+                            ],
+                          ),
+                          child: CircleAvatar(
+                            radius: 48,
+                            backgroundColor: const Color(0xFF121212),
+                            backgroundImage: up.avatarUrl != null && up.avatarUrl!.isNotEmpty
+                                ? NetworkImage(up.avatarUrl!)
+                                : null,
+                            child: up.avatarUrl == null || up.avatarUrl!.isEmpty
+                                ? Text(
+                                    up.userName.isNotEmpty ? up.userName[0].toUpperCase() : 'U',
+                                    style: const TextStyle(
+                                      fontSize: 40,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1DB954),
+                                    ),
+                                  )
+                                : null,
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
+                      const SizedBox(height: 16),
+                      
+                      // Имя
+                      Text(
+                        up.userName,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      
+                      // Email
+                      Text(
+                        up.userEmail,
+                        style: const TextStyle(
+                          color: Color(0xFF9A9A9A),
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      
+                      // Premium статус
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          gradient: up.isPremium
+                              ? const LinearGradient(
+                                  colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
+                                )
+                              : null,
+                          color: up.isPremium ? null : const Color(0xFF1E1E1E),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: up.isPremium ? Colors.transparent : const Color(0xFF2A2A2A),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: up.isPremium
+                                    ? Colors.white.withOpacity(0.2)
+                                    : const Color(0xFF2A2A2A),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(
+                                up.isPremium ? Icons.star_rounded : Icons.star_outline_rounded,
+                                color: up.isPremium ? Colors.white : const Color(0xFFFFD700),
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    up.isPremium ? 'Premium статус' : 'Бесплатный тариф',
+                                    style: TextStyle(
+                                      color: up.isPremium ? Colors.white : const Color(0xFF9A9A9A),
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    up.isPremium
+                                        ? 'Все функции доступны'
+                                        : 'Осталось ${up.freeGenerationsLeft} генераций в этом месяце',
+                                    style: TextStyle(
+                                      color: up.isPremium
+                                          ? Colors.white.withOpacity(0.8)
+                                          : const Color(0xFF4A4A4A),
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (!up.isPremium)
+                              MouseRegion(
+                                cursor: SystemMouseCursors.click,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => const PremiumScreen()),
+                                    );
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
+                                      ),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Text(
+                                      'Активировать',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      
+                      // Статистика
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E1E1E),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFF2A2A2A)),
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              up.isPremium ? 'Premium статус' : 'Бесплатный тариф',
+                            const Text(
+                              'СТАТИСТИКА',
                               style: TextStyle(
-                                color: up.isPremium ? Colors.white : const Color(0xFF9A9A9A),
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF4A4A4A),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.8,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              up.isPremium
-                                  ? 'Все функции доступны'
-                                  : 'Осталось ${up.freeGenerationsLeft} генераций',
-                              style: TextStyle(
-                                color: up.isPremium
-                                    ? Colors.white.withOpacity(0.8)
-                                    : const Color(0xFF4A4A4A),
-                                fontSize: 12,
-                              ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _StatCard(
+                                    value: up.isPremium ? '∞' : '${up.freeGenerationsLeft}',
+                                    label: 'Осталось',
+                                    icon: Icons.bolt_rounded,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _StatCard(
+                                    value: up.isPremium ? '∞' : '5',
+                                    label: 'Генераций/мес',
+                                    icon: Icons.calendar_today_rounded,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _StatCard(
+                                    value: up.isPremium ? '∞' : '10',
+                                    label: 'Макс. слайдов',
+                                    icon: Icons.slideshow_rounded,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
-                      if (!up.isPremium)
-                        MouseRegion(
-                          cursor: SystemMouseCursors.click,
-                          child: GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => const PremiumScreen()),
-                              );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [Color(0xFF1DB954), Color(0xFF1ED760)],
+                      const SizedBox(height: 24),
+                      
+                      // Кнопка выхода
+                      MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: _logout,
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E1E1E),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: const Color(0xFF2A2A2A)),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.logout_rounded, color: Color(0xFFFF3B30), size: 18),
+                                SizedBox(width: 10),
+                                Text(
+                                  'Выйти из аккаунта',
+                                  style: TextStyle(
+                                    color: Color(0xFFFF3B30),
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: const Text(
-                                'Активировать',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                              ],
                             ),
                           ),
                         ),
+                      ),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
-                
-                // Статистика
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E1E1E),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFF2A2A2A)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'СТАТИСТИКА',
-                        style: TextStyle(
-                          color: Color(0xFF4A4A4A),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.8,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _StatCard(
-                              value: '${up.freeGenerationsLeft}',
-                              label: 'Доступно',
-                              icon: Icons.bolt_rounded,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _StatCard(
-                              value: up.isPremium ? '∞' : '10',
-                              label: 'Макс. слайдов',
-                              icon: Icons.slideshow_rounded,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 24),
-                
-                // Кнопка выхода
-                MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: _logout,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1E1E1E),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFF2A2A2A)),
-                      ),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.logout_rounded, color: Color(0xFFFF3B30), size: 18),
-                          SizedBox(width: 10),
-                          Text(
-                            'Выйти из аккаунта',
-                            style: TextStyle(
-                              color: Color(0xFFFF3B30),
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
     );
   }
   
@@ -331,10 +343,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
     
     if (confirmed == true) {
+      setState(() => _isLoggingOut = true);
+      
       try {
-        await ApiService.logout();
         final up = Provider.of<UserProvider>(context, listen: false);
-        up.logout();
+        await up.logout();
+        
         if (mounted) {
           Navigator.pushAndRemoveUntil(
             context,
@@ -343,6 +357,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           );
         }
       } catch (e) {
+        setState(() => _isLoggingOut = false);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
