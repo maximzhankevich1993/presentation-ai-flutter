@@ -66,7 +66,6 @@ class _LoadingScreenState extends State<LoadingScreen> {
       
       if (!mounted) return;
       
-      // Обновляем данные пользователя после успешной генерации
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       await userProvider.loadUser();
       
@@ -102,7 +101,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
           children: [
-            Icon(Icons.warning_amber_rounded, Color(0xFFFFD700), size: 24),
+            Icon(Icons.warning_amber_rounded, color: Color(0xFFFFD700), size: 24),
             SizedBox(width: 8),
             Text('Лимит генераций исчерпан', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
           ],
@@ -138,7 +137,6 @@ class _LoadingScreenState extends State<LoadingScreen> {
   @override
   Widget build(BuildContext context) {
     if (_hasError) {
-      // Показываем диалог с ошибкой
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           _showLimitDialog();
