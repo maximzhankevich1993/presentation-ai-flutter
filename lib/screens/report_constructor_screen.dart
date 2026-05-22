@@ -5,7 +5,6 @@ import '../providers/user_provider.dart';
 import '../services/api_service.dart';
 import 'editor_screen.dart';
 import 'premium_screen.dart';
-import 'corporate_screen.dart';
 
 class ReportConstructorScreen extends StatefulWidget {
   const ReportConstructorScreen({super.key});
@@ -20,6 +19,7 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
   
   String _selectedStandard = 'ifrs';
   String _selectedReportType = 'financial';
+  int _slideCount = 6; // НОВОЕ: количество слайдов
   bool _isGenerating = false;
   
   final List<Map<String, String>> _standards = [
@@ -105,7 +105,6 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
     
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     
-    // Проверка лимита перед генерацией
     if (userProvider.freeGenerationsLeft <= 0) {
       _showLimitDialog();
       return;
@@ -119,9 +118,9 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
         period: period,
         standard: _selectedStandard,
         reportType: _selectedReportType,
+        slideCount: _slideCount, // НОВОЕ: передаём количество слайдов
       );
       
-      // Обновляем данные пользователя после генерации
       await userProvider.loadUser();
       
       if (!mounted) return;
@@ -151,35 +150,26 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
   Presentation _convertToPresentation(Map<String, dynamic> reportData) {
     final slides = <Slide>[];
     
-    // Титульный слайд
-    if (reportData['slides'] != null && reportData['slides'].isNotEmpty) {
-      for (final slide in reportData['slides']) {
-        slides.add(Slide(
-          title: slide['title'] ?? 'Слайд',
-          content: List<String>.from(slide['content'] ?? []),
-        ));
-      }
-    } else {
-      // Fallback структура
+    // Слайды отчёта
+    final slidesData = reportData['slides'] as List? ?? [];
+    for (final slideData in slidesData) {
+      final content = slideData['content'] as List? ?? [];
+      slides.add(Slide(
+        title: slideData['title'] ?? 'Слайд',
+        content: content.map((c) => c.toString()).toList(),
+      ));
+    }
+    
+    // Если нет слайдов — создаём структуру по умолчанию
+    if (slides.isEmpty) {
       slides.add(Slide(
         title: reportData['title'] ?? 'Отчёт',
         content: [
           'Компания: ${_companyController.text}',
           'Период: ${_periodController.text}',
           'Стандарт: ${_getStandardName(_selectedStandard)}',
+          'Тип: ${_getReportTypeName(_selectedReportType)}',
         ],
-      ));
-      slides.add(Slide(
-        title: 'Ключевые показатели',
-        content: ['📊 Выручка: _________', '💰 Прибыль: _________', '📈 Рентабельность: _________'],
-      ));
-      slides.add(Slide(
-        title: 'Анализ',
-        content: ['• Отклонения от плана:', '• Тренды и динамика:', '• Ключевые риски:'],
-      ));
-      slides.add(Slide(
-        title: 'Заключение',
-        content: ['Основные выводы:', 'Рекомендации:', 'План действий:'],
       ));
     }
     
@@ -223,7 +213,10 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Конструктор отчётов', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+        title: const Text(
+          'Конструктор отчётов',
+          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
+        ),
         centerTitle: true,
       ),
       body: _isGenerating
@@ -247,11 +240,15 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                         ),
                         child: Column(
                           children: [
-                            Container(width: 64, height: 64, decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)), child: const Icon(Icons.business_center_rounded, color: Colors.white, size: 32)),
+                            Container(
+                              width: 64, height: 64,
+                              decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)),
+                              child: const Icon(Icons.business_center_rounded, color: Colors.white, size: 32),
+                            ),
                             const SizedBox(height: 16),
                             const Text('Конструктор отчётов', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
                             const SizedBox(height: 8),
-                            Text('Создайте финансовый отчёт по международным стандартам', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
+                            Text('Создайте профессиональный финансовый отчёт', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
                           ],
                         ),
                       ),
@@ -270,6 +267,48 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                       const Text('СТАНДАРТ ОТЧЁТНОСТИ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
                       _buildStandardDropdown(),
+                      const SizedBox(height: 16),
+                      
+                      // НОВОЕ: Слайдер выбора количества слайдов
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E1E1E),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: const Color(0xFF2A2A2A)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('Количество слайдов', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 11)),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF1DB954).withOpacity(0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text('$_slideCount', style: const TextStyle(color: Color(0xFF1DB954), fontWeight: FontWeight.w700, fontSize: 12)),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Slider(
+                              value: _slideCount.toDouble(),
+                              min: 3,
+                              max: 15,
+                              divisions: 12,
+                              activeColor: const Color(0xFF1DB954),
+                              inactiveColor: const Color(0xFF2A2A2A),
+                              onChanged: (v) => setState(() => _slideCount = v.round()),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text('Рекомендуем: 6-10 слайдов для оптимального отчёта', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 10)),
+                          ],
+                        ),
+                      ),
                       const SizedBox(height: 24),
                       
                       // Индикатор оставшихся генераций
