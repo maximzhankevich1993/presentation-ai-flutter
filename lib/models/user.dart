@@ -4,9 +4,9 @@ class User {
   final String name;
   final bool isPremium;
   final int freeGenerationsLeft;
-  final int maxSlidesPerPresentation;
-  final DateTime? premiumUntil;
-  final String? avatarUrl;
+  final int monthlyGenerationsLeft;
+  final DateTime? premiumExpiry;
+  final bool isVip;
 
   User({
     required this.id,
@@ -14,23 +14,23 @@ class User {
     required this.name,
     required this.isPremium,
     required this.freeGenerationsLeft,
-    required this.maxSlidesPerPresentation,
-    this.premiumUntil,
-    this.avatarUrl,
+    required this.monthlyGenerationsLeft,
+    this.premiumExpiry,
+    this.isVip = false,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'] as String? ?? '',
-      email: json['email'] as String? ?? '',
-      name: json['name'] as String? ?? '',
-      isPremium: json['isPremium'] as bool? ?? false,
-      freeGenerationsLeft: json['freeGenerationsLeft'] as int? ?? 5,
-      maxSlidesPerPresentation: json['maxSlidesPerPresentation'] as int? ?? 10,
-      premiumUntil: json['premiumUntil'] != null 
-          ? DateTime.parse(json['premiumUntil'] as String)
+      id: json['id']?.toString() ?? '',
+      email: json['email'] ?? '',
+      name: json['name'] ?? '',
+      isPremium: json['isPremium'] ?? false,
+      freeGenerationsLeft: json['freeGenerationsLeft'] ?? 5,
+      monthlyGenerationsLeft: json['monthlyGenerationsLeft'] ?? 5,
+      premiumExpiry: json['premiumExpiry'] != null 
+          ? DateTime.tryParse(json['premiumExpiry']) 
           : null,
-      avatarUrl: json['avatarUrl'] as String?,
+      isVip: json['isVip'] ?? false,
     );
   }
 
@@ -41,21 +41,21 @@ class User {
       'name': name,
       'isPremium': isPremium,
       'freeGenerationsLeft': freeGenerationsLeft,
-      'maxSlidesPerPresentation': maxSlidesPerPresentation,
-      'premiumUntil': premiumUntil?.toIso8601String(),
-      'avatarUrl': avatarUrl,
+      'monthlyGenerationsLeft': monthlyGenerationsLeft,
+      'premiumExpiry': premiumExpiry?.toIso8601String(),
+      'isVip': isVip,
     };
   }
-
+  
   User copyWith({
     String? id,
     String? email,
     String? name,
     bool? isPremium,
     int? freeGenerationsLeft,
-    int? maxSlidesPerPresentation,
-    DateTime? premiumUntil,
-    String? avatarUrl,
+    int? monthlyGenerationsLeft,
+    DateTime? premiumExpiry,
+    bool? isVip,
   }) {
     return User(
       id: id ?? this.id,
@@ -63,9 +63,9 @@ class User {
       name: name ?? this.name,
       isPremium: isPremium ?? this.isPremium,
       freeGenerationsLeft: freeGenerationsLeft ?? this.freeGenerationsLeft,
-      maxSlidesPerPresentation: maxSlidesPerPresentation ?? this.maxSlidesPerPresentation,
-      premiumUntil: premiumUntil ?? this.premiumUntil,
-      avatarUrl: avatarUrl ?? this.avatarUrl,
+      monthlyGenerationsLeft: monthlyGenerationsLeft ?? this.monthlyGenerationsLeft,
+      premiumExpiry: premiumExpiry ?? this.premiumExpiry,
+      isVip: isVip ?? this.isVip,
     );
   }
 }
