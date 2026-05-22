@@ -5,27 +5,26 @@ import '../services/api_service.dart';
 class UserProvider extends ChangeNotifier {
   User? _user;
   String? _token;
+  bool _isLoading = false;
+  String? _error;
 
   User? get user => _user;
   String? get token => _token;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
   
+  bool get isLoggedIn => _user != null && _token != null;
   bool get isPremium => _user?.isPremium ?? false;
+  bool get isVip => _user?.isVip ?? false;
   int get freeGenerationsLeft => _user?.freeGenerationsLeft ?? 5;
-  int get maxSlidesPerPresentation => _user?.maxSlidesPerPresentation ?? 10;
-  bool get isLoggedIn => _user != null;
-  
-  String get userName => _user?.name ?? 'Гость';
+  int get monthlyGenerationsLeft => _user?.monthlyGenerationsLeft ?? 5;
+  String get userName => _user?.name ?? '';
   String get userEmail => _user?.email ?? '';
-  String get userId => _user?.id ?? '';
-  bool get hasAvatar => _user?.avatarUrl != null;
-  String? get avatarUrl => _user?.avatarUrl;
 
   void setUser(User user, {String? token}) {
     _user = user;
     if (token != null) {
       _token = token;
-      ApiService.setAuthToken(token);
-      ApiService.saveToken(token);
     }
     notifyListeners();
   }
@@ -35,92 +34,60 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setUserEmail(String email) {
-    if (_user != null) {
-      _user = _user!.copyWith(email: email);
-      notifyListeners();
-      _saveUserToServer();
-    }
+  void setToken(String token) {
+    _token = token;
+    notifyListeners();
+  }
+
+  void clearUser() {
+    _user = null;
+    _token = null;
+    notifyListeners();
   }
 
   void setUserName(String name) {
     if (_user != null) {
       _user = _user!.copyWith(name: name);
       notifyListeners();
-      _saveUserToServer();
     }
   }
 
-  void useFreeGeneration() {
-    if (_user != null && !_user!.isPremium && _user!.freeGenerationsLeft > 0) {
-      _user = _user!.copyWith(freeGenerationsLeft: _user!.freeGenerationsLeft - 1);
-      notifyListeners();
-      _saveUserToServer();
-    }
-  }
-
-  void incrementGenerations(int amount) {
+  void setUserEmail(String email) {
     if (_user != null) {
-      _user = _user!.copyWith(freeGenerationsLeft: _user!.freeGenerationsLeft + amount);
+      _user = _user!.copyWith(email: email);
       notifyListeners();
-      _saveUserToServer();
     }
   }
 
-  Future<void> _saveUserToServer() async {
-    if (_user == null) return;
+  Future<void> loadUser() async {
+    if (_token == null) return;
+    
+    _setLoading(true);
+    _clearError();
+    
     try {
-      await ApiService.updateUser(_user!);
+      final user = await ApiService.getProfile();
+      _user = user;
+      _setLoading(false);
+      notifyListeners();
     } catch (e) {
-      debugPrint('Error saving user to server: $e');
+      _error = e.toString();
+      _setLoading(false);
+      print('Ошибка загрузки пользователя: $e');
     }
   }
 
   Future<void> refreshUser() async {
-    try {
-      final user = await ApiService.getProfile();
-      _user = user;
-      notifyListeners();
-    } catch (e) {
-      debugPrint('Error refreshing user: $e');
-    }
+    await loadUser();
   }
 
-  // ⭐ ДОБАВЬ ЭТОТ МЕТОД ⭐
-  Future<void> loadUser() async {
-    try {
-      final token = ApiService.token;
-      if (token != null && token.isNotEmpty) {
-        _token = token;
-        ApiService.setAuthToken(token);
-        
-        final user = await ApiService.getProfile();
-        _user = user;
-        notifyListeners();
-        debugPrint('User loaded successfully: ${user.email}');
-      } else {
-        debugPrint('No token found');
-      }
-    } catch (e) {
-      debugPrint('Error loading user: $e');
-    }
-  }
-
-  Future<void> logout() async {
-    await ApiService.logout();
-    _user = null;
-    _token = null;
+  void _setLoading(bool loading) {
+    _isLoading = loading;
     notifyListeners();
   }
 
-  void setPremium(bool isPremium, {DateTime? until}) {
-    if (_user != null) {
-      _user = _user!.copyWith(
-        isPremium: isPremium,
-        premiumUntil: until,
-      );
-      notifyListeners();
-      _saveUserToServer();
-    }
+  void _clearError() {
+    _error = null;
+    notifyListeners();
   }
 }
