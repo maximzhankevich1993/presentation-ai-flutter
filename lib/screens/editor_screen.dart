@@ -661,7 +661,8 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
           child: LayoutBuilder(
             builder: (context, constraints) {
               final mobile = constraints.maxWidth < 768;
-              final navWidth = mobile ? (_navCollapsed ? 40 : 120) : (_navCollapsed ? 48 : 188);
+              // 🔧 исправлено: приведение к double
+              final navWidth = (mobile ? (_navCollapsed ? 40 : 120) : (_navCollapsed ? 48 : 188)).toDouble();
               final propsWidth = mobile ? 0.0 : (_propsPanelOpen ? 280.0 : 0.0);
               
               return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
