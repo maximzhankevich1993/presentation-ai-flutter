@@ -1,15 +1,22 @@
 import 'dart:convert';
-import 'dart:html' as html;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io' show File;
 import '../services/quiz_service.dart';
 import '../providers/user_provider.dart';
 import '../models/presentation.dart';
 import '../services/api_service.dart';
 import 'premium_screen.dart';
 import 'teacher_screen.dart';
+
+// Условный импорт dart:html только для Web
+// В Flutter Web dart:html доступен всегда, на мобилках — нет.
+// Поэтому оборачиваем использование dart:html в проверку kIsWeb.
 
 class QuizScreen extends StatefulWidget {
   const QuizScreen({super.key});
@@ -88,20 +95,42 @@ class _QuizScreenState extends State<QuizScreen> {
     setState(() => _loadingPresentations = false);
   }
 
-  void _uploadFile() {
-    final input = html.FileUploadInputElement()..accept = '.pptx,.pdf,.docx,.txt';
-    input.click();
-    input.onChange.listen((event) {
-      final file = input.files!.first;
-      final reader = html.FileReader();
-      reader.readAsText(file);
-      reader.onLoad.listen((_) {
-        setState(() {
-          _uploadedFileName = file.name;
-          _uploadedFileContent = reader.result as String;
+  void _uploadFile() async {
+    if (kIsWeb) {
+      // Web-версия
+      // ignore: avoid_dynamic_calls
+      final input = html.FileUploadInputElement()..accept = '.pptx,.pdf,.docx,.txt';
+      input.click();
+      input.onChange.listen((event) {
+        final file = input.files!.first;
+        final reader = html.FileReader();
+        reader.readAsText(file);
+        reader.onLoad.listen((_) {
+          setState(() {
+            _uploadedFileName = file.name;
+            _uploadedFileContent = reader.result as String;
+          });
         });
       });
-    });
+    } else {
+      // Мобильная версия
+      try {
+        final result = await FilePicker.platform.pickFiles(
+          type: FileType.custom,
+          allowedExtensions: ['pptx', 'pdf', 'docx', 'txt'],
+        );
+        if (result != null && result.files.single.path != null) {
+          final file = File(result.files.single.path!);
+          final content = await file.readAsString();
+          setState(() {
+            _uploadedFileName = result.files.single.name;
+            _uploadedFileContent = content;
+          });
+        }
+      } catch (e) {
+        _showError('Ошибка при выборе файла: $e');
+      }
+    }
   }
 
   void _showLimitDialog() {
@@ -205,7 +234,6 @@ class _QuizScreenState extends State<QuizScreen> {
     
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     
-    // Проверка лимита
     if (userProvider.freeGenerationsLeft <= 0) {
       _showLimitDialog();
       return;
@@ -219,7 +247,6 @@ class _QuizScreenState extends State<QuizScreen> {
         questionCount: 5,
       );
       
-      // Обновляем данные пользователя
       await userProvider.loadUser();
       
       if (!mounted) return;
@@ -362,19 +389,39 @@ class _QuizScreenState extends State<QuizScreen> {
     });
   }
   
-  void _exportToWord() {
+  void _exportToWord() async {
     if (_currentQuiz == null) return;
     final content = QuizService.exportToWord(_currentQuiz!, includeAnswers: true);
-    final htmlContent = '''
-    <!DOCTYPE html>
-    <html><head><meta charset="UTF-8"><title>${_currentQuiz!.title}</title>
-    <style>body{font-family:Arial;margin:40px;} h1{color:#1DB954;} .question{margin-bottom:30px;}</style>
-    </head><body><pre style="white-space:pre-wrap;">$content</pre></body></html>''';
-    final blob = html.Blob([htmlContent], 'application/msword');
-    final url = html.Url.createObjectUrlFromBlob(blob);
-    final anchor = html.AnchorElement(href: url)..setAttribute('download', '${_currentQuiz!.title}.doc')..click();
-    html.Url.revokeObjectUrl(url);
-    _showSnackBar('Тест сохранён в Word', true);
+    
+    if (kIsWeb) {
+      // Web-версия
+      final htmlContent = '''
+      <!DOCTYPE html>
+      <html><head><meta charset="UTF-8"><title>${_currentQuiz!.title}</title>
+      <style>body{font-family:Arial;margin:40px;} h1{color:#1DB954;} .question{margin-bottom:30px;}</style>
+      </head><body><pre style="white-space:pre-wrap;">$content</pre></body></html>''';
+      // ignore: avoid_dynamic_calls
+      final blob = html.Blob([htmlContent], 'application/msword');
+      // ignore: avoid_dynamic_calls
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      // ignore: avoid_dynamic_calls
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute('download', '${_currentQuiz!.title}.doc')
+        ..click();
+      // ignore: avoid_dynamic_calls
+      html.Url.revokeObjectUrl(url);
+      _showSnackBar('Тест сохранён в Word', true);
+    } else {
+      // Мобильная версия
+      try {
+        final directory = await getApplicationDocumentsDirectory();
+        final file = File('${directory.path}/${_currentQuiz!.title}.doc');
+        await file.writeAsString(content);
+        _showSnackBar('Файл сохранён: ${file.path}', true);
+      } catch (e) {
+        _showError('Ошибка сохранения: $e');
+      }
+    }
   }
   
   void _exportToPdf() async {
@@ -385,16 +432,39 @@ class _QuizScreenState extends State<QuizScreen> {
       return;
     }
     final content = QuizService.exportToWord(_currentQuiz!, includeAnswers: true);
-    final fullHtml = '''
-    <!DOCTYPE html>
-    <html><head><meta charset="UTF-8"><title>${_currentQuiz!.title}</title>
-    <style>body{font-family:Arial;margin:40px;} h1{color:#1DB954;}</style>
-    </head><body><pre style="white-space:pre-wrap;">$content</pre>
-    <script>window.onload=function(){window.print();};</script></body></html>''';
-    final blob = html.Blob([fullHtml], 'text/html');
-    final url = html.Url.createObjectUrlFromBlob(blob);
-    html.window.open(url, '_blank');
-    html.Url.revokeObjectUrl(url);
+    
+    if (kIsWeb) {
+      // Web-версия
+      final fullHtml = '''
+      <!DOCTYPE html>
+      <html><head><meta charset="UTF-8"><title>${_currentQuiz!.title}</title>
+      <style>body{font-family:Arial;margin:40px;} h1{color:#1DB954;}</style>
+      </head><body><pre style="white-space:pre-wrap;">$content</pre>
+      <script>window.onload=function(){window.print();};</script></body></html>''';
+      // ignore: avoid_dynamic_calls
+      final blob = html.Blob([fullHtml], 'text/html');
+      // ignore: avoid_dynamic_calls
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      // ignore: avoid_dynamic_calls
+      html.window.open(url, '_blank');
+      // ignore: avoid_dynamic_calls
+      html.Url.revokeObjectUrl(url);
+    } else {
+      // Мобильная версия — сохраняем HTML и открываем для печати
+      try {
+        final directory = await getApplicationDocumentsDirectory();
+        final file = File('${directory.path}/${_currentQuiz!.title}.html');
+        final fullHtml = '''
+        <!DOCTYPE html>
+        <html><head><meta charset="UTF-8"><title>${_currentQuiz!.title}</title>
+        <style>body{font-family:Arial;margin:40px;} h1{color:#1DB954;}</style>
+        </head><body><pre style="white-space:pre-wrap;">$content</pre></body></html>''';
+        await file.writeAsString(fullHtml);
+        _showSnackBar('HTML сохранён: ${file.path}. Откройте в браузере и распечатайте как PDF.', true);
+      } catch (e) {
+        _showError('Ошибка сохранения: $e');
+      }
+    }
   }
 
   @override
@@ -428,7 +498,6 @@ class _QuizScreenState extends State<QuizScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Заголовок
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(32),
@@ -452,7 +521,6 @@ class _QuizScreenState extends State<QuizScreen> {
                           ),
                           const SizedBox(height: 24),
                           
-                          // Кнопки переключения вкладок
                           Container(
                             padding: const EdgeInsets.all(4),
                             decoration: BoxDecoration(
@@ -470,7 +538,6 @@ class _QuizScreenState extends State<QuizScreen> {
                           ),
                           const SizedBox(height: 24),
                           
-                          // Содержимое вкладок
                           _currentTab == 0 
                               ? _buildPresentationTab(remaining, isPremium) 
                               : _buildTopicTab(remaining, isPremium),
@@ -515,7 +582,6 @@ class _QuizScreenState extends State<QuizScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Загрузка файла
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -557,7 +623,6 @@ class _QuizScreenState extends State<QuizScreen> {
                 ),
                 const SizedBox(height: 16),
                 
-                // Индикатор лимита
                 if (!isPremium && remaining <= 3)
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -638,7 +703,6 @@ class _QuizScreenState extends State<QuizScreen> {
         
         const SizedBox(height: 24),
         
-        // Выбор из сохранённых
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
@@ -667,7 +731,6 @@ class _QuizScreenState extends State<QuizScreen> {
                     ),
               const SizedBox(height: 20),
               
-              // Индикатор лимита
               if (!isPremium && remaining <= 3)
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -826,7 +889,6 @@ class _QuizScreenState extends State<QuizScreen> {
               ),
               const SizedBox(height: 20),
               
-              // Индикатор лимита
               if (!isPremium && remaining <= 3)
                 Container(
                   padding: const EdgeInsets.all(12),
