@@ -435,4 +435,56 @@ class _QuizScreenState extends State<QuizScreen> {
           child: Container(decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF2A2A2A))),
             child: ListTile(
               onTap: () => _answerQuestion(index),
-              leading: Container(width: 24, height: 24, decoration: BoxDecoration
+              leading: Container(width: 24, height: 24, decoration: BoxDecoration(color: const Color(0xFF2A2A2A), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.circle_outlined, color: Color(0xFF9A9A9A), size: 14)),
+              title: Text(question.options[index], style: const TextStyle(color: Colors.white)),
+            )),
+        )),
+      ]),
+    );
+  }
+  
+  Widget _buildResultScreen() {
+    final percentage = (_score / _currentQuiz!.questions.length) * 100;
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(children: [
+        Container(width: 100, height: 100, decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(50)), child: Center(child: Text('${percentage.toInt()}%', style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w800)))),
+        const SizedBox(height: 24),
+        Text(percentage >= 80 ? 'Отлично! 🎉' : (percentage >= 60 ? 'Хорошо! 👍' : 'Попробуй ещё! 💪'), style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 32),
+        Container(padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFF2A2A2A))), child: Column(children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Правильных ответов:', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14)), Text('$_score / ${_currentQuiz!.questions.length}', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 20, fontWeight: FontWeight.w700))]),
+          const SizedBox(height: 12),
+          LinearProgressIndicator(value: _score / _currentQuiz!.questions.length, backgroundColor: const Color(0xFF2A2A2A), color: const Color(0xFF1DB954)),
+        ])),
+        const SizedBox(height: 24),
+        if (_showAnswers) ...[
+          const Text('ПРАВИЛЬНЫЕ ОТВЕТЫ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)), const SizedBox(height: 12),
+          ..._currentQuiz!.questions.asMap().entries.map((entry) {
+            final i = entry.key; final q = entry.value; final correctLetter = String.fromCharCode(65 + q.correctIndex);
+            return Container(margin: const EdgeInsets.only(bottom: 12), padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF2A2A2A))),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text('${i + 1}. ${q.question}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)), const SizedBox(height: 8),
+                Text('✓ $correctLetter. ${q.options[q.correctIndex]}', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13)), const SizedBox(height: 8),
+                Text('📝 ${q.explanation}', style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 12)),
+              ]));
+          }),
+        ],
+        const SizedBox(height: 16),
+        Row(children: [
+          Expanded(child: OutlinedButton(onPressed: () => setState(() => _showAnswers = !_showAnswers), style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF2A2A2A)), padding: const EdgeInsets.symmetric(vertical: 14)), child: Text(_showAnswers ? 'Скрыть ответы' : 'Показать ответы', style: const TextStyle(color: Color(0xFF1DB954))))),
+          const SizedBox(width: 12),
+          Expanded(child: OutlinedButton(onPressed: _exportToWord, style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF2A2A2A)), padding: const EdgeInsets.symmetric(vertical: 14)), child: const Text('📄 Word', style: TextStyle(color: Colors.white)))),
+        ]),
+        const SizedBox(height: 12),
+        Row(children: [
+          Expanded(child: OutlinedButton(onPressed: _exportToPdf, style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF2A2A2A)), padding: const EdgeInsets.symmetric(vertical: 14)), child: const Text('📑 PDF', style: TextStyle(color: Colors.white)))),
+          const SizedBox(width: 12),
+          Expanded(child: OutlinedButton(onPressed: () { setState(() { _showQuiz = false; _quizFinished = false; _currentQuestionIndex = 0; _score = 0; _userAnswers.clear(); _currentQuiz = null; }); }, style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF2A2A2A)), padding: const EdgeInsets.symmetric(vertical: 14)), child: const Text('Новый тест', style: TextStyle(color: Colors.white)))),
+        ]),
+        const SizedBox(height: 12),
+        SizedBox(width: double.infinity, child: ElevatedButton(onPressed: () => Navigator.pop(context), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('На главную', style: TextStyle(color: Colors.white)))),
+      ]),
+    );
+  }
+}
