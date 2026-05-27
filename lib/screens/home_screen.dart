@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/user_provider.dart';
 import '../providers/logo_provider.dart';
 import '../providers/history_provider.dart';
@@ -74,6 +75,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   
   int _remainingGenerations = 5;
 
+  // Ключи для локального хранения счётчика генераций (для гостей)
+  static const String _genCountKey = 'guest_gen_count';
+  static const String _genDateKey = 'guest_gen_date';
+
   @override
   void initState() {
     super.initState();
@@ -99,19 +104,69 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     super.dispose();
   }
 
+  // ─────────────────────────────────────────────────────────────
+  // LOCAL GENERATION COUNTER (для гостей)
+  // ─────────────────────────────────────────────────────────────
+  Future<int> _getGuestGenerationCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedDate = prefs.getString(_genDateKey);
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    
+    if (savedDate != today) {
+      await prefs.setInt(_genCountKey, 0);
+      await prefs.setString(_genDateKey, today);
+      return 0;
+    }
+    return prefs.getInt(_genCountKey) ?? 0;
+  }
+
+  Future<void> _incrementGuestGenerationCount() async {
+    final prefs = await SharedPreferences.getInstance();
+    final current = await _getGuestGenerationCount();
+    await prefs.setInt(_genCountKey, current + 1);
+  }
+
+  Future<bool> _canGenerate() async {
+    final up = Provider.of<UserProvider>(context, listen: false);
+    
+    // Premium или VIP — безлимит
+    if (up.isPremium || up.isVip) return true;
+    
+    // Залогинен — проверяем бэкенд
+    if (up.isLoggedIn) {
+      await up.loadUser();
+      return up.freeGenerationsLeft > 0;
+    }
+    
+    // Гость — локальный счётчик
+    final count = await _getGuestGenerationCount();
+    return count < 5;
+  }
+
   Future<void> _loadUserData() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     await userProvider.loadUser();
-    setState(() {
-      _remainingGenerations = userProvider.freeGenerationsLeft;
-    });
+    
+    if (userProvider.isLoggedIn) {
+      setState(() {
+        _remainingGenerations = userProvider.freeGenerationsLeft;
+      });
+    } else {
+      final count = await _getGuestGenerationCount();
+      setState(() {
+        _remainingGenerations = 5 - count;
+      });
+    }
   }
   
   void _refreshUserData() {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     setState(() {
-      _remainingGenerations = userProvider.freeGenerationsLeft;
+      _remainingGenerations = userProvider.isLoggedIn 
+          ? userProvider.freeGenerationsLeft 
+          : 5 - (_remainingGenerations > 5 ? 5 : 5 - _remainingGenerations);
     });
+    _loadUserData(); // Полностью обновляем
   }
 
   Future<void> _detectCountry() async {
@@ -245,16 +300,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       return;
     }
 
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    
-    // Обновляем остаток перед проверкой
-    await userProvider.loadUser();
-    _refreshUserData();
-    
-    // Проверка лимита перед генерацией
-    if (userProvider.freeGenerationsLeft <= 0 && !userProvider.isPremium && !userProvider.isVip) {
+    // Проверка лимита (новая логика)
+    final canGenerate = await _canGenerate();
+    if (!canGenerate) {
       _showLimitDialog();
       return;
+    }
+
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    
+    // Увеличиваем локальный счётчик для гостей
+    if (!userProvider.isLoggedIn && !userProvider.isPremium && !userProvider.isVip) {
+      await _incrementGuestGenerationCount();
     }
 
     try {
@@ -268,15 +325,15 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         builder: (_) => LoadingScreen(topic: topic, slideCount: _maxSlides),
       ),
     ).then((_) {
-      // Обновляем данные после возврата из редактора
       _loadUserData();
     });
   }
 
-  void _showTextInput() {
+  void _showTextInput() async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     
-    if (userProvider.freeGenerationsLeft <= 0 && !userProvider.isPremium && !userProvider.isVip) {
+    final canGenerate = await _canGenerate();
+    if (!canGenerate) {
       _showLimitDialog();
       return;
     }
@@ -311,33 +368,27 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
               const SizedBox(height: 20),
               Row(children: [
-                Expanded(child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(ctx),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: _T.border)),
-                      child: const Center(child: Text('Отмена', style: TextStyle(color: _T.txtSecondary, fontWeight: FontWeight.w600))),
-                    ),
+                Expanded(child: GestureDetector(
+                  onTap: () => Navigator.pop(ctx),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: _T.border)),
+                    child: const Center(child: Text('Отмена', style: TextStyle(color: _T.txtSecondary, fontWeight: FontWeight.w600))),
                   ),
                 )),
                 const SizedBox(width: 12),
-                Expanded(child: MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      final text = controller.text.trim();
-                      if (text.isNotEmpty) {
-                        _generate(overrideTopic: text.length > 50 ? '${text.substring(0, 50)}...' : text);
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(12)),
-                      child: const Center(child: Text('Создать', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
-                    ),
+                Expanded(child: GestureDetector(
+                  onTap: () {
+                    Navigator.pop(ctx);
+                    final text = controller.text.trim();
+                    if (text.isNotEmpty) {
+                      _generate(overrideTopic: text.length > 50 ? '${text.substring(0, 50)}...' : text);
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(12)),
+                    child: const Center(child: Text('Создать', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
                   ),
                 )),
               ]),
@@ -416,15 +467,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       leading: Container(width: 36, height: 36, decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.slideshow_outlined, color: _T.accent, size: 18)),
                       title: Text(rec.topic, style: const TextStyle(color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
                       subtitle: Text('${rec.slideCount} слайдов', style: const TextStyle(color: _T.txtMuted, fontSize: 11)),
-                      trailing: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          onTap: () { 
-                            Navigator.pop(ctx); 
-                            _generate(overrideTopic: rec.topic); 
-                          },
-                          child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5), decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(8)), child: const Text('Повторить', style: TextStyle(color: _T.accent, fontSize: 11, fontWeight: FontWeight.w600))),
-                        ),
+                      trailing: GestureDetector(
+                        onTap: () { 
+                          Navigator.pop(ctx); 
+                          _generate(overrideTopic: rec.topic); 
+                        },
+                        child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5), decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(8)), child: const Text('Повторить', style: TextStyle(color: _T.accent, fontSize: 11, fontWeight: FontWeight.w600))),
                       ),
                     );
                   },
@@ -440,27 +488,24 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final bool isVipAvailable = _vipOccupiedSpots < _vipTotalSpots;
     if (!isVipAvailable) return const SizedBox.shrink();
     
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () => _push(const VipScreen()),
-        child: Container(
-          margin: const EdgeInsets.only(right: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFFFD60A)]),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.star_rounded, color: Colors.white, size: 14),
-              const SizedBox(width: 4),
-              Text(
-                'VIP ${_vipTotalSpots - _vipOccupiedSpots}',
-                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
-              ),
-            ],
-          ),
+    return GestureDetector(
+      onTap: () => _push(const VipScreen()),
+      child: Container(
+        margin: const EdgeInsets.only(right: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(colors: [Color(0xFFFFD700), Color(0xFFFFD60A)]),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.star_rounded, color: Colors.white, size: 14),
+            const SizedBox(width: 4),
+            Text(
+              'VIP ${_vipTotalSpots - _vipOccupiedSpots}',
+              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+            ),
+          ],
         ),
       ),
     );
@@ -470,7 +515,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     final up = Provider.of<UserProvider>(context);
     final logo = Provider.of<BrandKitProvider>(context).logoUrl;
-    final left = up.freeGenerationsLeft;
+    final left = _remainingGenerations;
     final isLoggedIn = up.isLoggedIn;
     final isPremium = up.isPremium;
     final isVip = up.isVip;
@@ -557,25 +602,22 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
                 ScaleTransition(
                   scale: _pulseAnimation,
-                  child: MouseRegion(
-                    cursor: canGenerate ? SystemMouseCursors.click : SystemMouseCursors.forbidden,
-                    child: GestureDetector(
-                      onTap: canGenerate ? _generate : null,
-                      child: Container(
-                        width: double.infinity, height: 48,
-                        decoration: BoxDecoration(
-                          gradient: canGenerate 
-                              ? const LinearGradient(colors: [Color(0xFF169C46), _T.accent, _T.accentLight])
-                              : const LinearGradient(colors: [_T.bgCard, _T.bgCard]),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: canGenerate ? [BoxShadow(color: _T.accent.withOpacity(0.25), blurRadius: 16, offset: const Offset(0, 4))] : null,
-                        ),
-                        child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                          Icon(Icons.auto_awesome, color: canGenerate ? Colors.white : _T.txtMuted, size: 16),
-                          const SizedBox(width: 8),
-                          Text(canGenerate ? 'Создать' : 'Лимит исчерпан', style: TextStyle(color: canGenerate ? Colors.white : _T.txtMuted, fontWeight: FontWeight.w800, fontSize: 15)),
-                        ]),
+                  child: GestureDetector(
+                    onTap: canGenerate ? _generate : null,
+                    child: Container(
+                      width: double.infinity, height: 48,
+                      decoration: BoxDecoration(
+                        gradient: canGenerate 
+                            ? const LinearGradient(colors: [Color(0xFF169C46), _T.accent, _T.accentLight])
+                            : const LinearGradient(colors: [_T.bgCard, _T.bgCard]),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: canGenerate ? [BoxShadow(color: _T.accent.withOpacity(0.25), blurRadius: 16, offset: const Offset(0, 4))] : null,
                       ),
+                      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                        Icon(Icons.auto_awesome, color: canGenerate ? Colors.white : _T.txtMuted, size: 16),
+                        const SizedBox(width: 8),
+                        Text(canGenerate ? 'Создать' : 'Лимит исчерпан', style: TextStyle(color: canGenerate ? Colors.white : _T.txtMuted, fontWeight: FontWeight.w800, fontSize: 15)),
+                      ]),
                     ),
                   ),
                 ),
@@ -585,16 +627,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   spacing: 6, runSpacing: 6, alignment: WrapAlignment.center,
                   children: _examples.map((example) {
                     final selected = _topicController.text == example;
-                    return MouseRegion(
-                      cursor: canGenerate ? SystemMouseCursors.click : SystemMouseCursors.forbidden,
-                      child: GestureDetector(
-                        onTap: canGenerate ? () => setState(() => _topicController.text = example) : null,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                          decoration: BoxDecoration(color: selected ? _T.accentDim : _T.bgSurface, borderRadius: BorderRadius.circular(20), border: Border.all(color: selected ? _T.accent.withOpacity(0.5) : _T.border)),
-                          child: Text(example, style: TextStyle(fontSize: 12, color: selected ? _T.accent : canGenerate ? _T.txtSecondary : _T.txtMuted, fontWeight: selected ? FontWeight.w600 : FontWeight.w400)),
-                        ),
+                    return GestureDetector(
+                      onTap: canGenerate ? () => setState(() => _topicController.text = example) : null,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                        decoration: BoxDecoration(color: selected ? _T.accentDim : _T.bgSurface, borderRadius: BorderRadius.circular(20), border: Border.all(color: selected ? _T.accent.withOpacity(0.5) : _T.border)),
+                        child: Text(example, style: TextStyle(fontSize: 12, color: selected ? _T.accent : canGenerate ? _T.txtSecondary : _T.txtMuted, fontWeight: selected ? FontWeight.w600 : FontWeight.w400)),
                       ),
                     );
                   }).toList(),
@@ -602,7 +641,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 const SizedBox(height: 16),
 
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  _ExtraBtn(Icons.article_outlined, 'Из текста', canGenerate ? _showTextInput : _showLimitDialog),
+                  _ExtraBtn(Icons.article_outlined, 'Из текста', () async { if (await _canGenerate()) _showTextInput(); else _showLimitDialog(); }),
                   const SizedBox(width: 10),
                   _ExtraBtn(Icons.image_outlined, 'Загрузить логотип', _uploadLogo),
                   const SizedBox(width: 10),
@@ -619,7 +658,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       const SizedBox(width: 12),
                       const Text('Логотип загружен', style: TextStyle(color: _T.accentLight, fontSize: 12, fontWeight: FontWeight.w500)),
                       const Spacer(),
-                      MouseRegion(cursor: SystemMouseCursors.click, child: GestureDetector(onTap: () => Provider.of<BrandKitProvider>(context, listen: false).clear(), child: const Icon(Icons.close_rounded, color: _T.txtMuted, size: 16))),
+                      GestureDetector(onTap: () => Provider.of<BrandKitProvider>(context, listen: false).clear(), child: const Icon(Icons.close_rounded, color: _T.txtMuted, size: 16)),
                     ]),
                   ),
                 ],
@@ -728,39 +767,36 @@ class _TariffCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final priceLabel = formatPrice(usd);
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: popular ? _T.accentDim : _T.bgSurface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: popular ? _T.accent.withOpacity(0.5) : _T.border, width: popular ? 1.5 : 1),
-            boxShadow: popular ? [BoxShadow(color: _T.accent.withOpacity(0.15), blurRadius: 12)] : null,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (popular || badge != null)
-                Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(gradient: popular ? const LinearGradient(colors: [_T.accent, _T.accentLight]) : const LinearGradient(colors: [_T.goldLight, _T.gold]), borderRadius: BorderRadius.circular(5)),
-                  child: Text(badge ?? (popular ? 'ПОПУЛЯРНЫЙ' : ''), style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
-                ),
-              Text(title, style: const TextStyle(color: _T.txtPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 4),
-              Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Text(priceLabel, style: const TextStyle(color: _T.accentLight, fontSize: 20, fontWeight: FontWeight.w900)),
-                if (period.isNotEmpty && usd > 0) ...[const SizedBox(width: 2), Padding(padding: const EdgeInsets.only(bottom: 4), child: Text(period, style: const TextStyle(color: _T.txtSecondary, fontSize: 10)))],
-              ]),
-              const SizedBox(height: 10),
-              ...features.map((f) => Padding(padding: const EdgeInsets.only(bottom: 4), child: Row(children: [const Icon(Icons.check_rounded, color: _T.accent, size: 13), const SizedBox(width: 5), Expanded(child: Text(f, style: const TextStyle(color: _T.txtSecondary, fontSize: 10)))]))),
-            ],
-          ),
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: popular ? _T.accentDim : _T.bgSurface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: popular ? _T.accent.withOpacity(0.5) : _T.border, width: popular ? 1.5 : 1),
+          boxShadow: popular ? [BoxShadow(color: _T.accent.withOpacity(0.15), blurRadius: 12)] : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (popular || badge != null)
+              Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(gradient: popular ? const LinearGradient(colors: [_T.accent, _T.accentLight]) : const LinearGradient(colors: [_T.goldLight, _T.gold]), borderRadius: BorderRadius.circular(5)),
+                child: Text(badge ?? (popular ? 'ПОПУЛЯРНЫЙ' : ''), style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+              ),
+            Text(title, style: const TextStyle(color: _T.txtPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+              Text(priceLabel, style: const TextStyle(color: _T.accentLight, fontSize: 20, fontWeight: FontWeight.w900)),
+              if (period.isNotEmpty && usd > 0) ...[const SizedBox(width: 2), Padding(padding: const EdgeInsets.only(bottom: 4), child: Text(period, style: const TextStyle(color: _T.txtSecondary, fontSize: 10)))],
+            ]),
+            const SizedBox(height: 10),
+            ...features.map((f) => Padding(padding: const EdgeInsets.only(bottom: 4), child: Row(children: [const Icon(Icons.check_rounded, color: _T.accent, size: 13), const SizedBox(width: 5), Expanded(child: Text(f, style: const TextStyle(color: _T.txtSecondary, fontSize: 10)))]))),
+          ],
         ),
       ),
     );
@@ -783,21 +819,15 @@ class _AppBarBtn extends StatefulWidget {
 class _AppBarBtnState extends State<_AppBarBtn> {
   bool _hovered = false;
   @override
-  Widget build(BuildContext context) => MouseRegion(
-    cursor: SystemMouseCursors.click,
-    onEnter: (_) => setState(() => _hovered = true),
-    onExit:  (_) => setState(() => _hovered = false),
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: widget.onTap,
     child: Tooltip(
       message: widget.tooltip,
-      child: GestureDetector(
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          width: 34, height: 34,
-          margin: const EdgeInsets.symmetric(horizontal: 2),
-          decoration: BoxDecoration(color: _hovered ? _T.bgHover : Colors.white.withOpacity(0.04), borderRadius: BorderRadius.circular(10)),
-          child: Icon(widget.icon, color: widget.color, size: 17),
-        ),
+      child: Container(
+        width: 34, height: 34,
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        decoration: BoxDecoration(color: _hovered ? _T.bgHover : Colors.white.withOpacity(0.04), borderRadius: BorderRadius.circular(10)),
+        child: Icon(widget.icon, color: widget.color, size: 17),
       ),
     ),
   );
@@ -810,15 +840,12 @@ class _ExtraBtn extends StatelessWidget {
   const _ExtraBtn(this.icon, this.label, this.onTap);
 
   @override
-  Widget build(BuildContext context) => MouseRegion(
-    cursor: SystemMouseCursors.click,
-    child: GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        decoration: BoxDecoration(color: _T.bgSurface, borderRadius: BorderRadius.circular(14), border: Border.all(color: _T.border)),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon, size: 16, color: _T.txtSecondary), const SizedBox(width: 7), Text(label, style: const TextStyle(fontSize: 12, color: _T.txtSecondary, fontWeight: FontWeight.w500))]),
-      ),
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      decoration: BoxDecoration(color: _T.bgSurface, borderRadius: BorderRadius.circular(14), border: Border.all(color: _T.border)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon, size: 16, color: _T.txtSecondary), const SizedBox(width: 7), Text(label, style: const TextStyle(fontSize: 12, color: _T.txtSecondary, fontWeight: FontWeight.w500))]),
     ),
   );
 }
@@ -830,14 +857,11 @@ class _NavItem extends StatelessWidget {
   const _NavItem(this.icon, this.label, this.onTap);
 
   @override
-  Widget build(BuildContext context) => MouseRegion(
-    cursor: SystemMouseCursors.click,
-    child: GestureDetector(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(icon, size: 20, color: _T.txtSecondary), const SizedBox(height: 4), Text(label, style: const TextStyle(fontSize: 9, color: _T.txtSecondary, fontWeight: FontWeight.w500))]),
-      ),
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(icon, size: 20, color: _T.txtSecondary), const SizedBox(height: 4), Text(label, style: const TextStyle(fontSize: 9, color: _T.txtSecondary, fontWeight: FontWeight.w500))]),
     ),
   );
 }
