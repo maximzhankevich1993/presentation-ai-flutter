@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -10,7 +9,6 @@ import '../providers/user_provider.dart';
 import '../models/presentation.dart';
 import '../services/api_service.dart';
 import 'premium_screen.dart';
-import 'teacher_screen.dart';
 
 class QuizScreen extends StatefulWidget {
   const QuizScreen({super.key});
@@ -202,10 +200,15 @@ class _QuizScreenState extends State<QuizScreen> {
     finally { if (mounted) setState(() => _isLoading = false); }
   }
 
+  // ИСПРАВЛЕННЫЙ МЕТОД — передаём textbook и grade
   Future<void> _generateQuizFromTopic() async {
     final topic = _topicController.text.trim();
+    final textbook = _textbookController.text.trim(); // может быть пустым
+    final grade = _gradeController.text.trim();
     final questionCount = int.tryParse(_questionCountController.text.trim()) ?? 5;
+    
     if (topic.isEmpty) { _showError('Введите тему'); return; }
+    if (grade.isEmpty) { _showError('Введите класс'); return; }
     if (questionCount < 3 || questionCount > 10) { _showError('Вопросов от 3 до 10'); return; }
     
     final userProvider = Provider.of<UserProvider>(context, listen: false);
@@ -213,8 +216,13 @@ class _QuizScreenState extends State<QuizScreen> {
     
     setState(() => _isLoading = true);
     try {
-      final quiz = await ApiService.generateQuiz(topic: topic, questionCount: questionCount);
-      print('QUIZ RESPONSE: $quiz');
+      // Передаём textbook и grade (если не заполнены — пустые строки, не null)
+      final quiz = await ApiService.generateQuiz(
+        topic: topic,
+        textbook: textbook.isEmpty ? '' : textbook,
+        grade: grade,
+        questionCount: questionCount,
+      );
       await userProvider.loadUser();
       if (!mounted) return;
       setState(() {
@@ -223,8 +231,11 @@ class _QuizScreenState extends State<QuizScreen> {
       });
     } on LimitReachedException catch (_) {
       if (mounted) { _showLimitDialog(); await userProvider.loadUser(); }
-    } catch (e) { _showError('Ошибка: $e'); }
-    finally { if (mounted) setState(() => _isLoading = false); }
+    } catch (e) {
+      _showError('Ошибка: $e');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
   
   void _answerQuestion(int selectedIndex) {
