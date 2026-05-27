@@ -523,4 +523,4 @@ class _QuizScreenState extends State<QuizScreen> {
       ]),
     );
   }
-} проверя и исправляй
+}
