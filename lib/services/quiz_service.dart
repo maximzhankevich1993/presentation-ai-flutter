@@ -23,11 +23,20 @@ class QuizQuestion {
   };
 
   factory QuizQuestion.fromJson(Map<String, dynamic> json) {
+    // Безопасное извлечение с защитой от null
+    final rawOptions = json['options'];
+    List<String> safeOptions;
+    if (rawOptions is List && rawOptions.isNotEmpty) {
+      safeOptions = rawOptions.map((o) => o?.toString() ?? 'Вариант').toList();
+    } else {
+      safeOptions = ['А', 'Б', 'В', 'Г'];
+    }
+    
     return QuizQuestion(
-      question: json['question'],
-      options: List<String>.from(json['options']),
-      correctIndex: json['correct'],
-      explanation: json['explanation'] ?? '',
+      question: json['question']?.toString() ?? 'Вопрос',
+      options: safeOptions,
+      correctIndex: json['correct'] ?? json['correctIndex'] ?? json['correct_index'] ?? 0,
+      explanation: json['explanation']?.toString() ?? json['explain']?.toString() ?? '',
     );
   }
 }
@@ -53,13 +62,30 @@ class Quiz {
   };
 
   factory Quiz.fromJson(Map<String, dynamic> json) {
-    return Quiz(
-      title: json['title'],
-      questions: (json['questions'] as List)
+    final rawQuestions = json['questions'];
+    List<QuizQuestion> safeQuestions;
+    
+    if (rawQuestions is List && rawQuestions.isNotEmpty) {
+      safeQuestions = rawQuestions
+          .whereType<Map<String, dynamic>>()
           .map((q) => QuizQuestion.fromJson(q))
-          .toList(),
-      difficulty: json['difficulty'],
-      timeLimitMinutes: json['timeLimitMinutes'],
+          .toList();
+    } else {
+      safeQuestions = [
+        const QuizQuestion(
+          question: 'Вопрос',
+          options: ['А', 'Б', 'В', 'Г'],
+          correctIndex: 0,
+          explanation: '',
+        ),
+      ];
+    }
+    
+    return Quiz(
+      title: json['title']?.toString() ?? 'Тест',
+      questions: safeQuestions,
+      difficulty: json['difficulty']?.toString() ?? 'medium',
+      timeLimitMinutes: json['timeLimitMinutes'] ?? 5,
     );
   }
 
@@ -85,7 +111,6 @@ class Quiz {
 class QuizService {
   static const String _baseUrl = 'https://presentation-ai-backend.onrender.com/api';
   
-  /// Генерация теста из презентации через AI
   static Future<Quiz> generateFromPresentation({
     required String presentationTitle,
     required List<String> slideContents,
@@ -124,7 +149,6 @@ class QuizService {
     }
   }
   
-  /// Генерация теста по теме через YandexGPT
   static Future<Quiz> generateFromTopic({
     required String topic,
     required String? textbook,
@@ -151,16 +175,7 @@ class QuizService {
       
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        final questions = (data['questions'] as List)
-            .map((q) => QuizQuestion.fromJson(q))
-            .toList();
-        
-        return Quiz(
-          title: 'Тест: $topic',
-          questions: questions,
-          difficulty: data['difficulty'] ?? 'medium',
-          timeLimitMinutes: data['timeLimitMinutes'] ?? questionCount * 2,
-        );
+        return Quiz.fromJson(data);
       } else if (response.statusCode == 401) {
         throw Exception('Требуется авторизация');
       } else if (response.statusCode == 402) {
@@ -177,7 +192,6 @@ class QuizService {
     }
   }
 
-  /// Экспорт теста + ответов для Word
   static String exportToWord(Quiz quiz, {bool includeAnswers = true}) {
     final buffer = StringBuffer();
     
