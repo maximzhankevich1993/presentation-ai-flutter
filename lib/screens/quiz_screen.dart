@@ -218,6 +218,11 @@ class _QuizScreenState extends State<QuizScreen> {
         topic: topic,
         questionCount: questionCount,
       );
+
+      // ВРЕМЕННАЯ ДИАГНОСТИКА
+      print('=== RAW API RESPONSE ===');
+      print(quiz.toString());
+
       await userProvider.loadUser();
       if (!mounted) return;
       
@@ -257,21 +262,20 @@ class _QuizScreenState extends State<QuizScreen> {
       throw Exception('Неизвестный формат ответа: ключи ${response.keys}');
     }
     
-    // Защита от null в вопросах
     if (data.containsKey('questions') && data['questions'] is List) {
       final cleaned = (data['questions'] as List).map((q) {
         if (q is! Map<String, dynamic>) {
           return <String, dynamic>{
             'question': 'Вопрос',
             'options': ['А', 'Б', 'В', 'Г'],
-            'correctIndex': 0,
+            'correct': 0,
             'explanation': '',
           };
         }
         return <String, dynamic>{
           'question': q['question']?.toString() ?? 'Вопрос',
           'options': (q['options'] as List?)?.map((o) => o?.toString() ?? 'Вариант').toList() ?? ['А', 'Б', 'В', 'Г'],
-          'correctIndex': q['correctIndex'] ?? q['correct'] ?? q['correct_index'] ?? 0,
+          'correct': q['correct'] ?? q['correctIndex'] ?? q['correct_index'] ?? 0,
           'explanation': q['explanation']?.toString() ?? q['explain']?.toString() ?? '',
         };
       }).toList();
