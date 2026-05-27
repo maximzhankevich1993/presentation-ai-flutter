@@ -200,15 +200,12 @@ class _QuizScreenState extends State<QuizScreen> {
     finally { if (mounted) setState(() => _isLoading = false); }
   }
 
-  // ИСПРАВЛЕННЫЙ МЕТОД — передаём textbook и grade
+  // ИСПРАВЛЕННЫЙ МЕТОД — передаём только topic и questionCount
   Future<void> _generateQuizFromTopic() async {
     final topic = _topicController.text.trim();
-    final textbook = _textbookController.text.trim(); // может быть пустым
-    final grade = _gradeController.text.trim();
     final questionCount = int.tryParse(_questionCountController.text.trim()) ?? 5;
     
     if (topic.isEmpty) { _showError('Введите тему'); return; }
-    if (grade.isEmpty) { _showError('Введите класс'); return; }
     if (questionCount < 3 || questionCount > 10) { _showError('Вопросов от 3 до 10'); return; }
     
     final userProvider = Provider.of<UserProvider>(context, listen: false);
@@ -216,11 +213,9 @@ class _QuizScreenState extends State<QuizScreen> {
     
     setState(() => _isLoading = true);
     try {
-      // Передаём textbook и grade (если не заполнены — пустые строки, не null)
+      // Убраны textbook и grade, так как API их пока не поддерживает
       final quiz = await ApiService.generateQuiz(
         topic: topic,
-        textbook: textbook.isEmpty ? '' : textbook,
-        grade: grade,
         questionCount: questionCount,
       );
       await userProvider.loadUser();
