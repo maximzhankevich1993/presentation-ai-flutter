@@ -47,7 +47,8 @@ dependencies:
   # Google Fonts (онлайн шрифты)
   google_fonts: ^6.2.1
   
-  # Web support
+  # Web & Mobile compatibility
+  universal_html: ^2.2.4
   flutter_web_plugins:
     sdk: flutter
 
@@ -62,7 +63,6 @@ flutter:
   assets:
     - assets/icons/
     - assets/templates/
-    # Явно перечисляем все файлы шаблонов для надежности
     - assets/templates/women_business.jpg
     - assets/templates/tech_minimal.jpg
     - assets/templates/party_event.jpg
