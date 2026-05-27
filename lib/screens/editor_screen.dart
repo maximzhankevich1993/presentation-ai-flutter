@@ -924,7 +924,7 @@ class _SlideNavigator extends StatelessWidget {
         ]))),
         const _ThinDivider(),
         Expanded(child: ListView.builder(padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 5), itemCount: slides.length, itemBuilder: (_, i) => _SlideThumbnail(
-          index: i, title: titleControllers[i].text, isActive: i == activeSlide, collapsed: collapsed, bgColor: _getColor(i),
+          index: i, title: titleControllers[i].text, isActive: i == activeIndex, collapsed: collapsed, bgColor: _getColor(i),
           onTap: () => onSelect(i),
           onDelete: slides.length > 1 ? () => onDelete(i) : null,
           onDuplicate: () => onDuplicate(i),
@@ -1134,7 +1134,7 @@ class _Canvas extends StatelessWidget {
   
   Widget _buildChartWidget(SlideChart chart) {
     if (chart.data.isEmpty) return const Center(child: Text('Нет данных', style: TextStyle(color: _T.txtSecondary, fontSize: 12)));
-    final maxY = chart.data.map((e) => e['value'] as double).reduce((a, b) => a > b ? a : b) * 1.2;
+    final maxY = chart.data.map((e) => (e['value'] as num).toDouble()).reduce((a, b) => a > b ? a : b) * 1.2;
     switch (chart.type) {
       case 'bar':
         return BarChart(BarChartData(
@@ -1147,13 +1147,13 @@ class _Canvas extends StatelessWidget {
           ),
           borderData: FlBorderData(show: false),
           gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (_) => FlLine(color: _T.border, strokeWidth: 0.5)),
-          barGroups: chart.data.asMap().entries.map((e) => BarChartGroupData(x: e.key, barRods: [BarChartRodData(toY: e.value['value'] as double, color: _T.accent, width: 20, borderRadius: BorderRadius.circular(3))])).toList(),
+          barGroups: chart.data.asMap().entries.map((e) => BarChartGroupData(x: e.key, barRods: [BarChartRodData(toY: (e.value['value'] as num).toDouble(), color: _T.accent, width: 20, borderRadius: BorderRadius.circular(3))])).toList(),
         ));
       case 'pie':
-        final total = chart.data.map((e) => e['value'] as double).reduce((a, b) => a + b);
+        final total = chart.data.map((e) => (e['value'] as num).toDouble()).reduce((a, b) => a + b);
         const colors = [_T.accent, _T.accentLight, Colors.orange, Colors.purple, Colors.cyan];
         return PieChart(PieChartData(
-          sections: chart.data.asMap().entries.map((e) => PieChartSectionData(value: e.value['value'] as double, title: '${((e.value['value'] as double) / total * 100).toInt()}%', radius: 60, titleStyle: const TextStyle(color: Colors.white, fontSize: 10), color: colors[e.key % colors.length])).toList(),
+          sections: chart.data.asMap().entries.map((e) => PieChartSectionData(value: (e.value['value'] as num).toDouble(), title: '${((e.value['value'] as num).toDouble() / total * 100).toInt()}%', radius: 60, titleStyle: const TextStyle(color: Colors.white, fontSize: 10), color: colors[e.key % colors.length])).toList(),
           sectionsSpace: 2, centerSpaceRadius: 30,
         ));
       case 'line':
@@ -1167,7 +1167,7 @@ class _Canvas extends StatelessWidget {
           ),
           borderData: FlBorderData(show: false),
           gridData: FlGridData(show: true, getDrawingHorizontalLine: (_) => FlLine(color: _T.border, strokeWidth: 0.5)),
-          lineBarsData: [LineChartBarData(spots: chart.data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value['value'] as double)).toList(), isCurved: true, color: _T.accent, barWidth: 2, dotData: const FlDotData(show: false), belowBarData: BarAreaData(show: true, color: _T.accentDim))],
+          lineBarsData: [LineChartBarData(spots: chart.data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), (e.value['value'] as num).toDouble())).toList(), isCurved: true, color: _T.accent, barWidth: 2, dotData: const FlDotData(show: false), belowBarData: BarAreaData(show: true, color: _T.accentDim))],
         ));
       default: return const SizedBox();
     }
