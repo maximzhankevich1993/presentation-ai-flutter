@@ -205,7 +205,6 @@ class _QuizScreenState extends State<QuizScreen> {
   Future<void> _generateQuizFromTopic() async {
     final topic = _topicController.text.trim();
     final questionCount = int.tryParse(_questionCountController.text.trim()) ?? 5;
-    
     if (topic.isEmpty) { _showError('Введите тему'); return; }
     if (questionCount < 3 || questionCount > 10) { _showError('Вопросов от 3 до 10'); return; }
     
@@ -214,53 +213,62 @@ class _QuizScreenState extends State<QuizScreen> {
     
     setState(() => _isLoading = true);
     try {
-      final quiz = await ApiService.generateQuiz(
-        topic: topic,
-        questionCount: questionCount,
-      );
+      final quiz = await ApiService.generateQuiz(topic: topic, questionCount: questionCount);
       await userProvider.loadUser();
       if (!mounted) return;
-      
-      // Диагностика: показываем первые 200 символов ответа
-      final responseStr = quiz.toString();
-      _showError('Ответ API: ${responseStr.length > 200 ? responseStr.substring(0, 200) + '...' : responseStr}');
-      
       final adapted = _adaptQuizResponse(quiz);
       setState(() {
         _currentQuiz = Quiz.fromJson(adapted);
-        _showQuiz = true;
-        _quizFinished = false;
-        _currentQuestionIndex = 0;
-        _userAnswers.clear();
-        _score = 0;
+        _showQuiz = true; _quizFinished = false; _currentQuestionIndex = 0; _userAnswers.clear(); _score = 0;
       });
     } on LimitReachedException catch (_) {
       if (mounted) { _showLimitDialog(); await userProvider.loadUser(); }
-    } catch (e) {
-      _showError('Ошибка: $e');
-      print('Ошибка генерации теста: $e');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    } catch (e) { _showError('Ошибка: $e'); }
+    finally { if (mounted) setState(() => _isLoading = false); }
   }
 
   Map<String, dynamic> _adaptQuizResponse(Map<String, dynamic> response) {
+    // Извлекаем данные из разных форматов ответа
+    Map<String, dynamic> data;
     if (response.containsKey('data') && response['data'] is Map<String, dynamic>) {
-      return response['data'] as Map<String, dynamic>;
-    }
-    if (response.containsKey('quiz') && response['quiz'] is Map<String, dynamic>) {
-      return response['quiz'] as Map<String, dynamic>;
-    }
-    if (response.containsKey('questions') && response.containsKey('title')) {
-      return response;
-    }
-    if (response.containsKey('questions')) {
-      return {
+      data = response['data'] as Map<String, dynamic>;
+    } else if (response.containsKey('quiz') && response['quiz'] is Map<String, dynamic>) {
+      data = response['quiz'] as Map<String, dynamic>;
+    } else if (response.containsKey('questions') && response.containsKey('title')) {
+      data = response;
+    } else if (response.containsKey('questions')) {
+      data = {
         'title': 'Тест по теме ${_topicController.text.trim()}',
         'questions': response['questions'],
       };
+    } else {
+      throw Exception('Неизвестный формат ответа: ключи ${response.keys}');
     }
-    throw Exception('Неизвестный формат ответа: ключи ${response.keys}');
+    
+    // Очищаем вопросы от null-значений
+    if (data.containsKey('questions') && data['questions'] is List) {
+      final cleanedQuestions = (data['questions'] as List).map((q) {
+        if (q is! Map<String, dynamic>) {
+          return <String, dynamic>{
+            'question': 'Вопрос',
+            'options': ['А', 'Б', 'В', 'Г'],
+            'correctIndex': 0,
+            'explanation': '',
+          };
+        }
+        
+        return <String, dynamic>{
+          'question': q['question']?.toString() ?? 'Вопрос',
+          'options': (q['options'] as List?)?.map((o) => o?.toString() ?? 'Вариант').toList() ?? ['А', 'Б', 'В', 'Г'],
+          'correctIndex': q['correctIndex'] ?? q['correct'] ?? q['correct_index'] ?? 0,
+          'explanation': q['explanation']?.toString() ?? q['explain']?.toString() ?? '',
+        };
+      }).toList();
+      
+      data['questions'] = cleanedQuestions;
+    }
+    
+    return data;
   }
   
   void _answerQuestion(int selectedIndex) {
