@@ -58,7 +58,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
   Future<void> _detectCountry() async {
     try {
-      final response = await http.get(Uri.parse('https://ipwho.is/'));
+      final response = await http.get(Uri.parse('https://ipapi.co/json/'));
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         setState(() => _countryCode = data['country_code'] ?? 'RU');
