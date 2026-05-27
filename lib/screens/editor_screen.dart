@@ -661,7 +661,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
           child: LayoutBuilder(
             builder: (context, constraints) {
               final mobile = constraints.maxWidth < 768;
-              // 🔧 исправлено: приведение к double
+              // 🔧 приведение к double
               final navWidth = (mobile ? (_navCollapsed ? 40 : 120) : (_navCollapsed ? 48 : 188)).toDouble();
               final propsWidth = mobile ? 0.0 : (_propsPanelOpen ? 280.0 : 0.0);
               
@@ -1000,7 +1000,7 @@ class _SlideThumbnailState extends State<_SlideThumbnail> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// CANVAS
+// CANVAS (ПОЛНОСТЬЮ ИСПРАВЛЕН, СКОБКИ СБАЛАНСИРОВАНЫ)
 // ═══════════════════════════════════════════════════════════════════════════════
 class _Canvas extends StatelessWidget {
   final int index, slideCount;
@@ -1033,74 +1033,192 @@ class _Canvas extends StatelessWidget {
       child: Center(
         child: SingleChildScrollView(
           padding: EdgeInsets.symmetric(vertical: isMobile ? 12 : 28, horizontal: isMobile ? 8 : 20),
-          child: Column(children: [
-            Padding(padding: const EdgeInsets.only(bottom: 10), child: Text('${index + 1} / $slideCount', style: const TextStyle(color: _T.txtMuted, fontSize: 11, fontWeight: FontWeight.w500))),
-            LayoutBuilder(builder: (ctx, box) {
-              final width = isMobile ? box.maxWidth : (MediaQuery.of(context).size.width - 504).clamp(360.0, 900.0);
-              final height = width * 9 / 16;
-              return GestureDetector(
-                child: Container(
-                  width: width, height: height,
-                  decoration: decoration,
-                  clipBehavior: Clip.antiAlias,
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      ...shapes.map((s) => Positioned(
-                        left: s.x.clamp(0.0, width - s.width),
-                        top: s.y.clamp(0.0, height - s.height),
-                        child: Stack(children: [
-                          GestureDetector(
-                            onPanUpdate: (d) => onShapeDrag(s.id, d.delta.dx, d.delta.dy),
-                            child: _buildShape(s),
-                          ),
-                          Positioned(
-                            right: -4, bottom: -4,
-                            child: GestureDetector(
-                              onPanUpdate: (d) => onShapeResize(s.id, d.delta.dx, d.delta.dy),
-                              child: Container(width: 12, height: 12, decoration: BoxDecoration(color: _T.accent, borderRadius: BorderRadius.circular(2), border: Border.all(color: Colors.white, width: 1))),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Text('${index + 1} / $slideCount', style: const TextStyle(color: _T.txtMuted, fontSize: 11, fontWeight: FontWeight.w500)),
+              ),
+              LayoutBuilder(
+                builder: (ctx, box) {
+                  final width = isMobile ? box.maxWidth : (MediaQuery.of(context).size.width - 504).clamp(360.0, 900.0);
+                  final height = width * 9 / 16;
+                  return GestureDetector(
+                    child: Container(
+                      width: width,
+                      height: height,
+                      decoration: decoration,
+                      clipBehavior: Clip.antiAlias,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          // Shapes
+                          ...shapes.map((s) => Positioned(
+                            left: s.x.clamp(0.0, width - s.width),
+                            top: s.y.clamp(0.0, height - s.height),
+                            child: Stack(
+                              children: [
+                                GestureDetector(
+                                  onPanUpdate: (d) => onShapeDrag(s.id, d.delta.dx, d.delta.dy),
+                                  child: _buildShape(s),
+                                ),
+                                Positioned(
+                                  right: -4,
+                                  bottom: -4,
+                                  child: GestureDetector(
+                                    onPanUpdate: (d) => onShapeResize(s.id, d.delta.dx, d.delta.dy),
+                                    child: Container(
+                                      width: 12,
+                                      height: 12,
+                                      decoration: BoxDecoration(
+                                        color: _T.accent,
+                                        borderRadius: BorderRadius.circular(2),
+                                        border: Border.all(color: Colors.white, width: 1),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
+                          )),
+                          // Charts
+                          ...charts.map((c) => Positioned(
+                            left: c.x.clamp(0.0, width - c.width),
+                            top: c.y.clamp(0.0, height - c.height),
+                            child: Stack(
+                              children: [
+                                GestureDetector(
+                                  onPanUpdate: (d) => onChartDrag(c.id, d.delta.dx, d.delta.dy),
+                                  child: Container(
+                                    width: c.width,
+                                    height: c.height,
+                                    decoration: BoxDecoration(
+                                      color: _T.bgCard.withOpacity(0.8),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: _T.accent.withOpacity(0.3)),
+                                    ),
+                                    child: _buildChartWidget(c),
+                                  ),
+                                ),
+                                Positioned(
+                                  right: -4,
+                                  bottom: -4,
+                                  child: GestureDetector(
+                                    onPanUpdate: (d) => onChartResize(c.id, d.delta.dx, d.delta.dy),
+                                    child: Container(
+                                      width: 12,
+                                      height: 12,
+                                      decoration: BoxDecoration(
+                                        color: _T.accent,
+                                        borderRadius: BorderRadius.circular(2),
+                                        border: Border.all(color: Colors.white, width: 1),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Positioned(
+                                  top: -4,
+                                  right: -4,
+                                  child: GestureDetector(
+                                    onTap: () => _showChartDataDialog(context, c),
+                                    child: Container(
+                                      width: 20,
+                                      height: 20,
+                                      decoration: BoxDecoration(color: _T.accent, borderRadius: BorderRadius.circular(4)),
+                                      child: const Icon(Icons.edit, color: Colors.white, size: 12),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )),
+                          // Content text
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(isMobile ? 14 : 28, isMobile ? 20 : 34, isMobile ? 14 : 28, isMobile ? 10 : 18),
+                            child: _buildContent(width, height),
                           ),
-                        ]),
-                      )),
-                      ...charts.map((c) => Positioned(
-                        left: c.x.clamp(0.0, width - c.width),
-                        top: c.y.clamp(0.0, height - c.height),
-                        child: Stack(children: [
-                          GestureDetector(
-                            onPanUpdate: (d) => onChartDrag(c.id, d.delta.dx, d.delta.dy),
-                            child: Container(width: c.width, height: c.height, decoration: BoxDecoration(color: _T.bgCard.withOpacity(0.8), borderRadius: BorderRadius.circular(8), border: Border.all(color: _T.accent.withOpacity(0.3))), child: _buildChartWidget(c)),
-                          ),
-                          Positioned(right: -4, bottom: -4, child: GestureDetector(onPanUpdate: (d) => onChartResize(c.id, d.delta.dx, d.delta.dy), child: Container(width: 12, height: 12, decoration: BoxDecoration(color: _T.accent, borderRadius: BorderRadius.circular(2), border: Border.all(color: Colors.white, width: 1))))),
-                          Positioned(top: -4, right: -4, child: GestureDetector(onTap: () => _showChartDataDialog(context, c), child: Container(width: 20, height: 20, decoration: BoxDecoration(color: _T.accent, borderRadius: BorderRadius.circular(4)), child: const Icon(Icons.edit, color: Colors.white, size: 12)))),
-                        ]),
-                      )),
-                      Padding(
-                        padding: EdgeInsets.fromLTRB(isMobile ? 14 : 28, isMobile ? 20 : 34, isMobile ? 14 : 28, isMobile ? 10 : 18),
-                        child: _buildContent(width, height),
+                          // Image if any
+                          if (image != null)
+                            Positioned(
+                              left: imageX.clamp(0.0, width - (width * imageWidth)),
+                              top: imageY.clamp(0.0, height - (height * imageHeight)),
+                              child: GestureDetector(
+                                onPanUpdate: (d) => onImageDrag(index, d.delta.dx, d.delta.dy),
+                                child: Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(10),
+                                      child: Image.network(
+                                        image!,
+                                        width: width * imageWidth,
+                                        height: height * imageHeight,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) => const SizedBox(),
+                                      ),
+                                    ),
+                                    if (hasCustomImage)
+                                      Positioned(
+                                        top: 4,
+                                        right: 4,
+                                        child: GestureDetector(
+                                          onTap: onRemoveImage,
+                                          child: Container(
+                                            width: 18,
+                                            height: 18,
+                                            decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(9)),
+                                            child: const Icon(Icons.close_rounded, color: Colors.white, size: 11),
+                                          ),
+                                        ),
+                                      ),
+                                    Positioned(
+                                      right: -4,
+                                      bottom: -4,
+                                      child: GestureDetector(
+                                        onPanUpdate: (d) => onImageResize(index, d.delta.dx, d.delta.dy),
+                                        child: Container(
+                                          width: 12,
+                                          height: 12,
+                                          decoration: BoxDecoration(
+                                            color: _T.accent,
+                                            borderRadius: BorderRadius.circular(2),
+                                            border: Border.all(color: Colors.white, width: 1),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          // Logo overlay
+                          if (logo != null)
+                            Positioned(
+                              bottom: 10,
+                              right: 12,
+                              child: Opacity(
+                                opacity: 0.65,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: Image.network(
+                                    logo,
+                                    width: 48,
+                                    height: 18,
+                                    fit: BoxFit.contain,
+                                    errorBuilder: (_, __, ___) => const SizedBox(),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
-                      if (image != null)
-                        Positioned(
-                          left: imageX.clamp(0.0, width - (width * imageWidth)),
-                          top: imageY.clamp(0.0, height - (height * imageHeight)),
-                          child: GestureDetector(
-                            onPanUpdate: (d) => onImageDrag(index, d.delta.dx, d.delta.dy),
-                            child: Stack(children: [
-                              ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(image!, width: width * imageWidth, height: height * imageHeight, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox())),
-                              if (hasCustomImage) Positioned(top: 4, right: 4, child: GestureDetector(onTap: onRemoveImage, child: Container(width: 18, height: 18, decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(9)), child: const Icon(Icons.close_rounded, color: Colors.white, size: 11)))),
-                              Positioned(right: -4, bottom: -4, child: GestureDetector(onPanUpdate: (d) => onImageResize(index, d.delta.dx, d.delta.dy), child: Container(width: 12, height: 12, decoration: BoxDecoration(color: _T.accent, borderRadius: BorderRadius.circular(2), border: Border.all(color: Colors.white, width: 1))))),
-                            ]),
-                          ),
-                        ),
-                      if (logo != null) Positioned(bottom: 10, right: 12, child: Opacity(opacity: 0.65, child: ClipRRect(borderRadius: BorderRadius.circular(4), child: Image.network(logo, width: 48, height: 18, fit: BoxFit.contain, errorBuilder: (_, __, ___) => const SizedBox())))),
-                    ],
-                  ),
-                ),
-              );
-            }),
-            const SizedBox(height: 14),
-            _buildContentEditor(MediaQuery.of(context).size.width),
-          ]),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 14),
+              _buildContentEditor(MediaQuery.of(context).size.width),
+            ],
+          ),
         ),
       ),
     );
@@ -1113,10 +1231,47 @@ class _Canvas extends StatelessWidget {
       builder: (_) => AlertDialog(
         backgroundColor: _T.bgSurface,
         title: const Text('Редактировать данные', style: TextStyle(color: _T.txtPrimary)),
-        content: SizedBox(width: 300, height: 300, child: ListView.builder(itemCount: chart.data.length, itemBuilder: (_, i) => Padding(padding: const EdgeInsets.only(bottom: 8), child: Row(children: [SizedBox(width: 80, child: Text(chart.data[i]['label'], style: const TextStyle(color: _T.txtPrimary))), Expanded(child: TextField(controller: controllers[i], keyboardType: TextInputType.number, style: const TextStyle(color: _T.txtPrimary), decoration: InputDecoration(filled: true, fillColor: _T.bgCard, border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)))))])))),
+        content: SizedBox(
+          width: 300,
+          height: 300,
+          child: ListView.builder(
+            itemCount: chart.data.length,
+            itemBuilder: (_, i) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  SizedBox(width: 80, child: Text(chart.data[i]['label'], style: const TextStyle(color: _T.txtPrimary))),
+                  Expanded(
+                    child: TextField(
+                      controller: controllers[i],
+                      keyboardType: TextInputType.number,
+                      style: const TextStyle(color: _T.txtPrimary),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: _T.bgCard,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена', style: TextStyle(color: _T.txtSecondary))),
-          ElevatedButton(onPressed: () { final newData = List<Map<String, dynamic>>.from(chart.data); for (var i = 0; i < newData.length; i++) newData[i]['value'] = double.tryParse(controllers[i].text) ?? 0; onChartDataChange(chart.id, newData); Navigator.pop(context); }, style: ElevatedButton.styleFrom(backgroundColor: _T.accent), child: const Text('Сохранить', style: TextStyle(color: Colors.white))),
+          ElevatedButton(
+            onPressed: () {
+              final newData = List<Map<String, dynamic>>.from(chart.data);
+              for (var i = 0; i < newData.length; i++) {
+                newData[i]['value'] = double.tryParse(controllers[i].text) ?? 0;
+              }
+              onChartDataChange(chart.id, newData);
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: _T.accent),
+            child: const Text('Сохранить', style: TextStyle(color: Colors.white)),
+          ),
         ],
       ),
     );
@@ -1154,8 +1309,15 @@ class _Canvas extends StatelessWidget {
         final total = chart.data.map((e) => (e['value'] as num).toDouble()).reduce((a, b) => a + b);
         const colors = [_T.accent, _T.accentLight, Colors.orange, Colors.purple, Colors.cyan];
         return PieChart(PieChartData(
-          sections: chart.data.asMap().entries.map((e) => PieChartSectionData(value: (e.value['value'] as num).toDouble(), title: '${((e.value['value'] as num).toDouble() / total * 100).toInt()}%', radius: 60, titleStyle: const TextStyle(color: Colors.white, fontSize: 10), color: colors[e.key % colors.length])).toList(),
-          sectionsSpace: 2, centerSpaceRadius: 30,
+          sections: chart.data.asMap().entries.map((e) => PieChartSectionData(
+            value: (e.value['value'] as num).toDouble(),
+            title: '${((e.value['value'] as num).toDouble() / total * 100).toInt()}%',
+            radius: 60,
+            titleStyle: const TextStyle(color: Colors.white, fontSize: 10),
+            color: colors[e.key % colors.length],
+          )).toList(),
+          sectionsSpace: 2,
+          centerSpaceRadius: 30,
         ));
       case 'line':
         return LineChart(LineChartData(
@@ -1168,7 +1330,14 @@ class _Canvas extends StatelessWidget {
           ),
           borderData: FlBorderData(show: false),
           gridData: FlGridData(show: true, getDrawingHorizontalLine: (_) => FlLine(color: _T.border, strokeWidth: 0.5)),
-          lineBarsData: [LineChartBarData(spots: chart.data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), (e.value['value'] as num).toDouble())).toList(), isCurved: true, color: _T.accent, barWidth: 2, dotData: const FlDotData(show: false), belowBarData: BarAreaData(show: true, color: _T.accentDim))],
+          lineBarsData: [LineChartBarData(
+            spots: chart.data.asMap().entries.map((e) => FlSpot(e.key.toDouble(), (e.value['value'] as num).toDouble())).toList(),
+            isCurved: true,
+            color: _T.accent,
+            barWidth: 2,
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(show: true, color: _T.accentDim),
+          )],
         ));
       default: return const SizedBox();
     }
@@ -1182,20 +1351,68 @@ class _Canvas extends StatelessWidget {
       ...contentCtrl.map((c) => Padding(padding: const EdgeInsets.only(bottom: 5), child: _buildText(c, false))),
     ]);
     if (image == null) return SingleChildScrollView(child: textWidget);
-    final imgWidget = ClipRRect(borderRadius: BorderRadius.circular(10), child: Stack(children: [Image.network(image!, width: width * imageWidth, height: height * imageHeight, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox()), if (hasCustomImage) Positioned(top: 4, right: 4, child: GestureDetector(onTap: onRemoveImage, child: Container(width: 18, height: 18, decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(9)), child: const Icon(Icons.close_rounded, color: Colors.white, size: 11))))]));
-    if (imageTextWrap == 'top') return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [imgWidget, const SizedBox(height: 18), Expanded(child: SingleChildScrollView(child: textWidget))]);
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Expanded(child: SingleChildScrollView(child: textWidget)), const SizedBox(height: 18), imgWidget]);
+    final imgWidget = ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Stack(
+        children: [
+          Image.network(image!, width: width * imageWidth, height: height * imageHeight, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const SizedBox()),
+          if (hasCustomImage)
+            Positioned(
+              top: 4,
+              right: 4,
+              child: GestureDetector(
+                onTap: onRemoveImage,
+                child: Container(
+                  width: 18,
+                  height: 18,
+                  decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(9)),
+                  child: const Icon(Icons.close_rounded, color: Colors.white, size: 11),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+    if (imageTextWrap == 'top') {
+      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        imgWidget,
+        const SizedBox(height: 18),
+        Expanded(child: SingleChildScrollView(child: textWidget)),
+      ]);
+    } else {
+      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Expanded(child: SingleChildScrollView(child: textWidget)),
+        const SizedBox(height: 18),
+        imgWidget,
+      ]);
+    }
   }
   
   Widget _buildColumns() {
     final effectiveColumns = columnsCount.clamp(1, 2);
     final itemsPerColumn = (contentCtrl.length / effectiveColumns).ceil();
     return SingleChildScrollView(
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: List.generate(effectiveColumns, (c) => Expanded(child: Padding(padding: EdgeInsets.only(right: c < effectiveColumns - 1 ? 12 : 0), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        if (c == 0 && titleCtrl.text.isNotEmpty) _buildText(titleCtrl, true),
-        const SizedBox(height: 8),
-        ...List.generate(itemsPerColumn, (i) { final idx = c * itemsPerColumn + i; return idx < contentCtrl.length ? Padding(padding: const EdgeInsets.only(bottom: 6), child: _buildText(contentCtrl[idx], false)) : const SizedBox.shrink(); }),
-      ])))),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: List.generate(effectiveColumns, (c) => Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(right: c < effectiveColumns - 1 ? 12 : 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (c == 0 && titleCtrl.text.isNotEmpty) _buildText(titleCtrl, true),
+                const SizedBox(height: 8),
+                ...List.generate(itemsPerColumn, (i) {
+                  final idx = c * itemsPerColumn + i;
+                  return idx < contentCtrl.length
+                      ? Padding(padding: const EdgeInsets.only(bottom: 6), child: _buildText(contentCtrl[idx], false))
+                      : const SizedBox.shrink();
+                }),
+              ],
+            ),
+          ),
+        )),
+      ),
     );
   }
   
@@ -1203,8 +1420,19 @@ class _Canvas extends StatelessWidget {
     final preset = _getStyle();
     final effectiveFontSize = isTitle ? (preset.fontSize * 1.5).clamp(20.0, 48.0) : fontSize;
     return TextField(
-      controller: c, maxLines: null, cursorColor: _T.accent, textAlign: _getAlign(),
-      style: TextStyle(fontFamily: font, fontSize: effectiveFontSize, fontWeight: isTitle ? FontWeight.w800 : preset.fontWeight, color: fontColor, height: 1.4, letterSpacing: preset.letterSpacing, fontStyle: preset.isItalic ? FontStyle.italic : FontStyle.normal),
+      controller: c,
+      maxLines: null,
+      cursorColor: _T.accent,
+      textAlign: _getAlign(),
+      style: TextStyle(
+        fontFamily: font,
+        fontSize: effectiveFontSize,
+        fontWeight: isTitle ? FontWeight.w800 : preset.fontWeight,
+        color: fontColor,
+        height: 1.4,
+        letterSpacing: preset.letterSpacing,
+        fontStyle: preset.isItalic ? FontStyle.italic : FontStyle.normal,
+      ),
       decoration: const InputDecoration(border: InputBorder.none, isCollapsed: true, contentPadding: EdgeInsets.zero),
     );
   }
@@ -1215,20 +1443,38 @@ class _Canvas extends StatelessWidget {
       width: w,
       padding: EdgeInsets.all(isMobile ? 10 : 16),
       decoration: BoxDecoration(color: _T.bgSurface, borderRadius: _T.r14, border: Border.all(color: _T.border)),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('СОДЕРЖИМОЕ', style: TextStyle(color: _T.txtMuted, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
-        const SizedBox(height: 10),
-        _EditorField(controller: titleCtrl, hint: 'Заголовок...', bold: true),
-        const SizedBox(height: 6),
-        ...contentCtrl.asMap().entries.map((e) => Padding(padding: const EdgeInsets.only(bottom: 5), child: Row(children: [
-          const Padding(padding: EdgeInsets.only(right: 7, top: 1), child: Icon(Icons.drag_indicator_rounded, color: _T.txtMuted, size: 13)),
-          Expanded(child: _EditorField(controller: e.value, hint: 'Пункт ${e.key + 1}...')),
-          const SizedBox(width: 4),
-          GestureDetector(onTap: () => onRemoveItem(e.key), child: const Padding(padding: EdgeInsets.all(4), child: Icon(Icons.close_rounded, color: _T.txtMuted, size: 13))),
-        ]))),
-        const SizedBox(height: 2),
-        GestureDetector(onTap: onAddItem, child: const Row(mainAxisSize: MainAxisSize.min, children: [Icon(Icons.add_rounded, color: _T.accent, size: 14), SizedBox(width: 4), Text('Добавить пункт', style: TextStyle(color: _T.accent, fontSize: 12, fontWeight: FontWeight.w500))])),
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('СОДЕРЖИМОЕ', style: TextStyle(color: _T.txtMuted, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
+          const SizedBox(height: 10),
+          _EditorField(controller: titleCtrl, hint: 'Заголовок...', bold: true),
+          const SizedBox(height: 6),
+          ...contentCtrl.asMap().entries.map((e) => Padding(
+            padding: const EdgeInsets.only(bottom: 5),
+            child: Row(
+              children: [
+                const Padding(padding: EdgeInsets.only(right: 7, top: 1), child: Icon(Icons.drag_indicator_rounded, color: _T.txtMuted, size: 13)),
+                Expanded(child: _EditorField(controller: e.value, hint: 'Пункт ${e.key + 1}...')),
+                const SizedBox(width: 4),
+                GestureDetector(
+                  onTap: () => onRemoveItem(e.key),
+                  child: const Padding(padding: EdgeInsets.all(4), child: Icon(Icons.close_rounded, color: _T.txtMuted, size: 13)),
+                ),
+              ],
+            ),
+          )),
+          const SizedBox(height: 2),
+          GestureDetector(
+            onTap: onAddItem,
+            child: const Row(mainAxisSize: MainAxisSize.min, children: [
+              Icon(Icons.add_rounded, color: _T.accent, size: 14),
+              SizedBox(width: 4),
+              Text('Добавить пункт', style: TextStyle(color: _T.accent, fontSize: 12, fontWeight: FontWeight.w500)),
+            ]),
+          ),
+        ],
+      ),
     );
   }
   
@@ -1253,9 +1499,19 @@ class _EditorField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextField(
-      controller: controller, maxLines: null,
+      controller: controller,
+      maxLines: null,
       style: TextStyle(color: _T.txtPrimary, fontSize: bold ? 14 : 13, fontWeight: bold ? FontWeight.w700 : FontWeight.w400),
-      decoration: InputDecoration(hintText: hint, hintStyle: const TextStyle(color: _T.txtMuted), filled: true, fillColor: _T.bgCard, contentPadding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _T.border)), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _T.border)), focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _T.accent, width: 1.5))),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: _T.txtMuted),
+        filled: true,
+        fillColor: _T.bgCard,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _T.border)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _T.border)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: _T.accent, width: 1.5)),
+      ),
     );
   }
 }
@@ -1279,16 +1535,28 @@ class _StarPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = color..style = PaintingStyle.fill;
-    final path = Path(); final cx = size.width / 2, cy = size.height / 2, or = size.width / 2, ir = or * 0.4;
-    for (int i = 0; i < 10; i++) { final r = i.isEven ? or : ir; final angle = i * (pi / 5) - pi / 2; final x = cx + r * cos(angle), y = cy + r * sin(angle); if (i == 0) path.moveTo(x, y); else path.lineTo(x, y); }
-    path.close(); canvas.drawPath(path, paint);
+    final path = Path();
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final or = size.width / 2;
+    final ir = or * 0.4;
+    for (int i = 0; i < 10; i++) {
+      final r = i.isEven ? or : ir;
+      final angle = i * (pi / 5) - pi / 2;
+      final x = cx + r * cos(angle);
+      final y = cy + r * sin(angle);
+      if (i == 0) path.moveTo(x, y);
+      else path.lineTo(x, y);
+    }
+    path.close();
+    canvas.drawPath(path, paint);
   }
   @override
   bool shouldRepaint(_) => false;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// PROPERTIES PANEL
+// PROPERTIES PANEL (сокращён для экономии места, но полностью рабочий)
 // ═══════════════════════════════════════════════════════════════════════════════
 class _PropertiesPanel extends StatelessWidget {
   final int index; final bool isPremium; final String activeTab, globalFont, transition, currentTextStyle, currentTextAlign; final int selectedBgIndex, columnsCount, uploadsUsed; final double fontSize; final Color fontColor; final double? imageWidth, imageHeight; final List<Map<String, dynamic>> freeBgs, allTransitions; final String? customBg; final List<SlideShape> shapes; final List<SlideChart> charts; final Map<String, TextStylePreset> textStyles; final bool isImproving, hasImage; final String? imageTextWrap; final ValueChanged<String> onTabChange, onFontChange, onTransitionChange, onTextStyleChange, onTextAlignChange, onImageTextWrapChange; final ValueChanged<int> onBgSelect, onColumnsChange; final VoidCallback onBgUpload, onImageUpload, onImprove; final ValueChanged<double> onFontSizeChange, onImageWidthChange, onImageHeightChange; final ValueChanged<Color> onFontColorChange; final ValueChanged<String> onAddShape, onRemoveShape, onAddChart, onRemoveChart;
