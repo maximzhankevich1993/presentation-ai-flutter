@@ -200,7 +200,7 @@ class _QuizScreenState extends State<QuizScreen> {
     finally { if (mounted) setState(() => _isLoading = false); }
   }
 
-  // ИСПРАВЛЕННЫЙ МЕТОД — передаём только topic и questionCount
+  // ✅ ИСПРАВЛЕННЫЙ МЕТОД — никаких textbook/grade, только topic и questionCount
   Future<void> _generateQuizFromTopic() async {
     final topic = _topicController.text.trim();
     final questionCount = int.tryParse(_questionCountController.text.trim()) ?? 5;
@@ -213,7 +213,7 @@ class _QuizScreenState extends State<QuizScreen> {
     
     setState(() => _isLoading = true);
     try {
-      // Убраны textbook и grade, так как API их пока не поддерживает
+      // ТОЛЬКО topic и questionCount
       final quiz = await ApiService.generateQuiz(
         topic: topic,
         questionCount: questionCount,
