@@ -4,9 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'dart:io' show File;
+import 'package:universal_html/html.dart' as html;
 import '../services/quiz_service.dart';
 import '../providers/user_provider.dart';
 import '../models/presentation.dart';
@@ -16,14 +14,12 @@ import 'teacher_screen.dart';
 
 class QuizScreen extends StatefulWidget {
   const QuizScreen({super.key});
-
   @override
   State<QuizScreen> createState() => _QuizScreenState();
 }
 
 class _QuizScreenState extends State<QuizScreen> {
   int _currentTab = 0;
-  
   List<Presentation> _userPresentations = [];
   Presentation? _selectedPresentation;
   bool _loadingPresentations = false;
@@ -42,10 +38,8 @@ class _QuizScreenState extends State<QuizScreen> {
   Quiz? _currentQuiz;
   Map<int, int?> _userAnswers = {};
   int _score = 0;
-  
   int _currentQuestionIndex = 0;
   bool _quizFinished = false;
-  
   String _countryCode = 'RU';
 
   @override
@@ -87,40 +81,20 @@ class _QuizScreenState extends State<QuizScreen> {
     setState(() => _loadingPresentations = false);
   }
 
-  void _uploadFile() async {
-    if (kIsWeb) {
-      // ignore: avoid_dynamic_calls
-      final input = html.FileUploadInputElement()..accept = '.pptx,.pdf,.docx,.txt';
-      input.click();
-      input.onChange.listen((event) {
-        final file = input.files!.first;
-        final reader = html.FileReader();
-        reader.readAsText(file);
-        reader.onLoad.listen((_) {
-          setState(() {
-            _uploadedFileName = file.name;
-            _uploadedFileContent = reader.result as String;
-          });
+  void _uploadFile() {
+    final input = html.FileUploadInputElement()..accept = '.pptx,.pdf,.docx,.txt';
+    input.click();
+    input.onChange.listen((event) {
+      final file = input.files!.first;
+      final reader = html.FileReader();
+      reader.readAsText(file);
+      reader.onLoad.listen((_) {
+        setState(() {
+          _uploadedFileName = file.name;
+          _uploadedFileContent = reader.result as String;
         });
       });
-    } else {
-      try {
-        final result = await FilePicker.platform.pickFiles(
-          type: FileType.custom,
-          allowedExtensions: ['pptx', 'pdf', 'docx', 'txt'],
-        );
-        if (result != null && result.files.single.path != null) {
-          final file = File(result.files.single.path!);
-          final content = await file.readAsString();
-          setState(() {
-            _uploadedFileName = result.files.single.name;
-            _uploadedFileContent = content;
-          });
-        }
-      } catch (e) {
-        _showError('Ошибка при выборе файла: $e');
-      }
-    }
+    });
   }
 
   void _showLimitDialog() {
@@ -142,15 +116,9 @@ class _QuizScreenState extends State<QuizScreen> {
           style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14, height: 1.4),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A))),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A)))),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen()));
-            },
+            onPressed: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())); },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
             child: const Text('Выбрать тариф'),
           ),
@@ -169,14 +137,8 @@ class _QuizScreenState extends State<QuizScreen> {
         content: const Text('Экспорт в PDF доступен только по подписке Premium.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A)))),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen()));
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
-            child: const Text('Выбрать тариф'),
-          ),
+          ElevatedButton(onPressed: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())); },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)), child: const Text('Выбрать тариф')),
         ],
       ),
     );
@@ -280,61 +242,32 @@ class _QuizScreenState extends State<QuizScreen> {
     });
   }
   
-  void _exportToWord() async {
+  void _exportToWord() {
     if (_currentQuiz == null) return;
     final content = QuizService.exportToWord(_currentQuiz!, includeAnswers: true);
-    if (kIsWeb) {
-      final htmlContent = '''<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_currentQuiz!.title}</title>
-      <style>body{font-family:Arial;margin:40px;} h1{color:#1DB954;} .question{margin-bottom:30px;}</style>
-      </head><body><pre style="white-space:pre-wrap;">$content</pre></body></html>''';
-      // ignore: avoid_dynamic_calls
-      final blob = html.Blob([htmlContent], 'application/msword');
-      // ignore: avoid_dynamic_calls
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      // ignore: avoid_dynamic_calls
-      html.AnchorElement(href: url)..setAttribute('download', '${_currentQuiz!.title}.doc')..click();
-      // ignore: avoid_dynamic_calls
-      html.Url.revokeObjectUrl(url);
-      _showSnackBar('Тест сохранён в Word', true);
-    } else {
-      try {
-        final directory = await getApplicationDocumentsDirectory();
-        final file = File('${directory.path}/${_currentQuiz!.title}.doc');
-        await file.writeAsString(content);
-        _showSnackBar('Файл сохранён: ${file.path}', true);
-      } catch (e) { _showError('Ошибка сохранения: $e'); }
-    }
+    final htmlContent = '''<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_currentQuiz!.title}</title>
+    <style>body{font-family:Arial;margin:40px;} h1{color:#1DB954;} .question{margin-bottom:30px;}</style>
+    </head><body><pre style="white-space:pre-wrap;">$content</pre></body></html>''';
+    final blob = html.Blob([htmlContent], 'application/msword');
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    html.AnchorElement(href: url)..setAttribute('download', '${_currentQuiz!.title}.doc')..click();
+    html.Url.revokeObjectUrl(url);
+    _showSnackBar('Тест сохранён в Word', true);
   }
   
-  void _exportToPdf() async {
+  void _exportToPdf() {
     if (_currentQuiz == null) return;
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     if (!userProvider.isPremium) { _showPremiumDialog(); return; }
     final content = QuizService.exportToWord(_currentQuiz!, includeAnswers: true);
-    if (kIsWeb) {
-      final fullHtml = '''<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_currentQuiz!.title}</title>
-      <style>body{font-family:Arial;margin:40px;} h1{color:#1DB954;}</style>
-      </head><body><pre style="white-space:pre-wrap;">$content</pre>
-      <script>window.onload=function(){window.print();};</script></body></html>''';
-      // ignore: avoid_dynamic_calls
-      final blob = html.Blob([fullHtml], 'text/html');
-      // ignore: avoid_dynamic_calls
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      // ignore: avoid_dynamic_calls
-      html.window.open(url, '_blank');
-      // ignore: avoid_dynamic_calls
-      html.Url.revokeObjectUrl(url);
-    } else {
-      try {
-        final directory = await getApplicationDocumentsDirectory();
-        final file = File('${directory.path}/${_currentQuiz!.title}.html');
-        final fullHtml = '''<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_currentQuiz!.title}</title>
-        <style>body{font-family:Arial;margin:40px;} h1{color:#1DB954;}</style>
-        </head><body><pre style="white-space:pre-wrap;">$content</pre></body></html>''';
-        await file.writeAsString(fullHtml);
-        _showSnackBar('HTML сохранён: ${file.path}', true);
-      } catch (e) { _showError('Ошибка сохранения: $e'); }
-    }
+    final fullHtml = '''<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${_currentQuiz!.title}</title>
+    <style>body{font-family:Arial;margin:40px;} h1{color:#1DB954;}</style>
+    </head><body><pre style="white-space:pre-wrap;">$content</pre>
+    <script>window.onload=function(){window.print();};</script></body></html>''';
+    final blob = html.Blob([fullHtml], 'text/html');
+    final url = html.Url.createObjectUrlFromBlob(blob);
+    html.window.open(url, '_blank');
+    html.Url.revokeObjectUrl(url);
   }
 
   @override
@@ -445,7 +378,7 @@ class _QuizScreenState extends State<QuizScreen> {
             items: _userPresentations.map((p) => DropdownMenuItem(value: p, child: Text(p.title, style: const TextStyle(color: Colors.white)))).toList(),
             onChanged: (value) => setState(() => _selectedPresentation = value), hint: const Text('Выберите презентацию', style: TextStyle(color: Color(0xFF9A9A9A)))),
           const SizedBox(height: 20),
-          if (!isPremium && remaining <= 3) Container(/* same limit indicator */ padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: remaining <= 0 ? const Color(0xFFFF3B30).withOpacity(0.1) : const Color(0xFF1DB954).withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: remaining <= 0 ? const Color(0xFFFF3B30).withOpacity(0.3) : const Color(0xFF1DB954).withOpacity(0.3))), child: Row(children: [Icon(remaining <= 0 ? Icons.warning_amber_rounded : Icons.info_outline_rounded, color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), size: 18), const SizedBox(width: 10), Expanded(child: Text(remaining <= 0 ? 'Бесплатные генерации закончились.' : 'Осталось $remaining из 5 бесплатных генераций', style: TextStyle(color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), fontSize: 13))), if (remaining <= 0) GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())), child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(20)), child: const Text('Купить', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700))))])),
+          if (!isPremium && remaining <= 3) Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: remaining <= 0 ? const Color(0xFFFF3B30).withOpacity(0.1) : const Color(0xFF1DB954).withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: remaining <= 0 ? const Color(0xFFFF3B30).withOpacity(0.3) : const Color(0xFF1DB954).withOpacity(0.3))), child: Row(children: [Icon(remaining <= 0 ? Icons.warning_amber_rounded : Icons.info_outline_rounded, color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), size: 18), const SizedBox(width: 10), Expanded(child: Text(remaining <= 0 ? 'Бесплатные генерации закончились.' : 'Осталось $remaining из 5 бесплатных генераций', style: TextStyle(color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), fontSize: 13))), if (remaining <= 0) GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())), child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(20)), child: const Text('Купить', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700))))])),
           const SizedBox(height: 16),
           SizedBox(width: double.infinity, child: ElevatedButton(onPressed: canGenerate ? _generateQuizFromSelectedPresentation : null, style: ElevatedButton.styleFrom(backgroundColor: canGenerate ? const Color(0xFF1DB954) : const Color(0xFF4A4A4A), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: Text(canGenerate ? 'Сгенерировать тест из презентации' : 'Лимит исчерпан', style: const TextStyle(color: Colors.white)))),
         ])),
@@ -502,56 +435,4 @@ class _QuizScreenState extends State<QuizScreen> {
           child: Container(decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFF2A2A2A))),
             child: ListTile(
               onTap: () => _answerQuestion(index),
-              leading: Container(width: 24, height: 24, decoration: BoxDecoration(color: const Color(0xFF2A2A2A), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.circle_outlined, color: Color(0xFF9A9A9A), size: 14)),
-              title: Text(question.options[index], style: const TextStyle(color: Colors.white)),
-            )),
-        )),
-      ]),
-    );
-  }
-  
-  Widget _buildResultScreen() {
-    final percentage = (_score / _currentQuiz!.questions.length) * 100;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(children: [
-        Container(width: 100, height: 100, decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(50)), child: Center(child: Text('${percentage.toInt()}%', style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w800)))),
-        const SizedBox(height: 24),
-        Text(percentage >= 80 ? 'Отлично! 🎉' : (percentage >= 60 ? 'Хорошо! 👍' : 'Попробуй ещё! 💪'), style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 32),
-        Container(padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFF2A2A2A))), child: Column(children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Правильных ответов:', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14)), Text('$_score / ${_currentQuiz!.questions.length}', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 20, fontWeight: FontWeight.w700))]),
-          const SizedBox(height: 12),
-          LinearProgressIndicator(value: _score / _currentQuiz!.questions.length, backgroundColor: const Color(0xFF2A2A2A), color: const Color(0xFF1DB954)),
-        ])),
-        const SizedBox(height: 24),
-        if (_showAnswers) ...[
-          const Text('ПРАВИЛЬНЫЕ ОТВЕТЫ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)), const SizedBox(height: 12),
-          ..._currentQuiz!.questions.asMap().entries.map((entry) {
-            final i = entry.key; final q = entry.value; final correctLetter = String.fromCharCode(65 + q.correctIndex);
-            return Container(margin: const EdgeInsets.only(bottom: 12), padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF2A2A2A))),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text('${i + 1}. ${q.question}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)), const SizedBox(height: 8),
-                Text('✓ $correctLetter. ${q.options[q.correctIndex]}', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13)), const SizedBox(height: 8),
-                Text('📝 ${q.explanation}', style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 12)),
-              ]));
-          }),
-        ],
-        const SizedBox(height: 16),
-        Row(children: [
-          Expanded(child: OutlinedButton(onPressed: () => setState(() => _showAnswers = !_showAnswers), style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF2A2A2A)), padding: const EdgeInsets.symmetric(vertical: 14)), child: Text(_showAnswers ? 'Скрыть ответы' : 'Показать ответы', style: const TextStyle(color: Color(0xFF1DB954))))),
-          const SizedBox(width: 12),
-          Expanded(child: OutlinedButton(onPressed: _exportToWord, style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF2A2A2A)), padding: const EdgeInsets.symmetric(vertical: 14)), child: const Text('📄 Word', style: TextStyle(color: Colors.white)))),
-        ]),
-        const SizedBox(height: 12),
-        Row(children: [
-          Expanded(child: OutlinedButton(onPressed: _exportToPdf, style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF2A2A2A)), padding: const EdgeInsets.symmetric(vertical: 14)), child: const Text('📑 PDF', style: TextStyle(color: Colors.white)))),
-          const SizedBox(width: 12),
-          Expanded(child: OutlinedButton(onPressed: () { setState(() { _showQuiz = false; _quizFinished = false; _currentQuestionIndex = 0; _score = 0; _userAnswers.clear(); _currentQuiz = null; }); }, style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF2A2A2A)), padding: const EdgeInsets.symmetric(vertical: 14)), child: const Text('Новый тест', style: TextStyle(color: Colors.white)))),
-        ]),
-        const SizedBox(height: 12),
-        SizedBox(width: double.infinity, child: ElevatedButton(onPressed: () => Navigator.pop(context), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('На главную', style: TextStyle(color: Colors.white)))),
-      ]),
-    );
-  }
-}
+              leading: Container(width: 24, height: 24, decoration: BoxDecoration
