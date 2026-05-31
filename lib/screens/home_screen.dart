@@ -24,6 +24,11 @@ import 'quiz_screen.dart';
 import 'template_selector_screen.dart';
 
 // ═══════════════════════════════════════════════════════════════
+// CRYPTO PAYMENT URL
+// ═══════════════════════════════════════════════════════════════
+const String CRYPTO_PAYMENT_URL = 'https://pay.cryptocloud.plus/pos/L1dhlsPbHiuNO7Fv';
+
+// ═══════════════════════════════════════════════════════════════
 // THEME
 // ═══════════════════════════════════════════════════════════════
 class _T {
@@ -126,6 +131,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     await prefs.setInt(_genCountKey, current + 1);
   }
 
+  // Обновлённая проверка лимита
   Future<bool> _canGenerate() async {
     final up = Provider.of<UserProvider>(context, listen: false);
     
@@ -141,6 +147,127 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     // Гость — локальный счётчик
     final count = await _getGuestGenerationCount();
     return count < 5;
+  }
+
+  // Открыть CryptoCloud для оплаты
+  void _openCryptoPayment(double amount) {
+    final url = amount > 0 ? '$CRYPTO_PAYMENT_URL?amount=$amount' : CRYPTO_PAYMENT_URL;
+    html.window.open(url, '_blank');
+    
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: const Text('💸 After payment, return to the app. Subscription activates in 1-2 min.\nPromo code CRYPTO10 → second month free!'),
+      backgroundColor: _T.accent.withOpacity(0.9),
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      duration: const Duration(seconds: 5),
+    ));
+  }
+
+  // Оффер после 3-й генерации
+  void _showUpgradeOffer() async {
+    final up = Provider.of<UserProvider>(context, listen: false);
+    if (up.isPremium || up.isVip) return;
+    
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        backgroundColor: _T.bgSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.bolt, color: _T.accent, size: 24),
+            SizedBox(width: 8),
+            Text('Upgrade to Unlimited', style: TextStyle(color: _T.txtPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text('You have used 3 of 5 free generations.', style: TextStyle(color: _T.txtSecondary, fontSize: 14)),
+            SizedBox(height: 12),
+            Text('✓ Unlimited presentations', style: TextStyle(color: _T.accent, fontSize: 13)),
+            Text('✓ 50 slides per presentation', style: TextStyle(color: _T.accent, fontSize: 13)),
+            Text('✓ Brand kit & logo upload', style: TextStyle(color: _T.accent, fontSize: 13)),
+            Text('✓ PDF export without watermark', style: TextStyle(color: _T.accent, fontSize: 13)),
+            SizedBox(height: 16),
+            Text('Only \$4.99/month — pay with USDT', style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w600)),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Continue free', style: TextStyle(color: _T.txtSecondary)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context, true);
+              _openCryptoPayment(4.99);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _T.accent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Upgrade now — \$4.99', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Обновлённый диалог лимита (после 5 генераций)
+  void _showLimitDialog() {
+    final up = Provider.of<UserProvider>(context, listen: false);
+    final isLoggedIn = up.isLoggedIn;
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => AlertDialog(
+        backgroundColor: _T.bgSurface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: _T.gold, size: 24),
+            SizedBox(width: 8),
+            Text('Limit reached', style: TextStyle(color: _T.txtPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
+          ],
+        ),
+        content: Text(
+          isLoggedIn
+              ? 'You have used all free generations for this month.\n\nSubscribe to continue creating unlimited presentations, lessons, tests and reports.'
+              : 'You have 5 free generations without registration. To get more, log in or subscribe.',
+          style: const TextStyle(color: _T.txtSecondary, fontSize: 14, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Later', style: TextStyle(color: _T.txtSecondary)),
+          ),
+          if (!isLoggedIn)
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _push(const LoginScreen());
+              },
+              child: const Text('Log in', style: TextStyle(color: _T.accent)),
+            ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _openCryptoPayment(4.99);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _T.accent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            child: const Text('Pay with USDT', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _loadUserData() async {
@@ -164,9 +291,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     setState(() {
       _remainingGenerations = userProvider.isLoggedIn 
           ? userProvider.freeGenerationsLeft 
-          : 5 - (_remainingGenerations > 5 ? 5 : 5 - _remainingGenerations);
+          : (5 - (_remainingGenerations > 5 ? 5 : 5 - _remainingGenerations));
     });
-    _loadUserData(); // Полностью обновляем
+    _loadUserData();
   }
 
   Future<void> _detectCountry() async {
@@ -248,45 +375,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   void _push(Widget screen) =>
       Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
 
-  void _showLimitDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        backgroundColor: _T.bgSurface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.warning_amber_rounded, color: _T.gold, size: 24),
-            SizedBox(width: 8),
-            Text('Лимит генераций исчерпан', style: TextStyle(color: _T.txtPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
-          ],
-        ),
-        content: const Text(
-          'У вас закончились бесплатные генерации на этот месяц.\n\nОформите подписку, чтобы продолжить создавать презентации, уроки, тесты и отчёты без ограничений.',
-          style: TextStyle(color: _T.txtSecondary, fontSize: 14, height: 1.4),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Позже', style: TextStyle(color: _T.txtSecondary)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _push(const PremiumScreen());
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _T.accent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-            child: const Text('Выбрать тариф', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
+  // Обновлённый метод генерации с оффером после 3-й генерации
   Future<void> _generate({String? overrideTopic}) async {
     final topic = (overrideTopic ?? _topicController.text).trim();
     if (topic.isEmpty) {
@@ -300,7 +389,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       return;
     }
 
-    // Проверка лимита (новая логика)
+    // Проверка лимита
     final canGenerate = await _canGenerate();
     if (!canGenerate) {
       _showLimitDialog();
@@ -309,9 +398,24 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     
-    // Увеличиваем локальный счётчик для гостей
+    // Увеличиваем счётчик и проверяем оффер для гостей
     if (!userProvider.isLoggedIn && !userProvider.isPremium && !userProvider.isVip) {
+      final oldCount = await _getGuestGenerationCount();
       await _incrementGuestGenerationCount();
+      final newCount = oldCount + 1;
+      // Показываем оффер после 3-й генерации (ещё не последняя)
+      if (oldCount == 2 && newCount == 3) {
+        _showUpgradeOffer();
+      }
+    }
+    
+    // Для залогиненных — проверка через провайдер (нужно будет добавить в UserProvider)
+    if (userProvider.isLoggedIn && !userProvider.isPremium && !userProvider.isVip) {
+      final left = userProvider.freeGenerationsLeft;
+      // Если осталось 2 генерации (то есть использовано 3 из 5)
+      if (left == 2) {
+        _showUpgradeOffer();
+      }
     }
 
     try {
@@ -684,14 +788,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     if (left <= 0 && !isPremium && !isVip) ...[
                       const SizedBox(height: 8),
                       GestureDetector(
-                        onTap: () => _push(const PremiumScreen()),
+                        onTap: () => _openCryptoPayment(4.99),
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Text('Купить тариф', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                          child: const Text('Купить тариф — USDT', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
                         ),
                       ),
                     ],
@@ -714,13 +818,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 Row(children: [
                   Expanded(child: _TariffCard(title: 'Бесплатно', usd: 0, formatPrice: _formatPrice, period: '', features: ['5 генераций/мес', '10 слайдов', '8 фонов', 'Базовый экспорт'], popular: false, onTap: () {})),
                   const SizedBox(width: 12),
-                  Expanded(child: _TariffCard(title: 'Месяц', usd: 4.99, formatPrice: _formatPrice, period: '/мес', features: ['∞ генераций', '50 слайдов', '16 фонов', 'PDF без знака', 'AI-улучшение'], popular: true, onTap: () => _push(const PremiumScreen()))),
+                  Expanded(child: _TariffCard(title: 'Месяц', usd: 4.99, formatPrice: _formatPrice, period: '/мес', features: ['∞ генераций', '50 слайдов', '16 фонов', 'PDF без знака', 'AI-улучшение'], popular: true, onTap: () => _openCryptoPayment(4.99))),
                 ]),
                 const SizedBox(height: 12),
                 Row(children: [
-                  Expanded(child: _TariffCard(title: 'Полгода', usd: 29.99, formatPrice: _formatPrice, period: '${_formatPrice(29.99 / 6)}/мес', features: ['Всё из Месяца', 'Экономия 17%', 'Приоритетная поддержка'], popular: false, onTap: () => _push(const PremiumScreen()))),
+                  Expanded(child: _TariffCard(title: 'Полгода', usd: 29.99, formatPrice: _formatPrice, period: '${_formatPrice(29.99 / 6)}/мес', features: ['Всё из Месяца', 'Экономия 17%', 'Приоритетная поддержка'], popular: false, onTap: () => _openCryptoPayment(29.99))),
                   const SizedBox(width: 12),
-                  Expanded(child: _TariffCard(title: 'Год', usd: 49.99, formatPrice: _formatPrice, period: '${_formatPrice(49.99 / 12)}/мес', features: ['Всё из Полугода', 'Экономия 33%', 'Бренд-кит'], popular: false, badge: 'ВЫГОДНО', onTap: () => _push(const PremiumScreen()))),
+                  Expanded(child: _TariffCard(title: 'Год', usd: 49.99, formatPrice: _formatPrice, period: '${_formatPrice(49.99 / 12)}/мес', features: ['Всё из Полугода', 'Экономия 33%', 'Бренд-кит'], popular: false, badge: 'ВЫГОДНО', onTap: () => _openCryptoPayment(49.99))),
                 ]),
                 const SizedBox(height: 28),
 
