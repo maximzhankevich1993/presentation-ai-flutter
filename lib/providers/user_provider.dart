@@ -8,6 +8,9 @@ class UserProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
   String? _avatarUrl;
+  
+  // Флаг для отслеживания, был ли уже показан оффер в этой сессии
+  bool _hasShownUpgradeOffer = false;
 
   User? get user => _user;
   String? get token => _token;
@@ -28,12 +31,34 @@ class UserProvider extends ChangeNotifier {
     if (token != null) {
       _token = token;
     }
+    _hasShownUpgradeOffer = false; // Сброс флага при новом пользователе
     notifyListeners();
   }
 
   void updateUser(User user) {
+    final int oldFreeLeft = _user?.freeGenerationsLeft ?? 5;
     _user = user;
-    notifyListeners();
+    
+    // Проверка: нужно ли показать оффер?
+    // Оффер показываем, если:
+    // 1. Пользователь НЕ Premium и НЕ VIP
+    // 2. Ещё не показывали в этой сессии
+    // 3. Старое значение было 3 (то есть было 3 бесплатных оставалось), а новое = 2 
+    //    ИЛИ старое было 4, а новое = 3 (использовал 2 из 5 -> осталось 3)
+    //    ИЛИ напрямую после генерации осталось 2 генерации (использовал 3 из 5)
+    if (!isPremium && !isVip && !_hasShownUpgradeOffer) {
+      final int newFreeLeft = _user?.freeGenerationsLeft ?? 5;
+      // Если осталось 2 бесплатные генерации (использовано 3 из 5) — показываем оффер
+      if (newFreeLeft == 2 || (oldFreeLeft == 3 && newFreeLeft == 2)) {
+        _hasShownUpgradeOffer = true;
+        // Уведомляем подписчиков о необходимости показать оффер
+        notifyListeners(); 
+      } else {
+        notifyListeners();
+      }
+    } else {
+      notifyListeners();
+    }
   }
 
   void setToken(String token) {
@@ -50,6 +75,7 @@ class UserProvider extends ChangeNotifier {
     _user = null;
     _token = null;
     _avatarUrl = null;
+    _hasShownUpgradeOffer = false;
     notifyListeners();
   }
 
@@ -97,6 +123,17 @@ class UserProvider extends ChangeNotifier {
     } finally {
       clearUser();
     }
+  }
+  
+  // Сброс флага оффера (например, после его показа)
+  void resetUpgradeOfferFlag() {
+    _hasShownUpgradeOffer = false;
+    notifyListeners();
+  }
+  
+  // Проверка, нужно ли показать оффер (для использования в HomeScreen)
+  bool get shouldShowUpgradeOffer {
+    return !isPremium && !isVip && !_hasShownUpgradeOffer && (freeGenerationsLeft == 2);
   }
 
   void _setLoading(bool loading) {
