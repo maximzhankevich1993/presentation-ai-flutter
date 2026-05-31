@@ -4,8 +4,15 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
+import 'dart:html' as html;
 import '../providers/user_provider.dart';
+import '../services/api_service.dart';
 import 'payment_screen.dart';
+
+// ═══════════════════════════════════════════════════════════════
+// CRYPTO PAYMENT URL
+// ═══════════════════════════════════════════════════════════════
+const String CRYPTO_PAYMENT_URL = 'https://pay.cryptocloud.plus/pos/L1dhlsPbHiuNO7Fv';
 
 // ═══════════════════════════════════════════════════════════════
 // DESIGN TOKENS
@@ -46,11 +53,26 @@ class _PremiumScreenState extends State<PremiumScreen> {
   double _rate = 1.0;
   bool _loadingRates = true;
   String? _selectedPlan;
+  
+  // Промокод
+  final TextEditingController _promoController = TextEditingController();
+  String _promoMessage = '';
+  bool _isPromoApplied = false;
+  String _appliedPromoCode = '';
+  double? _discountedPrice;
+  String _discountType = '';
+  double _discountValue = 0;
 
   @override
   void initState() {
     super.initState();
     _detectCurrency();
+  }
+
+  @override
+  void dispose() {
+    _promoController.dispose();
+    super.dispose();
   }
 
   Future<void> _detectCurrency() async {
@@ -102,11 +124,62 @@ class _PremiumScreenState extends State<PremiumScreen> {
     return '${converted.ceil()} $_currencySymbol/мес';
   }
 
-  void _selectPlan(String plan) {
+  void _openCryptoPayment(double amount) {
+    final url = amount > 0 ? '$CRYPTO_PAYMENT_URL?amount=${amount.toStringAsFixed(2)}' : CRYPTO_PAYMENT_URL;
+    html.window.open(url, '_blank');
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('💸 After payment, subscription activates in 1-2 minutes. Promo code CRYPTO10 gives second month free!'),
+        backgroundColor: _T.accent,
+        behavior: SnackBarBehavior.floating,
+        duration: Duration(seconds: 5),
+      ),
+    );
+  }
+
+  Future<void> _applyPromoCode() async {
+    final code = _promoController.text.trim().toUpperCase();
+    if (code.isEmpty) {
+      setState(() => _promoMessage = 'Enter a promo code');
+      return;
+    }
+    
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    if (!userProvider.isLoggedIn) {
+      setState(() => _promoMessage = 'Please log in to use promo codes');
+      return;
+    }
+    
+    setState(() {
+      _promoMessage = 'Checking...';
+      _isPromoApplied = false;
+    });
+    
+    try {
+      final response = await ApiService.validatePromoCode(code);
+      
+      if (response['valid'] == true) {
+        setState(() {
+          _isPromoApplied = true;
+          _appliedPromoCode = code;
+          _discountType = response['discountType'] ?? 'percent';
+          _discountValue = (response['discountValue'] ?? 0).toDouble();
+          _promoMessage = '✓ ${response['description'] ?? 'Promo code applied!'}';
+        });
+      } else {
+        setState(() => _promoMessage = response['message'] ?? 'Invalid promo code');
+      }
+    } catch (e) {
+      setState(() => _promoMessage = 'Network error. Try again.');
+    }
+  }
+
+  Future<void> _selectPlan(String plan) async {
     if (plan == 'trial') {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Пробный период будет доступен после запуска'),
+          content: const Text('Trial period will be available after launch'),
           backgroundColor: _T.accent.withOpacity(0.9),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -117,20 +190,56 @@ class _PremiumScreenState extends State<PremiumScreen> {
       return;
     }
     
-    final price = _usdPrices[plan] ?? 4.99;
-    final planNames = {'month': 'Месяц', 'half': 'Полгода', 'year': 'Год'};
-    final planName = planNames[plan] ?? plan;
-    
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PaymentScreen(
-          planId: planName,
-          price: price,
-          period: plan == 'month' ? '/мес' : (plan == 'half' ? '/6 мес' : '/год'),
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    if (!userProvider.isLoggedIn) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please log in to subscribe'),
+          backgroundColor: _T.gold,
+          behavior: SnackBarBehavior.floating,
         ),
-      ),
-    );
+      );
+      return;
+    }
+    
+    double originalPrice = _usdPrices[plan] ?? 4.99;
+    double finalPrice = originalPrice;
+    
+    // Применяем промокод, если он есть
+    if (_isPromoApplied && _appliedPromoCode.isNotEmpty) {
+      setState(() => _promoMessage = 'Applying promo code...');
+      
+      try {
+        final planMap = {'month': 'monthly', 'half': 'half_year', 'year': 'year'};
+        final response = await ApiService.applyPromoCode(_appliedPromoCode, planMap[plan] ?? 'monthly');
+        
+        if (response['success'] == true) {
+          finalPrice = response['finalPrice'].toDouble();
+          setState(() {
+            _discountedPrice = finalPrice;
+            _promoMessage = '✓ ${response['message']}';
+          });
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(response['message']),
+              backgroundColor: _T.accent,
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else {
+          setState(() => _promoMessage = response['message'] ?? 'Failed to apply promo code');
+          finalPrice = originalPrice;
+        }
+      } catch (e) {
+        setState(() => _promoMessage = 'Error applying promo code');
+        finalPrice = originalPrice;
+      }
+    }
+    
+    // Открываем оплату
+    _openCryptoPayment(finalPrice);
   }
 
   @override
@@ -157,7 +266,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                 gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: const Text('Активен', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11)),
+              child: const Text('Active', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11)),
             ),
         ],
       ),
@@ -178,16 +287,17 @@ class _PremiumScreenState extends State<PremiumScreen> {
               ),
               const SizedBox(height: 20),
 
-              const Text('Разблокируй всё',
+              const Text('Unlock Everything',
                 style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w800, fontSize: 26, letterSpacing: -0.5),
                 textAlign: TextAlign.center),
               const SizedBox(height: 6),
               Text(
-                _loadingRates ? 'Загрузка...' : 'Цены в $_currency',
+                _loadingRates ? 'Loading...' : 'Prices in $_currency',
                 style: const TextStyle(color: _T.txtSecondary, fontSize: 13),
               ),
               const SizedBox(height: 28),
 
+              // Comparison Table
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -203,8 +313,8 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                     ),
                     child: Row(children: [
-                      const Expanded(flex: 3, child: Text('Функция', style: TextStyle(color: _T.txtSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5))),
-                      const Expanded(flex: 2, child: Text('Бесплатно', textAlign: TextAlign.center, style: TextStyle(color: _T.txtMuted, fontSize: 11, fontWeight: FontWeight.w600))),
+                      const Expanded(flex: 3, child: Text('Feature', style: TextStyle(color: _T.txtSecondary, fontSize: 11, fontWeight: FontWeight.w600, letterSpacing: 0.5))),
+                      const Expanded(flex: 2, child: Text('Free', textAlign: TextAlign.center, style: TextStyle(color: _T.txtMuted, fontSize: 11, fontWeight: FontWeight.w600))),
                       Expanded(flex: 2, child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                         const Icon(Icons.star_rounded, color: _T.gold, size: 13),
                         const SizedBox(width: 4),
@@ -212,46 +322,109 @@ class _PremiumScreenState extends State<PremiumScreen> {
                       ])),
                     ]),
                   ),
-                  _ComparisonRow('Презентаций', '5', '∞'),
-                  _ComparisonRow('Слайдов', '10', '50'),
-                  _ComparisonRow('Фоны', '8', '16'),
-                  _ComparisonRow('Шрифты', 'Inter', '3 стиля'),
-                  _ComparisonRow('Анимации', '2', '6'),
-                  _ComparisonRow('PDF', '❌', '✅'),
-                  _ComparisonRow('AI-улучшение', '❌', '✅'),
-                  _ComparisonRow('Свои картинки', '❌', '✅'),
-                  _ComparisonRow('Водяной знак', 'Есть', 'Нет'),
+                  _ComparisonRow('Presentations', '5', '∞'),
+                  _ComparisonRow('Slides', '10', '50'),
+                  _ComparisonRow('Backgrounds', '8', '16'),
+                  _ComparisonRow('Fonts', 'Inter', '3 styles'),
+                  _ComparisonRow('Animations', '2', '6'),
+                  _ComparisonRow('PDF Export', '❌', '✅'),
+                  _ComparisonRow('AI Improve', '❌', '✅'),
+                  _ComparisonRow('Custom Images', '❌', '✅'),
+                  _ComparisonRow('Watermark', 'Yes', 'No'),
                 ]),
               ),
               const SizedBox(height: 24),
 
+              // Promo Code Field
+              Container(
+                decoration: BoxDecoration(
+                  color: _T.bgSurface,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: _T.border),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _promoController,
+                        style: const TextStyle(color: _T.txtPrimary, fontSize: 14),
+                        decoration: const InputDecoration(
+                          hintText: 'Enter promo code',
+                          hintStyle: TextStyle(color: _T.txtMuted, fontSize: 13),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        ),
+                      ),
+                    ),
+                    if (_isPromoApplied)
+                      const Padding(
+                        padding: EdgeInsets.only(right: 16),
+                        child: Icon(Icons.check_circle, color: _T.accent, size: 20),
+                      )
+                    else
+                      TextButton(
+                        onPressed: _applyPromoCode,
+                        style: TextButton.styleFrom(
+                          foregroundColor: _T.accent,
+                        ),
+                        child: const Text('Apply', style: TextStyle(fontWeight: FontWeight.w600)),
+                      ),
+                  ],
+                ),
+              ),
+              if (_promoMessage.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    _promoMessage,
+                    style: TextStyle(
+                      color: _promoMessage.startsWith('✓') ? _T.accent : _T.gold,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 24),
+
+              // Plan Cards
               _PlanCard(
-                name: 'Месяц',
+                name: 'Monthly',
                 price: _formatPrice(_usdPrices['month']!),
-                period: '/мес',
+                period: '/month',
                 popular: false,
                 selected: _selectedPlan == 'month',
-                onTap: () => _selectPlan('month'),
+                discountedPrice: (_isPromoApplied && _discountedPrice != null && _selectedPlan == 'month') ? _formatPrice(_discountedPrice!) : null,
+                onTap: () {
+                  setState(() => _selectedPlan = 'month');
+                  _selectPlan('month');
+                },
               ),
               const SizedBox(height: 10),
               _PlanCard(
-                name: 'Полгода',
+                name: '6 Months',
                 price: _formatPrice(_usdPrices['half']!),
                 period: _periodPrice(_usdPrices['half']!, 6),
                 popular: true,
-                badge: 'ЛУЧШИЙ ВЫБОР',
+                badge: 'BEST VALUE',
                 selected: _selectedPlan == 'half',
-                onTap: () => _selectPlan('half'),
+                discountedPrice: (_isPromoApplied && _discountedPrice != null && _selectedPlan == 'half') ? _formatPrice(_discountedPrice!) : null,
+                onTap: () {
+                  setState(() => _selectedPlan = 'half');
+                  _selectPlan('half');
+                },
               ),
               const SizedBox(height: 10),
               _PlanCard(
-                name: 'Год',
+                name: 'Yearly',
                 price: _formatPrice(_usdPrices['year']!),
                 period: _periodPrice(_usdPrices['year']!, 12),
                 popular: false,
-                badge: 'ЭКОНОМИЯ 33%',
+                badge: 'SAVE 33%',
                 selected: _selectedPlan == 'year',
-                onTap: () => _selectPlan('year'),
+                discountedPrice: (_isPromoApplied && _discountedPrice != null && _selectedPlan == 'year') ? _formatPrice(_discountedPrice!) : null,
+                onTap: () {
+                  setState(() => _selectedPlan = 'year');
+                  _selectPlan('year');
+                },
               ),
 
               const SizedBox(height: 20),
@@ -268,7 +441,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                   child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                     Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 18),
                     SizedBox(width: 8),
-                    Text('3 дня бесплатно', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                    Text('3 days free', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
                   ]),
                 ),
               ),
@@ -276,11 +449,11 @@ class _PremiumScreenState extends State<PremiumScreen> {
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                 const Icon(Icons.lock_rounded, color: _T.txtMuted, size: 11),
                 const SizedBox(width: 4),
-                const Text('Безопасная оплата', style: TextStyle(color: _T.txtMuted, fontSize: 10)),
+                const Text('Secure payment', style: TextStyle(color: _T.txtMuted, fontSize: 10)),
                 const SizedBox(width: 12),
                 const Icon(Icons.autorenew_rounded, color: _T.txtMuted, size: 11),
                 const SizedBox(width: 4),
-                const Text('Отмена в любое время', style: TextStyle(color: _T.txtMuted, fontSize: 10)),
+                const Text('Cancel anytime', style: TextStyle(color: _T.txtMuted, fontSize: 10)),
               ]),
               const SizedBox(height: 20),
             ]),
@@ -318,6 +491,7 @@ class _PlanCard extends StatelessWidget {
   final bool popular;
   final String? badge;
   final bool selected;
+  final String? discountedPrice;
   final VoidCallback onTap;
 
   const _PlanCard({
@@ -327,6 +501,7 @@ class _PlanCard extends StatelessWidget {
     required this.popular,
     this.badge,
     this.selected = false,
+    this.discountedPrice,
     required this.onTap,
   });
 
@@ -364,7 +539,26 @@ class _PlanCard extends StatelessWidget {
               Text(period, style: const TextStyle(color: _T.txtSecondary, fontSize: 11)),
             ]),
           ),
-          Text(price, style: const TextStyle(color: _T.accentLight, fontSize: 22, fontWeight: FontWeight.w900)),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (discountedPrice != null)
+                Text(
+                  discountedPrice!,
+                  style: const TextStyle(color: _T.accentLight, fontSize: 20, fontWeight: FontWeight.w900),
+                ),
+              if (discountedPrice == null)
+                Text(
+                  price,
+                  style: const TextStyle(color: _T.accentLight, fontSize: 22, fontWeight: FontWeight.w900),
+                ),
+              if (discountedPrice != null)
+                Text(
+                  price,
+                  style: const TextStyle(color: _T.txtMuted, fontSize: 12, decoration: TextDecoration.lineThrough),
+                ),
+            ],
+          ),
           const SizedBox(width: 8),
           AnimatedContainer(
             duration: const Duration(milliseconds: 150),
