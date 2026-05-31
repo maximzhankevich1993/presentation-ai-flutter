@@ -118,35 +118,39 @@ class ApiService {
   }
   
   // ============================================
-  // ПРОФИЛЬ
+  // ПРОФИЛЬ (ИСПРАВЛЕНО)
   // ============================================
   
   static Future<User> getProfile() async {
     final response = await http.get(
-      Uri.parse('$baseUrl/auth/profile'),
+      Uri.parse('$baseUrl/profile'),
       headers: _getHeaders(),
     );
     
+    print('📡 GET /profile - status: ${response.statusCode}');
+    
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
+      print('✅ Profile loaded: ${data['email']}, isPremium: ${data['isPremium']}, hasBonusMonth: ${data['hasBonusMonth']}');
       return User.fromJson(data);
     } else if (response.statusCode == 401) {
-      throw Exception('Сессия истекла');
+      throw Exception('Session expired');
     } else {
-      throw Exception('Ошибка загрузки профиля');
+      final data = json.decode(response.body);
+      throw Exception(data['error'] ?? 'Error loading profile');
     }
   }
   
   static Future<void> updateUser(User user) async {
     final response = await http.put(
-      Uri.parse('$baseUrl/auth/profile'),
+      Uri.parse('$baseUrl/profile'),
       headers: _getHeaders(),
       body: json.encode(user.toJson()),
     );
     
     if (response.statusCode != 200) {
       final data = json.decode(response.body);
-      throw Exception(data['error'] ?? 'Ошибка обновления профиля');
+      throw Exception(data['error'] ?? 'Error updating profile');
     }
   }
   
@@ -176,6 +180,57 @@ class ApiService {
       print('Logout error: $e');
     } finally {
       await clearToken();
+    }
+  }
+
+  // ============================================
+  // ПРОМОКОДЫ (НОВЫЕ МЕТОДЫ)
+  // ============================================
+  
+  static Future<Map<String, dynamic>> validatePromoCode(String code) async {
+    print('🎟️ Validating promo code: $code');
+    
+    final response = await http.post(
+      Uri.parse('$baseUrl/promocode/validate'),
+      headers: _getHeaders(),
+      body: json.encode({'code': code}),
+    );
+    
+    print('📡 POST /promocode/validate - status: ${response.statusCode}');
+    
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      print('✅ Promo code valid: ${data['description']}');
+      return data;
+    } else if (response.statusCode == 404) {
+      return {'valid': false, 'message': 'Invalid or expired promo code'};
+    } else {
+      final data = json.decode(response.body);
+      throw Exception(data['message'] ?? 'Error validating promo code');
+    }
+  }
+  
+  static Future<Map<String, dynamic>> applyPromoCode(String code, String plan) async {
+    print('🎟️ Applying promo code: $code for plan: $plan');
+    
+    final response = await http.post(
+      Uri.parse('$baseUrl/promocode/apply'),
+      headers: _getHeaders(),
+      body: json.encode({
+        'code': code,
+        'plan': plan, // 'monthly', 'half_year', 'year'
+      }),
+    );
+    
+    print('📡 POST /promocode/apply - status: ${response.statusCode}');
+    
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      print('✅ Promo code applied: finalPrice = ${data['finalPrice']} USDT');
+      return data;
+    } else {
+      final data = json.decode(response.body);
+      throw Exception(data['message'] ?? 'Error applying promo code');
     }
   }
 
