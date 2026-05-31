@@ -25,16 +25,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Future<void> _openCryptoCloudPayment() async {
     setState(() => _isLoading = true);
     
-    final publicKey = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1dWlkIjoiTVRBek1qUXoiLCJ0eXBlIjoicHJvamVjdCIsInYiOiJkYjAxNDYyNjkxZGJkOWY0YTBmMTdmNTFjZTZkMzJiNTc0ZTJmMzdiZmE5YTcwODQ0MjllYjJmMTUxZTFjYWE1IiwiZXhwIjo4ODE3OTg2ODgzNn0.gVi4uAU_3XCccqBRpy3e1loNxKHNuzEKsIIv_K7fuos';
-    
     final orderId = DateTime.now().millisecondsSinceEpoch.toString();
     
     // Получаем email пользователя
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final userEmail = userProvider.isLoggedIn ? userProvider.userEmail : '';
     
-    // Формируем URL с email для postback-уведомления
-    final paymentUrl = 'https://cryptocloud.plus/process/${publicKey}?amount=${widget.price}&order_id=$orderId&plan=${widget.planId}&email=${Uri.encodeComponent(userEmail)}';
+    // Правильный URL с POS-ссылкой из личного кабинета CryptoCloud
+    final paymentUrl = 'https://pay.cryptocloud.plus/pos/L1dhlsPbHiuNO7Fv?amount=${widget.price}&order_id=$orderId&plan=${widget.planId}&email=${Uri.encodeComponent(userEmail)}';
     
     html.window.open(paymentUrl, '_blank');
     
