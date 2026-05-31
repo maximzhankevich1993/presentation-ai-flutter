@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import 'report_constructor_screen.dart';
 import 'register_payment_screen.dart';
+import 'payment_screen.dart';
 
 class CorporateScreen extends StatefulWidget {
   final String countryCode;
@@ -85,72 +86,14 @@ class _CorporateScreenState extends State<CorporateScreen> {
   }
 
   void _showPaymentDialog(String planId, double price, String period) {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    
-    if (userProvider.isLoggedIn) {
-      _showPaymentSheet(planId, price, period);
-    } else {
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          backgroundColor: const Color(0xFF1C1C1C),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Корпоративный доступ', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
-          content: const Text('Для оформления корпоративного тарифа необходимо создать аккаунт.'),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A)))),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterPaymentScreen(planId: planId, price: price, period: period)));
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
-              child: const Text('Создать аккаунт и оплатить'),
-            ),
-          ],
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PaymentScreen(
+          planId: _getPlanName(planId),
+          price: price,
+          period: period,
         ),
-      );
-    }
-  }
-  
-  void _showPaymentSheet(String planId, double price, String period) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => Container(
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: const Color(0xFF1C1C1C), borderRadius: BorderRadius.circular(20)),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Оплата', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 16),
-            Text('${_getPlanName(planId)} — ${_formatPrice(price)} $period', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 16)),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(child: OutlinedButton(onPressed: () => Navigator.pop(context), style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF2A2A2A))), child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A))))),
-                const SizedBox(width: 12),
-                Expanded(child: ElevatedButton(onPressed: () { Navigator.pop(context); _showPaymentDemo(); }, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)), child: const Text('Оплатить'))),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  
-  void _showPaymentDemo() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1C),
-        title: const Text('Тестовый режим', style: TextStyle(color: Colors.white)),
-        content: const Text('Платёжный модуль в разработке.\n\nДоступ будет активирован после оплаты.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Закрыть', style: TextStyle(color: Color(0xFF1DB954)))),
-        ],
       ),
     );
   }
@@ -191,7 +134,6 @@ class _CorporateScreenState extends State<CorporateScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Заголовок
                       Container(
                         width: double.infinity,
                         padding: EdgeInsets.symmetric(horizontal: 24, vertical: isMobile ? 20 : 32),
@@ -214,7 +156,6 @@ class _CorporateScreenState extends State<CorporateScreen> {
                       const Text('ВЫБЕРИТЕ ПЛАН', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
                       const SizedBox(height: 12),
                       
-                      // Карточки тарифов — на мобилке в столбик, на десктопе в ряд
                       isMobile
                           ? Column(
                               children: [
@@ -261,7 +202,6 @@ class _CorporateScreenState extends State<CorporateScreen> {
                       
                       const SizedBox(height: 32),
                       
-                      // Кнопка "Конструктор отчётов"
                       GestureDetector(
                         onTap: _openReportConstructor,
                         child: Container(
@@ -283,7 +223,6 @@ class _CorporateScreenState extends State<CorporateScreen> {
                       ),
                       const SizedBox(height: 24),
                       
-                      // Кнопка "Связаться"
                       GestureDetector(
                         onTap: _contactSales,
                         child: Container(
