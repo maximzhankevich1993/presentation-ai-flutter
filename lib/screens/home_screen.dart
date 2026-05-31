@@ -131,25 +131,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     await prefs.setInt(_genCountKey, current + 1);
   }
 
-  // Обновлённая проверка лимита
   Future<bool> _canGenerate() async {
     final up = Provider.of<UserProvider>(context, listen: false);
     
-    // Premium или VIP — безлимит
     if (up.isPremium || up.isVip) return true;
     
-    // Залогинен — проверяем бэкенд
     if (up.isLoggedIn) {
       await up.loadUser();
       return up.freeGenerationsLeft > 0;
     }
     
-    // Гость — локальный счётчик
     final count = await _getGuestGenerationCount();
     return count < 5;
   }
 
-  // Открыть CryptoCloud для оплаты
   void _openCryptoPayment(double amount) {
     final url = amount > 0 ? '$CRYPTO_PAYMENT_URL?amount=$amount' : CRYPTO_PAYMENT_URL;
     html.window.open(url, '_blank');
@@ -164,7 +159,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     ));
   }
 
-  // Оффер после 3-й генерации
   void _showUpgradeOffer() async {
     final up = Provider.of<UserProvider>(context, listen: false);
     if (up.isPremium || up.isVip) return;
@@ -217,7 +211,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
 
-  // Обновлённый диалог лимита (после 5 генераций)
   void _showLimitDialog() {
     final up = Provider.of<UserProvider>(context, listen: false);
     final isLoggedIn = up.isLoggedIn;
@@ -375,7 +368,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   void _push(Widget screen) =>
       Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
 
-  // Обновлённый метод генерации с оффером после 3-й генерации
   Future<void> _generate({String? overrideTopic}) async {
     final topic = (overrideTopic ?? _topicController.text).trim();
     if (topic.isEmpty) {
@@ -389,7 +381,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       return;
     }
 
-    // Проверка лимита
     final canGenerate = await _canGenerate();
     if (!canGenerate) {
       _showLimitDialog();
@@ -398,26 +389,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     
-    // Увеличиваем счётчик и проверяем оффер для гостей
+    // Гость — увеличиваем счётчик и проверяем оффер
     if (!userProvider.isLoggedIn && !userProvider.isPremium && !userProvider.isVip) {
       final oldCount = await _getGuestGenerationCount();
       await _incrementGuestGenerationCount();
       final newCount = oldCount + 1;
-      // Показываем оффер после 3-й генерации (ещё не последняя)
       if (oldCount == 2 && newCount == 3) {
         _showUpgradeOffer();
       }
     }
     
-    // Для залогиненных — проверка через провайдер (нужно будет добавить в UserProvider)
-    if (userProvider.isLoggedIn && !userProvider.isPremium && !userProvider.isVip) {
-      final left = userProvider.freeGenerationsLeft;
-      // Если осталось 2 генерации (то есть использовано 3 из 5)
-      if (left == 2) {
-        _showUpgradeOffer();
-      }
-    }
-
+    // Залогиненный — оффер покажет UserProvider и проверка после генерации
     try {
       Provider.of<UserHistoryProvider>(context, listen: false)
           .add(topic, slideCount: _maxSlides);
@@ -428,8 +410,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       MaterialPageRoute(
         builder: (_) => LoadingScreen(topic: topic, slideCount: _maxSlides),
       ),
-    ).then((_) {
-      _loadUserData();
+    ).then((_) async {
+      await _loadUserData();
+      // Проверяем, нужно ли показать оффер для залогиненного пользователя
+      if (userProvider.shouldShowUpgradeOffer) {
+        _showUpgradeOffer();
+        userProvider.resetUpgradeOfferFlag();
+      }
     });
   }
 
