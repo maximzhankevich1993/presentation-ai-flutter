@@ -7,6 +7,7 @@ class User {
   final int monthlyGenerationsLeft;
   final DateTime? premiumExpiry;
   final bool isVip;
+  final bool hasBonusMonth;  // ← НОВОЕ ПОЛЕ
 
   User({
     required this.id,
@@ -17,6 +18,7 @@ class User {
     required this.monthlyGenerationsLeft,
     this.premiumExpiry,
     this.isVip = false,
+    this.hasBonusMonth = false,  // ← НОВОЕ ПОЛЕ
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -31,6 +33,7 @@ class User {
           ? DateTime.tryParse(json['premiumExpiry']) 
           : null,
       isVip: json['isVip'] ?? false,
+      hasBonusMonth: json['hasBonusMonth'] ?? false,  // ← НОВОЕ
     );
   }
 
@@ -44,6 +47,7 @@ class User {
       'monthlyGenerationsLeft': monthlyGenerationsLeft,
       'premiumExpiry': premiumExpiry?.toIso8601String(),
       'isVip': isVip,
+      'hasBonusMonth': hasBonusMonth,  // ← НОВОЕ
     };
   }
   
@@ -56,6 +60,7 @@ class User {
     int? monthlyGenerationsLeft,
     DateTime? premiumExpiry,
     bool? isVip,
+    bool? hasBonusMonth,  // ← НОВОЕ
   }) {
     return User(
       id: id ?? this.id,
@@ -66,6 +71,7 @@ class User {
       monthlyGenerationsLeft: monthlyGenerationsLeft ?? this.monthlyGenerationsLeft,
       premiumExpiry: premiumExpiry ?? this.premiumExpiry,
       isVip: isVip ?? this.isVip,
+      hasBonusMonth: hasBonusMonth ?? this.hasBonusMonth,  // ← НОВОЕ
     );
   }
 }
