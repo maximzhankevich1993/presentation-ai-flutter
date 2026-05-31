@@ -5,6 +5,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import '../providers/user_provider.dart';
+import 'payment_screen.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // DESIGN TOKENS
@@ -102,16 +103,32 @@ class _PremiumScreenState extends State<PremiumScreen> {
   }
 
   void _selectPlan(String plan) {
-    setState(() => _selectedPlan = plan);
+    if (plan == 'trial') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Пробный период будет доступен после запуска'),
+          backgroundColor: _T.accent.withOpacity(0.9),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Выбран план: $plan. Оплата будет доступна в ближайшее время.'),
-        backgroundColor: _T.accent.withOpacity(0.9),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        duration: const Duration(seconds: 3),
+    final price = _usdPrices[plan] ?? 4.99;
+    final planNames = {'month': 'Месяц', 'half': 'Полгода', 'year': 'Год'};
+    final planName = planNames[plan] ?? plan;
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PaymentScreen(
+          planId: planName,
+          price: price,
+          period: plan == 'month' ? '/мес' : (plan == 'half' ? '/6 мес' : '/год'),
+        ),
       ),
     );
   }
@@ -124,12 +141,9 @@ class _PremiumScreenState extends State<PremiumScreen> {
       backgroundColor: _T.bgBase,
       appBar: AppBar(
         backgroundColor: _T.bgBase,
-        leading: MouseRegion(
-          cursor: SystemMouseCursors.click,
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_rounded, color: _T.txtSecondary, size: 17),
-            onPressed: () => Navigator.pop(context),
-          ),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_rounded, color: _T.txtSecondary, size: 17),
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text('Premium',
           style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w600, fontSize: 15)),
@@ -153,7 +167,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              // Crown
               Container(
                 width: 72, height: 72,
                 decoration: BoxDecoration(
@@ -175,7 +188,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
               ),
               const SizedBox(height: 28),
 
-              // Comparison Table
               Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -213,7 +225,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
               ),
               const SizedBox(height: 24),
 
-              // Plans
               _PlanCard(
                 name: 'Месяц',
                 price: _formatPrice(_usdPrices['month']!),
@@ -244,24 +255,21 @@ class _PremiumScreenState extends State<PremiumScreen> {
               ),
 
               const SizedBox(height: 20),
-              MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: GestureDetector(
-                  onTap: () => _selectPlan('trial'),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [_T.goldLight, _T.gold]),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [BoxShadow(color: _T.gold.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
-                    ),
-                    child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                      Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 18),
-                      SizedBox(width: 8),
-                      Text('3 дня бесплатно', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
-                    ]),
+              GestureDetector(
+                onTap: () => _selectPlan('trial'),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [_T.goldLight, _T.gold]),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [BoxShadow(color: _T.gold.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 4))],
                   ),
+                  child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+                    Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 18),
+                    SizedBox(width: 8),
+                    Text('3 дня бесплатно', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                  ]),
                 ),
               ),
               const SizedBox(height: 12),
@@ -283,9 +291,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// COMPARISON ROW
-// ═══════════════════════════════════════════════════════════════
 class _ComparisonRow extends StatelessWidget {
   final String feature;
   final String free;
@@ -306,9 +311,6 @@ class _ComparisonRow extends StatelessWidget {
   }
 }
 
-// ═══════════════════════════════════════════════════════════════
-// PLAN CARD
-// ═══════════════════════════════════════════════════════════════
 class _PlanCard extends StatelessWidget {
   final String name;
   final String price;
@@ -330,58 +332,55 @@ class _PlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: popular ? _T.accentDim : _T.bgSurface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: selected ? _T.accent : (popular ? _T.accent.withOpacity(0.5) : _T.border),
-              width: selected ? 2 : (popular ? 1.5 : 1),
-            ),
-            boxShadow: (popular || selected) ? [BoxShadow(color: _T.accent.withOpacity(0.1), blurRadius: 8)] : null,
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: popular ? _T.accentDim : _T.bgSurface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected ? _T.accent : (popular ? _T.accent.withOpacity(0.5) : _T.border),
+            width: selected ? 2 : (popular ? 1.5 : 1),
           ),
-          child: Row(children: [
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                if (badge != null)
-                  Container(
-                    margin: const EdgeInsets.only(bottom: 6),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]),
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Text(badge!, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
-                  ),
-                Text(name, style: const TextStyle(color: _T.txtPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 2),
-                Text(period, style: const TextStyle(color: _T.txtSecondary, fontSize: 11)),
-              ]),
-            ),
-            Text(price, style: const TextStyle(color: _T.accentLight, fontSize: 22, fontWeight: FontWeight.w900)),
-            const SizedBox(width: 8),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              width: 28, height: 28,
-              decoration: BoxDecoration(
-                color: selected ? _T.accent : (popular ? _T.accent : _T.bgCard),
-                shape: BoxShape.circle,
-                border: Border.all(color: selected ? _T.accent : (popular ? _T.accent : _T.border)),
-              ),
-              child: Icon(
-                selected ? Icons.check_rounded : Icons.arrow_forward_rounded,
-                color: (selected || popular) ? Colors.white : _T.txtSecondary,
-                size: 14,
-              ),
-            ),
-          ]),
+          boxShadow: (popular || selected) ? [BoxShadow(color: _T.accent.withOpacity(0.1), blurRadius: 8)] : null,
         ),
+        child: Row(children: [
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              if (badge != null)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Text(badge!, style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800, letterSpacing: 0.3)),
+                ),
+              Text(name, style: const TextStyle(color: _T.txtPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 2),
+              Text(period, style: const TextStyle(color: _T.txtSecondary, fontSize: 11)),
+            ]),
+          ),
+          Text(price, style: const TextStyle(color: _T.accentLight, fontSize: 22, fontWeight: FontWeight.w900)),
+          const SizedBox(width: 8),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 28, height: 28,
+            decoration: BoxDecoration(
+              color: selected ? _T.accent : (popular ? _T.accent : _T.bgCard),
+              shape: BoxShape.circle,
+              border: Border.all(color: selected ? _T.accent : (popular ? _T.accent : _T.border)),
+            ),
+            child: Icon(
+              selected ? Icons.check_rounded : Icons.arrow_forward_rounded,
+              color: (selected || popular) ? Colors.white : _T.txtSecondary,
+              size: 14,
+            ),
+          ),
+        ]),
       ),
     );
   }
