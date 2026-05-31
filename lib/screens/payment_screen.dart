@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:universal_html/html.dart' as html;
+import '../providers/user_provider.dart';
 
 class PaymentScreen extends StatefulWidget {
   final String planId;
@@ -23,14 +25,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
   Future<void> _openCryptoCloudPayment() async {
     setState(() => _isLoading = true);
     
-    // Ваш публичный ключ CryptoCloud
     final publicKey = 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1dWlkIjoiTVRBek1qUXoiLCJ0eXBlIjoicHJvamVjdCIsInYiOiJkYjAxNDYyNjkxZGJkOWY0YTBmMTdmNTFjZTZkMzJiNTc0ZTJmMzdiZmE5YTcwODQ0MjllYjJmMTUxZTFjYWE1IiwiZXhwIjo4ODE3OTg2ODgzNn0.gVi4uAU_3XCccqBRpy3e1loNxKHNuzEKsIIv_K7fuos';
     
-    // Формируем ссылку на оплату
     final orderId = DateTime.now().millisecondsSinceEpoch.toString();
-    final paymentUrl = 'https://cryptocloud.plus/process/${publicKey}?amount=${widget.price}&order_id=$orderId&plan=${widget.planId}';
     
-    // Открываем в новой вкладке
+    // Получаем email пользователя
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final userEmail = userProvider.isLoggedIn ? userProvider.userEmail : '';
+    
+    // Формируем URL с email для postback-уведомления
+    final paymentUrl = 'https://cryptocloud.plus/process/${publicKey}?amount=${widget.price}&order_id=$orderId&plan=${widget.planId}&email=${Uri.encodeComponent(userEmail)}';
+    
     html.window.open(paymentUrl, '_blank');
     
     setState(() => _isLoading = false);
