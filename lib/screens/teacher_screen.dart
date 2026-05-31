@@ -7,6 +7,7 @@ import '../providers/user_provider.dart';
 import 'lesson_constructor_screen.dart';
 import 'login_screen.dart';
 import 'register_payment_screen.dart';
+import 'payment_screen.dart';
 
 class TeacherScreen extends StatefulWidget {
   final String countryCode;
@@ -25,7 +26,6 @@ class _TeacherScreenState extends State<TeacherScreen> {
   String _currencySymbol = '\$';
   double _rate = 1.0;
   
-  // Цены в USD для учителей
   final double _teacherPriceUSD = 1.99;
   final double _schoolPriceUSD = 4.99;
   final double _universityPriceUSD = 9.99;
@@ -45,8 +45,6 @@ class _TeacherScreenState extends State<TeacherScreen> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body) as Map<String, dynamic>;
         final countryCode = (data['country_code'] as String? ?? 'US').toUpperCase();
-        
-        print('📍 TeacherScreen - Страна по IP: $countryCode');
         
         if (countryCode == 'BY') {
           _currency = 'BYN';
@@ -69,21 +67,17 @@ class _TeacherScreenState extends State<TeacherScreen> {
           _currencySymbol = '\$';
           _rate = 1.0;
         }
-        
-        print('✅ Валюта: $_currency, курс: $_rate, символ: $_currencySymbol');
       } else {
         _currency = 'USD';
         _currencySymbol = '\$';
         _rate = 1.0;
       }
     } catch (e) {
-      print('❌ Ошибка определения валюты: $e');
       _currency = 'USD';
       _currencySymbol = '\$';
       _rate = 1.0;
     }
     
-    // Принудительно обновляем UI
     if (mounted) {
       setState(() {
         _loadingRates = false;
@@ -95,12 +89,9 @@ class _TeacherScreenState extends State<TeacherScreen> {
     if (usd == 0) return 'Бесплатно';
     final value = usd * _rate;
     
-    print('💰 Конвертация: $usd USD → $value $_currency'); // Отладка
-    
     if (_currency == 'USD' || _currency == 'EUR' || _currency == 'GBP') {
       return '$_currencySymbol${value.toStringAsFixed(2)}';
     }
-    // Для RUB, BYN, KZT, UAH - округляем до целых
     return '${value.ceil()} $_currencySymbol';
   }
 
@@ -146,87 +137,14 @@ class _TeacherScreenState extends State<TeacherScreen> {
   }
   
   void _showPaymentDialog(String planId, double price, String period) {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    
-    if (userProvider.isLoggedIn) {
-      _showPaymentSheet(planId, price, period);
-    } else {
-      showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-          backgroundColor: const Color(0xFF1C1C1C),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Premium доступ', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
-          content: const Text('Для оформления подписки необходимо создать аккаунт.\n\nЭто займёт меньше минуты.'),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A)))),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => RegisterPaymentScreen(planId: planId, price: price, period: period)));
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
-              child: const Text('Создать аккаунт и оплатить'),
-            ),
-          ],
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PaymentScreen(
+          planId: _getPlanName(planId),
+          price: price,
+          period: period,
         ),
-      );
-    }
-  }
-  
-  void _showPaymentSheet(String planId, double price, String period) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => Container(
-        margin: const EdgeInsets.all(16),
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(color: const Color(0xFF1C1C1C), borderRadius: BorderRadius.circular(20)),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Оплата подписки', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 16),
-            Text('${_getPlanName(planId)} — ${_formatPrice(price)} $period', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 16)),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF2A2A2A))),
-                    child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A))),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      _showPaymentDemo();
-                    },
-                    style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
-                    child: const Text('Оплатить'),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-  
-  void _showPaymentDemo() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF1C1C1C),
-        title: const Text('Тестовый режим', style: TextStyle(color: Colors.white)),
-        content: const Text('Платёжный модуль в разработке.\n\nPremium доступ будет активирован после оплаты.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Закрыть', style: TextStyle(color: Color(0xFF1DB954)))),
-        ],
       ),
     );
   }
@@ -242,7 +160,6 @@ class _TeacherScreenState extends State<TeacherScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Показываем загрузку, пока не определили валюту
     if (_loadingRates) {
       return const Scaffold(
         backgroundColor: Color(0xFF121212),
@@ -364,43 +281,37 @@ class _TeacherScreenState extends State<TeacherScreen> {
                 
                 const SizedBox(height: 32),
                 
-                MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: _openConstructor,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(16)),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.edit_calendar_rounded, color: Colors.white, size: 20),
-                          SizedBox(width: 10),
-                          Text('Открыть конструктор уроков', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
-                        ],
-                      ),
+                GestureDetector(
+                  onTap: _openConstructor,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(16)),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.edit_calendar_rounded, color: Colors.white, size: 20),
+                        SizedBox(width: 10),
+                        Text('Открыть конструктор уроков', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
+                      ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 24),
                 
-                MouseRegion(
-                  cursor: SystemMouseCursors.click,
-                  child: GestureDetector(
-                    onTap: _contactSales,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF2A2A2A))),
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 20),
-                          SizedBox(width: 10),
-                          Text('Связаться с отделом образования', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
-                        ],
-                      ),
+                GestureDetector(
+                  onTap: _contactSales,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF2A2A2A))),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 20),
+                        SizedBox(width: 10),
+                        Text('Связаться с отделом образования', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                      ],
                     ),
                   ),
                 ),
@@ -523,12 +434,9 @@ class _TeacherScreenState extends State<TeacherScreen> {
               const SizedBox(height: 20),
               Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF121212), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF2A2A2A))), child: const Row(children: [Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 18), SizedBox(width: 10), Text('edu@presentator.ai', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500))])),
               const SizedBox(height: 20),
-              MouseRegion(
-                cursor: SystemMouseCursors.click,
-                child: GestureDetector(
-                  onTap: () => Navigator.pop(ctx),
-                  child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 12), decoration: BoxDecoration(color: const Color(0xFF252525), borderRadius: BorderRadius.circular(12)), child: const Center(child: Text('Закрыть', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)))),
-                ),
+              GestureDetector(
+                onTap: () => Navigator.pop(ctx),
+                child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 12), decoration: BoxDecoration(color: const Color(0xFF252525), borderRadius: BorderRadius.circular(12)), child: const Center(child: Text('Закрыть', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)))),
               ),
             ],
           ),
