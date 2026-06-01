@@ -57,14 +57,17 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     final url = amount > 0 ? '$CRYPTO_PAYMENT_URL?amount=$amount' : CRYPTO_PAYMENT_URL;
     html.window.open(url, '_blank');
     
+    // Исправленный SnackBar (убрана ошибка с const)
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('💸 After payment, subscription activates in 1-2 minutes. Promo code CRYPTO10 → second month free!'),
-        backgroundColor: Color(0xFF1DB954),
+      SnackBar(
+        content: const Text('💸 After payment, subscription activates in 1-2 minutes. Promo code CRYPTO10 → second month free!'),
+        backgroundColor: const Color(0xFF1DB954),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: EdgeInsets.fromLTRB(16, 0, 16, 24),
-        duration: Duration(seconds: 5),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        duration: const Duration(seconds: 5),
       ),
     );
   }
@@ -119,7 +122,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   void _createWorkspace() {
     if (_workspaceNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter workspace name'), backgroundColor: Colors.red),
+        SnackBar(
+          content: const Text('Enter workspace name'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -141,7 +147,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     final topic = _topicController.text.trim();
     if (topic.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter presentation topic'), backgroundColor: Colors.red),
+        SnackBar(
+          content: const Text('Enter presentation topic'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -205,7 +214,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     
     if (_members.length >= _maxMembers) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Free workspace limited to $_maxMembers members'), backgroundColor: Colors.orange),
+        SnackBar(
+          content: Text('Free workspace limited to $_maxMembers members'),
+          backgroundColor: Colors.orange,
+        ),
       );
       _showUpgradeForMoreMembers();
       return;
@@ -345,7 +357,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                             onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF627EEA),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                               padding: const EdgeInsets.symmetric(vertical: 10),
                             ),
                             child: const Text('💳 Upgrade', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
@@ -423,7 +437,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: (isPremium || _usedGenerations < _maxGenerations) ? const Color(0xFF1DB954) : const Color(0xFF4A4A4A),
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: Text((isPremium || _usedGenerations < _maxGenerations) ? 'Create Presentation' : 'Limit reached', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                   ),
@@ -456,7 +472,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1DB954),
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                       child: const Text('Invite'),
                     ),
@@ -600,7 +618,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF1DB954),
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     child: const Text('Create Free Workspace', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
                   ),
