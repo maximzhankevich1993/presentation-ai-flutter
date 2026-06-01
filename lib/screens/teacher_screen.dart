@@ -2,12 +2,18 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'dart:html' as html;
 import '../services/generation_counter.dart';
 import '../providers/user_provider.dart';
 import 'lesson_constructor_screen.dart';
 import 'login_screen.dart';
 import 'register_payment_screen.dart';
 import 'payment_screen.dart';
+
+// ═══════════════════════════════════════════════════════════════
+// CRYPTO PAYMENT URL
+// ═══════════════════════════════════════════════════════════════
+const String CRYPTO_PAYMENT_URL = 'https://pay.cryptocloud.plus/pos/L1dhlsPbHiuNO7Fv';
 
 class TeacherScreen extends StatefulWidget {
   final String countryCode;
@@ -20,79 +26,36 @@ class TeacherScreen extends StatefulWidget {
 class _TeacherScreenState extends State<TeacherScreen> {
   String _selectedTariff = 'teacher';
   bool _isLoading = false;
-  bool _loadingRates = true;
   
-  String _currency = 'USD';
-  String _currencySymbol = '\$';
-  double _rate = 1.0;
-  
-  final double _teacherPriceUSD = 1.99;
-  final double _schoolPriceUSD = 4.99;
-  final double _universityPriceUSD = 9.99;
+  // Фиксированные цены в долларах
+  final double _teacherPriceUSD = 4.99;
+  final double _schoolPriceUSD = 12.99;
+  final double _universityPriceUSD = 24.99;
 
   @override
   void initState() {
     super.initState();
-    _detectCurrency();
-  }
-
-  Future<void> _detectCurrency() async {
-    try {
-      final response = await http
-          .get(Uri.parse('https://ipwho.is/'))
-          .timeout(const Duration(seconds: 5));
-          
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body) as Map<String, dynamic>;
-        final countryCode = (data['country_code'] as String? ?? 'US').toUpperCase();
-        
-        if (countryCode == 'BY') {
-          _currency = 'BYN';
-          _currencySymbol = 'Br';
-          _rate = 3.25;
-        } else if (countryCode == 'RU') {
-          _currency = 'RUB';
-          _currencySymbol = '₽';
-          _rate = 95.0;
-        } else if (countryCode == 'KZ') {
-          _currency = 'KZT';
-          _currencySymbol = '₸';
-          _rate = 460.0;
-        } else if (countryCode == 'UA') {
-          _currency = 'UAH';
-          _currencySymbol = '₴';
-          _rate = 41.0;
-        } else {
-          _currency = 'USD';
-          _currencySymbol = '\$';
-          _rate = 1.0;
-        }
-      } else {
-        _currency = 'USD';
-        _currencySymbol = '\$';
-        _rate = 1.0;
-      }
-    } catch (e) {
-      _currency = 'USD';
-      _currencySymbol = '\$';
-      _rate = 1.0;
-    }
-    
-    if (mounted) {
-      setState(() {
-        _loadingRates = false;
-      });
-    }
   }
 
   String _formatPrice(double usd) {
-    if (usd == 0) return 'Бесплатно';
-    final value = usd * _rate;
+    if (usd == 0) return 'Free';
+    return '\$${usd.toStringAsFixed(2)}';
+  }
+  
+  void _openCryptoPayment(double amount, String planName) {
+    final url = amount > 0 ? '$CRYPTO_PAYMENT_URL?amount=$amount' : CRYPTO_PAYMENT_URL;
+    html.window.open(url, '_blank');
     
-    if (_currency == 'USD' || _currency == 'EUR' || _currency == 'GBP') {
-      return '$_currencySymbol${value.toStringAsFixed(2)}';
-    }
-    return '${value.ceil()} $_currencySymbol';
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('💸 After payment, subscription activates in 1-2 minutes. Promo code CRYPTO10 → second month free!'),
+        backgroundColor: Color(0xFF1DB954),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: EdgeInsets.fromLTRB(16, 0, 16, 24),
+        duration: Duration(seconds: 5),
+      ),
+    );
   }
 
   Future<void> _openConstructor() async {
@@ -119,17 +82,20 @@ class _TeacherScreenState extends State<TeacherScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Лимит исчерпан', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+        title: const Text('Limit reached', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
         content: const Text(
-          'Вы использовали все 5 бесплатных генераций.\n\nВыберите тариф, чтобы продолжить.',
+          'You have used all 5 free generations.\n\nChoose a plan to continue.',
           style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A)))),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Later', style: TextStyle(color: Color(0xFF9A9A9A)))),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              Navigator.pop(context);
+              _openCryptoPayment(_teacherPriceUSD, 'Teacher');
+            },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
-            child: const Text('Выбрать тариф'),
+            child: const Text('Subscribe', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -137,36 +103,34 @@ class _TeacherScreenState extends State<TeacherScreen> {
   }
   
   void _showPaymentDialog(String planId, double price, String period) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PaymentScreen(
-          planId: _getPlanName(planId),
-          price: price,
-          period: period,
+    // Проверяем, залогинен ли пользователь
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    if (!userProvider.isLoggedIn) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please log in to subscribe'),
+          backgroundColor: Color(0xFFFFD700),
+          behavior: SnackBarBehavior.floating,
         ),
-      ),
-    );
+      );
+      return;
+    }
+    
+    // Открываем напрямую CryptoCloud
+    _openCryptoPayment(price, _getPlanName(planId));
   }
   
   String _getPlanName(String planId) {
     switch (planId) {
-      case 'teacher': return 'Учитель';
-      case 'school': return 'Школа';
-      case 'university': return 'Университет';
-      default: return 'Premium подписка';
+      case 'teacher': return 'Teacher';
+      case 'school': return 'School';
+      case 'university': return 'University';
+      default: return 'Premium';
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loadingRates) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF121212),
-        body: Center(child: CircularProgressIndicator(color: Color(0xFF1DB954))),
-      );
-    }
-    
     return Scaffold(
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
@@ -176,7 +140,7 @@ class _TeacherScreenState extends State<TeacherScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Учителям', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+        title: const Text('For Teachers', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
         centerTitle: true,
         actions: [
           Container(
@@ -193,7 +157,7 @@ class _TeacherScreenState extends State<TeacherScreen> {
                     children: [
                       Icon(Icons.edit_calendar_rounded, color: Colors.white, size: 16),
                       SizedBox(width: 6),
-                      Text('Конструктор уроков', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+                      Text('Lesson Builder', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ),
@@ -219,64 +183,89 @@ class _TeacherScreenState extends State<TeacherScreen> {
                     children: [
                       Container(width: 48, height: 48, decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.school_rounded, color: Colors.white, size: 26)),
                       const SizedBox(height: 16),
-                      const Text('Образовательный тариф', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
+                      const Text('Educational Plans', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 6),
-                      Text('Для преподавателей и учеников', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 13)),
+                      Text('For teachers and schools — pay with USDT', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 13)),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
-                const Text('ВЫБЕРИТЕ ПЛАН', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+                
+                // Crypto note
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF627EEA).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF627EEA).withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text('💡 Pay with USDT (cryptocurrency)', style: TextStyle(color: Color(0xFF627EEA), fontSize: 13, fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 4),
+                      Text('No fees, no banks — secure payment via CryptoCloud', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
+                      const SizedBox(height: 4),
+                      const Text('🎁 Promo code CRYPTO10 → second month free for first 10 paying users', style: TextStyle(color: Color(0xFFFFD700), fontSize: 11)),
+                    ],
+                  ),
+                ),
+                
+                const Text('CHOOSE YOUR PLAN', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
                 const SizedBox(height: 12),
                 
                 _buildTariffCard(
-                  title: 'Учитель',
+                  title: 'Teacher',
                   usd: _teacherPriceUSD,
-                  period: '/мес',
-                  description: 'Для индивидуального использования',
+                  period: '/month',
+                  description: 'For individual teachers',
                   features: const [
-                    '∞ генераций',
-                    '30 слайдов',
-                    'Все шаблоны',
-                    'Экспорт PDF',
-                    'Конструктор уроков',
+                    '∞ generations',
+                    '50 slides',
+                    'All templates',
+                    'PDF export',
+                    'Lesson builder',
+                    'Quiz generator',
                   ],
                   isPopular: true,
-                  onTap: () => _showPaymentDialog('teacher', _teacherPriceUSD, '/мес'),
+                  onTap: () => _showPaymentDialog('teacher', _teacherPriceUSD, '/month'),
                 ),
                 const SizedBox(height: 14),
                 
                 _buildTariffCard(
-                  title: 'Школа',
+                  title: 'School',
                   usd: _schoolPriceUSD,
-                  period: '/мес',
-                  description: 'Для школ и классов',
+                  period: '/month',
+                  description: 'For schools and classes',
                   features: const [
-                    'До 30 учителей',
-                    '∞ генераций',
-                    'Конструктор уроков PRO',
-                    'Бренд-кит',
-                    'Приоритетная поддержка',
+                    'Up to 30 teachers',
+                    '∞ generations',
+                    'Lesson builder PRO',
+                    'Brand kit',
+                    'Priority support',
+                    'Quiz generator',
                   ],
                   isPopular: false,
-                  onTap: () => _showPaymentDialog('school', _schoolPriceUSD, '/мес'),
+                  onTap: () => _showPaymentDialog('school', _schoolPriceUSD, '/month'),
                 ),
                 const SizedBox(height: 14),
                 
                 _buildTariffCard(
-                  title: 'Университет',
+                  title: 'University',
                   usd: _universityPriceUSD,
-                  period: '/мес',
-                  description: 'Для вузов и колледжей',
+                  period: '/month',
+                  description: 'For universities and colleges',
                   features: const [
-                    'Неограниченно преподавателей',
-                    '∞ генераций',
-                    'Конструктор уроков PRO',
-                    'VIP поддержка 24/7',
-                    'Индивидуальные настройки',
+                    'Unlimited teachers',
+                    '∞ generations',
+                    'Lesson builder PRO',
+                    'VIP support 24/7',
+                    'Custom settings',
+                    'Analytics dashboard',
                   ],
                   isPopular: false,
-                  onTap: () => _showPaymentDialog('university', _universityPriceUSD, '/мес'),
+                  onTap: () => _showPaymentDialog('university', _universityPriceUSD, '/month'),
                 ),
                 
                 const SizedBox(height: 32),
@@ -292,7 +281,7 @@ class _TeacherScreenState extends State<TeacherScreen> {
                       children: [
                         Icon(Icons.edit_calendar_rounded, color: Colors.white, size: 20),
                         SizedBox(width: 10),
-                        Text('Открыть конструктор уроков', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
+                        Text('Open Lesson Builder', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
                       ],
                     ),
                   ),
@@ -310,7 +299,7 @@ class _TeacherScreenState extends State<TeacherScreen> {
                       children: [
                         Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 20),
                         SizedBox(width: 10),
-                        Text('Связаться с отделом образования', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                        Text('Contact Education Department', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
                       ],
                     ),
                   ),
@@ -355,7 +344,7 @@ class _TeacherScreenState extends State<TeacherScreen> {
                   Container(
                     width: 44, height: 44,
                     decoration: BoxDecoration(color: isPopular ? const Color(0xFF1DB954) : const Color(0xFF2A2A2A), borderRadius: BorderRadius.circular(12)),
-                    child: Icon(title == 'Учитель' ? Icons.person_outline_rounded : Icons.school_rounded, color: isPopular ? Colors.white : const Color(0xFF1DB954), size: 22),
+                    child: Icon(title == 'Teacher' ? Icons.person_outline_rounded : Icons.school_rounded, color: isPopular ? Colors.white : const Color(0xFF1DB954), size: 22),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -371,7 +360,7 @@ class _TeacherScreenState extends State<TeacherScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(12)),
-                      child: const Text('Популярный', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+                      child: const Text('POPULAR', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
                     ),
                 ],
               ),
@@ -384,18 +373,20 @@ class _TeacherScreenState extends State<TeacherScreen> {
                     Text(period, style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13)),
                   ],
                   const Spacer(),
-                  if (isSelected)
-                    Container(
-                      width: 24, height: 24,
-                      decoration: BoxDecoration(color: const Color(0xFF1DB954), borderRadius: BorderRadius.circular(12)),
-                      child: const Icon(Icons.check_rounded, color: Colors.white, size: 14),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF627EEA),
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    child: const Text('USDT', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
+                  ),
                 ],
               ),
               const SizedBox(height: 20),
               const Divider(color: Color(0xFF2A2A2A), height: 1),
               const SizedBox(height: 16),
-              const Text('Включено:', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 11, fontWeight: FontWeight.w600)),
+              const Text('INCLUDED:', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 11, fontWeight: FontWeight.w600)),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 12, runSpacing: 10,
@@ -407,6 +398,19 @@ class _TeacherScreenState extends State<TeacherScreen> {
                     Text(feature, style: const TextStyle(color: Colors.white70, fontSize: 13)),
                   ],
                 )).toList(),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: onTap,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF627EEA),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('💳 Pay with USDT', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                ),
               ),
             ],
           ),
@@ -428,15 +432,28 @@ class _TeacherScreenState extends State<TeacherScreen> {
             children: [
               Container(width: 48, height: 48, decoration: BoxDecoration(color: const Color(0xFF1DB954).withOpacity(0.1), borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.email_rounded, color: Color(0xFF1DB954), size: 26)),
               const SizedBox(height: 16),
-              const Text('Образовательный отдел', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+              const Text('Education Department', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
-              const Text('Напишите нам на почту для подбора образовательного тарифа', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 13), textAlign: TextAlign.center),
+              const Text('Contact us for custom educational pricing', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 13), textAlign: TextAlign.center),
               const SizedBox(height: 20),
-              Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF121212), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF2A2A2A))), child: const Row(children: [Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 18), SizedBox(width: 10), Text('edu@presentator.ai', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500))])),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pop(ctx);
+                  html.window.navigator.clipboard?.writeText('edu@presentator.ai');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Email copied to clipboard'), backgroundColor: Color(0xFF1DB954)),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: const Color(0xFF121212), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF2A2A2A))),
+                  child: const Row(children: [Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 18), SizedBox(width: 10), Text('edu@presentator.ai', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500))]),
+                ),
+              ),
               const SizedBox(height: 20),
               GestureDetector(
                 onTap: () => Navigator.pop(ctx),
-                child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 12), decoration: BoxDecoration(color: const Color(0xFF252525), borderRadius: BorderRadius.circular(12)), child: const Center(child: Text('Закрыть', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)))),
+                child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 12), decoration: BoxDecoration(color: const Color(0xFF252525), borderRadius: BorderRadius.circular(12)), child: const Center(child: Text('Close', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)))),
               ),
             ],
           ),
