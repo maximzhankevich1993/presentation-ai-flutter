@@ -46,14 +46,17 @@ class _TeacherScreenState extends State<TeacherScreen> {
     final url = amount > 0 ? '$CRYPTO_PAYMENT_URL?amount=$amount' : CRYPTO_PAYMENT_URL;
     html.window.open(url, '_blank');
     
+    // Исправленный SnackBar (убрана ошибка с const)
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('💸 After payment, subscription activates in 1-2 minutes. Promo code CRYPTO10 → second month free!'),
-        backgroundColor: Color(0xFF1DB954),
+      SnackBar(
+        content: const Text('💸 After payment, subscription activates in 1-2 minutes. Promo code CRYPTO10 → second month free!'),
+        backgroundColor: const Color(0xFF1DB954),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: EdgeInsets.fromLTRB(16, 0, 16, 24),
-        duration: Duration(seconds: 5),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        duration: const Duration(seconds: 5),
       ),
     );
   }
@@ -406,7 +409,9 @@ class _TeacherScreenState extends State<TeacherScreen> {
                   onPressed: onTap,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF627EEA),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   child: const Text('💳 Pay with USDT', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
