@@ -2,10 +2,16 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
+import 'dart:html' as html;
 import '../providers/user_provider.dart';
 import 'report_constructor_screen.dart';
 import 'register_payment_screen.dart';
 import 'payment_screen.dart';
+
+// ═══════════════════════════════════════════════════════════════
+// CRYPTO PAYMENT URL
+// ═══════════════════════════════════════════════════════════════
+const String CRYPTO_PAYMENT_URL = 'https://pay.cryptocloud.plus/pos/L1dhlsPbHiuNO7Fv';
 
 class CorporateScreen extends StatefulWidget {
   final String countryCode;
@@ -18,64 +24,35 @@ class CorporateScreen extends StatefulWidget {
 class _CorporateScreenState extends State<CorporateScreen> {
   String _selectedTariff = 'business';
   bool _isLoading = false;
-  bool _loadingRates = true;
   
-  String _currency = 'USD';
-  String _currencySymbol = '\$';
-  double _rate = 1.0;
-  
+  // Фиксированные цены в долларах (без конвертации)
   final double _businessPriceUSD = 49.99;
   final double _corporatePriceUSD = 149.99;
 
   @override
   void initState() {
     super.initState();
-    _detectCurrency();
-  }
-
-  Future<void> _detectCurrency() async {
-    try {
-      final response = await http
-          .get(Uri.parse('https://ipapi.co/json/'))
-          .timeout(const Duration(seconds: 5));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body) as Map<String, dynamic>;
-        final countryCode = (data['country_code'] as String? ?? 'US').toUpperCase();
-        
-        const euroCountries = {
-          'IT', 'FR', 'DE', 'ES', 'NL', 'BE', 'AT', 'PT', 'FI',
-          'IE', 'GR', 'SK', 'SI', 'EE', 'LV', 'LT', 'LU', 'MT', 'CY',
-        };
-        
-        if (countryCode == 'BY') {
-          setState(() { _currency = 'BYN'; _currencySymbol = 'Br'; _rate = 3.25; });
-        } else if (countryCode == 'RU') {
-          setState(() { _currency = 'RUB'; _currencySymbol = '₽'; _rate = 95.0; });
-        } else if (countryCode == 'KZ') {
-          setState(() { _currency = 'KZT'; _currencySymbol = '₸'; _rate = 460.0; });
-        } else if (countryCode == 'UA') {
-          setState(() { _currency = 'UAH'; _currencySymbol = '₴'; _rate = 41.0; });
-        } else if (countryCode == 'GB') {
-          setState(() { _currency = 'GBP'; _currencySymbol = '£'; _rate = 0.79; });
-        } else if (euroCountries.contains(countryCode)) {
-          setState(() { _currency = 'EUR'; _currencySymbol = '€'; _rate = 0.92; });
-        } else {
-          setState(() { _currency = 'USD'; _currencySymbol = '\$'; _rate = 1.0; });
-        }
-      }
-    } catch (e) {
-      setState(() { _currency = 'USD'; _currencySymbol = '\$'; _rate = 1.0; });
-    }
-    if (mounted) setState(() => _loadingRates = false);
   }
 
   String _formatPrice(double usd) {
     if (usd == 0) return 'Бесплатно';
-    final value = usd * _rate;
-    if (_currency == 'USD' || _currency == 'EUR' || _currency == 'GBP') {
-      return '$_currencySymbol${value.toStringAsFixed(2)}';
-    }
-    return '${value.ceil()} $_currencySymbol';
+    return '\$${usd.toStringAsFixed(2)}';
+  }
+  
+  void _openCryptoPayment(double amount, String planName) {
+    final url = amount > 0 ? '$CRYPTO_PAYMENT_URL?amount=$amount' : CRYPTO_PAYMENT_URL;
+    html.window.open(url, '_blank');
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('💸 After successful USDT payment, return to the app. Subscription activates in 1-2 min.\nPromo code CRYPTO10 → second month free!'),
+        backgroundColor: const Color(0xFF1DB954),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        duration: const Duration(seconds: 5),
+      ),
+    );
   }
 
   void _openReportConstructor() {
@@ -86,23 +63,28 @@ class _CorporateScreenState extends State<CorporateScreen> {
   }
 
   void _showPaymentDialog(String planId, double price, String period) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PaymentScreen(
-          planId: _getPlanName(planId),
-          price: price,
-          period: period,
+    // Проверяем, залогинен ли пользователь
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    if (!userProvider.isLoggedIn) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please log in to subscribe'),
+          backgroundColor: Color(0xFFFFD700),
+          behavior: SnackBarBehavior.floating,
         ),
-      ),
-    );
+      );
+      return;
+    }
+    
+    // Открываем напрямую CryptoCloud
+    _openCryptoPayment(price, _getPlanName(planId));
   }
   
   String _getPlanName(String planId) {
     switch (planId) {
-      case 'business': return 'Бизнес';
-      case 'corporate': return 'Корпоративный';
-      default: return 'Тариф';
+      case 'business': return 'Business';
+      case 'corporate': return 'Corporate';
+      default: return 'Plan';
     }
   }
 
@@ -120,10 +102,10 @@ class _CorporateScreenState extends State<CorporateScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Бизнесу', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+        title: const Text('For Business', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
         centerTitle: true,
       ),
-      body: _isLoading || _loadingRates
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: Color(0xFF1DB954)))
           : Center(
               child: SingleChildScrollView(
@@ -145,57 +127,78 @@ class _CorporateScreenState extends State<CorporateScreen> {
                           children: [
                             Container(width: isMobile ? 40 : 48, height: isMobile ? 40 : 48, decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(isMobile ? 12 : 16)), child: Icon(Icons.business_center_rounded, color: Colors.white, size: isMobile ? 22 : 26)),
                             SizedBox(height: isMobile ? 12 : 16),
-                            Text('Корпоративный тариф', style: TextStyle(color: Colors.white, fontSize: isMobile ? 20 : 24, fontWeight: FontWeight.w800)),
+                            Text('Corporate Plans', style: TextStyle(color: Colors.white, fontSize: isMobile ? 20 : 24, fontWeight: FontWeight.w800)),
                             const SizedBox(height: 6),
-                            Text('Для компаний от 1 человека', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: isMobile ? 12 : 13)),
+                            Text('For companies of any size — pay with USDT', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: isMobile ? 12 : 13)),
                           ],
                         ),
                       ),
                       const SizedBox(height: 24),
                       
-                      const Text('ВЫБЕРИТЕ ПЛАН', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
+                      const Text('CHOOSE YOUR PLAN', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
                       const SizedBox(height: 12),
+                      
+                      // Crypto note
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF627EEA).withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF627EEA).withOpacity(0.3)),
+                        ),
+                        child: Column(
+                          children: [
+                            const Text('💡 Pay with USDT (cryptocurrency)', style: TextStyle(color: Color(0xFF627EEA), fontSize: 13, fontWeight: FontWeight.w600)),
+                            const SizedBox(height: 4),
+                            Text('No fees, no banks — secure payment via CryptoCloud', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
+                            const SizedBox(height: 4),
+                            Text('🎁 Promo code CRYPTO10 → second month free for first 10 paying users', style: TextStyle(color: const Color(0xFFFFD700), fontSize: 11)),
+                          ],
+                        ),
+                      ),
                       
                       isMobile
                           ? Column(
                               children: [
                                 _buildTariffCard(
-                                  title: 'Бизнес',
+                                  title: 'Business',
                                   price: _businessPriceUSD,
-                                  period: 'месяц',
-                                  description: 'Для малого бизнеса',
-                                  features: const ['До 10 пользователей', '∞ генераций', 'Бренд-кит', 'Приоритетная поддержка', 'API доступ', 'Конструктор отчётов'],
+                                  period: 'month',
+                                  description: 'For small business',
+                                  features: const ['Up to 10 users', '∞ generations', 'Brand Kit', 'Priority Support', 'API Access', 'Report Builder'],
                                   isPopular: true,
-                                  onTap: () => _showPaymentDialog('business', _businessPriceUSD, '/мес'),
+                                  onTap: () => _showPaymentDialog('business', _businessPriceUSD, '/month'),
                                 ),
                                 const SizedBox(height: 12),
                                 _buildTariffCard(
-                                  title: 'Корпоративный',
+                                  title: 'Corporate',
                                   price: _corporatePriceUSD,
-                                  period: 'месяц',
-                                  description: 'Для крупных компаний',
-                                  features: const ['Неограниченно пользователей', '∞ генераций', 'Бренд-кит', 'VIP поддержка 24/7', 'API + Webhook', 'Конструктор отчётов PRO'],
+                                  period: 'month',
+                                  description: 'For large companies',
+                                  features: const ['Unlimited users', '∞ generations', 'Brand Kit', 'VIP Support 24/7', 'API + Webhook', 'Report Builder PRO'],
                                   isPopular: false,
-                                  onTap: () => _showPaymentDialog('corporate', _corporatePriceUSD, '/мес'),
+                                  onTap: () => _showPaymentDialog('corporate', _corporatePriceUSD, '/month'),
                                 ),
                               ],
                             )
                           : Row(
                               children: [
                                 Expanded(child: _buildTariffCard(
-                                  title: 'Бизнес', price: _businessPriceUSD, period: 'месяц',
-                                  description: 'Для малого бизнеса',
-                                  features: const ['До 10 пользователей', '∞ генераций', 'Бренд-кит', 'Приоритетная поддержка', 'API доступ', 'Конструктор отчётов'],
+                                  title: 'Business', price: _businessPriceUSD, period: 'month',
+                                  description: 'For small business',
+                                  features: const ['Up to 10 users', '∞ generations', 'Brand Kit', 'Priority Support', 'API Access', 'Report Builder'],
                                   isPopular: true,
-                                  onTap: () => _showPaymentDialog('business', _businessPriceUSD, '/мес'),
+                                  onTap: () => _showPaymentDialog('business', _businessPriceUSD, '/month'),
                                 )),
                                 const SizedBox(width: 12),
                                 Expanded(child: _buildTariffCard(
-                                  title: 'Корпоративный', price: _corporatePriceUSD, period: 'месяц',
-                                  description: 'Для крупных компаний',
-                                  features: const ['Неограниченно пользователей', '∞ генераций', 'Бренд-кит', 'VIP поддержка 24/7', 'API + Webhook', 'Конструктор отчётов PRO'],
+                                  title: 'Corporate', price: _corporatePriceUSD, period: 'month',
+                                  description: 'For large companies',
+                                  features: const ['Unlimited users', '∞ generations', 'Brand Kit', 'VIP Support 24/7', 'API + Webhook', 'Report Builder PRO'],
                                   isPopular: false,
-                                  onTap: () => _showPaymentDialog('corporate', _corporatePriceUSD, '/мес'),
+                                  onTap: () => _showPaymentDialog('corporate', _corporatePriceUSD, '/month'),
                                 )),
                               ],
                             ),
@@ -216,7 +219,7 @@ class _CorporateScreenState extends State<CorporateScreen> {
                             children: [
                               Icon(Icons.description_rounded, color: Colors.white, size: isMobile ? 24 : 20),
                               const SizedBox(width: 10),
-                              Flexible(child: Text('Открыть конструктор отчётов', style: TextStyle(color: Colors.white, fontSize: isMobile ? 14 : 15, fontWeight: FontWeight.w700), textAlign: TextAlign.center)),
+                              Flexible(child: Text('Open Report Builder', style: TextStyle(color: Colors.white, fontSize: isMobile ? 14 : 15, fontWeight: FontWeight.w700), textAlign: TextAlign.center)),
                             ],
                           ),
                         ),
@@ -234,7 +237,7 @@ class _CorporateScreenState extends State<CorporateScreen> {
                             children: [
                               Icon(Icons.email_outlined, color: const Color(0xFF1DB954), size: isMobile ? 24 : 20),
                               const SizedBox(width: 10),
-                              Flexible(child: Text('Связаться с отделом продаж', style: TextStyle(color: Colors.white, fontSize: isMobile ? 14 : 14, fontWeight: FontWeight.w600), textAlign: TextAlign.center)),
+                              Flexible(child: Text('Contact Sales', style: TextStyle(color: Colors.white, fontSize: isMobile ? 14 : 14, fontWeight: FontWeight.w600), textAlign: TextAlign.center)),
                             ],
                           ),
                         ),
@@ -258,9 +261,9 @@ class _CorporateScreenState extends State<CorporateScreen> {
     required VoidCallback onTap,
   }) {
     final bool isSelected = _selectedTariff == title.toLowerCase();
-    final priceLabel = _formatPrice(price);
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 600;
+    final priceLabel = _formatPrice(price);
     
     return GestureDetector(
       onTap: onTap,
@@ -279,7 +282,7 @@ class _CorporateScreenState extends State<CorporateScreen> {
                 Container(
                   width: isMobile ? 40 : 44, height: isMobile ? 40 : 44,
                   decoration: BoxDecoration(color: isPopular ? const Color(0xFF1DB954) : const Color(0xFF2A2A2A), borderRadius: BorderRadius.circular(10)),
-                  child: Icon(title == 'Бизнес' ? Icons.business_center_rounded : Icons.apartment_rounded, color: isPopular ? Colors.white : const Color(0xFF1DB954), size: isMobile ? 20 : 22),
+                  child: Icon(title == 'Business' ? Icons.business_center_rounded : Icons.apartment_rounded, color: isPopular ? Colors.white : const Color(0xFF1DB954), size: isMobile ? 20 : 22),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -291,7 +294,7 @@ class _CorporateScreenState extends State<CorporateScreen> {
                     ],
                   ),
                 ),
-                if (isPopular) Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(12)), child: Text('Популярный', style: TextStyle(color: Colors.white, fontSize: isMobile ? 9 : 10, fontWeight: FontWeight.w700))),
+                if (isPopular) Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(12)), child: Text('POPULAR', style: TextStyle(color: Colors.white, fontSize: isMobile ? 9 : 10, fontWeight: FontWeight.w700))),
               ],
             ),
             SizedBox(height: isMobile ? 12 : 16),
@@ -303,13 +306,20 @@ class _CorporateScreenState extends State<CorporateScreen> {
                   Text('/$period', style: TextStyle(color: const Color(0xFF9A9A9A), fontSize: isMobile ? 12 : 13)),
                 ],
                 const Spacer(),
-                if (isSelected) Container(width: 24, height: 24, decoration: BoxDecoration(color: const Color(0xFF1DB954), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.check_rounded, color: Colors.white, size: 14)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF627EEA),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text('USDT', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600)),
+                ),
               ],
             ),
             SizedBox(height: isMobile ? 16 : 20),
             const Divider(color: Color(0xFF2A2A2A), height: 1),
             SizedBox(height: isMobile ? 12 : 16),
-            Text('Включено:', style: TextStyle(color: const Color(0xFF9A9A9A), fontSize: isMobile ? 10 : 11, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+            Text('INCLUDED:', style: TextStyle(color: const Color(0xFF9A9A9A), fontSize: isMobile ? 10 : 11, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
             SizedBox(height: isMobile ? 8 : 10),
             ...features.map((feature) => Padding(
               padding: EdgeInsets.only(bottom: isMobile ? 6 : 10),
@@ -319,6 +329,19 @@ class _CorporateScreenState extends State<CorporateScreen> {
                 Expanded(child: Text(feature, style: TextStyle(color: Colors.white70, fontSize: isMobile ? 12 : 13))),
               ]),
             )),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: onTap,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF627EEA),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: EdgeInsets.symmetric(vertical: isMobile ? 12 : 14),
+                ),
+                child: const Text('💳 Pay with USDT', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+              ),
+            ),
           ],
         ),
       ),
@@ -338,15 +361,29 @@ class _CorporateScreenState extends State<CorporateScreen> {
             children: [
               Container(width: 48, height: 48, decoration: BoxDecoration(color: const Color(0xFF1DB954).withOpacity(0.1), borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.email_rounded, color: Color(0xFF1DB954), size: 26)),
               const SizedBox(height: 16),
-              const Text('Отдел продаж', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+              const Text('Sales Department', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
-              const Text('Напишите нам на почту для подбора корпоративного тарифа', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 13), textAlign: TextAlign.center),
+              const Text('Contact us for custom corporate pricing', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 13), textAlign: TextAlign.center),
               const SizedBox(height: 20),
-              Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFF121212), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF2A2A2A))), child: const Row(children: [Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 18), SizedBox(width: 10), Text('corp@presentator.ai', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500))])),
+              GestureDetector(
+                onTap: () {
+                  Navigator.pop(ctx);
+                  // Копируем email в буфер
+                  html.window.navigator.clipboard?.writeText('corp@presentator.ai');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Email copied to clipboard'), backgroundColor: Color(0xFF1DB954)),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(color: const Color(0xFF121212), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF2A2A2A))),
+                  child: const Row(children: [Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 18), SizedBox(width: 10), Text('corp@presentator.ai', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w500))]),
+                ),
+              ),
               const SizedBox(height: 20),
               GestureDetector(
                 onTap: () => Navigator.pop(ctx),
-                child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 12), decoration: BoxDecoration(color: const Color(0xFF252525), borderRadius: BorderRadius.circular(12)), child: const Center(child: Text('Закрыть', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)))),
+                child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 12), decoration: BoxDecoration(color: const Color(0xFF252525), borderRadius: BorderRadius.circular(12)), child: const Center(child: Text('Close', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)))),
               ),
             ],
           ),
