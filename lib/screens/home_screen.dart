@@ -67,10 +67,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   int _maxSlides = 5;
   bool _isFocused = false;
 
-  String _currency = 'USD';
-  String _currencySymbol = '\$';
-  double _rate = 1.0;
-  bool _loadingRates = true;
   String _countryCode = 'US';
 
   final List<String> _examples = ['ИИ', 'Бизнес', 'Экология', 'Космос', 'IT', 'Маркетинг'];
@@ -95,7 +91,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
     _focusNode.addListener(() => setState(() => _isFocused = _focusNode.hasFocus));
-    _detectCurrency();
     _detectCountry();
     _loadVipStats();
     _loadUserData();
@@ -163,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final up = Provider.of<UserProvider>(context, listen: false);
     if (up.isPremium || up.isVip) return;
     
-    final result = await showDialog<bool>(
+    await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (_) => AlertDialog(
@@ -314,55 +309,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     } catch (_) {}
   }
 
-  Future<void> _detectCurrency() async {
-    try {
-      final response = await http
-          .get(Uri.parse('https://ipapi.co/json/'))
-          .timeout(const Duration(seconds: 5));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body) as Map<String, dynamic>;
-        final countryCode = (data['country_code'] as String? ?? 'US').toUpperCase();
-        const euroCountries = {
-          'DE', 'FR', 'IT', 'ES', 'NL', 'BE', 'AT', 'PT', 'FI',
-          'IE', 'GR', 'SK', 'SI', 'EE', 'LV', 'LT', 'LU', 'MT', 'CY',
-        };
-        final currencyMap = <String, Map<String, dynamic>>{
-          'BY': {'code': 'BYN', 'symbol': 'Br',  'rate': 3.25},
-          'RU': {'code': 'RUB', 'symbol': '₽',   'rate': 95.0},
-          'KZ': {'code': 'KZT', 'symbol': '₸',   'rate': 460.0},
-          'UA': {'code': 'UAH', 'symbol': '₴',   'rate': 41.0},
-          'GB': {'code': 'GBP', 'symbol': '£',   'rate': 0.79},
-        };
-        if (currencyMap.containsKey(countryCode)) {
-          final entry = currencyMap[countryCode]!;
-          if (mounted) {
-            setState(() {
-              _currency       = entry['code'] as String;
-              _currencySymbol = entry['symbol'] as String;
-              _rate           = (entry['rate'] as num).toDouble();
-            });
-          }
-        } else if (euroCountries.contains(countryCode)) {
-          if (mounted) {
-            setState(() {
-              _currency       = 'EUR';
-              _currencySymbol = '€';
-              _rate           = 0.92;
-            });
-          }
-        }
-      }
-    } catch (_) {}
-    if (mounted) setState(() => _loadingRates = false);
-  }
-
+  // Фиксированное форматирование цены в долларах
   String _formatPrice(double usd) {
     if (usd == 0) return 'Бесплатно';
-    final value = usd * _rate;
-    if (_currency == 'USD' || _currency == 'EUR' || _currency == 'GBP') {
-      return '$_currencySymbol${value.toStringAsFixed(2)}';
-    }
-    return '${value.ceil()} $_currencySymbol';
+    return '\$${usd.toStringAsFixed(2)}';
   }
 
   void _push(Widget screen) =>
@@ -792,7 +742,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     ],
                     if (isPremium || isVip) ...[
                       const SizedBox(height: 4),
-                      const Text('Premium • Безлимитно', style: TextStyle(color: _T.accent, fontSize: 11, fontWeight: FontWeight.w600)),
+                      const Text('Premium • Unlimited', style: TextStyle(color: _T.accent, fontSize: 11, fontWeight: FontWeight.w600)),
                     ],
                   ]),
                 ),
@@ -800,18 +750,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
                 const Text('Выберите план', style: TextStyle(color: _T.txtPrimary, fontSize: 20, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 4),
-                Text(_loadingRates ? 'Загрузка...' : 'Цены в $_currency', style: const TextStyle(color: _T.txtSecondary, fontSize: 12)),
+                const Text('Цены в USD — оплата USDT', style: TextStyle(color: _T.txtSecondary, fontSize: 12)),
                 const SizedBox(height: 20),
                 Row(children: [
                   Expanded(child: _TariffCard(title: 'Бесплатно', usd: 0, formatPrice: _formatPrice, period: '', features: ['5 генераций/мес', '10 слайдов', '8 фонов', 'Базовый экспорт'], popular: false, onTap: () {})),
                   const SizedBox(width: 12),
-                  Expanded(child: _TariffCard(title: 'Месяц', usd: 4.99, formatPrice: _formatPrice, period: '/мес', features: ['∞ генераций', '50 слайдов', '16 фонов', 'PDF без знака', 'AI-улучшение'], popular: true, onTap: () => _openCryptoPayment(4.99))),
+                  Expanded(child: _TariffCard(title: 'Месяц', usd: 4.99, formatPrice: _formatPrice, period: '/мес', features: ['∞ генераций', '50 слайдов', '16 фонов', 'PDF без знака', 'AI-улучшение', 'Оплата USDT'], popular: true, onTap: () => _openCryptoPayment(4.99))),
                 ]),
                 const SizedBox(height: 12),
                 Row(children: [
-                  Expanded(child: _TariffCard(title: 'Полгода', usd: 29.99, formatPrice: _formatPrice, period: '${_formatPrice(29.99 / 6)}/мес', features: ['Всё из Месяца', 'Экономия 17%', 'Приоритетная поддержка'], popular: false, onTap: () => _openCryptoPayment(29.99))),
+                  Expanded(child: _TariffCard(title: 'Полгода', usd: 29.99, formatPrice: _formatPrice, period: '\$5.00/мес', features: ['Всё из Месяца', 'Экономия 17%', 'Приоритетная поддержка', 'Оплата USDT'], popular: false, onTap: () => _openCryptoPayment(29.99))),
                   const SizedBox(width: 12),
-                  Expanded(child: _TariffCard(title: 'Год', usd: 49.99, formatPrice: _formatPrice, period: '${_formatPrice(49.99 / 12)}/мес', features: ['Всё из Полугода', 'Экономия 33%', 'Бренд-кит'], popular: false, badge: 'ВЫГОДНО', onTap: () => _openCryptoPayment(49.99))),
+                  Expanded(child: _TariffCard(title: 'Год', usd: 49.99, formatPrice: _formatPrice, period: '\$4.17/мес', features: ['Всё из Полугода', 'Экономия 33%', 'Бренд-кит', 'Оплата USDT'], popular: false, badge: 'ВЫГОДНО', onTap: () => _openCryptoPayment(49.99))),
                 ]),
                 const SizedBox(height: 28),
 
