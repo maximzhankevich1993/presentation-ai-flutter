@@ -3,11 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
+import 'dart:html' as html;
 import '../providers/user_provider.dart';
 import 'editor_screen.dart';
 import 'loading_screen.dart';
 import '../models/presentation.dart';
 import 'teacher_screen.dart';
+import 'premium_screen.dart';
+
+// ═══════════════════════════════════════════════════════════════
+// CRYPTO PAYMENT URL
+// ═══════════════════════════════════════════════════════════════
+const String CRYPTO_PAYMENT_URL = 'https://pay.cryptocloud.plus/pos/L1dhlsPbHiuNO7Fv';
 
 class WorkspaceScreen extends StatefulWidget {
   final String countryCode;
@@ -32,20 +39,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   int _usedGenerations = 0;
   final int _maxGenerations = 5;
   final int _maxMembers = 5;
-  
-  String _currency = 'USD';
-  String _currencySymbol = '\$';
-  double _rate = 1.0;
-  bool _loadingRates = true;
-  
-  final double _teamPriceUSD = 49.99;
-  final double _businessPriceUSD = 99.99;
-  final double _enterprisePriceUSD = 199.99;
 
   @override
   void initState() {
     super.initState();
-    _detectCurrency();
     _loadWorkspaceData();
   }
 
@@ -56,36 +53,20 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     super.dispose();
   }
 
-  Future<void> _detectCurrency() async {
-    try {
-      final response = await http
-          .get(Uri.parse('https://ipwho.is/'))
-          .timeout(const Duration(seconds: 5));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body) as Map<String, dynamic>;
-        final countryCode = (data['country_code'] as String? ?? 'US').toUpperCase();
-        
-        if (countryCode == 'BY') {
-          setState(() { _currency = 'BYN'; _currencySymbol = 'Br'; _rate = 3.25; });
-        } else if (countryCode == 'RU') {
-          setState(() { _currency = 'RUB'; _currencySymbol = '₽'; _rate = 95.0; });
-        } else if (countryCode == 'KZ') {
-          setState(() { _currency = 'KZT'; _currencySymbol = '₸'; _rate = 460.0; });
-        } else {
-          setState(() { _currency = 'USD'; _currencySymbol = '\$'; _rate = 1.0; });
-        }
-      }
-    } catch (_) {}
-    if (mounted) setState(() => _loadingRates = false);
-  }
-
-  String _formatPrice(double usd) {
-    if (usd == 0) return 'Бесплатно';
-    final value = usd * _rate;
-    if (_currency == 'USD' || _currency == 'EUR' || _currency == 'GBP') {
-      return '$_currencySymbol${value.toStringAsFixed(2)}';
-    }
-    return '${value.ceil()} $_currencySymbol';
+  void _openCryptoPayment(double amount) {
+    final url = amount > 0 ? '$CRYPTO_PAYMENT_URL?amount=$amount' : CRYPTO_PAYMENT_URL;
+    html.window.open(url, '_blank');
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('💸 After payment, subscription activates in 1-2 minutes. Promo code CRYPTO10 → second month free!'),
+        backgroundColor: Color(0xFF1DB954),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: EdgeInsets.fromLTRB(16, 0, 16, 24),
+        duration: Duration(seconds: 5),
+      ),
+    );
   }
 
   Future<void> _saveWorkspaceData() async {
@@ -116,7 +97,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
           final data = json.decode(savedData);
           setState(() {
             _workspaceId = data['id'] ?? DateTime.now().toString();
-            _workspaceName = data['name'] ?? 'Моя команда';
+            _workspaceName = data['name'] ?? 'My Team';
             _members = List<Map<String, dynamic>>.from(data['members'] ?? []);
             _presentations = List<Map<String, dynamic>>.from(data['presentations'] ?? []);
             _usedGenerations = data['usedGenerations'] ?? 0;
@@ -138,7 +119,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
   void _createWorkspace() {
     if (_workspaceNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Введите название пространства'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Enter workspace name'), backgroundColor: Colors.red),
       );
       return;
     }
@@ -148,7 +129,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       _workspaceName = _workspaceNameController.text.trim();
       _hasWorkspace = true;
       _members = [
-        {'id': '1', 'name': 'Я', 'email': 'me@example.com', 'role': 'Owner', 'avatar': 'Я', 'status': 'online'},
+        {'id': '1', 'name': 'Me', 'email': 'me@example.com', 'role': 'Owner', 'avatar': 'M', 'status': 'online'},
       ];
       _presentations = [];
       _usedGenerations = 0;
@@ -160,12 +141,15 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     final topic = _topicController.text.trim();
     if (topic.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Введите тему презентации'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Enter presentation topic'), backgroundColor: Colors.red),
       );
       return;
     }
     
-    if (_usedGenerations >= _maxGenerations) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final isPremium = userProvider.isPremium;
+    
+    if (!isPremium && _usedGenerations >= _maxGenerations) {
       _showLimitDialog();
       return;
     }
@@ -175,8 +159,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       _presentations.insert(0, {
         'id': DateTime.now().toString(),
         'title': topic,
-        'updated': 'Только что',
-        'author': 'Я',
+        'updated': 'Just now',
+        'author': 'Me',
         'slides': _topicMaxSlides,
       });
     });
@@ -196,17 +180,20 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Лимит генераций', style: TextStyle(color: Colors.white)),
+        title: const Text('Limit reached', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
         content: Text(
-          'Вы использовали все $_maxGenerations бесплатных генераций.\n\nПриобретите тариф Team или выше.',
-          style: const TextStyle(color: Color(0xFF9A9A9A)),
+          'You have used all $_maxGenerations free generations for this workspace.\n\nSubscribe to continue creating unlimited presentations.',
+          style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A)))),
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Later', style: TextStyle(color: Color(0xFF9A9A9A)))),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen()));
+            },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
-            child: const Text('Выбрать тариф'),
+            child: const Text('Subscribe', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -218,8 +205,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     
     if (_members.length >= _maxMembers) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Бесплатно до $_maxMembers участников'), backgroundColor: Colors.orange),
+        SnackBar(content: Text('Free workspace limited to $_maxMembers members'), backgroundColor: Colors.orange),
       );
+      _showUpgradeForMoreMembers();
       return;
     }
     
@@ -237,7 +225,33 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     _saveWorkspaceData();
     
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Приглашение отправлено'), backgroundColor: Color(0xFF1DB954)),
+      const SnackBar(content: Text('Invitation sent'), backgroundColor: Color(0xFF1DB954)),
+    );
+  }
+  
+  void _showUpgradeForMoreMembers() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1C1C1C),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Upgrade for more members', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+        content: const Text(
+          'Free workspace is limited to 5 members.\n\nUpgrade to Team or Business plan for unlimited members.',
+          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Later', style: TextStyle(color: Color(0xFF9A9A9A)))),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen()));
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
+            child: const Text('Upgrade', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
     );
   }
   
@@ -250,9 +264,10 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isLoggedIn = context.watch<UserProvider>().isLoggedIn;
-    final isPremium = context.watch<UserProvider>().isPremium;
-    final remaining = isPremium || isLoggedIn ? 999 : _maxGenerations - _usedGenerations;
+    final userProvider = Provider.of<UserProvider>(context);
+    final isLoggedIn = userProvider.isLoggedIn;
+    final isPremium = userProvider.isPremium;
+    final remaining = isPremium ? 999 : _maxGenerations - _usedGenerations;
     
     if (_isLoading) {
       return const Scaffold(
@@ -299,19 +314,54 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                       const SizedBox(height: 16),
                       Text(_workspaceName, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 8),
-                      Text('Участников: ${_members.length}', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
+                      Text('Members: ${_members.length}', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
                 
-                const Text('СОЗДАТЬ ПРЕЗЕНТАЦИЮ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+                // Crypto note for workspace upgrade
+                if (!isPremium && _members.length >= 3)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF627EEA).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF627EEA).withOpacity(0.3)),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text('💡 Upgrade for unlimited members', style: TextStyle(color: Color(0xFF627EEA), fontSize: 13, fontWeight: FontWeight.w600)),
+                        const SizedBox(height: 4),
+                        Text('Pay with USDT — no fees, no banks', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
+                        const SizedBox(height: 4),
+                        const Text('🎁 Promo code CRYPTO10 → second month free', style: TextStyle(color: Color(0xFFFFD700), fontSize: 11)),
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF627EEA),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                            ),
+                            child: const Text('💳 Upgrade', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                
+                const Text('CREATE PRESENTATION', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _topicController,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    hintText: 'О чём презентация?',
+                    hintText: 'What is your presentation about?',
                     hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
                     prefixIcon: const Icon(Icons.edit_rounded, color: Color(0xFF1DB954)),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
@@ -321,7 +371,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    const Text('Слайдов:', style: TextStyle(color: Color(0xFF9A9A9A))),
+                    const Text('Slides:', style: TextStyle(color: Color(0xFF9A9A9A))),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Slider(
@@ -339,19 +389,28 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 ),
                 const SizedBox(height: 16),
                 
-                if (!isLoggedIn && !isPremium && remaining < 5)
+                if (!isPremium && remaining <= 3)
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1DB954).withOpacity(0.1),
+                      color: remaining <= 0 ? const Color(0xFFFF3B30).withOpacity(0.1) : const Color(0xFF1DB954).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.3)),
+                      border: Border.all(color: remaining <= 0 ? const Color(0xFFFF3B30).withOpacity(0.3) : const Color(0xFF1DB954).withOpacity(0.3)),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.info_outline_rounded, color: Color(0xFF1DB954), size: 18),
+                        Icon(remaining <= 0 ? Icons.warning_amber_rounded : Icons.info_outline_rounded, color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), size: 18),
                         const SizedBox(width: 10),
-                        Expanded(child: Text('Осталось $remaining из $_maxGenerations бесплатных генераций', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13))),
+                        Expanded(child: Text(remaining <= 0 ? 'Free generations used up.' : '$remaining of $_maxGenerations free generations left', style: TextStyle(color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), fontSize: 13))),
+                        if (remaining <= 0)
+                          GestureDetector(
+                            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                              decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(20)),
+                              child: const Text('Subscribe', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -360,13 +419,13 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: _generatePresentation,
+                    onPressed: (isPremium || _usedGenerations < _maxGenerations) ? _generatePresentation : _showLimitDialog,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF1DB954),
+                      backgroundColor: (isPremium || _usedGenerations < _maxGenerations) ? const Color(0xFF1DB954) : const Color(0xFF4A4A4A),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('Создать презентацию', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                    child: Text((isPremium || _usedGenerations < _maxGenerations) ? 'Create Presentation' : 'Limit reached', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                   ),
                 ),
                 
@@ -374,7 +433,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 const Divider(color: Color(0xFF2A2A2A)),
                 const SizedBox(height: 24),
                 
-                const Text('УЧАСТНИКИ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+                const Text('TEAM MEMBERS', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -383,7 +442,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                         style: const TextStyle(color: Colors.white),
                         onChanged: (v) => _inviteEmail = v,
                         decoration: InputDecoration(
-                          hintText: 'Email для приглашения',
+                          hintText: 'Email to invite',
                           hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
                           prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 20),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
@@ -399,7 +458,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      child: const Text('Пригласить'),
+                      child: const Text('Invite'),
                     ),
                   ],
                 ),
@@ -444,6 +503,32 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                     ],
                   ),
                 )),
+                
+                const SizedBox(height: 12),
+                if (!isPremium && _members.length >= 3)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1DB954).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.lock_outline_rounded, color: Color(0xFF1DB954), size: 18),
+                        const SizedBox(width: 10),
+                        const Expanded(child: Text('Free workspace limited to 5 members. Upgrade for unlimited members.', style: TextStyle(color: Color(0xFF1DB954), fontSize: 13))),
+                        GestureDetector(
+                          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(20)),
+                            child: const Text('Upgrade', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
@@ -462,7 +547,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Рабочее пространство', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+        title: const Text('Workspace', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
         centerTitle: true,
       ),
       body: Center(
@@ -485,21 +570,21 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                     children: [
                       Container(width: 64, height: 64, decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)), child: const Icon(Icons.group_add_rounded, color: Colors.white, size: 32)),
                       const SizedBox(height: 16),
-                      const Text('Создайте команду', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
+                      const Text('Create a Team', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 8),
-                      Text('Работайте над презентациями вместе', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
+                      Text('Work on presentations together', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
                 
-                const Text('СОЗДАТЬ ПРОСТРАНСТВО', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+                const Text('CREATE WORKSPACE', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _workspaceNameController,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    hintText: 'Название пространства',
+                    hintText: 'Workspace name',
                     hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
                     prefixIcon: const Icon(Icons.group_rounded, color: Color(0xFF1DB954)),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
@@ -517,7 +602,24 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    child: const Text('Создать бесплатно', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+                    child: const Text('Create Free Workspace', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+                  ),
+                ),
+                
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1E1E1E),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF2A2A2A)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.info_outline_rounded, color: Color(0xFF1DB954), size: 16),
+                      SizedBox(width: 8),
+                      Expanded(child: Text('Free workspace includes: 5 members, 5 presentations/month, 10 slides per presentation', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 12))),
+                    ],
                   ),
                 ),
               ],
