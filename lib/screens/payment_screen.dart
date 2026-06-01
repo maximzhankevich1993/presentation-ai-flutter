@@ -27,11 +27,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
     
     final orderId = DateTime.now().millisecondsSinceEpoch.toString();
     
-    // Получаем email пользователя
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final userEmail = userProvider.isLoggedIn ? userProvider.userEmail : '';
     
-    // Определяем план для передачи в колбэк
     String planParam = 'monthly';
     if (widget.planId.toLowerCase().contains('год') || widget.planId.toLowerCase().contains('year')) {
       planParam = 'year';
@@ -47,7 +45,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       planParam = 'corporate';
     }
     
-    // Формируем URL с параметрами
     final paymentUrl = 'https://pay.cryptocloud.plus/pos/L1dhlsPbHiuNO7Fv'
         '?amount=${widget.price.toStringAsFixed(2)}'
         '&order_id=$orderId'
@@ -60,15 +57,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
     
     setState(() => _isLoading = false);
     
-    // Показываем подсказку
+    // Исправленный SnackBar (без const у RoundedRectangleBorder)
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('💸 After payment, subscription activates in 1-2 minutes. Promo code CRYPTO10 gives second month free!'),
-        backgroundColor: Color(0xFF1DB954),
+      SnackBar(
+        content: const Text('💸 After payment, subscription activates in 1-2 minutes. Promo code CRYPTO10 gives second month free!'),
+        backgroundColor: const Color(0xFF1DB954),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: EdgeInsets.fromLTRB(16, 0, 16, 24),
-        duration: Duration(seconds: 5),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        duration: const Duration(seconds: 5),
       ),
     );
   }
@@ -139,7 +138,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1DB954),
                     padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
                   ),
                   child: _isLoading
                       ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
