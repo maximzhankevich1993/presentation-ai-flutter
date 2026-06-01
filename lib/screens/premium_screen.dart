@@ -7,7 +7,6 @@ import 'package:http/http.dart' as http;
 import 'dart:html' as html;
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
-import 'payment_screen.dart';
 
 // ═══════════════════════════════════════════════════════════════
 // CRYPTO PAYMENT URL
@@ -48,10 +47,6 @@ class PremiumScreen extends StatefulWidget {
 }
 
 class _PremiumScreenState extends State<PremiumScreen> {
-  String _currency = 'USD';
-  String _currencySymbol = '\$';
-  double _rate = 1.0;
-  bool _loadingRates = true;
   String? _selectedPlan;
   
   // Промокод
@@ -66,7 +61,6 @@ class _PremiumScreenState extends State<PremiumScreen> {
   @override
   void initState() {
     super.initState();
-    _detectCurrency();
   }
 
   @override
@@ -75,53 +69,14 @@ class _PremiumScreenState extends State<PremiumScreen> {
     super.dispose();
   }
 
-  Future<void> _detectCurrency() async {
-    try {
-      final response = await http.get(
-        Uri.parse('https://ipapi.co/json/'),
-      ).timeout(const Duration(seconds: 5));
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final country = data['country_code'] ?? 'US';
-
-        final localCurrencies = {
-          'BY': {'code': 'BYN', 'symbol': 'Br', 'rate': 3.25},
-          'RU': {'code': 'RUB', 'symbol': '₽', 'rate': 95.0},
-          'KZ': {'code': 'KZT', 'symbol': '₸', 'rate': 460.0},
-          'UA': {'code': 'UAH', 'symbol': '₴', 'rate': 41.0},
-          'EU': {'code': 'EUR', 'symbol': '€', 'rate': 0.92},
-          'GB': {'code': 'GBP', 'symbol': '£', 'rate': 0.79},
-        };
-
-        if (localCurrencies.containsKey(country)) {
-          final c = localCurrencies[country]!;
-          setState(() {
-            _currency = c['code'] as String;
-            _currencySymbol = c['symbol'] as String;
-            _rate = (c['rate'] as num).toDouble();
-          });
-        }
-      }
-    } catch (_) {}
-    if (mounted) setState(() => _loadingRates = false);
-  }
-
+  // Фиксированное форматирование цены в долларах
   String _formatPrice(double usdPrice) {
-    final converted = (usdPrice * _rate);
-    if (_currency == 'USD' || _currency == 'EUR' || _currency == 'GBP') {
-      return '$_currencySymbol${converted.toStringAsFixed(2)}';
-    }
-    return '${converted.ceil()} $_currencySymbol';
+    return '\$${usdPrice.toStringAsFixed(2)}';
   }
 
   String _periodPrice(double usdPrice, int months) {
     final monthly = usdPrice / months;
-    final converted = (monthly * _rate);
-    if (_currency == 'USD' || _currency == 'EUR' || _currency == 'GBP') {
-      return '$_currencySymbol${converted.toStringAsFixed(2)}/мес';
-    }
-    return '${converted.ceil()} $_currencySymbol/мес';
+    return '\$${monthly.toStringAsFixed(2)}/month';
   }
 
   void _openCryptoPayment(double amount) {
@@ -291,10 +246,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                 style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w800, fontSize: 26, letterSpacing: -0.5),
                 textAlign: TextAlign.center),
               const SizedBox(height: 6),
-              Text(
-                _loadingRates ? 'Loading...' : 'Prices in $_currency',
-                style: const TextStyle(color: _T.txtSecondary, fontSize: 13),
-              ),
+              const Text('Prices in USD — pay with USDT', style: TextStyle(color: _T.txtSecondary, fontSize: 13)),
               const SizedBox(height: 28),
 
               // Comparison Table
@@ -331,6 +283,7 @@ class _PremiumScreenState extends State<PremiumScreen> {
                   _ComparisonRow('AI Improve', '❌', '✅'),
                   _ComparisonRow('Custom Images', '❌', '✅'),
                   _ComparisonRow('Watermark', 'Yes', 'No'),
+                  _ComparisonRow('Payment', 'No', 'USDT'),
                 ]),
               ),
               const SizedBox(height: 24),
@@ -427,6 +380,28 @@ class _PremiumScreenState extends State<PremiumScreen> {
                 },
               ),
 
+              const SizedBox(height: 20),
+              
+              // Crypto Note
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF627EEA).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFF627EEA).withOpacity(0.3)),
+                ),
+                child: Column(
+                  children: [
+                    const Text('💡 Pay with USDT (cryptocurrency)', style: TextStyle(color: Color(0xFF627EEA), fontSize: 12, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 4),
+                    Text('No fees, no banks — secure payment via CryptoCloud', style: TextStyle(color: Colors.grey[400], fontSize: 10)),
+                    const SizedBox(height: 4),
+                    const Text('🎁 Promo code CRYPTO10 → second month free for first 10 paying users', style: TextStyle(color: Color(0xFFFFD700), fontSize: 10)),
+                  ],
+                ),
+              ),
+              
               const SizedBox(height: 20),
               GestureDetector(
                 onTap: () => _selectPlan('trial'),
