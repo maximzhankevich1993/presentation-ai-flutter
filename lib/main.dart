@@ -4,20 +4,32 @@ import 'providers/user_provider.dart';
 import 'providers/logo_provider.dart';
 import 'providers/history_provider.dart';
 import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
+import 'services/api_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const MyApp());
+  
+  // Загружаем токен из SharedPreferences при старте
+  await ApiService.loadToken();
+  
+  // Создаём провайдер и пробуем загрузить пользователя (если токен есть)
+  final userProvider = UserProvider();
+  await userProvider.loadUser();
+  
+  runApp(MyApp(userProvider: userProvider));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final UserProvider userProvider;
+  
+  const MyApp({super.key, required this.userProvider});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider.value(value: userProvider),
         ChangeNotifierProvider(create: (_) => BrandKitProvider()),
         ChangeNotifierProvider(create: (_) => UserHistoryProvider()),
       ],
@@ -30,7 +42,20 @@ class MyApp extends StatelessWidget {
           fontFamily: 'Inter',
           useMaterial3: true,
         ),
-        home: const HomeScreen(),  // ← Всегда HomeScreen
+        home: Consumer<UserProvider>(
+          builder: (context, userProvider, _) {
+            if (userProvider.isLoading) {
+              return const Scaffold(
+                backgroundColor: Color(0xFF121212),
+                body: Center(
+                  child: CircularProgressIndicator(color: Color(0xFF1DB954)),
+                ),
+              );
+            }
+            // Если пользователь залогинен — показываем HomeScreen, иначе — LoginScreen
+            return userProvider.isLoggedIn ? const HomeScreen() : const LoginScreen();
+          },
+        ),
       ),
     );
   }
