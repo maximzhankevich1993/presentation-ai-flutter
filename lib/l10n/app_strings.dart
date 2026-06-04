@@ -1,3 +1,5 @@
+// lib/l10n/app_strings.dart
+
 class AppStrings {
   static AppStrings? _current;
   
@@ -41,6 +43,7 @@ class AppStrings {
   String get yes => 'Да';
   String get no => 'Нет';
   String get ok => 'ОК';
+  String get continueText => 'Продолжить';
   
   // ═══════════════════════════════════════════════════════════════
   // АВТОРИЗАЦИЯ
@@ -58,6 +61,7 @@ class AppStrings {
   String get emailRequired => 'Email обязателен';
   String get passwordRequired => 'Пароль обязателен';
   String get nameRequired => 'Имя обязательно';
+  String get logIn => 'Войти';
   
   // ═══════════════════════════════════════════════════════════════
   // ГЛАВНЫЙ ЭКРАН
@@ -77,13 +81,53 @@ class AppStrings {
   String get save33 => 'Экономия 33%';
   String get save15 => 'Экономия 15%';
   String get premiumUnlimited => 'Premium • Безлимитно';
-  String get buyTariff => 'Купить тариф — USDT';
+  String get buyPlanUSDT => 'Купить тариф — USDT';
+  String get unlimited => '∞';
+  String get ofFive => 'из 5';
+  String get enterTopic => 'Введите тему презентации';
+  String get uploadText => 'Загрузите текст';
+  String get pasteText => 'Вставьте текст для презентации';
+  String get yourText => 'Ваш текст...';
+  String get fromText => 'Из текста';
+  String get uploadLogo => 'Загрузить логотип';
+  String get templates => 'Шаблоны';
+  String get generationsFinished => 'Бесплатные генерации на месяц закончились';
+  String get choosePlan => 'Выберите план';
+  String get pricesInUSD => 'Цены в USD — оплата USDT';
+  String get monthLower => 'мес';
+  String get generationsPerMonth => 'генераций/мес';
+  String get slidesLower => 'слайдов';
+  String get backgroundsLower => 'фонов';
+  String get basicExport => 'Базовый экспорт';
+  String get allFromMonth => 'Всё из Месяца';
+  String get allFromHalfYear => 'Всё из Полугода';
+  String get save17 => 'Экономия 17%';
+  String get prioritySupport => 'Приоритетная поддержка';
+  String get brandKit => 'Бренд-кит';
+  String get payWithUSDTShort => 'Оплата USDT';
+  String get bestValue => 'ВЫГОДНО';
+  String get upgradeToUnlimited => 'Перейти на безлимит';
+  String get usedThreeOfFive => 'Вы использовали 3 из 5 бесплатных генераций.';
+  String get unlimitedPresentations => 'Безлимит презентаций';
+  String get fiftySlides => '50 слайдов на презентацию';
+  String get pdfNoWatermark => 'PDF без водяного знака';
+  String get only499PerMonth => 'Всего $4.99/мес — оплата USDT';
+  String get continueFree => 'Продолжить бесплатно';
+  String get upgradeNow => 'Оформить подписку — $4.99';
+  String get limitReachedLoggedIn => 'Вы использовали все бесплатные генерации на этот месяц.\n\nОформите подписку, чтобы продолжить создавать презентации, уроки и тесты без ограничений.';
+  String get limitReachedGuest => 'У вас есть 5 бесплатных генераций без регистрации. Чтобы получить больше, войдите или оформите подписку.';
+  String get payWithUSDT => 'Оплатить USDT';
+  String get generationHistory => 'История генераций';
+  String get noGenerations => 'Пока нет генераций';
+  String get repeat => 'Повторить';
+  String get logoPremiumOnly => 'Загрузка логотипа — Premium функция';
+  String get logoUploaded => 'Логотип загружен!';
+  String get afterPaymentMessage => 'После оплаты USDT, вернитесь в приложение. Подписка активируется через 1-2 мин.\nПромокод CRYPTO10 → второй месяц бесплатно!';
   
   // ═══════════════════════════════════════════════════════════════
   // ПРЕМИУМ ЭКРАН
   // ═══════════════════════════════════════════════════════════════
   String get unlockEverything => 'Разблокируй всё';
-  String get pricesInUSD => 'Цены в USD — оплата USDT';
   String get feature => 'Функция';
   String get presentations => 'Презентаций';
   String get slides => 'Слайдов';
@@ -96,14 +140,11 @@ class AppStrings {
   String get watermark => 'Водяной знак';
   String get freePlan => 'Бесплатно';
   String get premiumPlan => 'Premium';
-  String get unlimited => '∞';
-  String get monthly => 'Monthly';
-  String get halfYearly => '6 Months';
-  String get yearly => 'Yearly';
-  String get bestValue => 'BEST VALUE';
+  String get monthly => 'Месяц';
+  String get halfYearly => '6 месяцев';
+  String get yearly => 'Год';
   String get securePayment => 'Безопасная оплата';
   String get cancelAnytime => 'Отмена в любое время';
-  String get payWithUSDT => '💳 Оплатить USDT';
   
   // ═══════════════════════════════════════════════════════════════
   // ГЕНЕРАТОР ТЕСТОВ
@@ -194,14 +235,24 @@ class AppStrings {
   String get payment => 'Оплата';
   String get securePaymentRedirect => 'Вы будете перенаправлены на защищённую страницу оплаты';
   String get payNow => 'Оплатить';
-  String get afterPaymentMessage => 'После успешной оплаты USDT, вернитесь в приложение и подождите 1-2 минуты для автоматической активации.';
   String get promoCode => 'Промокод';
   String get enterPromoCode => 'Введите промокод';
   String get promoCodeApplied => 'Промокод применён!';
   String get invalidPromoCode => 'Неверный промокод';
+  
+  // ═══════════════════════════════════════════════════════════════
+  // НАВИГАЦИЯ
+  // ═══════════════════════════════════════════════════════════════
+  String get forTeachers => 'Учителям';
+  String get forBusiness => 'Бизнесу';
+  String get team => 'Команда';
+  String get tests => 'Тесты';
+  String get friends => 'Друзья';
 }
 
-// Класс для английского языка
+// ═══════════════════════════════════════════════════════════════
+// ENGLISH VERSION
+// ═══════════════════════════════════════════════════════════════
 class AppStringsEn extends AppStrings {
   @override
   String get appTitle => 'Prezentator AI';
@@ -251,6 +302,8 @@ class AppStringsEn extends AppStrings {
   String get no => 'No';
   @override
   String get ok => 'OK';
+  @override
+  String get continueText => 'Continue';
   
   @override
   String get email => 'Email';
@@ -278,6 +331,8 @@ class AppStringsEn extends AppStrings {
   String get passwordRequired => 'Password is required';
   @override
   String get nameRequired => 'Name is required';
+  @override
+  String get logIn => 'Log in';
   
   @override
   String get createPresentation => 'Create a Presentation';
@@ -310,12 +365,92 @@ class AppStringsEn extends AppStrings {
   @override
   String get premiumUnlimited => 'Premium • Unlimited';
   @override
-  String get buyTariff => 'Buy plan — USDT';
+  String get buyPlanUSDT => 'Buy plan — USDT';
+  @override
+  String get unlimited => '∞';
+  @override
+  String get ofFive => 'of 5';
+  @override
+  String get enterTopic => 'Enter a presentation topic';
+  @override
+  String get uploadText => 'Upload text';
+  @override
+  String get pasteText => 'Paste text for presentation';
+  @override
+  String get yourText => 'Your text...';
+  @override
+  String get fromText => 'From text';
+  @override
+  String get uploadLogo => 'Upload logo';
+  @override
+  String get templates => 'Templates';
+  @override
+  String get generationsFinished => 'Free generations for the month are over';
+  @override
+  String get choosePlan => 'Choose plan';
+  @override
+  String get pricesInUSD => 'Prices in USD — pay with USDT';
+  @override
+  String get monthLower => 'month';
+  @override
+  String get generationsPerMonth => 'generations/month';
+  @override
+  String get slidesLower => 'slides';
+  @override
+  String get backgroundsLower => 'backgrounds';
+  @override
+  String get basicExport => 'Basic export';
+  @override
+  String get allFromMonth => 'Everything from Month';
+  @override
+  String get allFromHalfYear => 'Everything from 6 Months';
+  @override
+  String get save17 => 'Save 17%';
+  @override
+  String get prioritySupport => 'Priority support';
+  @override
+  String get brandKit => 'Brand kit';
+  @override
+  String get payWithUSDTShort => 'Pay with USDT';
+  @override
+  String get bestValue => 'BEST VALUE';
+  @override
+  String get upgradeToUnlimited => 'Upgrade to Unlimited';
+  @override
+  String get usedThreeOfFive => 'You have used 3 of 5 free generations.';
+  @override
+  String get unlimitedPresentations => 'Unlimited presentations';
+  @override
+  String get fiftySlides => '50 slides per presentation';
+  @override
+  String get pdfNoWatermark => 'PDF export without watermark';
+  @override
+  String get only499PerMonth => 'Only \$4.99/month — pay with USDT';
+  @override
+  String get continueFree => 'Continue free';
+  @override
+  String get upgradeNow => 'Upgrade now — \$4.99';
+  @override
+  String get limitReachedLoggedIn => 'You have used all free generations for this month.\n\nSubscribe to continue creating unlimited presentations, lessons, tests and reports.';
+  @override
+  String get limitReachedGuest => 'You have 5 free generations without registration. To get more, log in or subscribe.';
+  @override
+  String get payWithUSDT => 'Pay with USDT';
+  @override
+  String get generationHistory => 'Generation history';
+  @override
+  String get noGenerations => 'No generations yet';
+  @override
+  String get repeat => 'Repeat';
+  @override
+  String get logoPremiumOnly => 'Logo upload is a Premium feature';
+  @override
+  String get logoUploaded => 'Logo uploaded!';
+  @override
+  String get afterPaymentMessage => 'After payment, return to the app. Subscription activates in 1-2 min.\nPromo code CRYPTO10 → second month free!';
   
   @override
   String get unlockEverything => 'Unlock Everything';
-  @override
-  String get pricesInUSD => 'Prices in USD — pay with USDT';
   @override
   String get feature => 'Feature';
   @override
@@ -341,21 +476,15 @@ class AppStringsEn extends AppStrings {
   @override
   String get premiumPlan => 'Premium';
   @override
-  String get unlimited => '∞';
-  @override
   String get monthly => 'Monthly';
   @override
   String get halfYearly => '6 Months';
   @override
   String get yearly => 'Yearly';
   @override
-  String get bestValue => 'BEST VALUE';
-  @override
   String get securePayment => 'Secure payment';
   @override
   String get cancelAnytime => 'Cancel anytime';
-  @override
-  String get payWithUSDT => '💳 Pay with USDT';
   
   @override
   String get quizGenerator => 'Quiz Generator';
@@ -488,8 +617,6 @@ class AppStringsEn extends AppStrings {
   @override
   String get payNow => 'Pay now';
   @override
-  String get afterPaymentMessage => 'After successful USDT payment, return to the app and wait 1-2 minutes for automatic activation.';
-  @override
   String get promoCode => 'Promo code';
   @override
   String get enterPromoCode => 'Enter promo code';
@@ -497,4 +624,15 @@ class AppStringsEn extends AppStrings {
   String get promoCodeApplied => 'Promo code applied!';
   @override
   String get invalidPromoCode => 'Invalid promo code';
+  
+  @override
+  String get forTeachers => 'For Teachers';
+  @override
+  String get forBusiness => 'For Business';
+  @override
+  String get team => 'Team';
+  @override
+  String get tests => 'Tests';
+  @override
+  String get friends => 'Friends';
 }
