@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../l10n/app_strings.dart';
 import 'login_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
@@ -24,7 +25,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final email = _emailController.text.trim();
     
     if (email.isEmpty) {
-      _showError('Введите email');
+      _showError(AppStrings.current.emailRequired);
       return;
     }
 
@@ -76,9 +77,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             ),
           ),
         ),
-        title: const Text(
-          'Сброс пароля',
-          style: TextStyle(
+        title: Text(
+          AppStrings.current.resetPassword,
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.w700,
@@ -95,7 +96,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Иконка
                 Container(
                   width: 80,
                   height: 80,
@@ -120,10 +120,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
                 const SizedBox(height: 32),
                 
-                // Заголовок
-                const Text(
-                  'Сброс пароля',
-                  style: TextStyle(
+                Text(
+                  AppStrings.current.resetPassword,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
@@ -131,9 +130,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Мы отправим ссылку для сброса пароля\nна вашу почту',
-                  style: TextStyle(
+                Text(
+                  AppStrings.current.resetPasswordSubtitle,
+                  style: const TextStyle(
                     color: Color(0xFF9A9A9A),
                     fontSize: 14,
                   ),
@@ -142,7 +141,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 const SizedBox(height: 40),
                 
                 if (!_isSent) ...[
-                  // Поле Email
                   Container(
                     decoration: BoxDecoration(
                       color: const Color(0xFF1E1E1E),
@@ -153,18 +151,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       controller: _emailController,
                       style: const TextStyle(color: Colors.white),
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        hintText: 'Email',
-                        hintStyle: TextStyle(color: Color(0xFF4A4A4A)),
-                        prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF1DB954)),
+                      decoration: InputDecoration(
+                        hintText: AppStrings.current.email,
+                        hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
+                        prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF1DB954)),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       ),
                     ),
                   ),
                   const SizedBox(height: 24),
                   
-                  // Кнопка отправки
                   MouseRegion(
                     cursor: SystemMouseCursors.click,
                     child: GestureDetector(
@@ -192,9 +189,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                     strokeWidth: 2.5,
                                   ),
                                 )
-                              : const Text(
-                                  'Отправить ссылку',
-                                  style: TextStyle(
+                              : Text(
+                                  AppStrings.current.sendResetLink,
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 16,
                                     fontWeight: FontWeight.w700,
@@ -205,7 +202,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     ),
                   ),
                 ] else ...[
-                  // Успешная отправка
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(24),
@@ -222,9 +218,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                           size: 64,
                         ),
                         const SizedBox(height: 16),
-                        const Text(
-                          'Письмо отправлено!',
-                          style: TextStyle(
+                        Text(
+                          AppStrings.current.emailSent,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -232,7 +228,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Проверьте почту ${_emailController.text}',
+                          '${AppStrings.current.checkEmail} ${_emailController.text}',
                           style: const TextStyle(
                             color: Color(0xFF9A9A9A),
                             fontSize: 13,
@@ -258,10 +254,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                 ),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Center(
+                              child: Center(
                                 child: Text(
-                                  'Вернуться к входу',
-                                  style: TextStyle(
+                                  AppStrings.current.backToLogin,
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w600,
                                     fontSize: 14,
