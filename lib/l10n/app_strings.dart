@@ -161,6 +161,35 @@ class AppStrings {
   String get typeLabel => 'Тип';
   
   // ═══════════════════════════════════════════════════════════════
+  // НАСТРОЙКИ
+  // ═══════════════════════════════════════════════════════════════
+  String get settings => 'Настройки';
+  String get userName => 'Имя пользователя';
+  String get application => 'ПРИЛОЖЕНИЕ';
+  String get notifications => 'Уведомления';
+  String get autoSave => 'Автосохранение';
+  String get language => 'Язык';
+  String get theme => 'Тема';
+  String get about => 'О ПРИЛОЖЕНИИ';
+  String get version => 'Версия';
+  String get termsOfService => 'Пользовательское соглашение';
+  String get privacyPolicy => 'Политика конфиденциальности';
+  String get changeName => 'Изменить имя';
+  String get enterName => 'Введите имя';
+  String get nameUpdated => 'Имя обновлено';
+  String get changeEmail => 'Изменить Email';
+  String get enterEmail => 'Введите email';
+  String get emailUpdated => 'Email обновлён';
+  String get selectLanguage => 'Выберите язык';
+  String get selectTheme => 'Выберите тему';
+  String get darkTheme => 'Тёмная';
+  String get lightTheme => 'Светлая';
+  String get systemTheme => 'Системная';
+  String get themeChangedTo => 'Тема изменена на';
+  String get restartToApply => 'Перезапустите приложение для полного применения.';
+  String get languageChanged => 'Язык изменён';
+  
+  // ═══════════════════════════════════════════════════════════════
   // АВТОРИЗАЦИЯ
   // ═══════════════════════════════════════════════════════════════
   String get email => 'Email';
@@ -312,37 +341,6 @@ class AppStrings {
   String get finishing => 'Завершаем...';
   
   // ═══════════════════════════════════════════════════════════════
-  // КОНСТРУКТОР ОТЧЁТОВ
-  // ═══════════════════════════════════════════════════════════════
-  String get reportBuilder => 'Конструктор отчётов';
-  String get createFinancialReport => 'Создайте профессиональный финансовый отчёт';
-  String get companyHint => 'Название компании';
-  String get periodHint => 'Отчётный период';
-  String get reportTypeLabel => 'ТИП ОТЧЁТА';
-  String get financialReport => 'Финансовый отчёт';
-  String get annualReport => 'Годовой отчёт';
-  String get esgReport => 'ESG отчёт';
-  String get managementReport => 'Управленческий отчёт';
-  String get ifrs => 'IFRS';
-  String get gaap => 'US GAAP';
-  String get rsbu => 'РСБУ';
-  String get gri => 'GRI';
-  String get international => 'Международный';
-  String get usa => 'США';
-  String get russia => 'Россия';
-  String get ifrsDescription => 'International Financial Reporting Standards';
-  String get gaapDescription => 'Generally Accepted Accounting Principles';
-  String get rsbuDescription => 'Российские стандарты бухгалтерского учёта';
-  String get griDescription => 'Global Reporting Initiative (ESG)';
-  String get freePlanMaxSlides => '⚠️ Для бесплатного тарифа максимум 10 слайдов';
-  String get premiumUpToSlides => '✨ Premium: до 15 слайдов';
-  String get reportGenerationError => 'Ошибка создания отчёта:';
-  String get report => 'Отчёт';
-  String get companyLabel => 'Компания';
-  String get periodLabel => 'Период';
-  String get typeLabel => 'Тип';
-  
-  // ═══════════════════════════════════════════════════════════════
   // ЭКСПОРТ
   // ═══════════════════════════════════════════════════════════════
   String get exportToPPTX => 'PowerPoint';
@@ -354,12 +352,10 @@ class AppStrings {
   // ═══════════════════════════════════════════════════════════════
   // ПРОФИЛЬ И НАСТРОЙКИ
   // ═══════════════════════════════════════════════════════════════
-  String get settings => 'Настройки';
   String get history => 'История';
   String get referralProgram => 'Реферальная программа';
   String get inviteFriends => 'Пригласи друзей';
   String get getBonus => 'Получи бонус';
-  String get language => 'Язык';
   String get russian => 'Русский';
   String get english => 'English';
   
@@ -700,6 +696,57 @@ class AppStringsEn extends AppStrings {
   String get typeLabel => 'Type';
   
   @override
+  String get settings => 'Settings';
+  @override
+  String get userName => 'Username';
+  @override
+  String get application => 'APPLICATION';
+  @override
+  String get notifications => 'Notifications';
+  @override
+  String get autoSave => 'Auto save';
+  @override
+  String get language => 'Language';
+  @override
+  String get theme => 'Theme';
+  @override
+  String get about => 'ABOUT';
+  @override
+  String get version => 'Version';
+  @override
+  String get termsOfService => 'Terms of Service';
+  @override
+  String get privacyPolicy => 'Privacy Policy';
+  @override
+  String get changeName => 'Change name';
+  @override
+  String get enterName => 'Enter name';
+  @override
+  String get nameUpdated => 'Name updated';
+  @override
+  String get changeEmail => 'Change Email';
+  @override
+  String get enterEmail => 'Enter email';
+  @override
+  String get emailUpdated => 'Email updated';
+  @override
+  String get selectLanguage => 'Select language';
+  @override
+  String get selectTheme => 'Select theme';
+  @override
+  String get darkTheme => 'Dark';
+  @override
+  String get lightTheme => 'Light';
+  @override
+  String get systemTheme => 'System';
+  @override
+  String get themeChangedTo => 'Theme changed to';
+  @override
+  String get restartToApply => 'Restart the app to fully apply.';
+  @override
+  String get languageChanged => 'Language changed';
+  
+  @override
   String get email => 'Email';
   @override
   String get password => 'Password';
@@ -971,8 +1018,6 @@ class AppStringsEn extends AppStrings {
   String get highQuality => 'High quality';
   
   @override
-  String get settings => 'Settings';
-  @override
   String get history => 'History';
   @override
   String get referralProgram => 'Referral program';
@@ -980,8 +1025,6 @@ class AppStringsEn extends AppStrings {
   String get inviteFriends => 'Invite friends';
   @override
   String get getBonus => 'Get bonus';
-  @override
-  String get language => 'Language';
   @override
   String get russian => 'Russian';
   @override
