@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_strings.dart';
 
 class RegisterPaymentScreen extends StatelessWidget {
   final String planId;
@@ -23,9 +24,9 @@ class RegisterPaymentScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Регистрация и оплата',
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
+        title: Text(
+          AppStrings.current.registerAndPayment,
+          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
         ),
         centerTitle: true,
       ),
@@ -53,14 +54,14 @@ class RegisterPaymentScreen extends StatelessWidget {
               style: const TextStyle(color: Color(0xFF1DB954), fontSize: 20, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 32),
-            const Text(
-              'Платёжный модуль в разработке',
-              style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
+            Text(
+              AppStrings.current.paymentModuleUnderDevelopment,
+              style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Premium доступ будет активирован после оплаты',
-              style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 12),
+            Text(
+              AppStrings.current.premiumWillBeActivatedAfterPayment,
+              style: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 12),
             ),
             const SizedBox(height: 48),
             ElevatedButton(
@@ -70,7 +71,10 @@ class RegisterPaymentScreen extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text('Назад', style: TextStyle(color: Colors.white, fontSize: 16)),
+              child: Text(
+                AppStrings.current.back,
+                style: const TextStyle(color: Colors.white, fontSize: 16),
+              ),
             ),
           ],
         ),
@@ -80,10 +84,14 @@ class RegisterPaymentScreen extends StatelessWidget {
 
   String _getPlanName() {
     switch (planId) {
-      case 'monthly': return 'Месячная подписка';
-      case 'semiannual': return 'Полугодовая подписка';
-      case 'annual': return 'Годовая подписка';
-      default: return 'Подписка';
+      case 'monthly':
+        return AppStrings.current.monthlySubscription;
+      case 'semiannual':
+        return AppStrings.current.semiannualSubscription;
+      case 'annual':
+        return AppStrings.current.annualSubscription;
+      default:
+        return AppStrings.current.subscription;
     }
   }
 }
