@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
+import '../l10n/app_strings.dart';
 import 'login_screen.dart';
 import 'teacher_screen.dart';
 
@@ -23,33 +24,38 @@ class _ReferralScreenState extends State<ReferralScreen> {
   
   List<Map<String, dynamic>> _friends = [];
 
-  final List<Map<String, dynamic>> _referralRules = [
-    {
-      'icon': Icons.person_add_rounded,
-      'title': 'Пригласи друга',
-      'description': 'Отправь реферальную ссылку другу',
-      'reward': 'Бесплатно',
-    },
-    {
-      'icon': Icons.check_circle_rounded,
-      'title': 'Регистрация друга',
-      'description': 'Друг зарегистрируется по твоей ссылке',
-      'reward': '+2 генерации',
-      'premium': false,
-    },
-    {
-      'icon': Icons.stars_rounded,
-      'title': 'Premium друга',
-      'description': 'Друг купит Premium тариф',
-      'reward': '+10 генераций',
-      'premium': true,
-    },
-  ];
+  final List<Map<String, dynamic>> _referralRules = [];
 
   @override
   void initState() {
     super.initState();
+    _initRules();
     _checkAuthAndLoadData();
+  }
+
+  void _initRules() {
+    _referralRules.addAll([
+      {
+        'icon': Icons.person_add_rounded,
+        'title': AppStrings.current.inviteFriend,
+        'description': AppStrings.current.sendReferralLink,
+        'reward': AppStrings.current.free,
+      },
+      {
+        'icon': Icons.check_circle_rounded,
+        'title': AppStrings.current.friendRegistration,
+        'description': AppStrings.current.friendRegisters,
+        'reward': '+2 ${AppStrings.current.generations}',
+        'premium': false,
+      },
+      {
+        'icon': Icons.stars_rounded,
+        'title': AppStrings.current.friendPremium,
+        'description': AppStrings.current.friendBuysPremium,
+        'reward': '+10 ${AppStrings.current.generations}',
+        'premium': true,
+      },
+    ]);
   }
 
   Future<void> _checkAuthAndLoadData() async {
@@ -123,11 +129,11 @@ class _ReferralScreenState extends State<ReferralScreen> {
       setState(() => _isCopied = true);
       
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Код скопирован!'),
-          backgroundColor: Color(0xFF1DB954),
+        SnackBar(
+          content: Text(AppStrings.current.codeCopied),
+          backgroundColor: const Color(0xFF1DB954),
           behavior: SnackBarBehavior.floating,
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         ),
       );
       
@@ -136,9 +142,9 @@ class _ReferralScreenState extends State<ReferralScreen> {
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ошибка копирования'),
-          backgroundColor: Color(0xFFFF3B30),
+        SnackBar(
+          content: Text(AppStrings.current.copyError),
+          backgroundColor: const Color(0xFFFF3B30),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -149,7 +155,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
     final shareUrl = 'https://presentator.ai/ref/$_referralCode';
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Ссылка: $shareUrl'),
+        content: Text('${AppStrings.current.link}: $shareUrl'),
         backgroundColor: const Color(0xFF1DB954),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 3),
@@ -190,7 +196,10 @@ class _ReferralScreenState extends State<ReferralScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Друзья', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+        title: Text(
+          AppStrings.current.friends,
+          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
+        ),
         centerTitle: true,
       ),
       body: _isLoading
@@ -204,7 +213,6 @@ class _ReferralScreenState extends State<ReferralScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(32),
@@ -220,22 +228,27 @@ class _ReferralScreenState extends State<ReferralScreen> {
                               child: const Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 32),
                             ),
                             const SizedBox(height: 16),
-                            const Text('Приведи друга', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
+                            Text(
+                              AppStrings.current.inviteFriendTitle,
+                              style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800),
+                            ),
                             const SizedBox(height: 8),
-                            Text('Получи бонусные генерации', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
+                            Text(
+                              AppStrings.current.getBonusGenerations,
+                              style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
+                            ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 24),
 
-                      // Stats
                       Row(
                         children: [
                           Expanded(
                             child: _buildStatCard(
                               icon: Icons.people_rounded,
                               value: '$_referralsCount',
-                              label: 'Приглашений',
+                              label: AppStrings.current.invitations,
                               color: const Color(0xFF1DB954),
                             ),
                           ),
@@ -244,7 +257,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                             child: _buildStatCard(
                               icon: Icons.card_giftcard_rounded,
                               value: '+$_bonusGenerations',
-                              label: 'Бонусов получено',
+                              label: AppStrings.current.bonusReceived,
                               color: const Color(0xFFFFD700),
                             ),
                           ),
@@ -252,7 +265,6 @@ class _ReferralScreenState extends State<ReferralScreen> {
                       ),
                       const SizedBox(height: 24),
 
-                      // Referral code
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(20),
@@ -264,7 +276,10 @@ class _ReferralScreenState extends State<ReferralScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text('ВАШ РЕФЕРАЛЬНЫЙ КОД', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+                            Text(
+                              AppStrings.current.yourReferralCode,
+                              style: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700),
+                            ),
                             const SizedBox(height: 12),
                             Container(
                               width: double.infinity,
@@ -295,7 +310,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                                         children: [
                                           Icon(_isCopied ? Icons.check_rounded : Icons.copy_rounded, color: _isCopied ? const Color(0xFF1DB954) : Colors.white, size: 16),
                                           const SizedBox(width: 6),
-                                          Text(_isCopied ? 'Скопировано!' : 'Копировать', style: TextStyle(color: _isCopied ? const Color(0xFF1DB954) : Colors.white, fontSize: 12)),
+                                          Text(_isCopied ? AppStrings.current.copied : AppStrings.current.copy, style: TextStyle(color: _isCopied ? const Color(0xFF1DB954) : Colors.white, fontSize: 12)),
                                         ],
                                       ),
                                     ),
@@ -308,7 +323,6 @@ class _ReferralScreenState extends State<ReferralScreen> {
                       ),
                       const SizedBox(height: 16),
 
-                      // Share button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -318,20 +332,27 @@ class _ReferralScreenState extends State<ReferralScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
-                          child: const Text('Пригласить друзей', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                          child: Text(
+                            AppStrings.current.inviteFriendsButton,
+                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),
 
-                      // How it works
-                      const Text('КАК ЭТО РАБОТАЕТ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+                      Text(
+                        AppStrings.current.howItWorks.toUpperCase(),
+                        style: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700),
+                      ),
                       const SizedBox(height: 12),
                       ..._referralRules.map((rule) => _buildRuleCard(rule, isPremium)),
                       const SizedBox(height: 24),
 
-                      // Invited friends
                       if (_friends.isNotEmpty) ...[
-                        const Text('ПРИГЛАШЁННЫЕ ДРУЗЬЯ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+                        Text(
+                          AppStrings.current.invitedFriends.toUpperCase(),
+                          style: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700),
+                        ),
                         const SizedBox(height: 12),
                         Container(
                           decoration: BoxDecoration(
@@ -366,7 +387,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                                     size: 20,
                                   ),
                                 ),
-                                title: Text(friend['name'] ?? friend['email']?.split('@')[0] ?? 'Пользователь', style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                                title: Text(friend['name'] ?? friend['email']?.split('@')[0] ?? AppStrings.current.user, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
                                 subtitle: Text(friend['date'] ?? '', style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 11)),
                                 trailing: friend['reward'] != null
                                     ? Container(
@@ -377,7 +398,7 @@ class _ReferralScreenState extends State<ReferralScreen> {
                                     : Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                         decoration: BoxDecoration(color: const Color(0xFF2A2A2A), borderRadius: BorderRadius.circular(12)),
-                                        child: const Text('Ожидает', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 11)),
+                                        child: Text(AppStrings.current.pending, style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 11)),
                                       ),
                               );
                             },
@@ -402,7 +423,10 @@ class _ReferralScreenState extends State<ReferralScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Друзья', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+        title: Text(
+          AppStrings.current.friends,
+          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
+        ),
         centerTitle: true,
       ),
       body: Center(
@@ -427,9 +451,15 @@ class _ReferralScreenState extends State<ReferralScreen> {
                         child: const Icon(Icons.card_giftcard_rounded, color: Colors.white, size: 32),
                       ),
                       const SizedBox(height: 16),
-                      const Text('Реферальная программа', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
+                      Text(
+                        AppStrings.current.referralProgram,
+                        style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800),
+                      ),
                       const SizedBox(height: 8),
-                      Text('Приглашайте друзей и получайте бонусы', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
+                      Text(
+                        AppStrings.current.inviteFriendsGetBonuses,
+                        style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
+                      ),
                     ],
                   ),
                 ),
@@ -445,9 +475,16 @@ class _ReferralScreenState extends State<ReferralScreen> {
                     children: [
                       const Icon(Icons.lock_rounded, color: Color(0xFFFFD700), size: 48),
                       const SizedBox(height: 16),
-                      const Text('Войдите в аккаунт', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+                      Text(
+                        AppStrings.current.loginToAccount,
+                        style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
+                      ),
                       const SizedBox(height: 8),
-                      const Text('Реферальная программа доступна только авторизованным пользователям', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14), textAlign: TextAlign.center),
+                      Text(
+                        AppStrings.current.referralLoginRequired,
+                        style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
+                        textAlign: TextAlign.center,
+                      ),
                       const SizedBox(height: 24),
                       SizedBox(
                         width: double.infinity,
@@ -458,7 +495,10 @@ class _ReferralScreenState extends State<ReferralScreen> {
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          child: const Text('Войти', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                          child: Text(
+                            AppStrings.current.logIn,
+                            style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                          ),
                         ),
                       ),
                     ],
