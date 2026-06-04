@@ -10,6 +10,7 @@ import '../providers/user_provider.dart';
 import '../providers/logo_provider.dart';
 import '../providers/history_provider.dart';
 import '../services/api_service.dart';
+import '../l10n/app_strings.dart';
 import 'loading_screen.dart';
 import 'premium_screen.dart';
 import 'settings_screen.dart';
@@ -69,7 +70,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   String _countryCode = 'US';
 
-  final List<String> _examples = ['ИИ', 'Бизнес', 'Экология', 'Космос', 'IT', 'Маркетинг'];
+  final List<String> _examples = ['AI', 'Business', 'Ecology', 'Space', 'IT', 'Marketing'];
   
   int _vipOccupiedSpots = 0;
   int _vipTotalSpots = 50;
@@ -145,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     html.window.open(url, '_blank');
     
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: const Text('💸 After payment, return to the app. Subscription activates in 1-2 min.\nPromo code CRYPTO10 → second month free!'),
+      content: Text('💸 ${AppStrings.current.afterPaymentMessage}'),
       backgroundColor: _T.accent.withOpacity(0.9),
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -164,31 +165,31 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       builder: (_) => AlertDialog(
         backgroundColor: _T.bgSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.bolt, color: _T.accent, size: 24),
-            SizedBox(width: 8),
-            Text('Upgrade to Unlimited', style: TextStyle(color: _T.txtPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
+            const Icon(Icons.bolt, color: _T.accent, size: 24),
+            const SizedBox(width: 8),
+            Text(AppStrings.current.upgradeToUnlimited, style: const TextStyle(color: _T.txtPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            Text('You have used 3 of 5 free generations.', style: TextStyle(color: _T.txtSecondary, fontSize: 14)),
-            SizedBox(height: 12),
-            Text('✓ Unlimited presentations', style: TextStyle(color: _T.accent, fontSize: 13)),
-            Text('✓ 50 slides per presentation', style: TextStyle(color: _T.accent, fontSize: 13)),
-            Text('✓ Brand kit & logo upload', style: TextStyle(color: _T.accent, fontSize: 13)),
-            Text('✓ PDF export without watermark', style: TextStyle(color: _T.accent, fontSize: 13)),
-            SizedBox(height: 16),
-            Text('Only \$4.99/month — pay with USDT', style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w600)),
+          children: [
+            Text(AppStrings.current.usedThreeOfFive, style: const TextStyle(color: _T.txtSecondary, fontSize: 14)),
+            const SizedBox(height: 12),
+            Text('✓ ${AppStrings.current.unlimitedPresentations}', style: const TextStyle(color: _T.accent, fontSize: 13)),
+            Text('✓ ${AppStrings.current.fiftySlides}', style: const TextStyle(color: _T.accent, fontSize: 13)),
+            Text('✓ ${AppStrings.current.brandKit}', style: const TextStyle(color: _T.accent, fontSize: 13)),
+            Text('✓ ${AppStrings.current.pdfNoWatermark}', style: const TextStyle(color: _T.accent, fontSize: 13)),
+            const SizedBox(height: 16),
+            Text(AppStrings.current.only499PerMonth, style: const TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w600)),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Continue free', style: TextStyle(color: _T.txtSecondary)),
+            child: Text(AppStrings.current.continueFree, style: const TextStyle(color: _T.txtSecondary)),
           ),
           ElevatedButton(
             onPressed: () {
@@ -199,7 +200,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               backgroundColor: _T.accent,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('Upgrade now — \$4.99', style: TextStyle(color: Colors.white)),
+            child: Text(AppStrings.current.upgradeNow, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -216,23 +217,23 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       builder: (_) => AlertDialog(
         backgroundColor: _T.bgSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: _T.gold, size: 24),
-            SizedBox(width: 8),
-            Text('Limit reached', style: TextStyle(color: _T.txtPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
+            const Icon(Icons.warning_amber_rounded, color: _T.gold, size: 24),
+            const SizedBox(width: 8),
+            Text(AppStrings.current.limitReachedTitle, style: const TextStyle(color: _T.txtPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
           ],
         ),
         content: Text(
           isLoggedIn
-              ? 'You have used all free generations for this month.\n\nSubscribe to continue creating unlimited presentations, lessons, tests and reports.'
-              : 'You have 5 free generations without registration. To get more, log in or subscribe.',
+              ? AppStrings.current.limitReachedLoggedIn
+              : AppStrings.current.limitReachedGuest,
           style: const TextStyle(color: _T.txtSecondary, fontSize: 14, height: 1.4),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Later', style: TextStyle(color: _T.txtSecondary)),
+            child: Text(AppStrings.current.later, style: const TextStyle(color: _T.txtSecondary)),
           ),
           if (!isLoggedIn)
             TextButton(
@@ -240,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 Navigator.pop(context);
                 _push(const LoginScreen());
               },
-              child: const Text('Log in', style: TextStyle(color: _T.accent)),
+              child: Text(AppStrings.current.logIn, style: const TextStyle(color: _T.accent)),
             ),
           ElevatedButton(
             onPressed: () {
@@ -251,7 +252,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               backgroundColor: _T.accent,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
-            child: const Text('Pay with USDT', style: TextStyle(color: Colors.white)),
+            child: Text(AppStrings.current.payWithUSDT, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -309,9 +310,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     } catch (_) {}
   }
 
-  // Фиксированное форматирование цены в долларах
   String _formatPrice(double usd) {
-    if (usd == 0) return 'Бесплатно';
+    if (usd == 0) return AppStrings.current.free;
     return '\$${usd.toStringAsFixed(2)}';
   }
 
@@ -322,7 +322,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final topic = (overrideTopic ?? _topicController.text).trim();
     if (topic.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Введите тему'),
+        content: Text(AppStrings.current.enterTopic),
         backgroundColor: _T.gold.withOpacity(0.9),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -339,7 +339,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     
-    // Гость — увеличиваем счётчик и проверяем оффер
     if (!userProvider.isLoggedIn && !userProvider.isPremium && !userProvider.isVip) {
       final oldCount = await _getGuestGenerationCount();
       await _incrementGuestGenerationCount();
@@ -349,7 +348,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       }
     }
     
-    // Залогиненный — оффер покажет UserProvider и проверка после генерации
     try {
       Provider.of<UserHistoryProvider>(context, listen: false)
           .add(topic, slideCount: _maxSlides);
@@ -362,7 +360,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ),
     ).then((_) async {
       await _loadUserData();
-      // Проверяем, нужно ли показать оффер для залогиненного пользователя
       if (userProvider.shouldShowUpgradeOffer) {
         _showUpgradeOffer();
         userProvider.resetUpgradeOfferFlag();
@@ -390,16 +387,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Загрузите текст', style: TextStyle(color: _T.txtPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
+              Text(AppStrings.current.uploadText, style: const TextStyle(color: _T.txtPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
               const SizedBox(height: 6),
-              const Text('Вставьте текст для презентации', style: TextStyle(color: _T.txtSecondary, fontSize: 13)),
+              Text(AppStrings.current.pasteText, style: const TextStyle(color: _T.txtSecondary, fontSize: 13)),
               const SizedBox(height: 20),
               TextField(
                 controller: controller,
                 maxLines: 6,
                 style: const TextStyle(fontSize: 13, color: _T.txtPrimary),
                 decoration: InputDecoration(
-                  hintText: 'Ваш текст...',
+                  hintText: AppStrings.current.yourText,
                   hintStyle: const TextStyle(color: _T.txtMuted),
                   filled: true,
                   fillColor: _T.bgCard,
@@ -414,7 +411,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(color: _T.bgCard, borderRadius: BorderRadius.circular(12), border: Border.all(color: _T.border)),
-                    child: const Center(child: Text('Отмена', style: TextStyle(color: _T.txtSecondary, fontWeight: FontWeight.w600))),
+                    child: Center(child: Text(AppStrings.current.cancel, style: const TextStyle(color: _T.txtSecondary, fontWeight: FontWeight.w600))),
                   ),
                 )),
                 const SizedBox(width: 12),
@@ -429,7 +426,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(12)),
-                    child: const Center(child: Text('Создать', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
+                    child: Center(child: Text(AppStrings.current.create, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700))),
                   ),
                 )),
               ]),
@@ -444,7 +441,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     final up = Provider.of<UserProvider>(context, listen: false);
     if (!up.isPremium) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: const Text('Загрузка логотипа — Premium функция'),
+        content: Text(AppStrings.current.logoPremiumOnly),
         backgroundColor: _T.gold.withOpacity(0.9),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -466,7 +463,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           content: Row(children: [
             Container(width: 24, height: 24, decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(6)), child: const Icon(Icons.check_rounded, color: Colors.white, size: 14)),
             const SizedBox(width: 10),
-            const Text('Логотип загружен!', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
+            Text(AppStrings.current.logoUploaded, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13)),
           ]),
           backgroundColor: _T.accent.withOpacity(0.9),
           behavior: SnackBarBehavior.floating,
@@ -490,10 +487,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(child: Container(width: 36, height: 4, margin: const EdgeInsets.only(bottom: 16), decoration: BoxDecoration(color: _T.border, borderRadius: BorderRadius.circular(2)))),
-            const Text('История генераций', style: TextStyle(color: _T.txtPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+            Text(AppStrings.current.generationHistory, style: const TextStyle(color: _T.txtPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
             const SizedBox(height: 12),
             if (records.isEmpty)
-              const Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 24), child: Text('Пока нет генераций', style: TextStyle(color: _T.txtMuted, fontSize: 13))))
+              Center(child: Padding(padding: EdgeInsets.symmetric(vertical: 24), child: Text(AppStrings.current.noGenerations, style: const TextStyle(color: _T.txtMuted, fontSize: 13))))
             else
               ConstrainedBox(
                 constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.4),
@@ -507,13 +504,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       contentPadding: EdgeInsets.zero,
                       leading: Container(width: 36, height: 36, decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(10)), child: const Icon(Icons.slideshow_outlined, color: _T.accent, size: 18)),
                       title: Text(rec.topic, style: const TextStyle(color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w600)),
-                      subtitle: Text('${rec.slideCount} слайдов', style: const TextStyle(color: _T.txtMuted, fontSize: 11)),
+                      subtitle: Text('${rec.slideCount} ${AppStrings.current.slidesLower}', style: const TextStyle(color: _T.txtMuted, fontSize: 11)),
                       trailing: GestureDetector(
                         onTap: () { 
                           Navigator.pop(ctx); 
                           _generate(overrideTopic: rec.topic); 
                         },
-                        child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5), decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(8)), child: const Text('Повторить', style: TextStyle(color: _T.accent, fontSize: 11, fontWeight: FontWeight.w600))),
+                        child: Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5), decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(8)), child: Text(AppStrings.current.repeat, style: const TextStyle(color: _T.accent, fontSize: 11, fontWeight: FontWeight.w600))),
                       ),
                     );
                   },
@@ -573,13 +570,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           children: [
             Container(width: 28, height: 28, decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.auto_awesome, color: Colors.white, size: 16)),
             const SizedBox(width: 8),
-            const Text('Презентатор ИИ', style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w700, fontSize: 17, letterSpacing: -0.3)),
+            Text(AppStrings.current.appTitle, style: const TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w700, fontSize: 17, letterSpacing: -0.3)),
           ],
         ),
         actions: [
           _buildVipIcon(),
-          if (logo != null) _AppBarBtn(Icons.image_rounded, _T.accentLight, () {}, tooltip: 'Логотип загружен'),
-          _AppBarBtn(Icons.history_rounded, _T.txtSecondary, _showHistory, tooltip: 'История'),
+          if (logo != null) _AppBarBtn(Icons.image_rounded, _T.accentLight, () {}, tooltip: AppStrings.current.logoUploaded),
+          _AppBarBtn(Icons.history_rounded, _T.txtSecondary, _showHistory, tooltip: AppStrings.current.history),
           _AppBarBtn(
             Icons.person_outline_rounded,
             _T.txtSecondary,
@@ -590,9 +587,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 _push(const LoginScreen());
               }
             },
-            tooltip: isLoggedIn ? 'Профиль' : 'Войти',
+            tooltip: isLoggedIn ? AppStrings.current.profile : AppStrings.current.logIn,
           ),
-          _AppBarBtn(Icons.settings_outlined, _T.txtSecondary, () => _push(const SettingsScreen()), tooltip: 'Настройки'),
+          _AppBarBtn(Icons.settings_outlined, _T.txtSecondary, () => _push(const SettingsScreen()), tooltip: AppStrings.current.settings),
         ],
       ),
       body: Center(
@@ -603,9 +600,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text('Создай презентацию', style: TextStyle(color: _T.txtPrimary, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.8)),
+                Text(AppStrings.current.createPresentation, style: const TextStyle(color: _T.txtPrimary, fontSize: 26, fontWeight: FontWeight.w900, letterSpacing: -0.8)),
                 const SizedBox(height: 6),
-                const Text('с помощью ИИ за 1 минуту', style: TextStyle(color: _T.txtSecondary, fontSize: 14)),
+                Text(AppStrings.current.withAI, style: const TextStyle(color: _T.txtSecondary, fontSize: 14)),
                 const SizedBox(height: 28),
 
                 AnimatedContainer(
@@ -617,7 +614,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     focusNode: _focusNode,
                     style: const TextStyle(fontSize: 14, color: _T.txtPrimary),
                     textAlign: TextAlign.center,
-                    decoration: const InputDecoration(hintText: 'О чём презентация?', hintStyle: TextStyle(color: _T.txtMuted, fontSize: 14), border: InputBorder.none, contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14)),
+                    decoration: InputDecoration(
+                      hintText: AppStrings.current.topicHint,
+                      hintStyle: const TextStyle(color: _T.txtMuted, fontSize: 14),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ),
                     onSubmitted: (_) => _generate(),
                   ),
                 ),
@@ -630,7 +632,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Количество слайдов', style: TextStyle(color: _T.txtMuted, fontSize: 11)), Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3), decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(8)), child: Text('$_maxSlides', style: const TextStyle(color: _T.accent, fontWeight: FontWeight.w700, fontSize: 12)))]),
+                      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+                        Text(AppStrings.current.slidesCount, style: const TextStyle(color: _T.txtMuted, fontSize: 11)),
+                        Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3), decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(8)), child: Text('$_maxSlides', style: const TextStyle(color: _T.accent, fontWeight: FontWeight.w700, fontSize: 12))),
+                      ]),
                       const SizedBox(height: 4),
                       SliderTheme(
                         data: SliderThemeData(activeTrackColor: _T.accent, inactiveTrackColor: _T.border, thumbColor: _T.accent, overlayColor: _T.accentDim, trackHeight: 3, thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7)),
@@ -657,7 +662,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                         Icon(Icons.auto_awesome, color: canGenerate ? Colors.white : _T.txtMuted, size: 16),
                         const SizedBox(width: 8),
-                        Text(canGenerate ? 'Создать' : 'Лимит исчерпан', style: TextStyle(color: canGenerate ? Colors.white : _T.txtMuted, fontWeight: FontWeight.w800, fontSize: 15)),
+                        Text(canGenerate ? AppStrings.current.createButton : AppStrings.current.limitReached, style: TextStyle(color: canGenerate ? Colors.white : _T.txtMuted, fontWeight: FontWeight.w800, fontSize: 15)),
                       ]),
                     ),
                   ),
@@ -682,11 +687,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 const SizedBox(height: 16),
 
                 Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  _ExtraBtn(Icons.article_outlined, 'Из текста', () async { if (await _canGenerate()) _showTextInput(); else _showLimitDialog(); }),
+                  _ExtraBtn(Icons.article_outlined, AppStrings.current.fromText, () async { if (await _canGenerate()) _showTextInput(); else _showLimitDialog(); }),
                   const SizedBox(width: 10),
-                  _ExtraBtn(Icons.image_outlined, 'Загрузить логотип', _uploadLogo),
+                  _ExtraBtn(Icons.image_outlined, AppStrings.current.uploadLogo, _uploadLogo),
                   const SizedBox(width: 10),
-                  _ExtraBtn(Icons.style_rounded, 'Шаблоны', () => _push(const TemplateSelectorScreen())),
+                  _ExtraBtn(Icons.style_rounded, AppStrings.current.templates, () => _push(const TemplateSelectorScreen())),
                 ]),
 
                 if (logo != null) ...[
@@ -697,7 +702,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     child: Row(children: [
                       ClipRRect(borderRadius: BorderRadius.circular(8), child: Image.network(logo, width: 40, height: 40, fit: BoxFit.cover)),
                       const SizedBox(width: 12),
-                      const Text('Логотип загружен', style: TextStyle(color: _T.accentLight, fontSize: 12, fontWeight: FontWeight.w500)),
+                      Text(AppStrings.current.logoUploaded, style: const TextStyle(color: _T.accentLight, fontSize: 12, fontWeight: FontWeight.w500)),
                       const Spacer(),
                       GestureDetector(onTap: () => Provider.of<BrandKitProvider>(context, listen: false).clear(), child: const Icon(Icons.close_rounded, color: _T.txtMuted, size: 16)),
                     ]),
@@ -705,7 +710,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ],
                 const SizedBox(height: 20),
 
-                // Индикатор оставшихся генераций
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
@@ -718,9 +722,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     Row(mainAxisAlignment: MainAxisAlignment.center, children: [
                       Icon(left <= 0 && !isPremium && !isVip ? Icons.warning_amber_rounded : Icons.bolt, color: _T.accent, size: 14),
                       const SizedBox(width: 4),
-                      Text(left <= 0 && !isPremium && !isVip ? 'Бесплатные генерации на месяц закончились' : 'Осталось генераций в этом месяце: ', style: TextStyle(color: _T.txtSecondary, fontSize: 11)),
+                      Text(left <= 0 && !isPremium && !isVip ? AppStrings.current.generationsFinished : AppStrings.current.generationsLeft, style: const TextStyle(color: _T.txtSecondary, fontSize: 11)),
                       if (left > 0 || isPremium || isVip) 
-                        Text(isPremium || isVip ? '∞' : '$left из 5', style: const TextStyle(color: _T.accent, fontWeight: FontWeight.w700, fontSize: 12)),
+                        Text(isPremium || isVip ? AppStrings.current.unlimited : '$left ${AppStrings.current.ofFive}', style: const TextStyle(color: _T.accent, fontWeight: FontWeight.w700, fontSize: 12)),
                     ]),
                     if (left <= 0 && !isPremium && !isVip) ...[
                       const SizedBox(height: 8),
@@ -732,7 +736,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Text('Купить тариф — USDT', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+                          child: Text(AppStrings.current.buyPlanUSDT, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
                         ),
                       ),
                     ],
@@ -742,26 +746,77 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     ],
                     if (isPremium || isVip) ...[
                       const SizedBox(height: 4),
-                      const Text('Premium • Unlimited', style: TextStyle(color: _T.accent, fontSize: 11, fontWeight: FontWeight.w600)),
+                      Text(AppStrings.current.premiumUnlimited, style: const TextStyle(color: _T.accent, fontSize: 11, fontWeight: FontWeight.w600)),
                     ],
                   ]),
                 ),
                 const SizedBox(height: 28),
 
-                const Text('Выберите план', style: TextStyle(color: _T.txtPrimary, fontSize: 20, fontWeight: FontWeight.w800)),
+                Text(AppStrings.current.choosePlan, style: const TextStyle(color: _T.txtPrimary, fontSize: 20, fontWeight: FontWeight.w800)),
                 const SizedBox(height: 4),
-                const Text('Цены в USD — оплата USDT', style: TextStyle(color: _T.txtSecondary, fontSize: 12)),
+                Text(AppStrings.current.pricesInUSD, style: const TextStyle(color: _T.txtSecondary, fontSize: 12)),
                 const SizedBox(height: 20),
                 Row(children: [
-                  Expanded(child: _TariffCard(title: 'Бесплатно', usd: 0, formatPrice: _formatPrice, period: '', features: ['5 генераций/мес', '10 слайдов', '8 фонов', 'Базовый экспорт'], popular: false, onTap: () {})),
+                  Expanded(child: _TariffCard(
+                    title: AppStrings.current.free, 
+                    usd: 0, 
+                    formatPrice: _formatPrice, 
+                    period: '', 
+                    features: [
+                      '5 ${AppStrings.current.generationsPerMonth}',
+                      '10 ${AppStrings.current.slidesLower}',
+                      '8 ${AppStrings.current.backgroundsLower}',
+                      AppStrings.current.basicExport
+                    ], 
+                    popular: false, 
+                    onTap: () {})),
                   const SizedBox(width: 12),
-                  Expanded(child: _TariffCard(title: 'Месяц', usd: 4.99, formatPrice: _formatPrice, period: '/мес', features: ['∞ генераций', '50 слайдов', '16 фонов', 'PDF без знака', 'AI-улучшение', 'Оплата USDT'], popular: true, onTap: () => _openCryptoPayment(4.99))),
+                  Expanded(child: _TariffCard(
+                    title: AppStrings.current.month, 
+                    usd: 4.99, 
+                    formatPrice: _formatPrice, 
+                    period: '/${AppStrings.current.monthLower}', 
+                    features: [
+                      AppStrings.current.unlimited,
+                      '50 ${AppStrings.current.slidesLower}',
+                      '16 ${AppStrings.current.backgroundsLower}',
+                      AppStrings.current.pdfNoWatermark,
+                      AppStrings.current.aiImprove,
+                      AppStrings.current.payWithUSDTShort
+                    ], 
+                    popular: true, 
+                    onTap: () => _openCryptoPayment(4.99))),
                 ]),
                 const SizedBox(height: 12),
                 Row(children: [
-                  Expanded(child: _TariffCard(title: 'Полгода', usd: 29.99, formatPrice: _formatPrice, period: '\$5.00/мес', features: ['Всё из Месяца', 'Экономия 17%', 'Приоритетная поддержка', 'Оплата USDT'], popular: false, onTap: () => _openCryptoPayment(29.99))),
+                  Expanded(child: _TariffCard(
+                    title: AppStrings.current.halfYear, 
+                    usd: 29.99, 
+                    formatPrice: _formatPrice, 
+                    period: '\$5.00/${AppStrings.current.monthLower}', 
+                    features: [
+                      AppStrings.current.allFromMonth,
+                      AppStrings.current.save17,
+                      AppStrings.current.prioritySupport,
+                      AppStrings.current.payWithUSDTShort
+                    ], 
+                    popular: false, 
+                    onTap: () => _openCryptoPayment(29.99))),
                   const SizedBox(width: 12),
-                  Expanded(child: _TariffCard(title: 'Год', usd: 49.99, formatPrice: _formatPrice, period: '\$4.17/мес', features: ['Всё из Полугода', 'Экономия 33%', 'Бренд-кит', 'Оплата USDT'], popular: false, badge: 'ВЫГОДНО', onTap: () => _openCryptoPayment(49.99))),
+                  Expanded(child: _TariffCard(
+                    title: AppStrings.current.year, 
+                    usd: 49.99, 
+                    formatPrice: _formatPrice, 
+                    period: '\$4.17/${AppStrings.current.monthLower}', 
+                    features: [
+                      AppStrings.current.allFromHalfYear,
+                      AppStrings.current.save33,
+                      AppStrings.current.brandKit,
+                      AppStrings.current.payWithUSDTShort
+                    ], 
+                    popular: false, 
+                    badge: AppStrings.current.bestValue.toUpperCase(), 
+                    onTap: () => _openCryptoPayment(49.99))),
                 ]),
                 const SizedBox(height: 28),
 
@@ -771,12 +826,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _NavItem(Icons.school_outlined, 'Учителям', () => _push(TeacherScreen(countryCode: _countryCode))),
-                      _NavItem(Icons.business_center_outlined, 'Бизнесу', () => _push(CorporateScreen(countryCode: _countryCode))),
-                      _NavItem(Icons.group_outlined, 'Команда', () => _push(WorkspaceScreen(countryCode: _countryCode))),
-                      _NavItem(Icons.quiz_outlined, 'Тесты', () => _push(const QuizScreen())),
-                      _NavItem(Icons.card_giftcard_outlined, 'Друзья', () => _push(const ReferralScreen())),
-                      _NavItem(Icons.person_outline, 'Профиль', () => _push(const ProfileScreen())),
+                      _NavItem(Icons.school_outlined, AppStrings.current.forTeachers, () => _push(TeacherScreen(countryCode: _countryCode))),
+                      _NavItem(Icons.business_center_outlined, AppStrings.current.forBusiness, () => _push(CorporateScreen(countryCode: _countryCode))),
+                      _NavItem(Icons.group_outlined, AppStrings.current.team, () => _push(WorkspaceScreen(countryCode: _countryCode))),
+                      _NavItem(Icons.quiz_outlined, AppStrings.current.tests, () => _push(const QuizScreen())),
+                      _NavItem(Icons.card_giftcard_outlined, AppStrings.current.friends, () => _push(const ReferralScreen())),
+                      _NavItem(Icons.person_outline, AppStrings.current.profile, () => _push(const ProfileScreen())),
                     ],
                   ),
                 ),
@@ -827,7 +882,7 @@ class _TariffCard extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(gradient: popular ? const LinearGradient(colors: [_T.accent, _T.accentLight]) : const LinearGradient(colors: [_T.goldLight, _T.gold]), borderRadius: BorderRadius.circular(5)),
-                child: Text(badge ?? (popular ? 'ПОПУЛЯРНЫЙ' : ''), style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
+                child: Text(badge ?? (popular ? AppStrings.current.popular.toUpperCase() : ''), style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.w800, letterSpacing: 0.5)),
               ),
             Text(title, style: const TextStyle(color: _T.txtPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
             const SizedBox(height: 4),
@@ -845,7 +900,7 @@ class _TariffCard extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// SMALL WIDGETS
+// SMALL WIDGETS (без изменений, только тексты через AppStrings)
 // ═══════════════════════════════════════════════════════════════
 class _AppBarBtn extends StatefulWidget {
   final IconData icon;
