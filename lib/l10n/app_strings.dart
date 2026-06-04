@@ -64,6 +64,40 @@ class AppStrings {
   String get allFeaturesAvailable => 'Все функции доступны';
   String get thisMonth => 'в этом месяце';
   String get activate => 'Активировать';
+  String get of => 'из';
+  String get ofFive => 'из 5';
+  String get generationsLeftLower => 'бесплатных генераций осталось';
+  String get quizGenerator => 'Генератор тестов';
+  String get createQuizFromTopic => 'Создайте тест по теме или презентации';
+  String get fromPresentation => 'Из презентации';
+  String get byTopic => 'По теме';
+  String get uploadFile => 'Загрузить файл';
+  String get chooseFile => 'Выбрать файл';
+  String get selectPresentation => 'Выберите презентацию';
+  String get generateQuiz => 'Сгенерировать тест';
+  String get question => 'Вопрос';
+  String get score => 'Счёт';
+  String get selectAnswer => 'Выберите ответ';
+  String get correct => 'Правильно!';
+  String get wrong => 'Неправильно!';
+  String get correctAnswer => 'Правильный ответ:';
+  String get showAnswers => 'Показать ответы';
+  String get hideAnswers => 'Скрыть ответы';
+  String get newQuiz => 'Новый тест';
+  String get backToHome => 'На главную';
+  String get excellent => 'Отлично!';
+  String get good => 'Хорошо!';
+  String get tryAgain => 'Попробуй ещё!';
+  String get premiumRequired => 'Premium доступ';
+  String get pdfPremiumOnly => 'Экспорт в PDF доступен только с Premium подпиской';
+  String get uploadFileFirst => 'Сначала загрузите файл';
+  String get selectPresentationFirst => 'Выберите презентацию';
+  String get enterTopicFirst => 'Введите тему';
+  String get questionsRange => 'Количество вопросов должно быть от 3 до 10';
+  String get generateQuizFromFile => 'Сгенерировать тест из файла';
+  String get generateQuizFromPresentation => 'Сгенерировать тест из презентации';
+  String get quizSaved => 'Тест сохранён в';
+  String get correctAnswersTitle => 'ПРАВИЛЬНЫЕ ОТВЕТЫ';
   
   // ═══════════════════════════════════════════════════════════════
   // АВТОРИЗАЦИЯ
@@ -116,7 +150,6 @@ class AppStrings {
   String get premiumUnlimited => 'Premium • Безлимитно';
   String get buyPlanUSDT => 'Купить тариф — USDT';
   String get unlimited => '∞';
-  String get ofFive => 'из 5';
   String get enterTopic => 'Введите тему презентации';
   String get uploadText => 'Загрузите текст';
   String get pasteText => 'Вставьте текст для презентации';
@@ -180,32 +213,6 @@ class AppStrings {
   String get cancelAnytime => 'Отмена в любое время';
   
   // ═══════════════════════════════════════════════════════════════
-  // ГЕНЕРАТОР ТЕСТОВ
-  // ═══════════════════════════════════════════════════════════════
-  String get quizGenerator => 'Генератор тестов';
-  String get createQuizFromTopic => 'Создайте тест по теме или презентации';
-  String get fromPresentation => 'Из презентации';
-  String get byTopic => 'По теме';
-  String get uploadFile => 'Загрузить файл';
-  String get chooseFile => 'Выбрать файл';
-  String get selectFromSaved => 'Или выберите из сохранённых';
-  String get selectPresentation => 'Выберите презентацию';
-  String get generateQuiz => 'Сгенерировать тест';
-  String get question => 'Вопрос';
-  String get score => 'Счёт';
-  String get selectAnswer => 'Выберите ответ';
-  String get correct => 'Правильно!';
-  String get wrong => 'Неправильно!';
-  String get correctAnswer => 'Правильный ответ:';
-  String get showAnswers => 'Показать ответы';
-  String get hideAnswers => 'Скрыть ответы';
-  String get newQuiz => 'Новый тест';
-  String get backToHome => 'На главную';
-  String get excellent => 'Отлично!';
-  String get good => 'Хорошо!';
-  String get tryAgain => 'Попробуй ещё!';
-  
-  // ═══════════════════════════════════════════════════════════════
   // КОНСТРУКТОР УРОКОВ
   // ═══════════════════════════════════════════════════════════════
   String get lessonBuilder => 'Конструктор уроков';
@@ -260,7 +267,6 @@ class AppStrings {
   String get exportToPDF => 'PDF';
   String get withWatermark => 'С водяным знаком';
   String get noWatermark => 'Без водяного знака';
-  String get premiumRequired => 'Только Premium';
   String get highQuality => 'Высокое качество';
   
   // ═══════════════════════════════════════════════════════════════
@@ -420,6 +426,74 @@ class AppStringsEn extends AppStrings {
   String get thisMonth => 'this month';
   @override
   String get activate => 'Activate';
+  @override
+  String get of => 'of';
+  @override
+  String get ofFive => 'of 5';
+  @override
+  String get generationsLeftLower => 'free generations left';
+  @override
+  String get quizGenerator => 'Quiz Generator';
+  @override
+  String get createQuizFromTopic => 'Create a quiz from a topic or presentation';
+  @override
+  String get fromPresentation => 'From Presentation';
+  @override
+  String get byTopic => 'By Topic';
+  @override
+  String get uploadFile => 'Upload file';
+  @override
+  String get chooseFile => 'Choose file';
+  @override
+  String get selectPresentation => 'Select presentation';
+  @override
+  String get generateQuiz => 'Generate quiz';
+  @override
+  String get question => 'Question';
+  @override
+  String get score => 'Score';
+  @override
+  String get selectAnswer => 'Select answer';
+  @override
+  String get correct => 'Correct!';
+  @override
+  String get wrong => 'Wrong!';
+  @override
+  String get correctAnswer => 'Correct answer:';
+  @override
+  String get showAnswers => 'Show answers';
+  @override
+  String get hideAnswers => 'Hide answers';
+  @override
+  String get newQuiz => 'New quiz';
+  @override
+  String get backToHome => 'Back to home';
+  @override
+  String get excellent => 'Excellent!';
+  @override
+  String get good => 'Good job!';
+  @override
+  String get tryAgain => 'Try again!';
+  @override
+  String get premiumRequired => 'Premium Required';
+  @override
+  String get pdfPremiumOnly => 'PDF export is only available with a Premium subscription.';
+  @override
+  String get uploadFileFirst => 'Upload a file first';
+  @override
+  String get selectPresentationFirst => 'Select a presentation';
+  @override
+  String get enterTopicFirst => 'Enter a topic';
+  @override
+  String get questionsRange => 'Questions must be between 3 and 10';
+  @override
+  String get generateQuizFromFile => 'Generate Quiz from File';
+  @override
+  String get generateQuizFromPresentation => 'Generate Quiz from Presentation';
+  @override
+  String get quizSaved => 'Quiz saved as';
+  @override
+  String get correctAnswersTitle => 'CORRECT ANSWERS';
   
   @override
   String get email => 'Email';
@@ -503,8 +577,6 @@ class AppStringsEn extends AppStrings {
   String get buyPlanUSDT => 'Buy plan — USDT';
   @override
   String get unlimited => '∞';
-  @override
-  String get ofFive => 'of 5';
   @override
   String get enterTopic => 'Enter a presentation topic';
   @override
@@ -622,51 +694,6 @@ class AppStringsEn extends AppStrings {
   String get cancelAnytime => 'Cancel anytime';
   
   @override
-  String get quizGenerator => 'Quiz Generator';
-  @override
-  String get createQuizFromTopic => 'Create a quiz from a topic or presentation';
-  @override
-  String get fromPresentation => 'From Presentation';
-  @override
-  String get byTopic => 'By Topic';
-  @override
-  String get uploadFile => 'Upload file';
-  @override
-  String get chooseFile => 'Choose file';
-  @override
-  String get selectFromSaved => 'Or select from saved';
-  @override
-  String get selectPresentation => 'Select presentation';
-  @override
-  String get generateQuiz => 'Generate quiz';
-  @override
-  String get question => 'Question';
-  @override
-  String get score => 'Score';
-  @override
-  String get selectAnswer => 'Select answer';
-  @override
-  String get correct => 'Correct!';
-  @override
-  String get wrong => 'Wrong!';
-  @override
-  String get correctAnswer => 'Correct answer:';
-  @override
-  String get showAnswers => 'Show answers';
-  @override
-  String get hideAnswers => 'Hide answers';
-  @override
-  String get newQuiz => 'New quiz';
-  @override
-  String get backToHome => 'Back to home';
-  @override
-  String get excellent => 'Excellent!';
-  @override
-  String get good => 'Good job!';
-  @override
-  String get tryAgain => 'Try again!';
-  
-  @override
   String get lessonBuilder => 'Lesson Builder';
   @override
   String get createFullLesson => 'Create a full lesson plan on your topic';
@@ -749,8 +776,6 @@ class AppStringsEn extends AppStrings {
   String get withWatermark => 'With watermark';
   @override
   String get noWatermark => 'No watermark';
-  @override
-  String get premiumRequired => 'Premium only';
   @override
   String get highQuality => 'High quality';
   
