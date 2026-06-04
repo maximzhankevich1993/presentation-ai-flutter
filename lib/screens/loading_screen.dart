@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/presentation.dart';
 import '../services/api_service.dart';
 import '../providers/user_provider.dart';
+import '../l10n/app_strings.dart';
 import 'editor_screen.dart';
 import 'premium_screen.dart';
 
@@ -21,22 +22,24 @@ class LoadingScreen extends StatefulWidget {
 }
 
 class _LoadingScreenState extends State<LoadingScreen> {
-  String _status = 'Создаю презентацию...';
+  String _status = '';
   double _progress = 0.0;
   bool _hasError = false;
   String _errorMessage = '';
 
-  final List<String> _statusMessages = [
-    'Анализирую тему...',
-    'Генерирую структуру...',
-    'Создаю слайды...',
-    'Подбираю оформление...',
-    'Почти готово...',
-  ];
+  late List<String> _statusMessages;
 
   @override
   void initState() {
     super.initState();
+    _statusMessages = [
+      AppStrings.current.analyzingTopic,
+      AppStrings.current.generatingStructure,
+      AppStrings.current.creatingSlides,
+      AppStrings.current.selectingDesign,
+      AppStrings.current.almostReady,
+    ];
+    _status = _statusMessages[0];
     _startGeneration();
     _startProgressAnimation();
   }
@@ -99,16 +102,16 @@ class _LoadingScreenState extends State<LoadingScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Color(0xFFFFD700), size: 24),
-            SizedBox(width: 8),
-            Text('Лимит генераций исчерпан', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+            const Icon(Icons.warning_amber_rounded, color: Color(0xFFFFD700), size: 24),
+            const SizedBox(width: 8),
+            Text(AppStrings.current.limitReachedTitle, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
           ],
         ),
-        content: const Text(
-          'У вас закончились бесплатные генерации на этот месяц.\n\nОформите подписку, чтобы продолжить создавать презентации без ограничений.',
-          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14, height: 1.4),
+        content: Text(
+          AppStrings.current.limitReachedMessage,
+          style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 14, height: 1.4),
         ),
         actions: [
           TextButton(
@@ -116,7 +119,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
               Navigator.pop(context);
               Navigator.pop(context);
             },
-            child: const Text('На главную', style: TextStyle(color: Color(0xFF9A9A9A))),
+            child: Text(AppStrings.current.backToHome, style: const TextStyle(color: Color(0xFF9A9A9A))),
           ),
           ElevatedButton(
             onPressed: () {
@@ -127,7 +130,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
               );
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
-            child: const Text('Выбрать тариф'),
+            child: Text(AppStrings.current.subscribe, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -150,7 +153,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
             children: [
               CircularProgressIndicator(color: Color(0xFF1DB954)),
               SizedBox(height: 20),
-              Text('Завершаем...', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14)),
+              Text('Finishing...', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14)),
             ],
           ),
         ),
@@ -209,7 +212,7 @@ class _LoadingScreenState extends State<LoadingScreen> {
             ),
             const SizedBox(height: 24),
             Text(
-              'Это может занять до 30 секунд',
+              AppStrings.current.mayTakeUpTo30Seconds,
               style: const TextStyle(
                 color: Color(0xFF4A4A4A),
                 fontSize: 12,
