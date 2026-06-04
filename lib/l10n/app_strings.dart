@@ -278,6 +278,9 @@ class AppStrings {
   String get enterPromoCode => 'Введите промокод';
   String get promoCodeApplied => 'Промокод применён!';
   String get invalidPromoCode => 'Неверный промокод';
+  String get payWithUSDTLong => 'Оплата в USDT (криптовалюта)';
+  String get noFeesNoBanks => 'Без комиссий, без банков — защищённая оплата через CryptoCloud';
+  String get promoCodeCRYPTO10 => '🎁 Промокод CRYPTO10 — второй месяц бесплатно для первых 10 платящих';
   
   // ═══════════════════════════════════════════════════════════════
   // НАВИГАЦИЯ
@@ -297,9 +300,6 @@ class AppStrings {
   String get corporatePlans => 'Корпоративные тарифы';
   String get corporateSubtitle => 'Для компаний любого размера — оплата USDT';
   String get chooseYourPlan => 'ВЫБЕРИТЕ ПЛАН';
-  String get payWithUSDTLong => 'Оплата в USDT (криптовалюта)';
-  String get noFeesNoBanks => 'Без комиссий, без банков — защищённая оплата через CryptoCloud';
-  String get promoCodeCRYPTO10 => '🎁 Промокод CRYPTO10 — второй месяц бесплатно для первых 10 платящих';
   String get forSmallBusiness => 'Для малого бизнеса';
   String get forLargeCompanies => 'Для крупных компаний';
   String get openReportBuilder => 'Открыть конструктор отчётов';
@@ -747,6 +747,12 @@ class AppStringsEn extends AppStrings {
   String get promoCodeApplied => 'Promo code applied!';
   @override
   String get invalidPromoCode => 'Invalid promo code';
+  @override
+  String get payWithUSDTLong => 'Pay with USDT (cryptocurrency)';
+  @override
+  String get noFeesNoBanks => 'No fees, no banks — secure payment via CryptoCloud';
+  @override
+  String get promoCodeCRYPTO10 => '🎁 Promo code CRYPTO10 — second month free for first 10 paying users';
   
   @override
   String get forTeachers => 'For Teachers';
@@ -771,12 +777,6 @@ class AppStringsEn extends AppStrings {
   String get corporateSubtitle => 'For companies of any size — pay with USDT';
   @override
   String get chooseYourPlan => 'CHOOSE YOUR PLAN';
-  @override
-  String get payWithUSDTLong => 'Pay with USDT (cryptocurrency)';
-  @override
-  String get noFeesNoBanks => 'No fees, no banks — secure payment via CryptoCloud';
-  @override
-  String get promoCodeCRYPTO10 => '🎁 Promo code CRYPTO10 — second month free for first 10 paying users';
   @override
   String get forSmallBusiness => 'For small business';
   @override
