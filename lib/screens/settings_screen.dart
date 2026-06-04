@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
+import '../l10n/app_strings.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
 
@@ -16,22 +17,24 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _notificationsEnabled = true;
   bool _autoSaveEnabled = true;
-  String _selectedLanguage = 'Русский';
-  String _selectedTheme = 'Тёмная';
+  String _selectedLanguage = AppStrings.current.russian;
+  String _selectedTheme = AppStrings.current.darkTheme;
   bool _isLoggingOut = false;
 
-  final List<String> _languages = ['Русский', 'English', 'Қазақша'];
-  final List<String> _themes = ['Тёмная', 'Светлая', 'Системная'];
+  late List<String> _languages;
+  late List<String> _themes;
 
   @override
   void initState() {
     super.initState();
+    _languages = [AppStrings.current.russian, AppStrings.current.english];
+    _themes = [AppStrings.current.darkTheme, AppStrings.current.lightTheme, AppStrings.current.systemTheme];
     _loadTheme();
   }
 
   Future<void> _loadTheme() async {
     final prefs = await SharedPreferences.getInstance();
-    final savedTheme = prefs.getString('app_theme') ?? 'Тёмная';
+    final savedTheme = prefs.getString('app_theme') ?? AppStrings.current.darkTheme;
     setState(() {
       _selectedTheme = savedTheme;
     });
@@ -40,28 +43,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _saveTheme(String theme) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('app_theme', theme);
-    // Применяем тему через MaterialApp (нужно перезагрузить приложение)
-    // Для простоты перезагружаем весь виджет
-    if (mounted) {
-      // Можно использовать для перезагрузки:
-      // (context as Element).reassemble(); // работает только в dev
-      // Либо выбросить событие через ChangeNotifier
-      // Временное решение: перезапустить приложение
-      // Но лучше использовать ThemeProvider (см. ниже)
-    }
   }
 
   void _applyTheme(String theme) {
-    // Здесь будет логика реального переключения темы
-    // Рекомендуется использовать Provider или Riverpod для глобального состояния темы
-    // Для демонстрации просто меняем переменную и сохраняем
     setState(() {
       _selectedTheme = theme;
     });
     _saveTheme(theme);
-    // Уведомляем об изменении (можно через отдельный ThemeProvider)
-    // Пример: Provider.of<ThemeProvider>(context, listen: false).setTheme(theme);
-    _showSuccess('Тема изменена на $theme. Перезапустите приложение для полного применения.');
+    _showSuccess('${AppStrings.current.themeChangedTo} $theme. ${AppStrings.current.restartToApply}');
   }
 
   @override
@@ -90,9 +79,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ),
-        title: const Text(
-          'Настройки',
-          style: TextStyle(
+        title: Text(
+          AppStrings.current.settings,
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.w700,
@@ -111,25 +100,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Профиль
-                      _buildSectionHeader('ПРОФИЛЬ'),
+                      _buildSectionHeader(AppStrings.current.profile),
                       const SizedBox(height: 12),
                       _buildSettingsCard([
                         _SettingsItem(
                           icon: Icons.person_outline,
-                          title: 'Имя пользователя',
+                          title: AppStrings.current.userName,
                           value: up.userName,
                           onTap: () => _editUserName(up),
                         ),
                         _SettingsItem(
                           icon: Icons.email_outlined,
-                          title: 'Email',
+                          title: AppStrings.current.email,
                           value: up.userEmail,
                           onTap: () => _editEmail(up),
                         ),
                         _SettingsItem(
                           icon: Icons.logout_rounded,
-                          title: 'Выйти',
+                          title: AppStrings.current.logout,
                           value: '',
                           isDanger: true,
                           onTap: () => _logout(),
@@ -137,56 +125,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ]),
                       const SizedBox(height: 24),
 
-                      // Настройки приложения
-                      _buildSectionHeader('ПРИЛОЖЕНИЕ'),
+                      _buildSectionHeader(AppStrings.current.application),
                       const SizedBox(height: 12),
                       _buildSettingsCard([
                         _SettingsSwitch(
                           icon: Icons.notifications_none,
-                          title: 'Уведомления',
+                          title: AppStrings.current.notifications,
                           value: _notificationsEnabled,
                           onChanged: (v) => setState(() => _notificationsEnabled = v),
                         ),
                         _SettingsSwitch(
                           icon: Icons.save_outlined,
-                          title: 'Автосохранение',
+                          title: AppStrings.current.autoSave,
                           value: _autoSaveEnabled,
                           onChanged: (v) => setState(() => _autoSaveEnabled = v),
                         ),
                         _SettingsItem(
                           icon: Icons.language_outlined,
-                          title: 'Язык',
+                          title: AppStrings.current.language,
                           value: _selectedLanguage,
                           onTap: () => _showLanguagePicker(),
                         ),
                         _SettingsItem(
                           icon: Icons.dark_mode_outlined,
-                          title: 'Тема',
+                          title: AppStrings.current.theme,
                           value: _selectedTheme,
                           onTap: () => _showThemePicker(),
                         ),
                       ]),
                       const SizedBox(height: 24),
 
-                      // О приложении
-                      _buildSectionHeader('О ПРИЛОЖЕНИИ'),
+                      _buildSectionHeader(AppStrings.current.about),
                       const SizedBox(height: 12),
                       _buildSettingsCard([
                         _SettingsItem(
                           icon: Icons.info_outline,
-                          title: 'Версия',
+                          title: AppStrings.current.version,
                           value: '1.0.0',
                           onTap: null,
                         ),
                         _SettingsItem(
                           icon: Icons.description_outlined,
-                          title: 'Пользовательское соглашение',
+                          title: AppStrings.current.termsOfService,
                           value: '',
                           onTap: () => _showTerms(),
                         ),
                         _SettingsItem(
                           icon: Icons.privacy_tip_outlined,
-                          title: 'Политика конфиденциальности',
+                          title: AppStrings.current.privacyPolicy,
                           value: '',
                           onTap: () => _showPrivacy(),
                         ),
@@ -206,7 +192,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4),
         child: Text(
-          title,
+          title.toUpperCase(),
           style: const TextStyle(
             color: Color(0xFF4A4A4A),
             fontSize: 11,
@@ -249,15 +235,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Изменить имя',
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+        title: Text(
+          AppStrings.current.changeName,
+          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
         ),
         content: TextField(
           controller: controller,
           style: const TextStyle(color: Colors.white),
           decoration: InputDecoration(
-            hintText: 'Введите имя',
+            hintText: AppStrings.current.enterName,
             hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
             filled: true,
             fillColor: const Color(0xFF2A2A2A),
@@ -270,12 +256,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A))),
+            child: Text(AppStrings.current.cancel, style: const TextStyle(color: Color(0xFF9A9A9A))),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, controller.text),
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
-            child: const Text('Сохранить', style: TextStyle(color: Colors.white)),
+            child: Text(AppStrings.current.save, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -283,7 +269,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     
     if (result != null && result.isNotEmpty && result != up.userName) {
       up.setUserName(result);
-      _showSuccess('Имя обновлено');
+      _showSuccess(AppStrings.current.nameUpdated);
     }
   }
 
@@ -294,16 +280,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Изменить Email',
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+        title: Text(
+          AppStrings.current.changeEmail,
+          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
         ),
         content: TextField(
           controller: controller,
           style: const TextStyle(color: Colors.white),
           keyboardType: TextInputType.emailAddress,
           decoration: InputDecoration(
-            hintText: 'Введите email',
+            hintText: AppStrings.current.enterEmail,
             hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
             filled: true,
             fillColor: const Color(0xFF2A2A2A),
@@ -316,12 +302,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A))),
+            child: Text(AppStrings.current.cancel, style: const TextStyle(color: Color(0xFF9A9A9A))),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, controller.text),
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
-            child: const Text('Сохранить', style: TextStyle(color: Colors.white)),
+            child: Text(AppStrings.current.save, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -329,7 +315,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     
     if (result != null && result.isNotEmpty && result != up.userEmail) {
       up.setUserEmail(result);
-      _showSuccess('Email обновлён');
+      _showSuccess(AppStrings.current.emailUpdated);
     }
   }
 
@@ -339,23 +325,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Выход',
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+        title: Text(
+          AppStrings.current.logout,
+          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
         ),
-        content: const Text(
-          'Вы уверены, что хотите выйти?',
-          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
+        content: Text(
+          AppStrings.current.logoutConfirmation,
+          style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A))),
+            child: Text(AppStrings.current.cancel, style: const TextStyle(color: Color(0xFF9A9A9A))),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF3B30)),
-            child: const Text('Выйти', style: TextStyle(color: Colors.white)),
+            child: Text(AppStrings.current.logout, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -377,7 +363,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         }
       } catch (e) {
         setState(() => _isLoggingOut = false);
-        _showError('Ошибка выхода');
+        _showError(AppStrings.current.logoutError);
       }
     }
   }
@@ -402,9 +388,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Выберите язык',
-            style: TextStyle(
+          Text(
+            AppStrings.current.selectLanguage,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -419,8 +405,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: () {
               setState(() => _selectedLanguage = lang);
               Navigator.pop(ctx);
-              _showSuccess('Язык изменён');
-              // Здесь будет логика смены языка (i18n)
+              _showSuccess(AppStrings.current.languageChanged);
             },
           )),
           const SizedBox(height: 16),
@@ -449,9 +434,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Выберите тему',
-            style: TextStyle(
+          Text(
+            AppStrings.current.selectTheme,
+            style: const TextStyle(
               color: Colors.white,
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -480,20 +465,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Пользовательское соглашение',
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+        title: Text(
+          AppStrings.current.termsOfService,
+          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
         ),
         content: const SingleChildScrollView(
           child: Text(
-            'Здесь будет текст пользовательского соглашения...',
+            'Terms of service content will be displayed here...',
             style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 13, height: 1.5),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Закрыть', style: TextStyle(color: Color(0xFF1DB954))),
+            child: Text(AppStrings.current.close, style: const TextStyle(color: Color(0xFF1DB954))),
           ),
         ],
       ),
@@ -506,20 +491,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Политика конфиденциальности',
-          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+        title: Text(
+          AppStrings.current.privacyPolicy,
+          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
         ),
         content: const SingleChildScrollView(
           child: Text(
-            'Здесь будет текст политики конфиденциальности...',
+            'Privacy policy content will be displayed here...',
             style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 13, height: 1.5),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Закрыть', style: TextStyle(color: Color(0xFF1DB954))),
+            child: Text(AppStrings.current.close, style: const TextStyle(color: Color(0xFF1DB954))),
           ),
         ],
       ),
@@ -554,7 +539,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// ВСПОМОГАТЕЛЬНЫЕ ВИДЖЕТЫ
+// HELPER WIDGETS
 // ──────────────────────────────────────────────────────────────────────────────
 
 class _SettingsItem extends StatelessWidget {
