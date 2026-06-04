@@ -211,6 +211,17 @@ class AppStrings {
   String get generationsLeftLesson => 'Осталось';
   
   // ═══════════════════════════════════════════════════════════════
+  // ЭКРАН ЗАГРУЗКИ
+  // ═══════════════════════════════════════════════════════════════
+  String get analyzingTopic => 'Анализирую тему...';
+  String get generatingStructure => 'Генерирую структуру...';
+  String get creatingSlides => 'Создаю слайды...';
+  String get selectingDesign => 'Подбираю оформление...';
+  String get almostReady => 'Почти готово...';
+  String get mayTakeUpTo30Seconds => 'Это может занять до 30 секунд';
+  String get finishing => 'Завершаем...';
+  
+  // ═══════════════════════════════════════════════════════════════
   // КОНСТРУКТОР ОТЧЁТОВ
   // ═══════════════════════════════════════════════════════════════
   String get reportBuilder => 'Конструктор отчётов';
@@ -637,6 +648,21 @@ class AppStringsEn extends AppStrings {
   String get generationsFinishedLesson => 'Free generations are over. Subscribe to continue.';
   @override
   String get generationsLeftLesson => 'Left';
+  
+  @override
+  String get analyzingTopic => 'Analyzing topic...';
+  @override
+  String get generatingStructure => 'Generating structure...';
+  @override
+  String get creatingSlides => 'Creating slides...';
+  @override
+  String get selectingDesign => 'Selecting design...';
+  @override
+  String get almostReady => 'Almost ready...';
+  @override
+  String get mayTakeUpTo30Seconds => 'This may take up to 30 seconds';
+  @override
+  String get finishing => 'Finishing...';
   
   @override
   String get reportBuilder => 'Report Builder';
