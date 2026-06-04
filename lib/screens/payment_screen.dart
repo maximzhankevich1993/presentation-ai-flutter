@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:universal_html/html.dart' as html;
 import '../providers/user_provider.dart';
+import '../l10n/app_strings.dart';
 
 class PaymentScreen extends StatefulWidget {
   final String planId;
@@ -57,10 +58,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
     
     setState(() => _isLoading = false);
     
-    // Исправленный SnackBar (без const у RoundedRectangleBorder)
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('💸 After payment, subscription activates in 1-2 minutes. Promo code CRYPTO10 gives second month free!'),
+        content: Text(AppStrings.current.afterPaymentMessage),
         backgroundColor: const Color(0xFF1DB954),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -83,7 +83,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Payment', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+        title: Text(
+          AppStrings.current.payment,
+          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
+        ),
         centerTitle: true,
       ),
       body: Center(
@@ -107,9 +110,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              const Text(
-                'You will be redirected to a secure payment page',
-                style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
+              Text(
+                AppStrings.current.securePaymentRedirect,
+                style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
@@ -122,11 +125,20 @@ class _PaymentScreenState extends State<PaymentScreen> {
                 ),
                 child: Column(
                   children: [
-                    const Text('💡 Pay with USDT (cryptocurrency)', style: TextStyle(color: Color(0xFF627EEA), fontSize: 13, fontWeight: FontWeight.w600)),
+                    Text(
+                      '💡 ${AppStrings.current.payWithUSDTLong}',
+                      style: const TextStyle(color: Color(0xFF627EEA), fontSize: 13, fontWeight: FontWeight.w600),
+                    ),
                     const SizedBox(height: 4),
-                    Text('No fees, no banks — secure payment via CryptoCloud', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
+                    Text(
+                      AppStrings.current.noFeesNoBanks,
+                      style: TextStyle(color: Colors.grey[400], fontSize: 11),
+                    ),
                     const SizedBox(height: 4),
-                    const Text('🎁 Promo code CRYPTO10 → second month free for first 10 paying users', style: TextStyle(color: Color(0xFFFFD700), fontSize: 11)),
+                    Text(
+                      AppStrings.current.promoCodeCRYPTO10,
+                      style: const TextStyle(color: Color(0xFFFFD700), fontSize: 11),
+                    ),
                   ],
                 ),
               ),
@@ -144,13 +156,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                   child: _isLoading
                       ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Pay with USDT', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                      : Text(
+                          AppStrings.current.payWithUSDT,
+                          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
+                        ),
                 ),
               ),
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel', style: TextStyle(color: Color(0xFF9A9A9A))),
+                child: Text(
+                  AppStrings.current.cancel,
+                  style: const TextStyle(color: Color(0xFF9A9A9A)),
+                ),
               ),
             ],
           ),
