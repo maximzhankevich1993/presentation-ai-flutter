@@ -248,6 +248,26 @@ class AppStrings {
   String get team => 'Команда';
   String get tests => 'Тесты';
   String get friends => 'Друзья';
+  
+  // ═══════════════════════════════════════════════════════════════
+  // CORPORATE SCREEN
+  // ═══════════════════════════════════════════════════════════════
+  String get business => 'Бизнес';
+  String get corporate => 'Корпоративный';
+  String get plan => 'Тариф';
+  String get corporatePlans => 'Корпоративные тарифы';
+  String get corporateSubtitle => 'Для компаний любого размера — оплата USDT';
+  String get chooseYourPlan => 'ВЫБЕРИТЕ ПЛАН';
+  String get payWithUSDTLong => 'Оплата в USDT (криптовалюта)';
+  String get noFeesNoBanks => 'Без комиссий, без банков — защищённая оплата через CryptoCloud';
+  String get promoCodeCRYPTO10 => '🎁 Промокод CRYPTO10 — второй месяц бесплатно для первых 10 платящих';
+  String get forSmallBusiness => 'Для малого бизнеса';
+  String get forLargeCompanies => 'Для крупных компаний';
+  String get openReportBuilder => 'Открыть конструктор отчётов';
+  String get contactSales => 'Связаться с отделом продаж';
+  String get included => 'Включено';
+  String get salesDepartment => 'Отдел продаж';
+  String get contactSalesText => 'Свяжитесь с нами для подбора индивидуального тарифа';
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -635,4 +655,37 @@ class AppStringsEn extends AppStrings {
   String get tests => 'Tests';
   @override
   String get friends => 'Friends';
+  
+  @override
+  String get business => 'Business';
+  @override
+  String get corporate => 'Corporate';
+  @override
+  String get plan => 'Plan';
+  @override
+  String get corporatePlans => 'Corporate Plans';
+  @override
+  String get corporateSubtitle => 'For companies of any size — pay with USDT';
+  @override
+  String get chooseYourPlan => 'CHOOSE YOUR PLAN';
+  @override
+  String get payWithUSDTLong => 'Pay with USDT (cryptocurrency)';
+  @override
+  String get noFeesNoBanks => 'No fees, no banks — secure payment via CryptoCloud';
+  @override
+  String get promoCodeCRYPTO10 => '🎁 Promo code CRYPTO10 — second month free for first 10 paying users';
+  @override
+  String get forSmallBusiness => 'For small business';
+  @override
+  String get forLargeCompanies => 'For large companies';
+  @override
+  String get openReportBuilder => 'Open Report Builder';
+  @override
+  String get contactSales => 'Contact Sales';
+  @override
+  String get included => 'INCLUDED';
+  @override
+  String get salesDepartment => 'Sales Department';
+  @override
+  String get contactSalesText => 'Contact us for custom corporate pricing';
 }
