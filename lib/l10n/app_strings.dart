@@ -125,6 +125,13 @@ class AppStrings {
   String get referralProgram => 'Реферальная программа';
   String get inviteFriendsGetBonuses => 'Приглашайте друзей и получайте бонусы';
   String get referralLoginRequired => 'Реферальная программа доступна только авторизованным пользователям';
+  String get registerAndPayment => 'Регистрация и оплата';
+  String get paymentModuleUnderDevelopment => 'Платёжный модуль в разработке';
+  String get premiumWillBeActivatedAfterPayment => 'Premium доступ будет активирован после оплаты';
+  String get monthlySubscription => 'Месячная подписка';
+  String get semiannualSubscription => 'Полугодовая подписка';
+  String get annualSubscription => 'Годовая подписка';
+  String get subscription => 'Подписка';
   
   // ═══════════════════════════════════════════════════════════════
   // АВТОРИЗАЦИЯ
@@ -575,6 +582,20 @@ class AppStringsEn extends AppStrings {
   String get inviteFriendsGetBonuses => 'Invite friends and get bonuses';
   @override
   String get referralLoginRequired => 'Referral program is only available to logged in users';
+  @override
+  String get registerAndPayment => 'Registration & Payment';
+  @override
+  String get paymentModuleUnderDevelopment => 'Payment module is under development';
+  @override
+  String get premiumWillBeActivatedAfterPayment => 'Premium access will be activated after payment';
+  @override
+  String get monthlySubscription => 'Monthly subscription';
+  @override
+  String get semiannualSubscription => 'Semi-annual subscription';
+  @override
+  String get annualSubscription => 'Annual subscription';
+  @override
+  String get subscription => 'Subscription';
   
   @override
   String get email => 'Email';
