@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'dart:html' as html;
 import '../providers/user_provider.dart';
+import '../l10n/app_strings.dart';
 import 'report_constructor_screen.dart';
 import 'register_payment_screen.dart';
 import 'payment_screen.dart';
@@ -25,7 +26,6 @@ class _CorporateScreenState extends State<CorporateScreen> {
   String _selectedTariff = 'business';
   bool _isLoading = false;
   
-  // Фиксированные цены в долларах (без конвертации)
   final double _businessPriceUSD = 49.99;
   final double _corporatePriceUSD = 149.99;
 
@@ -35,7 +35,7 @@ class _CorporateScreenState extends State<CorporateScreen> {
   }
 
   String _formatPrice(double usd) {
-    if (usd == 0) return 'Бесплатно';
+    if (usd == 0) return AppStrings.current.free;
     return '\$${usd.toStringAsFixed(2)}';
   }
   
@@ -45,7 +45,7 @@ class _CorporateScreenState extends State<CorporateScreen> {
     
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('💸 After successful USDT payment, return to the app. Subscription activates in 1-2 min.\nPromo code CRYPTO10 → second month free!'),
+        content: Text(AppStrings.current.afterPaymentMessage),
         backgroundColor: const Color(0xFF1DB954),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -63,28 +63,26 @@ class _CorporateScreenState extends State<CorporateScreen> {
   }
 
   void _showPaymentDialog(String planId, double price, String period) {
-    // Проверяем, залогинен ли пользователь
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     if (!userProvider.isLoggedIn) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please log in to subscribe'),
-          backgroundColor: Color(0xFFFFD700),
+        SnackBar(
+          content: Text(AppStrings.current.pleaseLogIn),
+          backgroundColor: const Color(0xFFFFD700),
           behavior: SnackBarBehavior.floating,
         ),
       );
       return;
     }
     
-    // Открываем напрямую CryptoCloud
     _openCryptoPayment(price, _getPlanName(planId));
   }
   
   String _getPlanName(String planId) {
     switch (planId) {
-      case 'business': return 'Business';
-      case 'corporate': return 'Corporate';
-      default: return 'Plan';
+      case 'business': return AppStrings.current.business;
+      case 'corporate': return AppStrings.current.corporate;
+      default: return AppStrings.current.plan;
     }
   }
 
@@ -102,7 +100,7 @@ class _CorporateScreenState extends State<CorporateScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('For Business', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+        title: Text(AppStrings.current.forBusiness, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
         centerTitle: true,
       ),
       body: _isLoading
@@ -127,18 +125,17 @@ class _CorporateScreenState extends State<CorporateScreen> {
                           children: [
                             Container(width: isMobile ? 40 : 48, height: isMobile ? 40 : 48, decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(isMobile ? 12 : 16)), child: Icon(Icons.business_center_rounded, color: Colors.white, size: isMobile ? 22 : 26)),
                             SizedBox(height: isMobile ? 12 : 16),
-                            Text('Corporate Plans', style: TextStyle(color: Colors.white, fontSize: isMobile ? 20 : 24, fontWeight: FontWeight.w800)),
+                            Text(AppStrings.current.corporatePlans, style: TextStyle(color: Colors.white, fontSize: isMobile ? 20 : 24, fontWeight: FontWeight.w800)),
                             const SizedBox(height: 6),
-                            Text('For companies of any size — pay with USDT', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: isMobile ? 12 : 13)),
+                            Text(AppStrings.current.corporateSubtitle, style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: isMobile ? 12 : 13)),
                           ],
                         ),
                       ),
                       const SizedBox(height: 24),
                       
-                      const Text('CHOOSE YOUR PLAN', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
+                      Text(AppStrings.current.chooseYourPlan.toUpperCase(), style: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
                       const SizedBox(height: 12),
                       
-                      // Crypto note
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(12),
@@ -150,11 +147,11 @@ class _CorporateScreenState extends State<CorporateScreen> {
                         ),
                         child: Column(
                           children: [
-                            const Text('💡 Pay with USDT (cryptocurrency)', style: TextStyle(color: Color(0xFF627EEA), fontSize: 13, fontWeight: FontWeight.w600)),
+                            Text('💡 ${AppStrings.current.payWithUSDTLong}', style: const TextStyle(color: Color(0xFF627EEA), fontSize: 13, fontWeight: FontWeight.w600)),
                             const SizedBox(height: 4),
-                            Text('No fees, no banks — secure payment via CryptoCloud', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
+                            Text(AppStrings.current.noFeesNoBanks, style: TextStyle(color: Colors.grey[400], fontSize: 11)),
                             const SizedBox(height: 4),
-                            Text('🎁 Promo code CRYPTO10 → second month free for first 10 paying users', style: TextStyle(color: const Color(0xFFFFD700), fontSize: 11)),
+                            Text(AppStrings.current.promoCodeCRYPTO10, style: const TextStyle(color: Color(0xFFFFD700), fontSize: 11)),
                           ],
                         ),
                       ),
@@ -163,42 +160,74 @@ class _CorporateScreenState extends State<CorporateScreen> {
                           ? Column(
                               children: [
                                 _buildTariffCard(
-                                  title: 'Business',
+                                  title: AppStrings.current.business,
                                   price: _businessPriceUSD,
-                                  period: 'month',
-                                  description: 'For small business',
-                                  features: const ['Up to 10 users', '∞ generations', 'Brand Kit', 'Priority Support', 'API Access', 'Report Builder'],
+                                  period: AppStrings.current.monthLower,
+                                  description: AppStrings.current.forSmallBusiness,
+                                  features: const [
+                                    'Up to 10 users',
+                                    '∞ generations',
+                                    'Brand Kit',
+                                    'Priority Support',
+                                    'API Access',
+                                    'Report Builder'
+                                  ],
                                   isPopular: true,
-                                  onTap: () => _showPaymentDialog('business', _businessPriceUSD, '/month'),
+                                  onTap: () => _showPaymentDialog('business', _businessPriceUSD, '/${AppStrings.current.monthLower}'),
                                 ),
                                 const SizedBox(height: 12),
                                 _buildTariffCard(
-                                  title: 'Corporate',
+                                  title: AppStrings.current.corporate,
                                   price: _corporatePriceUSD,
-                                  period: 'month',
-                                  description: 'For large companies',
-                                  features: const ['Unlimited users', '∞ generations', 'Brand Kit', 'VIP Support 24/7', 'API + Webhook', 'Report Builder PRO'],
+                                  period: AppStrings.current.monthLower,
+                                  description: AppStrings.current.forLargeCompanies,
+                                  features: const [
+                                    'Unlimited users',
+                                    '∞ generations',
+                                    'Brand Kit',
+                                    'VIP Support 24/7',
+                                    'API + Webhook',
+                                    'Report Builder PRO'
+                                  ],
                                   isPopular: false,
-                                  onTap: () => _showPaymentDialog('corporate', _corporatePriceUSD, '/month'),
+                                  onTap: () => _showPaymentDialog('corporate', _corporatePriceUSD, '/${AppStrings.current.monthLower}'),
                                 ),
                               ],
                             )
                           : Row(
                               children: [
                                 Expanded(child: _buildTariffCard(
-                                  title: 'Business', price: _businessPriceUSD, period: 'month',
-                                  description: 'For small business',
-                                  features: const ['Up to 10 users', '∞ generations', 'Brand Kit', 'Priority Support', 'API Access', 'Report Builder'],
+                                  title: AppStrings.current.business,
+                                  price: _businessPriceUSD,
+                                  period: AppStrings.current.monthLower,
+                                  description: AppStrings.current.forSmallBusiness,
+                                  features: const [
+                                    'Up to 10 users',
+                                    '∞ generations',
+                                    'Brand Kit',
+                                    'Priority Support',
+                                    'API Access',
+                                    'Report Builder'
+                                  ],
                                   isPopular: true,
-                                  onTap: () => _showPaymentDialog('business', _businessPriceUSD, '/month'),
+                                  onTap: () => _showPaymentDialog('business', _businessPriceUSD, '/${AppStrings.current.monthLower}'),
                                 )),
                                 const SizedBox(width: 12),
                                 Expanded(child: _buildTariffCard(
-                                  title: 'Corporate', price: _corporatePriceUSD, period: 'month',
-                                  description: 'For large companies',
-                                  features: const ['Unlimited users', '∞ generations', 'Brand Kit', 'VIP Support 24/7', 'API + Webhook', 'Report Builder PRO'],
+                                  title: AppStrings.current.corporate,
+                                  price: _corporatePriceUSD,
+                                  period: AppStrings.current.monthLower,
+                                  description: AppStrings.current.forLargeCompanies,
+                                  features: const [
+                                    'Unlimited users',
+                                    '∞ generations',
+                                    'Brand Kit',
+                                    'VIP Support 24/7',
+                                    'API + Webhook',
+                                    'Report Builder PRO'
+                                  ],
                                   isPopular: false,
-                                  onTap: () => _showPaymentDialog('corporate', _corporatePriceUSD, '/month'),
+                                  onTap: () => _showPaymentDialog('corporate', _corporatePriceUSD, '/${AppStrings.current.monthLower}'),
                                 )),
                               ],
                             ),
@@ -219,7 +248,7 @@ class _CorporateScreenState extends State<CorporateScreen> {
                             children: [
                               Icon(Icons.description_rounded, color: Colors.white, size: isMobile ? 24 : 20),
                               const SizedBox(width: 10),
-                              Flexible(child: Text('Open Report Builder', style: TextStyle(color: Colors.white, fontSize: isMobile ? 14 : 15, fontWeight: FontWeight.w700), textAlign: TextAlign.center)),
+                              Flexible(child: Text(AppStrings.current.openReportBuilder, style: TextStyle(color: Colors.white, fontSize: isMobile ? 14 : 15, fontWeight: FontWeight.w700), textAlign: TextAlign.center)),
                             ],
                           ),
                         ),
@@ -237,7 +266,7 @@ class _CorporateScreenState extends State<CorporateScreen> {
                             children: [
                               Icon(Icons.email_outlined, color: const Color(0xFF1DB954), size: isMobile ? 24 : 20),
                               const SizedBox(width: 10),
-                              Flexible(child: Text('Contact Sales', style: TextStyle(color: Colors.white, fontSize: isMobile ? 14 : 14, fontWeight: FontWeight.w600), textAlign: TextAlign.center)),
+                              Flexible(child: Text(AppStrings.current.contactSales, style: TextStyle(color: Colors.white, fontSize: isMobile ? 14 : 14, fontWeight: FontWeight.w600), textAlign: TextAlign.center)),
                             ],
                           ),
                         ),
@@ -282,7 +311,7 @@ class _CorporateScreenState extends State<CorporateScreen> {
                 Container(
                   width: isMobile ? 40 : 44, height: isMobile ? 40 : 44,
                   decoration: BoxDecoration(color: isPopular ? const Color(0xFF1DB954) : const Color(0xFF2A2A2A), borderRadius: BorderRadius.circular(10)),
-                  child: Icon(title == 'Business' ? Icons.business_center_rounded : Icons.apartment_rounded, color: isPopular ? Colors.white : const Color(0xFF1DB954), size: isMobile ? 20 : 22),
+                  child: Icon(title == AppStrings.current.business ? Icons.business_center_rounded : Icons.apartment_rounded, color: isPopular ? Colors.white : const Color(0xFF1DB954), size: isMobile ? 20 : 22),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -294,7 +323,7 @@ class _CorporateScreenState extends State<CorporateScreen> {
                     ],
                   ),
                 ),
-                if (isPopular) Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(12)), child: Text('POPULAR', style: TextStyle(color: Colors.white, fontSize: isMobile ? 9 : 10, fontWeight: FontWeight.w700))),
+                if (isPopular) Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(12)), child: Text(AppStrings.current.popular.toUpperCase(), style: TextStyle(color: Colors.white, fontSize: isMobile ? 9 : 10, fontWeight: FontWeight.w700))),
               ],
             ),
             SizedBox(height: isMobile ? 12 : 16),
@@ -319,7 +348,7 @@ class _CorporateScreenState extends State<CorporateScreen> {
             SizedBox(height: isMobile ? 16 : 20),
             const Divider(color: Color(0xFF2A2A2A), height: 1),
             SizedBox(height: isMobile ? 12 : 16),
-            Text('INCLUDED:', style: TextStyle(color: const Color(0xFF9A9A9A), fontSize: isMobile ? 10 : 11, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
+            Text('${AppStrings.current.included}:', style: TextStyle(color: const Color(0xFF9A9A9A), fontSize: isMobile ? 10 : 11, fontWeight: FontWeight.w600, letterSpacing: 0.5)),
             SizedBox(height: isMobile ? 8 : 10),
             ...features.map((feature) => Padding(
               padding: EdgeInsets.only(bottom: isMobile ? 6 : 10),
@@ -339,7 +368,7 @@ class _CorporateScreenState extends State<CorporateScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   padding: EdgeInsets.symmetric(vertical: isMobile ? 12 : 14),
                 ),
-                child: const Text('💳 Pay with USDT', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                child: Text(AppStrings.current.payWithUSDT, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
               ),
             ),
           ],
@@ -361,14 +390,13 @@ class _CorporateScreenState extends State<CorporateScreen> {
             children: [
               Container(width: 48, height: 48, decoration: BoxDecoration(color: const Color(0xFF1DB954).withOpacity(0.1), borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.email_rounded, color: Color(0xFF1DB954), size: 26)),
               const SizedBox(height: 16),
-              const Text('Sales Department', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+              Text(AppStrings.current.salesDepartment, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
-              const Text('Contact us for custom corporate pricing', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 13), textAlign: TextAlign.center),
+              Text(AppStrings.current.contactSalesText, style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13), textAlign: TextAlign.center),
               const SizedBox(height: 20),
               GestureDetector(
                 onTap: () {
                   Navigator.pop(ctx);
-                  // Копируем email в буфер
                   html.window.navigator.clipboard?.writeText('corp@presentator.ai');
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Email copied to clipboard'), backgroundColor: Color(0xFF1DB954)),
@@ -383,7 +411,7 @@ class _CorporateScreenState extends State<CorporateScreen> {
               const SizedBox(height: 20),
               GestureDetector(
                 onTap: () => Navigator.pop(ctx),
-                child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 12), decoration: BoxDecoration(color: const Color(0xFF252525), borderRadius: BorderRadius.circular(12)), child: const Center(child: Text('Close', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)))),
+                child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 12), decoration: BoxDecoration(color: const Color(0xFF252525), borderRadius: BorderRadius.circular(12)), child: Center(child: Text(AppStrings.current.close, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)))),
               ),
             ],
           ),
