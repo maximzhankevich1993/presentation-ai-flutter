@@ -45,6 +45,14 @@ class AppStrings {
   String get ok => 'ОК';
   String get continueText => 'Продолжить';
   String get fillAllFields => 'Заполните все поля';
+  String get checking => 'Проверка...';
+  String get applyingPromoCode => 'Применяем промокод...';
+  String get failedToApplyPromoCode => 'Не удалось применить промокод';
+  String get errorApplyingPromoCode => 'Ошибка применения промокода';
+  String get daysFree => 'дня бесплатно';
+  String get payment => 'Оплата';
+  String get apply => 'Применить';
+  String get active => 'Активен';
   
   // ═══════════════════════════════════════════════════════════════
   // АВТОРИЗАЦИЯ
@@ -271,7 +279,6 @@ class AppStrings {
   // ═══════════════════════════════════════════════════════════════
   // ОПЛАТА
   // ═══════════════════════════════════════════════════════════════
-  String get payment => 'Оплата';
   String get securePaymentRedirect => 'Вы будете перенаправлены на защищённую страницу оплаты';
   String get payNow => 'Оплатить';
   String get promoCode => 'Промокод';
@@ -365,6 +372,22 @@ class AppStringsEn extends AppStrings {
   String get continueText => 'Continue';
   @override
   String get fillAllFields => 'Please fill all fields';
+  @override
+  String get checking => 'Checking...';
+  @override
+  String get applyingPromoCode => 'Applying promo code...';
+  @override
+  String get failedToApplyPromoCode => 'Failed to apply promo code';
+  @override
+  String get errorApplyingPromoCode => 'Error applying promo code';
+  @override
+  String get daysFree => 'days free';
+  @override
+  String get payment => 'Payment';
+  @override
+  String get apply => 'Apply';
+  @override
+  String get active => 'Active';
   
   @override
   String get email => 'Email';
@@ -733,8 +756,6 @@ class AppStringsEn extends AppStrings {
   @override
   String get somethingWentWrong => 'Something went wrong';
   
-  @override
-  String get payment => 'Payment';
   @override
   String get securePaymentRedirect => 'You will be redirected to a secure payment page';
   @override
