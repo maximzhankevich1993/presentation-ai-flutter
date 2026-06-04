@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/presentation.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
+import '../l10n/app_strings.dart';
 import 'editor_screen.dart';
 import 'premium_screen.dart';
 
@@ -22,22 +23,36 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
   int _slideCount = 6;
   bool _isGenerating = false;
   
-  final List<Map<String, String>> _standards = [
-    {'code': 'ifrs', 'name': 'IFRS', 'region': 'Международный', 'description': 'International Financial Reporting Standards'},
-    {'code': 'gaap', 'name': 'US GAAP', 'region': 'США', 'description': 'Generally Accepted Accounting Principles'},
-    {'code': 'rsbu', 'name': 'РСБУ', 'region': 'Россия', 'description': 'Российские стандарты бухгалтерского учёта'},
-    {'code': 'gri', 'name': 'GRI', 'region': 'Международный', 'description': 'Global Reporting Initiative (ESG)'},
-  ];
-  
-  final List<Map<String, dynamic>> _reportTypes = [
-    {'id': 'financial', 'name': 'Финансовый отчёт', 'icon': Icons.attach_money_rounded},
-    {'id': 'annual', 'name': 'Годовой отчёт', 'icon': Icons.calendar_today_rounded},
-    {'id': 'esg', 'name': 'ESG отчёт', 'icon': Icons.eco_rounded},
-    {'id': 'management', 'name': 'Управленческий отчёт', 'icon': Icons.analytics_rounded},
-  ];
+  final List<Map<String, String>> _standards = [];
+  final List<Map<String, dynamic>> _reportTypes = [];
 
   @override
-  void dispose() {
+  void initState() {
+    super.initState();
+    _initStandards();
+    _initReportTypes();
+  }
+
+  void _initStandards() {
+    _standards.addAll([
+      {'code': 'ifrs', 'name': AppStrings.current.ifrs, 'region': AppStrings.current.international, 'description': AppStrings.current.ifrsDescription},
+      {'code': 'gaap', 'name': AppStrings.current.gaap, 'region': AppStrings.current.usa, 'description': AppStrings.current.gaapDescription},
+      {'code': 'rsbu', 'name': AppStrings.current.rsbu, 'region': AppStrings.current.russia, 'description': AppStrings.current.rsbuDescription},
+      {'code': 'gri', 'name': AppStrings.current.gri, 'region': AppStrings.current.international, 'description': AppStrings.current.griDescription},
+    ]);
+  }
+
+  void _initReportTypes() {
+    _reportTypes.addAll([
+      {'id': 'financial', 'name': AppStrings.current.financialReport, 'icon': Icons.attach_money_rounded},
+      {'id': 'annual', 'name': AppStrings.current.annualReport, 'icon': Icons.calendar_today_rounded},
+      {'id': 'esg', 'name': AppStrings.current.esgReport, 'icon': Icons. eco_rounded},
+      {'id': 'management', void 'name': AppStrings.current.managementReport, 'icon': dispose Icons.analytics_rounded},
+()    ]);
+  }
+
+  @override
+ {
     _companyController.dispose();
     _periodController.dispose();
     super.dispose();
@@ -50,21 +65,21 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Color(0xFFFFD700), size: 24),
-            SizedBox(width: 8),
-            Text('Лимит генераций исчерпан', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+            const Icon(Icons.warning_amber_rounded, color: Color(0xFFFFD700), size: 24),
+            const SizedBox(width: 8),
+            Text(AppStrings.current.limitReachedTitle, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
           ],
         ),
-        content: const Text(
-          'У вас закончились бесплатные генерации.\n\nОформите подписку, чтобы продолжить создавать отчёты без ограничений.',
-          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14, height: 1.4),
+        content: Text(
+          AppStrings.current.limitReachedMessage,
+          style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 14, height: 1.4),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A))),
+            child: Text(AppStrings.current.later, style: const TextStyle(color: Color(0xFF9A9A9A))),
           ),
           ElevatedButton(
             onPressed: () {
@@ -75,7 +90,7 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
               );
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
-            child: const Text('Выбрать тариф'),
+            child: Text(AppStrings.current.subscribe, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -99,7 +114,7 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
     final period = _periodController.text.trim();
     
     if (company.isEmpty || period.isEmpty) {
-      _showError('Заполните все поля');
+      _showError(AppStrings.current.fillAllFields);
       return;
     }
     
@@ -139,7 +154,7 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
         await userProvider.loadUser();
       }
     } catch (e) {
-      _showError('Ошибка создания отчёта: $e');
+      _showError('${AppStrings.current.reportGenerationError} $e');
     } finally {
       if (mounted) {
         setState(() => _isGenerating = false);
@@ -155,7 +170,7 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
       final content = slideData['content'] as List? ?? [];
       if (content.isNotEmpty) {
         slides.add(Slide(
-          title: slideData['title'] ?? 'Слайд',
+          title: slideData['title'] ?? AppStrings.current.slide,
           content: content.map((c) => c.toString()).toList(),
         ));
       }
@@ -163,12 +178,12 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
     
     if (slides.isEmpty) {
       slides.add(Slide(
-        title: reportData['title'] ?? 'Отчёт',
+        title: reportData['title'] ?? AppStrings.current.report,
         content: [
-          'Компания: ${_companyController.text}',
-          'Период: ${_periodController.text}',
-          'Стандарт: ${_getStandardName(_selectedStandard)}',
-          'Тип: ${_getReportTypeName(_selectedReportType)}',
+          '${AppStrings.current.companyLabel}: ${_companyController.text}',
+          '${AppStrings.current.periodLabel}: ${_periodController.text}',
+          '${AppStrings.current.standardLabel}: ${_getStandardName(_selectedStandard)}',
+          '${AppStrings.current.typeLabel}: ${_getReportTypeName(_selectedReportType)}',
         ],
       ));
     }
@@ -233,9 +248,9 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
             ),
           ),
         ),
-        title: const Text(
-          'Конструктор отчётов',
-          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.3),
+        title: Text(
+          AppStrings.current.reportBuilder,
+          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: -0.3),
         ),
         centerTitle: true,
       ),
@@ -250,7 +265,6 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Заголовок
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(32),
@@ -266,30 +280,29 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                               child: const Icon(Icons.business_center_rounded, color: Colors.white, size: 32),
                             ),
                             const SizedBox(height: 16),
-                            const Text('Конструктор отчётов', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
+                            Text(AppStrings.current.reportBuilder, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
                             const SizedBox(height: 8),
-                            Text('Создайте профессиональный финансовый отчёт', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
+                            Text(AppStrings.current.createFinancialReport, style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
                           ],
                         ),
                       ),
                       const SizedBox(height: 24),
                       
-                      _buildTextField(controller: _companyController, hint: 'Название компании', icon: Icons.business_rounded),
+                      _buildTextField(controller: _companyController, hint: AppStrings.current.companyHint, icon: Icons.business_rounded),
                       const SizedBox(height: 12),
-                      _buildTextField(controller: _periodController, hint: 'Отчётный период', icon: Icons.calendar_today_rounded),
+                      _buildTextField(controller: _periodController, hint: AppStrings.current.periodHint, icon: Icons.calendar_today_rounded),
                       const SizedBox(height: 16),
                       
-                      const Text('ТИП ОТЧЁТА', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+                      Text(AppStrings.current.reportTypeLabel.toUpperCase(), style: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
                       _buildReportTypeSelector(),
                       const SizedBox(height: 16),
                       
-                      const Text('СТАНДАРТ ОТЧЁТНОСТИ', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+                      Text(AppStrings.current.standardLabel.toUpperCase(), style: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
                       const SizedBox(height: 8),
                       _buildStandardDropdown(),
                       const SizedBox(height: 16),
                       
-                      // Слайдер выбора количества слайдов
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
@@ -303,7 +316,7 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Количество слайдов', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 11)),
+                                Text(AppStrings.current.slidesCount, style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 11)),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                                   decoration: BoxDecoration(
@@ -326,21 +339,20 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                             ),
                             const SizedBox(height: 4),
                             if (!isPremium && !isVip && _slideCount > 10)
-                              const Text(
-                                '⚠️ Для бесплатного тарифа максимум 10 слайдов',
-                                style: TextStyle(color: Color(0xFFFFD700), fontSize: 10),
+                              Text(
+                                AppStrings.current.freePlanMaxSlides,
+                                style: const TextStyle(color: Color(0xFFFFD700), fontSize: 10),
                               ),
                             if (isPremium || isVip)
-                              const Text(
-                                '✨ Premium: до 15 слайдов',
-                                style: TextStyle(color: Color(0xFF1DB954), fontSize: 10),
+                              Text(
+                                AppStrings.current.premiumUpToSlides,
+                                style: const TextStyle(color: Color(0xFF1DB954), fontSize: 10),
                               ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 24),
                       
-                      // Индикатор оставшихся генераций
                       if (!isPremium && !isVip && remaining <= 3)
                         Container(
                           padding: const EdgeInsets.all(12),
@@ -366,8 +378,8 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                               Expanded(
                                 child: Text(
                                   remaining <= 0 
-                                      ? 'Бесплатные генерации закончились. Оформите подписку, чтобы продолжить.'
-                                      : 'Осталось $remaining из 5 бесплатных генераций',
+                                      ? AppStrings.current.generationsFinished
+                                      : '${AppStrings.current.generationsLeft} $remaining ${AppStrings.current.ofFive}',
                                   style: TextStyle(
                                     color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954),
                                     fontSize: 13,
@@ -388,9 +400,9 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                                       gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
-                                    child: const Text(
-                                      'Купить',
-                                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                                    child: Text(
+                                      AppStrings.current.subscribe,
+                                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
                                     ),
                                   ),
                                 ),
@@ -399,7 +411,6 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                         ),
                       const SizedBox(height: 16),
                       
-                      // Кнопка создания
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -410,7 +421,7 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
                           child: Text(
-                            canGenerate ? 'Создать отчёт' : 'Лимит исчерпан',
+                            canGenerate ? AppStrings.current.generateReport : AppStrings.current.limitReached,
                             style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
                           ),
                         ),
@@ -511,9 +522,9 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
           );
         }).toList(),
         onChanged: (v) => setState(() => _selectedStandard = v!),
-        decoration: const InputDecoration(
-          labelText: 'Стандарт отчетности',
-          labelStyle: TextStyle(color: Color(0xFF4A4A4A)),
+        decoration: InputDecoration(
+          labelText: AppStrings.current.standardLabel,
+          labelStyle: const TextStyle(color: Color(0xFF4A4A4A)),
           border: InputBorder.none,
         ),
         dropdownColor: const Color(0xFF1E1E1E),
