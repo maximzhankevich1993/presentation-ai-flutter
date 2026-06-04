@@ -64,6 +64,16 @@ class AppStrings {
   String get logIn => 'Войти';
   
   // ═══════════════════════════════════════════════════════════════
+  // СБРОС ПАРОЛЯ
+  // ═══════════════════════════════════════════════════════════════
+  String get resetPassword => 'Сброс пароля';
+  String get resetPasswordSubtitle => 'Мы отправим ссылку для сброса пароля\nна вашу почту';
+  String get sendResetLink => 'Отправить ссылку';
+  String get emailSent => 'Письмо отправлено!';
+  String get checkEmail => 'Проверьте почту';
+  String get backToLogin => 'Вернуться к входу';
+  
+  // ═══════════════════════════════════════════════════════════════
   // ГЛАВНЫЙ ЭКРАН
   // ═══════════════════════════════════════════════════════════════
   String get createPresentation => 'Создай презентацию';
@@ -353,6 +363,19 @@ class AppStringsEn extends AppStrings {
   String get nameRequired => 'Name is required';
   @override
   String get logIn => 'Log in';
+  
+  @override
+  String get resetPassword => 'Reset Password';
+  @override
+  String get resetPasswordSubtitle => 'We will send a password reset link\nto your email';
+  @override
+  String get sendResetLink => 'Send reset link';
+  @override
+  String get emailSent => 'Email sent!';
+  @override
+  String get checkEmail => 'Check your email';
+  @override
+  String get backToLogin => 'Back to login';
   
   @override
   String get createPresentation => 'Create a Presentation';
