@@ -194,6 +194,21 @@ class AppStrings {
   String get lessonPlan => 'План урока';
   String get homework => 'Домашнее задание';
   String get materials => 'Материалы';
+  String get fillAllFields => 'Заполните все поля';
+  String get lessonGenerationError => 'Ошибка создания урока:';
+  String get lesson => 'Урок';
+  String get subjectLabel => 'Предмет';
+  String get gradeLabel => 'Класс';
+  String get durationLabel => 'Длительность';
+  String get minutes => 'мин';
+  String get slide => 'Слайд';
+  String get lessonTitle => 'Урок:';
+  String get topicHintLesson => 'Тема урока';
+  String get subjectHint => 'Предмет';
+  String get gradeHint => 'Класс';
+  String get standardLabel => 'Образовательный стандарт';
+  String get generationsFinishedLesson => 'Бесплатные генерации закончились. Оформите подписку, чтобы продолжить.';
+  String get generationsLeftLesson => 'Осталось';
   
   // ═══════════════════════════════════════════════════════════════
   // КОНСТРУКТОР ОТЧЁТОВ
@@ -592,6 +607,36 @@ class AppStringsEn extends AppStrings {
   String get homework => 'Homework';
   @override
   String get materials => 'Materials';
+  @override
+  String get fillAllFields => 'Please fill all fields';
+  @override
+  String get lessonGenerationError => 'Lesson generation error:';
+  @override
+  String get lesson => 'Lesson';
+  @override
+  String get subjectLabel => 'Subject';
+  @override
+  String get gradeLabel => 'Grade';
+  @override
+  String get durationLabel => 'Duration';
+  @override
+  String get minutes => 'min';
+  @override
+  String get slide => 'Slide';
+  @override
+  String get lessonTitle => 'Lesson:';
+  @override
+  String get topicHintLesson => 'Lesson topic';
+  @override
+  String get subjectHint => 'Subject';
+  @override
+  String get gradeHint => 'Grade';
+  @override
+  String get standardLabel => 'Educational standard';
+  @override
+  String get generationsFinishedLesson => 'Free generations are over. Subscribe to continue.';
+  @override
+  String get generationsLeftLesson => 'Left';
   
   @override
   String get reportBuilder => 'Report Builder';
