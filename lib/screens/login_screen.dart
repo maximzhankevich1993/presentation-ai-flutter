@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/user.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
+import '../l10n/app_strings.dart';
 import 'home_screen.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
@@ -32,7 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      _showError('Заполните все поля');
+      _showError(AppStrings.current.fillAllFields);
       return;
     }
 
@@ -59,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         }
       } else {
-        _showError('Ошибка входа');
+        _showError(AppStrings.current.loginError);
       }
     } catch (e) {
       _showError(e.toString().replaceAll('Exception:', ''));
@@ -104,9 +105,9 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
-        title: const Text(
-          'Вход',
-          style: TextStyle(
+        title: Text(
+          AppStrings.current.login,
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.w700,
@@ -123,7 +124,6 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Логотип
                 Container(
                   width: 80,
                   height: 80,
@@ -148,9 +148,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 32),
                 
-                const Text(
-                  'Добро пожаловать',
-                  style: TextStyle(
+                Text(
+                  AppStrings.current.welcome,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
@@ -158,16 +158,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Войдите в свой аккаунт',
-                  style: TextStyle(
+                Text(
+                  AppStrings.current.loginToAccount,
+                  style: const TextStyle(
                     color: Color(0xFF9A9A9A),
                     fontSize: 14,
                   ),
                 ),
                 const SizedBox(height: 40),
                 
-                // Поле Email
                 Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFF1E1E1E),
@@ -178,18 +177,17 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _emailController,
                     style: const TextStyle(color: Colors.white),
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
-                      hintText: 'Email',
-                      hintStyle: TextStyle(color: Color(0xFF4A4A4A)),
-                      prefixIcon: Icon(Icons.email_outlined, color: Color(0xFF1DB954)),
+                    decoration: InputDecoration(
+                      hintText: AppStrings.current.email,
+                      hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
+                      prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF1DB954)),
                       border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 
-                // Поле Пароль
                 Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFF1E1E1E),
@@ -201,7 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: const TextStyle(color: Colors.white),
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
-                      hintText: 'Пароль',
+                      hintText: AppStrings.current.password,
                       hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
                       prefixIcon: const Icon(Icons.lock_outline, color: Color(0xFF1DB954)),
                       suffixIcon: IconButton(
@@ -218,7 +216,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 12),
                 
-                // Забыли пароль?
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -228,15 +225,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
                       );
                     },
-                    child: const Text(
-                      'Забыли пароль?',
-                      style: TextStyle(color: Color(0xFF1DB954), fontSize: 13),
+                    child: Text(
+                      AppStrings.current.forgotPassword,
+                      style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13),
                     ),
                   ),
                 ),
                 const SizedBox(height: 24),
                 
-                // Кнопка входа
                 MouseRegion(
                   cursor: SystemMouseCursors.click,
                   child: GestureDetector(
@@ -264,9 +260,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   strokeWidth: 2.5,
                                 ),
                               )
-                            : const Text(
-                                'Войти',
-                                style: TextStyle(
+                            : Text(
+                                AppStrings.current.login,
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 16,
                                   fontWeight: FontWeight.w700,
@@ -279,13 +275,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 
                 const SizedBox(height: 20),
                 
-                // Регистрация
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                      'Нет аккаунта?',
-                      style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 13),
+                    Text(
+                      AppStrings.current.noAccount,
+                      style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13),
                     ),
                     TextButton(
                       onPressed: () {
@@ -294,9 +289,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           MaterialPageRoute(builder: (_) => const RegisterScreen()),
                         );
                       },
-                      child: const Text(
-                        'Создать',
-                        style: TextStyle(
+                      child: Text(
+                        AppStrings.current.register,
+                        style: const TextStyle(
                           color: Color(0xFF1DB954),
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
