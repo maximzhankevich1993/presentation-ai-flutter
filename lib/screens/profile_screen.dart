@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
+import '../l10n/app_strings.dart';
 import 'login_screen.dart';
 import 'premium_screen.dart';
 import 'home_screen.dart';
@@ -20,7 +21,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final up = Provider.of<UserProvider>(context);
     
-    // Если не авторизован — показываем экран входа
     if (!up.isLoggedIn) {
       return const LoginScreen();
     }
@@ -47,9 +47,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ),
-        title: const Text(
-          'Профиль',
-          style: TextStyle(
+        title: Text(
+          AppStrings.current.profile,
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.w700,
@@ -67,7 +67,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   constraints: const BoxConstraints(maxWidth: 700),
                   child: Column(
                     children: [
-                      // Аватар
                       Center(
                         child: Container(
                           width: 100,
@@ -105,7 +104,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 16),
                       
-                      // Имя
                       Text(
                         up.userName,
                         style: const TextStyle(
@@ -116,7 +114,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 4),
                       
-                      // Email
                       Text(
                         up.userEmail,
                         style: const TextStyle(
@@ -126,7 +123,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 20),
                       
-                      // Premium статус
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -165,7 +161,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    up.isPremium ? 'Premium статус' : 'Бесплатный тариф',
+                                    up.isPremium ? AppStrings.current.premiumStatus : AppStrings.current.freePlan,
                                     style: TextStyle(
                                       color: up.isPremium ? Colors.white : const Color(0xFF9A9A9A),
                                       fontSize: 15,
@@ -175,8 +171,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                   const SizedBox(height: 2),
                                   Text(
                                     up.isPremium
-                                        ? 'Все функции доступны'
-                                        : 'Осталось ${up.freeGenerationsLeft} генераций в этом месяце',
+                                        ? AppStrings.current.allFeaturesAvailable
+                                        : '${AppStrings.current.generationsLeft} ${up.freeGenerationsLeft} ${AppStrings.current.thisMonth}',
                                     style: TextStyle(
                                       color: up.isPremium
                                           ? Colors.white.withOpacity(0.8)
@@ -184,7 +180,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       fontSize: 12,
                                     ),
                                   ),
-                                ],
+                                ),
                               ),
                             ),
                             if (!up.isPremium)
@@ -205,9 +201,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: const Text(
-                                      'Активировать',
-                                      style: TextStyle(
+                                    child: Text(
+                                      AppStrings.current.activate,
+                                      style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
@@ -221,7 +217,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 24),
                       
-                      // Статистика
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
@@ -233,9 +228,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
-                              'СТАТИСТИКА',
-                              style: TextStyle(
+                            Text(
+                              AppStrings.current.statistics.toUpperCase(),
+                              style: const TextStyle(
                                 color: Color(0xFF4A4A4A),
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
@@ -247,24 +242,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               children: [
                                 Expanded(
                                   child: _StatCard(
-                                    value: up.isPremium ? '∞' : '${up.freeGenerationsLeft}',
-                                    label: 'Осталось',
+                                    value: up.isPremium ? AppStrings.current.unlimited : '${up.freeGenerationsLeft}',
+                                    label: AppStrings.current.remaining,
                                     icon: Icons.bolt_rounded,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: _StatCard(
-                                    value: up.isPremium ? '∞' : '5',
-                                    label: 'Генераций/мес',
+                                    value: up.isPremium ? AppStrings.current.unlimited : '5',
+                                    label: AppStrings.current.perMonth,
                                     icon: Icons.calendar_today_rounded,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: _StatCard(
-                                    value: up.isPremium ? '∞' : '10',
-                                    label: 'Макс. слайдов',
+                                    value: up.isPremium ? AppStrings.current.unlimited : '10',
+                                    label: AppStrings.current.maxSlides,
                                     icon: Icons.slideshow_rounded,
                                   ),
                                 ),
@@ -275,7 +270,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       const SizedBox(height: 24),
                       
-                      // Кнопка выхода
                       MouseRegion(
                         cursor: SystemMouseCursors.click,
                         child: GestureDetector(
@@ -288,14 +282,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(color: const Color(0xFF2A2A2A)),
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.logout_rounded, color: Color(0xFFFF3B30), size: 18),
-                                SizedBox(width: 10),
+                                const Icon(Icons.logout_rounded, color: Color(0xFFFF3B30), size: 18),
+                                const SizedBox(width: 10),
                                 Text(
-                                  'Выйти из аккаунта',
-                                  style: TextStyle(
+                                  AppStrings.current.logout,
+                                  style: const TextStyle(
                                     color: Color(0xFFFF3B30),
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
@@ -321,22 +315,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1E1E1E),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Выход',
-          style: TextStyle(color: Colors.white, fontSize: 18),
+        title: Text(
+          AppStrings.current.logout,
+          style: const TextStyle(color: Colors.white, fontSize: 18),
         ),
-        content: const Text(
-          'Вы уверены, что хотите выйти?',
-          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
+        content: Text(
+          AppStrings.current.logoutConfirmation,
+          style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Отмена', style: TextStyle(color: Color(0xFF9A9A9A))),
+            child: Text(AppStrings.current.cancel, style: const TextStyle(color: Color(0xFF9A9A9A))),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Выйти', style: TextStyle(color: Color(0xFFFF3B30))),
+            child: Text(AppStrings.current.logout, style: const TextStyle(color: Color(0xFFFF3B30))),
           ),
         ],
       ),
@@ -360,9 +354,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         setState(() => _isLoggingOut = false);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Ошибка выхода'),
-              backgroundColor: Color(0xFFFF3B30),
+            SnackBar(
+              content: Text(AppStrings.current.logoutError),
+              backgroundColor: const Color(0xFFFF3B30),
               behavior: SnackBarBehavior.floating,
             ),
           );
