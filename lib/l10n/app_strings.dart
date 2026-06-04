@@ -44,6 +44,7 @@ class AppStrings {
   String get no => 'Нет';
   String get ok => 'ОК';
   String get continueText => 'Продолжить';
+  String get fillAllFields => 'Заполните все поля';
   
   // ═══════════════════════════════════════════════════════════════
   // АВТОРИЗАЦИЯ
@@ -62,6 +63,9 @@ class AppStrings {
   String get passwordRequired => 'Пароль обязателен';
   String get nameRequired => 'Имя обязательно';
   String get logIn => 'Войти';
+  String get welcome => 'Добро пожаловать';
+  String get loginToAccount => 'Войдите в свой аккаунт';
+  String get welcomeBack => 'С возвращением';
   
   // ═══════════════════════════════════════════════════════════════
   // СБРОС ПАРОЛЯ
@@ -194,7 +198,6 @@ class AppStrings {
   String get lessonPlan => 'План урока';
   String get homework => 'Домашнее задание';
   String get materials => 'Материалы';
-  String get fillAllFields => 'Заполните все поля';
   String get lessonGenerationError => 'Ошибка создания урока:';
   String get lesson => 'Урок';
   String get subjectLabel => 'Предмет';
@@ -360,6 +363,8 @@ class AppStringsEn extends AppStrings {
   String get ok => 'OK';
   @override
   String get continueText => 'Continue';
+  @override
+  String get fillAllFields => 'Please fill all fields';
   
   @override
   String get email => 'Email';
@@ -389,6 +394,12 @@ class AppStringsEn extends AppStrings {
   String get nameRequired => 'Name is required';
   @override
   String get logIn => 'Log in';
+  @override
+  String get welcome => 'Welcome';
+  @override
+  String get loginToAccount => 'Log in to your account';
+  @override
+  String get welcomeBack => 'Welcome back';
   
   @override
   String get resetPassword => 'Reset Password';
@@ -618,8 +629,6 @@ class AppStringsEn extends AppStrings {
   String get homework => 'Homework';
   @override
   String get materials => 'Materials';
-  @override
-  String get fillAllFields => 'Please fill all fields';
   @override
   String get lessonGenerationError => 'Lesson generation error:';
   @override
