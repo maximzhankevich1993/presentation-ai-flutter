@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/presentation.dart';
 import '../providers/user_provider.dart';
 import '../services/api_service.dart';
+import '../l10n/app_strings.dart';
 import 'editor_screen.dart';
 import 'premium_screen.dart';
 
@@ -20,18 +21,18 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
   
   String _selectedStandard = 'common_core';
   int _durationMinutes = 45;
-  int _slideCount = 5; // НОВОЕ: количество слайдов
+  int _slideCount = 5;
   bool _isGenerating = false;
   
   final List<Map<String, String>> _standards = [
-    {'code': 'common_core', 'name': 'Common Core (USA)', 'region': 'США'},
-    {'code': 'cambridge', 'name': 'Cambridge International', 'region': 'Международный'},
-    {'code': 'ib', 'name': 'International Baccalaureate (IB)', 'region': 'Международный'},
-    {'code': 'fgos', 'name': 'ФГОС (Россия)', 'region': 'Россия'},
-    {'code': 'national_uk', 'name': 'National Curriculum (UK)', 'region': 'Великобритания'},
-    {'code': 'australian', 'name': 'Australian Curriculum', 'region': 'Австралия'},
-    {'code': 'cbse', 'name': 'CBSE (India)', 'region': 'Индия'},
-    {'code': 'common_eu', 'name': 'European Framework', 'region': 'Евросоюз'},
+    {'code': 'common_core', 'name': 'Common Core (USA)', 'region': 'USA'},
+    {'code': 'cambridge', 'name': 'Cambridge International', 'region': 'International'},
+    {'code': 'ib', 'name': 'International Baccalaureate (IB)', 'region': 'International'},
+    {'code': 'fgos', 'name': 'ФГОС (Russia)', 'region': 'Russia'},
+    {'code': 'national_uk', 'name': 'National Curriculum (UK)', 'region': 'United Kingdom'},
+    {'code': 'australian', 'name': 'Australian Curriculum', 'region': 'Australia'},
+    {'code': 'cbse', 'name': 'CBSE (India)', 'region': 'India'},
+    {'code': 'common_eu', 'name': 'European Framework', 'region': 'European Union'},
   ];
 
   @override
@@ -49,21 +50,21 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Color(0xFFFFD700), size: 24),
-            SizedBox(width: 8),
-            Text('Лимит генераций исчерпан', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+            const Icon(Icons.warning_amber_rounded, color: Color(0xFFFFD700), size: 24),
+            const SizedBox(width: 8),
+            Text(AppStrings.current.limitReachedTitle, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
           ],
         ),
-        content: const Text(
-          'У вас закончились бесплатные генерации.\n\nОформите подписку, чтобы продолжить создавать уроки без ограничений.',
-          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14, height: 1.4),
+        content: Text(
+          AppStrings.current.limitReachedMessage,
+          style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 14, height: 1.4),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A))),
+            child: Text(AppStrings.current.later, style: const TextStyle(color: Color(0xFF9A9A9A))),
           ),
           ElevatedButton(
             onPressed: () {
@@ -74,7 +75,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
               );
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
-            child: const Text('Выбрать тариф'),
+            child: Text(AppStrings.current.subscribe, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -99,7 +100,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
     final grade = _gradeController.text.trim();
     
     if (topic.isEmpty || subject.isEmpty || grade.isEmpty) {
-      _showError('Заполните все поля');
+      _showError(AppStrings.current.fillAllFields);
       return;
     }
     
@@ -119,7 +120,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
         standard: _selectedStandard,
         grade: grade,
         durationMinutes: _durationMinutes,
-        slideCount: _slideCount, // НОВОЕ: передаём количество слайдов
+        slideCount: _slideCount,
       );
       
       await userProvider.loadUser();
@@ -141,7 +142,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showError('Ошибка создания урока: $e');
+        _showError('${AppStrings.current.lessonGenerationError} $e');
       }
     } finally {
       if (mounted) {
@@ -153,40 +154,36 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
   Presentation _convertToPresentation(Map<String, dynamic> lessonData) {
     final List<Slide> slides = [];
     
-    // Титульный слайд
     slides.add(Slide(
-      title: lessonData['topic'] ?? 'Урок',
+      title: lessonData['topic'] ?? AppStrings.current.lesson,
       content: [
-        '📚 Предмет: ${lessonData['subject'] ?? ''}',
-        '🎓 Класс: ${lessonData['grade'] ?? ''}',
-        '⏱️ Длительность: ${_durationMinutes} минут',
+        '📚 ${AppStrings.current.subjectLabel}: ${lessonData['subject'] ?? ''}',
+        '🎓 ${AppStrings.current.gradeLabel}: ${lessonData['grade'] ?? ''}',
+        '⏱️ ${AppStrings.current.durationLabel}: $_durationMinutes ${AppStrings.current.minutes}',
       ],
     ));
     
-    // Слайды урока
     final slidesData = lessonData['slides'] as List? ?? [];
     for (final slideData in slidesData) {
       final content = slideData['content'] as List? ?? [];
       slides.add(Slide(
-        title: slideData['title'] ?? 'Слайд',
+        title: slideData['title'] ?? AppStrings.current.slide,
         content: content.map((c) => c.toString()).toList(),
       ));
     }
     
-    // Домашнее задание (если есть)
     if (lessonData['homework'] != null && lessonData['homework'].toString().isNotEmpty) {
       slides.add(Slide(
-        title: 'Домашнее задание',
+        title: AppStrings.current.homework,
         content: [lessonData['homework']],
       ));
     }
     
-    // Материалы (если есть)
     if (lessonData['materials'] != null) {
       final materials = lessonData['materials'] as List? ?? [];
       if (materials.isNotEmpty) {
         slides.add(Slide(
-          title: 'Дополнительные материалы',
+          title: AppStrings.current.materials,
           content: materials.map((m) => '📖 $m').toList(),
         ));
       }
@@ -194,7 +191,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
     
     return Presentation(
       id: DateTime.now().toString(),
-      title: 'Урок: ${lessonData['topic'] ?? ''}',
+      title: '${AppStrings.current.lessonTitle} ${lessonData['topic'] ?? ''}',
       slides: slides,
       createdAt: DateTime.now(),
     );
@@ -215,9 +212,9 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Конструктор уроков',
-          style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
+        title: Text(
+          AppStrings.current.lessonBuilder,
+          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
         ),
         centerTitle: true,
       ),
@@ -232,7 +229,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Заголовок
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(32),
@@ -248,19 +244,19 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                               child: const Icon(Icons.school_rounded, color: Colors.white, size: 32),
                             ),
                             const SizedBox(height: 16),
-                            const Text('Конструктор уроков', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
+                            Text(AppStrings.current.lessonBuilder, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
                             const SizedBox(height: 8),
-                            Text('Создайте полноценный урок по вашей теме', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
+                            Text(AppStrings.current.createFullLesson, style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
                           ],
                         ),
                       ),
                       const SizedBox(height: 24),
                       
-                      _buildTextField(controller: _topicController, hint: 'Тема урока', icon: Icons.topic_rounded),
+                      _buildTextField(controller: _topicController, hint: AppStrings.current.topicHintLesson, icon: Icons.topic_rounded),
                       const SizedBox(height: 12),
-                      _buildTextField(controller: _subjectController, hint: 'Предмет', icon: Icons.subject_rounded),
+                      _buildTextField(controller: _subjectController, hint: AppStrings.current.subjectHint, icon: Icons.subject_rounded),
                       const SizedBox(height: 12),
-                      _buildTextField(controller: _gradeController, hint: 'Класс', icon: Icons.numbers_rounded),
+                      _buildTextField(controller: _gradeController, hint: AppStrings.current.gradeHint, icon: Icons.numbers_rounded),
                       const SizedBox(height: 16),
                       
                       Row(
@@ -272,7 +268,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                       ),
                       const SizedBox(height: 16),
                       
-                      // НОВОЕ: Слайдер выбора количества слайдов
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
@@ -286,7 +281,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text('Количество слайдов', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 11)),
+                                Text(AppStrings.current.slidesCount, style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 11)),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                                   decoration: BoxDecoration(
@@ -312,7 +307,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                       ),
                       const SizedBox(height: 24),
                       
-                      // Индикатор оставшихся генераций
                       if (!isPremium && remaining <= 3)
                         Container(
                           padding: const EdgeInsets.all(12),
@@ -338,8 +332,8 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                               Expanded(
                                 child: Text(
                                   remaining <= 0 
-                                      ? 'Бесплатные генерации закончились. Оформите подписку, чтобы продолжить.'
-                                      : 'Осталось $remaining из 5 бесплатных генераций',
+                                      ? AppStrings.current.generationsFinishedLesson
+                                      : '${AppStrings.current.generationsLeftLesson} $remaining ${AppStrings.current.ofFive}',
                                   style: TextStyle(
                                     color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954),
                                     fontSize: 13,
@@ -360,9 +354,9 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                                       gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]),
                                       borderRadius: BorderRadius.circular(20),
                                     ),
-                                    child: const Text(
-                                      'Купить',
-                                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                                    child: Text(
+                                      AppStrings.current.subscribe,
+                                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
                                     ),
                                   ),
                                 ),
@@ -371,7 +365,6 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                         ),
                       const SizedBox(height: 16),
                       
-                      // Кнопка создания
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
@@ -382,7 +375,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
                           child: Text(
-                            remaining <= 0 ? 'Лимит исчерпан' : 'Создать урок',
+                            remaining <= 0 ? AppStrings.current.limitReached : AppStrings.current.generateLesson,
                             style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700),
                           ),
                         ),
@@ -439,9 +432,9 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
           );
         }).toList(),
         onChanged: (v) => setState(() => _selectedStandard = v!),
-        decoration: const InputDecoration(
-          labelText: 'Образовательный стандарт',
-          labelStyle: TextStyle(color: Color(0xFF4A4A4A)),
+        decoration: InputDecoration(
+          labelText: AppStrings.current.standardLabel,
+          labelStyle: const TextStyle(color: Color(0xFF4A4A4A)),
           border: InputBorder.none,
         ),
         dropdownColor: const Color(0xFF1E1E1E),
@@ -454,7 +447,7 @@ class _LessonConstructorScreenState extends State<LessonConstructorScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Длительность: $_durationMinutes мин', style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13)),
+        Text('${AppStrings.current.durationLabel}: $_durationMinutes ${AppStrings.current.minutes}', style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13)),
         Slider(
           value: _durationMinutes.toDouble(),
           min: 20,
