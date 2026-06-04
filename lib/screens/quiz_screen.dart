@@ -8,6 +8,7 @@ import '../services/quiz_service.dart';
 import '../providers/user_provider.dart';
 import '../models/presentation.dart';
 import '../services/api_service.dart';
+import '../l10n/app_strings.dart';
 import 'premium_screen.dart';
 
 class QuizScreen extends StatefulWidget {
@@ -102,23 +103,23 @@ class _QuizScreenState extends State<QuizScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Color(0xFFFFD700), size: 24),
-            SizedBox(width: 8),
-            Text('Limit reached', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+            const Icon(Icons.warning_amber_rounded, color: Color(0xFFFFD700), size: 24),
+            const SizedBox(width: 8),
+            Text(AppStrings.current.limitReachedTitle, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
           ],
         ),
-        content: const Text(
-          'You have used all free generations for this month.\n\nSubscribe to continue creating unlimited quizzes.',
-          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14, height: 1.4),
+        content: Text(
+          AppStrings.current.limitReachedMessage,
+          style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 14, height: 1.4),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Later', style: TextStyle(color: Color(0xFF9A9A9A)))),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(AppStrings.current.later, style: const TextStyle(color: Color(0xFF9A9A9A)))),
           ElevatedButton(
             onPressed: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())); },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
-            child: const Text('Subscribe', style: TextStyle(color: Colors.white)),
+            child: Text(AppStrings.current.subscribe, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -131,12 +132,12 @@ class _QuizScreenState extends State<QuizScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Premium Required', style: TextStyle(color: Color(0xFFFFD700))),
-        content: const Text('PDF export is only available with a Premium subscription.'),
+        title: Text(AppStrings.current.premiumRequired, style: const TextStyle(color: Color(0xFFFFD700))),
+        content: Text(AppStrings.current.pdfPremiumOnly),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Later', style: TextStyle(color: Color(0xFF9A9A9A)))),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(AppStrings.current.later, style: const TextStyle(color: Color(0xFF9A9A9A)))),
           ElevatedButton(onPressed: () { Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())); },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)), child: const Text('Subscribe', style: TextStyle(color: Colors.white))),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)), child: Text(AppStrings.current.subscribe, style: const TextStyle(color: Colors.white))),
         ],
       ),
     );
@@ -158,7 +159,7 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Future<void> _generateQuizFromFile() async {
-    if (_uploadedFileContent == null) { _showError('Upload a file first'); return; }
+    if (_uploadedFileContent == null) { _showError(AppStrings.current.uploadFileFirst); return; }
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     await userProvider.loadUser();
     if (userProvider.freeGenerationsLeft <= 0 && !userProvider.isPremium) { _showLimitDialog(); return; }
@@ -176,12 +177,12 @@ class _QuizScreenState extends State<QuizScreen> {
       });
     } on LimitReachedException catch (_) {
       if (mounted) { _showLimitDialog(); await userProvider.loadUser(); }
-    } catch (e) { _showError('Error: $e'); }
+    } catch (e) { _showError('${AppStrings.current.error}: $e'); }
     finally { if (mounted) setState(() => _isLoading = false); }
   }
 
   Future<void> _generateQuizFromSelectedPresentation() async {
-    if (_selectedPresentation == null) { _showError('Select a presentation'); return; }
+    if (_selectedPresentation == null) { _showError(AppStrings.current.selectPresentationFirst); return; }
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     await userProvider.loadUser();
     if (userProvider.freeGenerationsLeft <= 0 && !userProvider.isPremium) { _showLimitDialog(); return; }
@@ -200,7 +201,7 @@ class _QuizScreenState extends State<QuizScreen> {
       });
     } on LimitReachedException catch (_) {
       if (mounted) { _showLimitDialog(); await userProvider.loadUser(); }
-    } catch (e) { _showError('Error: $e'); }
+    } catch (e) { _showError('${AppStrings.current.error}: $e'); }
     finally { if (mounted) setState(() => _isLoading = false); }
   }
 
@@ -208,8 +209,8 @@ class _QuizScreenState extends State<QuizScreen> {
     final topic = _topicController.text.trim();
     final questionCount = int.tryParse(_questionCountController.text.trim()) ?? 5;
     
-    if (topic.isEmpty) { _showError('Enter a topic'); return; }
-    if (questionCount < 3 || questionCount > 10) { _showError('Questions must be between 3 and 10'); return; }
+    if (topic.isEmpty) { _showError(AppStrings.current.enterTopicFirst); return; }
+    if (questionCount < 3 || questionCount > 10) { _showError(AppStrings.current.questionsRange); return; }
     
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     await userProvider.loadUser();
@@ -240,7 +241,7 @@ class _QuizScreenState extends State<QuizScreen> {
     } on LimitReachedException catch (_) {
       if (mounted) { _showLimitDialog(); await userProvider.loadUser(); }
     } catch (e) {
-      _showError('Error: $e');
+      _showError('${AppStrings.current.error}: $e');
       print('Quiz generation error: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -257,7 +258,7 @@ class _QuizScreenState extends State<QuizScreen> {
       data = response;
     } else if (response.containsKey('questions')) {
       data = {
-        'title': 'Quiz on ${_topicController.text.trim()}',
+        'title': '${AppStrings.current.quizOn} ${_topicController.text.trim()}',
         'questions': response['questions'],
       };
     } else {
@@ -268,14 +269,14 @@ class _QuizScreenState extends State<QuizScreen> {
       final cleaned = (data['questions'] as List).map((q) {
         if (q is! Map<String, dynamic>) {
           return <String, dynamic>{
-            'question': 'Question',
+            'question': AppStrings.current.question,
             'options': ['A', 'B', 'C', 'D'],
             'correct': 0,
             'explanation': '',
           };
         }
         return <String, dynamic>{
-          'question': q['question']?.toString() ?? 'Question',
+          'question': q['question']?.toString() ?? AppStrings.current.question,
           'options': (q['options'] as List?)?.map((o) => o?.toString() ?? 'Option').toList() ?? ['A', 'B', 'C', 'D'],
           'correct': q['correct'] ?? q['correctIndex'] ?? q['correct_index'] ?? 0,
           'explanation': q['explanation']?.toString() ?? q['explain']?.toString() ?? '',
@@ -291,7 +292,7 @@ class _QuizScreenState extends State<QuizScreen> {
     final question = _currentQuiz!.questions[_currentQuestionIndex];
     final isCorrect = selectedIndex == question.correctIndex;
     setState(() { _userAnswers[_currentQuestionIndex] = selectedIndex; if (isCorrect) _score++; });
-    _showSnackBar(isCorrect ? 'Correct! 🎉' : 'Wrong! Correct answer: ${question.options[question.correctIndex]}', isCorrect);
+    _showSnackBar(isCorrect ? '${AppStrings.current.correct} 🎉' : '${AppStrings.current.wrong} ${AppStrings.current.correctAnswer} ${question.options[question.correctIndex]}', isCorrect);
     Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted) {
         setState(() {
@@ -312,7 +313,7 @@ class _QuizScreenState extends State<QuizScreen> {
     final url = html.Url.createObjectUrlFromBlob(blob);
     html.AnchorElement(href: url)..setAttribute('download', '${_currentQuiz!.title}.doc')..click();
     html.Url.revokeObjectUrl(url);
-    _showSnackBar('Quiz saved as Word', true);
+    _showSnackBar('${AppStrings.current.quizSaved} Word', true);
   }
   
   void _exportToPdf() {
@@ -341,7 +342,7 @@ class _QuizScreenState extends State<QuizScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF121212), elevation: 0,
         leading: IconButton(icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white), onPressed: () => Navigator.pop(context)),
-        title: const Text('Quiz Generator', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+        title: Text(AppStrings.current.quizGenerator, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
         centerTitle: true,
       ),
       body: _isLoading
@@ -360,16 +361,16 @@ class _QuizScreenState extends State<QuizScreen> {
                           child: Column(children: [
                             Container(width: 64, height: 64, decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)), child: const Icon(Icons.quiz_rounded, color: Colors.white, size: 32)),
                             const SizedBox(height: 16),
-                            const Text('Quiz Generator', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
+                            Text(AppStrings.current.quizGenerator, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
                             const SizedBox(height: 8),
-                            Text('Create a quiz from a presentation or topic', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
+                            Text(AppStrings.current.createQuizFromTopic, style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
                           ]),
                         ),
                         const SizedBox(height: 24),
                         Container(
                           padding: const EdgeInsets.all(4),
                           decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF2A2A2A))),
-                          child: Row(children: [_buildTabButton('From Presentation', 0), const SizedBox(width: 8), _buildTabButton('By Topic', 1)]),
+                          child: Row(children: [_buildTabButton(AppStrings.current.fromPresentation, 0), const SizedBox(width: 8), _buildTabButton(AppStrings.current.byTopic, 1)]),
                         ),
                         const SizedBox(height: 24),
                         _currentTab == 0 ? _buildPresentationTab(remaining, isPremium) : _buildTopicTab(remaining, isPremium),
@@ -403,7 +404,7 @@ class _QuizScreenState extends State<QuizScreen> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('UPLOAD FILE', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
           const SizedBox(height: 12),
-          ElevatedButton.icon(onPressed: _uploadFile, icon: const Icon(Icons.upload_file_rounded, color: Colors.white), label: const Text('Choose File'),
+          ElevatedButton.icon(onPressed: _uploadFile, icon: const Icon(Icons.upload_file_rounded, color: Colors.white), label: Text(AppStrings.current.chooseFile),
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF252525), padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)))),
           if (_uploadedFileName != null) ...[
             const SizedBox(height: 12),
@@ -418,13 +419,13 @@ class _QuizScreenState extends State<QuizScreen> {
               Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: remaining <= 0 ? const Color(0xFFFF3B30).withOpacity(0.1) : const Color(0xFF1DB954).withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: remaining <= 0 ? const Color(0xFFFF3B30).withOpacity(0.3) : const Color(0xFF1DB954).withOpacity(0.3))),
                 child: Row(children: [
                   Icon(remaining <= 0 ? Icons.warning_amber_rounded : Icons.info_outline_rounded, color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), size: 18), const SizedBox(width: 10),
-                  Expanded(child: Text(remaining <= 0 ? 'Free generations used up.' : '$remaining of 5 free generations left', style: TextStyle(color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), fontSize: 13))),
-                  if (remaining <= 0) GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())), child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(20)), child: const Text('Subscribe', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)))),
+                  Expanded(child: Text(remaining <= 0 ? AppStrings.current.generationsFinished : '$remaining ${AppStrings.current.ofFive} ${AppStrings.current.generationsLeftLower}', style: TextStyle(color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), fontSize: 13))),
+                  if (remaining <= 0) GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())), child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(20)), child: Text(AppStrings.current.subscribe, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)))),
                 ])),
             const SizedBox(height: 16),
             SizedBox(width: double.infinity, child: ElevatedButton(onPressed: canGenerate ? _generateQuizFromFile : null,
               style: ElevatedButton.styleFrom(backgroundColor: canGenerate ? const Color(0xFF1DB954) : const Color(0xFF4A4A4A), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-              child: Text(canGenerate ? 'Generate Quiz from File' : 'Limit reached', style: const TextStyle(color: Colors.white)))),
+              child: Text(canGenerate ? AppStrings.current.generateQuizFromFile : AppStrings.current.limitReached, style: const TextStyle(color: Colors.white)))),
           ],
         ])),
       const SizedBox(height: 24),
@@ -436,11 +437,11 @@ class _QuizScreenState extends State<QuizScreen> {
           DropdownButtonFormField<Presentation>(value: _selectedPresentation, dropdownColor: const Color(0xFF1E1E1E), style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A)))),
             items: _userPresentations.map((p) => DropdownMenuItem(value: p, child: Text(p.title, style: const TextStyle(color: Colors.white)))).toList(),
-            onChanged: (value) => setState(() => _selectedPresentation = value), hint: const Text('Select a presentation', style: TextStyle(color: Color(0xFF9A9A9A)))),
+            onChanged: (value) => setState(() => _selectedPresentation = value), hint: Text(AppStrings.current.selectPresentation, style: const TextStyle(color: Color(0xFF9A9A9A)))),
           const SizedBox(height: 20),
-          if (!isPremium && remaining <= 3) Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: remaining <= 0 ? const Color(0xFFFF3B30).withOpacity(0.1) : const Color(0xFF1DB954).withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: remaining <= 0 ? const Color(0xFFFF3B30).withOpacity(0.3) : const Color(0xFF1DB954).withOpacity(0.3))), child: Row(children: [Icon(remaining <= 0 ? Icons.warning_amber_rounded : Icons.info_outline_rounded, color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), size: 18), const SizedBox(width: 10), Expanded(child: Text(remaining <= 0 ? 'Free generations used up.' : '$remaining of 5 free generations left', style: TextStyle(color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), fontSize: 13))), if (remaining <= 0) GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())), child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(20)), child: const Text('Subscribe', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700))))])),
+          if (!isPremium && remaining <= 3) Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: remaining <= 0 ? const Color(0xFFFF3B30).withOpacity(0.1) : const Color(0xFF1DB954).withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: remaining <= 0 ? const Color(0xFFFF3B30).withOpacity(0.3) : const Color(0xFF1DB954).withOpacity(0.3))), child: Row(children: [Icon(remaining <= 0 ? Icons.warning_amber_rounded : Icons.info_outline_rounded, color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), size: 18), const SizedBox(width: 10), Expanded(child: Text(remaining <= 0 ? AppStrings.current.generationsFinished : '$remaining ${AppStrings.current.ofFive} ${AppStrings.current.generationsLeftLower}', style: TextStyle(color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), fontSize: 13))), if (remaining <= 0) GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())), child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(20)), child: Text(AppStrings.current.subscribe, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700))))])),
           const SizedBox(height: 16),
-          SizedBox(width: double.infinity, child: ElevatedButton(onPressed: canGenerate ? _generateQuizFromSelectedPresentation : null, style: ElevatedButton.styleFrom(backgroundColor: canGenerate ? const Color(0xFF1DB954) : const Color(0xFF4A4A4A), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: Text(canGenerate ? 'Generate Quiz from Presentation' : 'Limit reached', style: const TextStyle(color: Colors.white)))),
+          SizedBox(width: double.infinity, child: ElevatedButton(onPressed: canGenerate ? _generateQuizFromSelectedPresentation : null, style: ElevatedButton.styleFrom(backgroundColor: canGenerate ? const Color(0xFF1DB954) : const Color(0xFF4A4A4A), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: Text(canGenerate ? AppStrings.current.generateQuizFromPresentation : AppStrings.current.limitReached, style: const TextStyle(color: Colors.white)))),
         ])),
     ]);
   }
@@ -463,9 +464,9 @@ class _QuizScreenState extends State<QuizScreen> {
           const Text('NUMBER OF QUESTIONS', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)), const SizedBox(height: 8),
           TextField(controller: _questionCountController, keyboardType: TextInputType.number, style: const TextStyle(color: Colors.white), decoration: InputDecoration(hintText: '5 (3-10)', hintStyle: const TextStyle(color: Color(0xFF4A4A4A)), prefixIcon: const Icon(Icons.numbers_rounded, color: Color(0xFF1DB954)), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))), enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))))),
           const SizedBox(height: 20),
-          if (!isPremium && remaining <= 3) Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: remaining <= 0 ? const Color(0xFFFF3B30).withOpacity(0.1) : const Color(0xFF1DB954).withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: remaining <= 0 ? const Color(0xFFFF3B30).withOpacity(0.3) : const Color(0xFF1DB954).withOpacity(0.3))), child: Row(children: [Icon(remaining <= 0 ? Icons.warning_amber_rounded : Icons.info_outline_rounded, color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), size: 18), const SizedBox(width: 10), Expanded(child: Text(remaining <= 0 ? 'Free generations used up.' : '$remaining of 5 free generations left', style: TextStyle(color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), fontSize: 13))), if (remaining <= 0) GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())), child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(20)), child: const Text('Subscribe', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700))))])),
+          if (!isPremium && remaining <= 3) Container(padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: remaining <= 0 ? const Color(0xFFFF3B30).withOpacity(0.1) : const Color(0xFF1DB954).withOpacity(0.1), borderRadius: BorderRadius.circular(12), border: Border.all(color: remaining <= 0 ? const Color(0xFFFF3B30).withOpacity(0.3) : const Color(0xFF1DB954).withOpacity(0.3))), child: Row(children: [Icon(remaining <= 0 ? Icons.warning_amber_rounded : Icons.info_outline_rounded, color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), size: 18), const SizedBox(width: 10), Expanded(child: Text(remaining <= 0 ? AppStrings.current.generationsFinished : '$remaining ${AppStrings.current.ofFive} ${AppStrings.current.generationsLeftLower}', style: TextStyle(color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), fontSize: 13))), if (remaining <= 0) GestureDetector(onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())), child: Container(padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(20)), child: Text(AppStrings.current.subscribe, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700))))])),
           const SizedBox(height: 16),
-          SizedBox(width: double.infinity, child: ElevatedButton(onPressed: canGenerate ? _generateQuizFromTopic : null, style: ElevatedButton.styleFrom(backgroundColor: canGenerate ? const Color(0xFF1DB954) : const Color(0xFF4A4A4A), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: Text(canGenerate ? 'Generate Quiz' : 'Limit reached', style: const TextStyle(color: Colors.white)))),
+          SizedBox(width: double.infinity, child: ElevatedButton(onPressed: canGenerate ? _generateQuizFromTopic : null, style: ElevatedButton.styleFrom(backgroundColor: canGenerate ? const Color(0xFF1DB954) : const Color(0xFF4A4A4A), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: Text(canGenerate ? AppStrings.current.generateQuiz : AppStrings.current.limitReached, style: const TextStyle(color: Colors.white)))),
         ])),
     ]);
   }
@@ -478,8 +479,8 @@ class _QuizScreenState extends State<QuizScreen> {
         Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF2A2A2A))),
           child: Column(children: [
             Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-              Text('Question ${_currentQuestionIndex + 1} of ${_currentQuiz!.questions.length}', style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13)),
-              Text('Score: $_score', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13, fontWeight: FontWeight.w700)),
+              Text('${AppStrings.current.question} ${_currentQuestionIndex + 1} ${AppStrings.current.of} ${_currentQuiz!.questions.length}', style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13)),
+              Text('${AppStrings.current.score}: $_score', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13, fontWeight: FontWeight.w700)),
             ]),
             const SizedBox(height: 8),
             LinearProgressIndicator(value: (_currentQuestionIndex + 1) / _currentQuiz!.questions.length, backgroundColor: const Color(0xFF2A2A2A), color: const Color(0xFF1DB954)),
@@ -488,7 +489,7 @@ class _QuizScreenState extends State<QuizScreen> {
         Container(padding: const EdgeInsets.all(24), decoration: BoxDecoration(color: const Color(0xFF1DB954).withOpacity(0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFF1DB954).withOpacity(0.2))),
           child: Text(question.question, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600))),
         const SizedBox(height: 24),
-        const Text('SELECT ANSWER', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+        Text(AppStrings.current.selectAnswer, style: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
         const SizedBox(height: 12),
         ...List.generate(question.options.length, (index) => Padding(
           padding: const EdgeInsets.only(bottom: 10),
@@ -510,16 +511,16 @@ class _QuizScreenState extends State<QuizScreen> {
       child: Column(children: [
         Container(width: 100, height: 100, decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(50)), child: Center(child: Text('${percentage.toInt()}%', style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w800)))),
         const SizedBox(height: 24),
-        Text(percentage >= 80 ? 'Excellent! 🎉' : (percentage >= 60 ? 'Good job! 👍' : 'Try again! 💪'), style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
+        Text(percentage >= 80 ? AppStrings.current.excellent : (percentage >= 60 ? AppStrings.current.good : AppStrings.current.tryAgain), style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
         const SizedBox(height: 32),
         Container(padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFF2A2A2A))), child: Column(children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('Correct answers:', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14)), Text('$_score / ${_currentQuiz!.questions.length}', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 20, fontWeight: FontWeight.w700))]),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(AppStrings.current.correctAnswers, style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 14)), Text('$_score / ${_currentQuiz!.questions.length}', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 20, fontWeight: FontWeight.w700))]),
           const SizedBox(height: 12),
           LinearProgressIndicator(value: _score / _currentQuiz!.questions.length, backgroundColor: const Color(0xFF2A2A2A), color: const Color(0xFF1DB954)),
         ])),
         const SizedBox(height: 24),
         if (_showAnswers) ...[
-          const Text('CORRECT ANSWERS', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)), const SizedBox(height: 12),
+          Text(AppStrings.current.correctAnswersTitle, style: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)), const SizedBox(height: 12),
           ..._currentQuiz!.questions.asMap().entries.map((entry) {
             final i = entry.key; final q = entry.value; final correctLetter = String.fromCharCode(65 + q.correctIndex);
             return Container(margin: const EdgeInsets.only(bottom: 12), padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFF2A2A2A))),
@@ -532,7 +533,7 @@ class _QuizScreenState extends State<QuizScreen> {
         ],
         const SizedBox(height: 16),
         Row(children: [
-          Expanded(child: OutlinedButton(onPressed: () => setState(() => _showAnswers = !_showAnswers), style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF2A2A2A)), padding: const EdgeInsets.symmetric(vertical: 14)), child: Text(_showAnswers ? 'Hide Answers' : 'Show Answers', style: const TextStyle(color: Color(0xFF1DB954))))),
+          Expanded(child: OutlinedButton(onPressed: () => setState(() => _showAnswers = !_showAnswers), style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF2A2A2A)), padding: const EdgeInsets.symmetric(vertical: 14)), child: Text(_showAnswers ? AppStrings.current.hideAnswers : AppStrings.current.showAnswers, style: const TextStyle(color: Color(0xFF1DB954))))),
           const SizedBox(width: 12),
           Expanded(child: OutlinedButton(onPressed: _exportToWord, style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF2A2A2A)), padding: const EdgeInsets.symmetric(vertical: 14)), child: const Text('📄 Word', style: TextStyle(color: Colors.white)))),
         ]),
@@ -540,10 +541,10 @@ class _QuizScreenState extends State<QuizScreen> {
         Row(children: [
           Expanded(child: OutlinedButton(onPressed: _exportToPdf, style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF2A2A2A)), padding: const EdgeInsets.symmetric(vertical: 14)), child: const Text('📑 PDF', style: TextStyle(color: Colors.white)))),
           const SizedBox(width: 12),
-          Expanded(child: OutlinedButton(onPressed: () { setState(() { _showQuiz = false; _quizFinished = false; _currentQuestionIndex = 0; _score = 0; _userAnswers.clear(); _currentQuiz = null; }); }, style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF2A2A2A)), padding: const EdgeInsets.symmetric(vertical: 14)), child: const Text('New Quiz', style: TextStyle(color: Colors.white)))),
+          Expanded(child: OutlinedButton(onPressed: () { setState(() { _showQuiz = false; _quizFinished = false; _currentQuestionIndex = 0; _score = 0; _userAnswers.clear(); _currentQuiz = null; }); }, style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFF2A2A2A)), padding: const EdgeInsets.symmetric(vertical: 14)), child: Text(AppStrings.current.newQuiz, style: const TextStyle(color: Colors.white)))),
         ]),
         const SizedBox(height: 12),
-        SizedBox(width: double.infinity, child: ElevatedButton(onPressed: () => Navigator.pop(context), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: const Text('Back to Home', style: TextStyle(color: Colors.white)))),
+        SizedBox(width: double.infinity, child: ElevatedButton(onPressed: () => Navigator.pop(context), style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954), padding: const EdgeInsets.symmetric(vertical: 14), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), child: Text(AppStrings.current.backToHome, style: const TextStyle(color: Colors.white)))),
       ]),
     );
   }
