@@ -132,6 +132,33 @@ class AppStrings {
   String get semiannualSubscription => 'Полугодовая подписка';
   String get annualSubscription => 'Годовая подписка';
   String get subscription => 'Подписка';
+  String get reportBuilder => 'Конструктор отчётов';
+  String get createFinancialReport => 'Создайте профессиональный финансовый отчёт';
+  String get companyHint => 'Название компании';
+  String get periodHint => 'Отчётный период';
+  String get reportTypeLabel => 'ТИП ОТЧЁТА';
+  String get financialReport => 'Финансовый отчёт';
+  String get annualReport => 'Годовой отчёт';
+  String get esgReport => 'ESG отчёт';
+  String get managementReport => 'Управленческий отчёт';
+  String get ifrs => 'IFRS';
+  String get gaap => 'US GAAP';
+  String get rsbu => 'РСБУ';
+  String get gri => 'GRI';
+  String get international => 'Международный';
+  String get usa => 'США';
+  String get russia => 'Россия';
+  String get ifrsDescription => 'International Financial Reporting Standards';
+  String get gaapDescription => 'Generally Accepted Accounting Principles';
+  String get rsbuDescription => 'Российские стандарты бухгалтерского учёта';
+  String get griDescription => 'Global Reporting Initiative (ESG)';
+  String get freePlanMaxSlides => '⚠️ Для бесплатного тарифа максимум 10 слайдов';
+  String get premiumUpToSlides => '✨ Premium: до 15 слайдов';
+  String get reportGenerationError => 'Ошибка создания отчёта:';
+  String get report => 'Отчёт';
+  String get companyLabel => 'Компания';
+  String get periodLabel => 'Период';
+  String get typeLabel => 'Тип';
   
   // ═══════════════════════════════════════════════════════════════
   // АВТОРИЗАЦИЯ
@@ -289,10 +316,31 @@ class AppStrings {
   // ═══════════════════════════════════════════════════════════════
   String get reportBuilder => 'Конструктор отчётов';
   String get createFinancialReport => 'Создайте профессиональный финансовый отчёт';
-  String get company => 'Компания';
-  String get period => 'Период';
-  String get reportType => 'Тип отчёта';
-  String get generateReport => 'Создать отчёт';
+  String get companyHint => 'Название компании';
+  String get periodHint => 'Отчётный период';
+  String get reportTypeLabel => 'ТИП ОТЧЁТА';
+  String get financialReport => 'Финансовый отчёт';
+  String get annualReport => 'Годовой отчёт';
+  String get esgReport => 'ESG отчёт';
+  String get managementReport => 'Управленческий отчёт';
+  String get ifrs => 'IFRS';
+  String get gaap => 'US GAAP';
+  String get rsbu => 'РСБУ';
+  String get gri => 'GRI';
+  String get international => 'Международный';
+  String get usa => 'США';
+  String get russia => 'Россия';
+  String get ifrsDescription => 'International Financial Reporting Standards';
+  String get gaapDescription => 'Generally Accepted Accounting Principles';
+  String get rsbuDescription => 'Российские стандарты бухгалтерского учёта';
+  String get griDescription => 'Global Reporting Initiative (ESG)';
+  String get freePlanMaxSlides => '⚠️ Для бесплатного тарифа максимум 10 слайдов';
+  String get premiumUpToSlides => '✨ Premium: до 15 слайдов';
+  String get reportGenerationError => 'Ошибка создания отчёта:';
+  String get report => 'Отчёт';
+  String get companyLabel => 'Компания';
+  String get periodLabel => 'Период';
+  String get typeLabel => 'Тип';
   
   // ═══════════════════════════════════════════════════════════════
   // ЭКСПОРТ
@@ -596,6 +644,60 @@ class AppStringsEn extends AppStrings {
   String get annualSubscription => 'Annual subscription';
   @override
   String get subscription => 'Subscription';
+  @override
+  String get reportBuilder => 'Report Builder';
+  @override
+  String get createFinancialReport => 'Create a professional financial report';
+  @override
+  String get companyHint => 'Company name';
+  @override
+  String get periodHint => 'Reporting period';
+  @override
+  String get reportTypeLabel => 'REPORT TYPE';
+  @override
+  String get financialReport => 'Financial Report';
+  @override
+  String get annualReport => 'Annual Report';
+  @override
+  String get esgReport => 'ESG Report';
+  @override
+  String get managementReport => 'Management Report';
+  @override
+  String get ifrs => 'IFRS';
+  @override
+  String get gaap => 'US GAAP';
+  @override
+  String get rsbu => 'RSBU';
+  @override
+  String get gri => 'GRI';
+  @override
+  String get international => 'International';
+  @override
+  String get usa => 'USA';
+  @override
+  String get russia => 'Russia';
+  @override
+  String get ifrsDescription => 'International Financial Reporting Standards';
+  @override
+  String get gaapDescription => 'Generally Accepted Accounting Principles';
+  @override
+  String get rsbuDescription => 'Russian Accounting Standards';
+  @override
+  String get griDescription => 'Global Reporting Initiative (ESG)';
+  @override
+  String get freePlanMaxSlides => '⚠️ Free plan limited to 10 slides';
+  @override
+  String get premiumUpToSlides => '✨ Premium: up to 15 slides';
+  @override
+  String get reportGenerationError => 'Report generation error:';
+  @override
+  String get report => 'Report';
+  @override
+  String get companyLabel => 'Company';
+  @override
+  String get periodLabel => 'Period';
+  @override
+  String get typeLabel => 'Type';
   
   @override
   String get email => 'Email';
@@ -856,19 +958,6 @@ class AppStringsEn extends AppStrings {
   String get mayTakeUpTo30Seconds => 'This may take up to 30 seconds';
   @override
   String get finishing => 'Finishing...';
-  
-  @override
-  String get reportBuilder => 'Report Builder';
-  @override
-  String get createFinancialReport => 'Create a professional financial report';
-  @override
-  String get company => 'Company';
-  @override
-  String get period => 'Period';
-  @override
-  String get reportType => 'Report type';
-  @override
-  String get generateReport => 'Generate report';
   
   @override
   String get exportToPPTX => 'PowerPoint';
