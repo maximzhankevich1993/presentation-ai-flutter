@@ -98,6 +98,33 @@ class AppStrings {
   String get generateQuizFromPresentation => 'Сгенерировать тест из презентации';
   String get quizSaved => 'Тест сохранён в';
   String get correctAnswersTitle => 'ПРАВИЛЬНЫЕ ОТВЕТЫ';
+  String get friends => 'Друзья';
+  String get inviteFriend => 'Пригласи друга';
+  String get sendReferralLink => 'Отправь реферальную ссылку другу';
+  String get free => 'Бесплатно';
+  String get friendRegistration => 'Регистрация друга';
+  String get friendRegisters => 'Друг зарегистрируется по твоей ссылке';
+  String get friendPremium => 'Premium друга';
+  String get friendBuysPremium => 'Друг купит Premium тариф';
+  String get generations => 'генераций';
+  String get inviteFriendTitle => 'Приведи друга';
+  String get getBonusGenerations => 'Получи бонусные генерации';
+  String get invitations => 'Приглашений';
+  String get bonusReceived => 'Бонусов получено';
+  String get yourReferralCode => 'ВАШ РЕФЕРАЛЬНЫЙ КОД';
+  String get copied => 'Скопировано!';
+  String get copy => 'Копировать';
+  String get codeCopied => 'Код скопирован!';
+  String get copyError => 'Ошибка копирования';
+  String get link => 'Ссылка';
+  String get inviteFriendsButton => 'Пригласить друзей';
+  String get howItWorks => 'Как это работает';
+  String get invitedFriends => 'ПРИГЛАШЁННЫЕ ДРУЗЬЯ';
+  String get user => 'Пользователь';
+  String get pending => 'Ожидает';
+  String get referralProgram => 'Реферальная программа';
+  String get inviteFriendsGetBonuses => 'Приглашайте друзей и получайте бонусы';
+  String get referralLoginRequired => 'Реферальная программа доступна только авторизованным пользователям';
   
   // ═══════════════════════════════════════════════════════════════
   // АВТОРИЗАЦИЯ
@@ -494,6 +521,60 @@ class AppStringsEn extends AppStrings {
   String get quizSaved => 'Quiz saved as';
   @override
   String get correctAnswersTitle => 'CORRECT ANSWERS';
+  @override
+  String get friends => 'Friends';
+  @override
+  String get inviteFriend => 'Invite a friend';
+  @override
+  String get sendReferralLink => 'Send referral link to a friend';
+  @override
+  String get free => 'Free';
+  @override
+  String get friendRegistration => 'Friend registration';
+  @override
+  String get friendRegisters => 'Friend registers using your link';
+  @override
+  String get friendPremium => 'Friend Premium';
+  @override
+  String get friendBuysPremium => 'Friend buys Premium plan';
+  @override
+  String get generations => 'generations';
+  @override
+  String get inviteFriendTitle => 'Invite a friend';
+  @override
+  String get getBonusGenerations => 'Get bonus generations';
+  @override
+  String get invitations => 'Invitations';
+  @override
+  String get bonusReceived => 'Bonuses received';
+  @override
+  String get yourReferralCode => 'YOUR REFERRAL CODE';
+  @override
+  String get copied => 'Copied!';
+  @override
+  String get copy => 'Copy';
+  @override
+  String get codeCopied => 'Code copied!';
+  @override
+  String get copyError => 'Copy error';
+  @override
+  String get link => 'Link';
+  @override
+  String get inviteFriendsButton => 'Invite friends';
+  @override
+  String get howItWorks => 'How it works';
+  @override
+  String get invitedFriends => 'INVITED FRIENDS';
+  @override
+  String get user => 'User';
+  @override
+  String get pending => 'Pending';
+  @override
+  String get referralProgram => 'Referral program';
+  @override
+  String get inviteFriendsGetBonuses => 'Invite friends and get bonuses';
+  @override
+  String get referralLoginRequired => 'Referral program is only available to logged in users';
   
   @override
   String get email => 'Email';
