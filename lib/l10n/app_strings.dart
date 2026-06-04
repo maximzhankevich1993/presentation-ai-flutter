@@ -53,6 +53,17 @@ class AppStrings {
   String get payment => 'Оплата';
   String get apply => 'Применить';
   String get active => 'Активен';
+  String get profile => 'Профиль';
+  String get statistics => 'Статистика';
+  String get remaining => 'Осталось';
+  String get perMonth => 'Генераций/мес';
+  String get maxSlides => 'Макс. слайдов';
+  String get logoutConfirmation => 'Вы уверены, что хотите выйти?';
+  String get logoutError => 'Ошибка выхода';
+  String get premiumStatus => 'Premium статус';
+  String get allFeaturesAvailable => 'Все функции доступны';
+  String get thisMonth => 'в этом месяце';
+  String get activate => 'Активировать';
   
   // ═══════════════════════════════════════════════════════════════
   // АВТОРИЗАЦИЯ
@@ -255,7 +266,6 @@ class AppStrings {
   // ═══════════════════════════════════════════════════════════════
   // ПРОФИЛЬ И НАСТРОЙКИ
   // ═══════════════════════════════════════════════════════════════
-  String get profile => 'Профиль';
   String get settings => 'Настройки';
   String get history => 'История';
   String get referralProgram => 'Реферальная программа';
@@ -388,6 +398,28 @@ class AppStringsEn extends AppStrings {
   String get apply => 'Apply';
   @override
   String get active => 'Active';
+  @override
+  String get profile => 'Profile';
+  @override
+  String get statistics => 'Statistics';
+  @override
+  String get remaining => 'Remaining';
+  @override
+  String get perMonth => 'Generations/month';
+  @override
+  String get maxSlides => 'Max slides';
+  @override
+  String get logoutConfirmation => 'Are you sure you want to logout?';
+  @override
+  String get logoutError => 'Logout error';
+  @override
+  String get premiumStatus => 'Premium status';
+  @override
+  String get allFeaturesAvailable => 'All features available';
+  @override
+  String get thisMonth => 'this month';
+  @override
+  String get activate => 'Activate';
   
   @override
   String get email => 'Email';
@@ -722,8 +754,6 @@ class AppStringsEn extends AppStrings {
   @override
   String get highQuality => 'High quality';
   
-  @override
-  String get profile => 'Profile';
   @override
   String get settings => 'Settings';
   @override
