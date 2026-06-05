@@ -172,6 +172,18 @@ class AppStrings {
   String get linkLabel => 'Ссылка';
   
   // ═══════════════════════════════════════════════════════════════
+  // ЭКРАН ПОДПИСКИ (SUBSCRIPTION SCREEN)
+  // ═══════════════════════════════════════════════════════════════
+  String get premiumActive => 'Premium активен';
+  String get validUntil => 'Действует до';
+  String get autoRenew => 'Автопродление';
+  String get actions => 'Действия';
+  String get changePlan => 'Сменить тариф';
+  String get pause => 'Приостановить';
+  String get paymentHistory => 'История платежей';
+  String get cancelSubscription => 'Отменить подписку';
+  
+  // ═══════════════════════════════════════════════════════════════
   // НАСТРОЙКИ
   // ═══════════════════════════════════════════════════════════════
   String get settings => 'Настройки';
@@ -717,6 +729,23 @@ class AppStringsEn extends AppStrings {
   String get canEdit => 'Can edit presentation';
   @override
   String get linkLabel => 'Link';
+  
+  @override
+  String get premiumActive => 'Premium active';
+  @override
+  String get validUntil => 'Valid until';
+  @override
+  String get autoRenew => 'Auto-renew';
+  @override
+  String get actions => 'Actions';
+  @override
+  String get changePlan => 'Change plan';
+  @override
+  String get pause => 'Pause';
+  @override
+  String get paymentHistory => 'Payment history';
+  @override
+  String get cancelSubscription => 'Cancel subscription';
   
   @override
   String get settings => 'Settings';
