@@ -184,6 +184,29 @@ class AppStrings {
   String get cancelSubscription => 'Отменить подписку';
   
   // ═══════════════════════════════════════════════════════════════
+  // ЭКРАН TEACHER (TEACHER SCREEN)
+  // ═══════════════════════════════════════════════════════════════
+  String get educationalPlans => 'Образовательные тарифы';
+  String get forIndividualTeachers => 'Для отдельных учителей';
+  String get unlimitedGenerations => '∞ генераций';
+  String get allTemplates => 'Все шаблоны';
+  String get pdfExportLower => 'PDF экспорт';
+  String get quizGeneratorLower => 'Генератор тестов';
+  String get forSchoolsAndClasses => 'Для школ и классов';
+  String get upTo30Teachers => 'До 30 учителей';
+  String get lessonBuilderPro => 'Конструктор уроков PRO';
+  String get forUniversities => 'Для университетов';
+  String get unlimitedTeachers => 'Безлимит учителей';
+  String get vipSupport247 => 'VIP поддержка 24/7';
+  String get customSettings => 'Индивидуальные настройки';
+  String get analyticsDashboard => 'Аналитическая панель';
+  String get openLessonBuilder => 'Открыть конструктор уроков';
+  String get contactEducationDepartment => 'Связаться с отделом образования';
+  String get educationDepartment => 'Отдел образования';
+  String get popular => 'ПОПУЛЯРНЫЙ';
+  String get payWithUSDTShort => 'Оплатить USDT';
+  
+  // ═══════════════════════════════════════════════════════════════
   // НАСТРОЙКИ
   // ═══════════════════════════════════════════════════════════════
   String get settings => 'Настройки';
@@ -256,7 +279,6 @@ class AppStrings {
   String get month => 'Месяц';
   String get halfYear => 'Полгода';
   String get year => 'Год';
-  String get popular => 'Популярный';
   String get save33 => 'Экономия 33%';
   String get save15 => 'Экономия 15%';
   String get premiumUnlimited => 'Premium • Безлимитно';
@@ -280,9 +302,7 @@ class AppStrings {
   String get allFromMonth => 'Всё из Месяца';
   String get allFromHalfYear => 'Всё из Полугода';
   String get save17 => 'Экономия 17%';
-  String get prioritySupport => 'Приоритетная поддержка';
   String get brandKit => 'Бренд-кит';
-  String get payWithUSDTShort => 'Оплата USDT';
   String get bestValue => 'ВЫГОДНО';
   String get upgradeToUnlimited => 'Перейти на безлимит';
   String get usedThreeOfFive => 'Вы использовали 3 из 5 бесплатных генераций.';
@@ -748,6 +768,45 @@ class AppStringsEn extends AppStrings {
   String get cancelSubscription => 'Cancel subscription';
   
   @override
+  String get educationalPlans => 'Educational Plans';
+  @override
+  String get forIndividualTeachers => 'For individual teachers';
+  @override
+  String get unlimitedGenerations => '∞ generations';
+  @override
+  String get allTemplates => 'All templates';
+  @override
+  String get pdfExportLower => 'PDF export';
+  @override
+  String get quizGeneratorLower => 'Quiz generator';
+  @override
+  String get forSchoolsAndClasses => 'For schools and classes';
+  @override
+  String get upTo30Teachers => 'Up to 30 teachers';
+  @override
+  String get lessonBuilderPro => 'Lesson builder PRO';
+  @override
+  String get forUniversities => 'For universities';
+  @override
+  String get unlimitedTeachers => 'Unlimited teachers';
+  @override
+  String get vipSupport247 => 'VIP support 24/7';
+  @override
+  String get customSettings => 'Custom settings';
+  @override
+  String get analyticsDashboard => 'Analytics dashboard';
+  @override
+  String get openLessonBuilder => 'Open Lesson Builder';
+  @override
+  String get contactEducationDepartment => 'Contact Education Department';
+  @override
+  String get educationDepartment => 'Education Department';
+  @override
+  String get popular => 'POPULAR';
+  @override
+  String get payWithUSDTShort => 'Pay with USDT';
+  
+  @override
   String get settings => 'Settings';
   @override
   String get userName => 'Username';
@@ -867,8 +926,6 @@ class AppStringsEn extends AppStrings {
   @override
   String get year => 'Year';
   @override
-  String get popular => 'Popular';
-  @override
   String get save33 => 'Save 33%';
   @override
   String get save15 => 'Save 15%';
@@ -915,11 +972,7 @@ class AppStringsEn extends AppStrings {
   @override
   String get save17 => 'Save 17%';
   @override
-  String get prioritySupport => 'Priority support';
-  @override
   String get brandKit => 'Brand kit';
-  @override
-  String get payWithUSDTShort => 'Pay with USDT';
   @override
   String get bestValue => 'BEST VALUE';
   @override
