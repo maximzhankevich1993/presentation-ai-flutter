@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'dart:html' as html;
 import '../providers/user_provider.dart';
+import '../l10n/app_strings.dart';
 import 'editor_screen.dart';
 import 'loading_screen.dart';
 import '../models/presentation.dart';
@@ -57,10 +58,9 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     final url = amount > 0 ? '$CRYPTO_PAYMENT_URL?amount=$amount' : CRYPTO_PAYMENT_URL;
     html.window.open(url, '_blank');
     
-    // Исправленный SnackBar (убрана ошибка с const)
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('💸 After payment, subscription activates in 1-2 minutes. Promo code CRYPTO10 → second month free!'),
+        content: Text(AppStrings.current.afterPaymentMessage),
         backgroundColor: const Color(0xFF1DB954),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -123,7 +123,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     if (_workspaceNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Enter workspace name'),
+          content: Text(AppStrings.current.enterWorkspaceName),
           backgroundColor: Colors.red,
         ),
       );
@@ -135,7 +135,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       _workspaceName = _workspaceNameController.text.trim();
       _hasWorkspace = true;
       _members = [
-        {'id': '1', 'name': 'Me', 'email': 'me@example.com', 'role': 'Owner', 'avatar': 'M', 'status': 'online'},
+        {'id': '1', 'name': AppStrings.current.me, 'email': 'me@example.com', 'role': AppStrings.current.owner, 'avatar': 'M', 'status': 'online'},
       ];
       _presentations = [];
       _usedGenerations = 0;
@@ -148,7 +148,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     if (topic.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Enter presentation topic'),
+          content: Text(AppStrings.current.enterPresentationTopic),
           backgroundColor: Colors.red,
         ),
       );
@@ -168,8 +168,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       _presentations.insert(0, {
         'id': DateTime.now().toString(),
         'title': topic,
-        'updated': 'Just now',
-        'author': 'Me',
+        'updated': AppStrings.current.justNow,
+        'author': AppStrings.current.me,
         'slides': _topicMaxSlides,
       });
     });
@@ -189,20 +189,23 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Limit reached', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+        title: Text(AppStrings.current.limitReachedTitle, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
         content: Text(
-          'You have used all $_maxGenerations free generations for this workspace.\n\nSubscribe to continue creating unlimited presentations.',
+          '${AppStrings.current.usedAllFreeGenerationsWorkspace} $_maxGenerations ${AppStrings.current.subscribeToContinueWorkspace}',
           style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Later', style: TextStyle(color: Color(0xFF9A9A9A)))),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppStrings.current.later, style: const TextStyle(color: Color(0xFF9A9A9A))),
+          ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen()));
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
-            child: const Text('Subscribe', style: TextStyle(color: Colors.white)),
+            child: Text(AppStrings.current.subscribe, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -215,7 +218,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     if (_members.length >= _maxMembers) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Free workspace limited to $_maxMembers members'),
+          content: Text('${AppStrings.current.freeWorkspaceLimited} $_maxMembers ${AppStrings.current.members}'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -228,7 +231,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
         'id': DateTime.now().toString(),
         'name': _inviteEmail.split('@')[0],
         'email': _inviteEmail,
-        'role': 'Viewer',
+        'role': AppStrings.current.viewer,
         'avatar': _inviteEmail[0].toUpperCase(),
         'status': 'invited',
       });
@@ -237,7 +240,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
     _saveWorkspaceData();
     
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Invitation sent'), backgroundColor: Color(0xFF1DB954)),
+      SnackBar(content: Text(AppStrings.current.invitationSent), backgroundColor: const Color(0xFF1DB954)),
     );
   }
   
@@ -247,20 +250,23 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Upgrade for more members', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
-        content: const Text(
-          'Free workspace is limited to 5 members.\n\nUpgrade to Team or Business plan for unlimited members.',
-          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
+        title: Text(AppStrings.current.upgradeForMoreMembers, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+        content: Text(
+          AppStrings.current.upgradeForMoreMembersMessage,
+          style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Later', style: TextStyle(color: Color(0xFF9A9A9A)))),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppStrings.current.later, style: const TextStyle(color: Color(0xFF9A9A9A))),
+          ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen()));
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
-            child: const Text('Upgrade', style: TextStyle(color: Colors.white)),
+            child: Text(AppStrings.current.upgrade, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -326,7 +332,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                       const SizedBox(height: 16),
                       Text(_workspaceName, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 8),
-                      Text('Members: ${_members.length}', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
+                      Text('${AppStrings.current.members}: ${_members.length}', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
                     ],
                   ),
                 ),
@@ -345,11 +351,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                     ),
                     child: Column(
                       children: [
-                        const Text('💡 Upgrade for unlimited members', style: TextStyle(color: Color(0xFF627EEA), fontSize: 13, fontWeight: FontWeight.w600)),
+                        Text('💡 ${AppStrings.current.upgradeForUnlimitedMembers}', style: const TextStyle(color: Color(0xFF627EEA), fontSize: 13, fontWeight: FontWeight.w600)),
                         const SizedBox(height: 4),
-                        Text('Pay with USDT — no fees, no banks', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
+                        Text(AppStrings.current.payWithUSDTNoFees, style: TextStyle(color: Colors.grey[400], fontSize: 11)),
                         const SizedBox(height: 4),
-                        const Text('🎁 Promo code CRYPTO10 → second month free', style: TextStyle(color: Color(0xFFFFD700), fontSize: 11)),
+                        Text(AppStrings.current.promoCodeCRYPTO10, style: const TextStyle(color: Color(0xFFFFD700), fontSize: 11)),
                         const SizedBox(height: 8),
                         SizedBox(
                           width: double.infinity,
@@ -362,20 +368,20 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                               ),
                               padding: const EdgeInsets.symmetric(vertical: 10),
                             ),
-                            child: const Text('💳 Upgrade', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
+                            child: Text('💳 ${AppStrings.current.upgrade}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
                           ),
                         ),
                       ],
                     ),
                   ),
                 
-                const Text('CREATE PRESENTATION', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+                Text(AppStrings.current.createPresentation.toUpperCase(), style: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _topicController,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    hintText: 'What is your presentation about?',
+                    hintText: AppStrings.current.topicHint,
                     hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
                     prefixIcon: const Icon(Icons.edit_rounded, color: Color(0xFF1DB954)),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
@@ -385,7 +391,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 const SizedBox(height: 12),
                 Row(
                   children: [
-                    const Text('Slides:', style: TextStyle(color: Color(0xFF9A9A9A))),
+                    Text('${AppStrings.current.slidesCount}:', style: const TextStyle(color: Color(0xFF9A9A9A))),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Slider(
@@ -415,14 +421,14 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                       children: [
                         Icon(remaining <= 0 ? Icons.warning_amber_rounded : Icons.info_outline_rounded, color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), size: 18),
                         const SizedBox(width: 10),
-                        Expanded(child: Text(remaining <= 0 ? 'Free generations used up.' : '$remaining of $_maxGenerations free generations left', style: TextStyle(color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), fontSize: 13))),
+                        Expanded(child: Text(remaining <= 0 ? AppStrings.current.freeGenerationsUsedUp : '$remaining ${AppStrings.current.of} $_maxGenerations ${AppStrings.current.freeGenerationsLeft}', style: TextStyle(color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954), fontSize: 13))),
                         if (remaining <= 0)
                           GestureDetector(
                             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())),
                             child: Container(
                               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                               decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(20)),
-                              child: const Text('Subscribe', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                              child: Text(AppStrings.current.subscribe, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
                             ),
                           ),
                       ],
@@ -441,7 +447,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: Text((isPremium || _usedGenerations < _maxGenerations) ? 'Create Presentation' : 'Limit reached', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                    child: Text((isPremium || _usedGenerations < _maxGenerations) ? AppStrings.current.createPresentation : AppStrings.current.limitReached, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                   ),
                 ),
                 
@@ -449,7 +455,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                 const Divider(color: Color(0xFF2A2A2A)),
                 const SizedBox(height: 24),
                 
-                const Text('TEAM MEMBERS', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+                Text(AppStrings.current.teamMembers.toUpperCase(), style: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -458,7 +464,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                         style: const TextStyle(color: Colors.white),
                         onChanged: (v) => _inviteEmail = v,
                         decoration: InputDecoration(
-                          hintText: 'Email to invite',
+                          hintText: AppStrings.current.emailToInvite,
                           hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
                           prefixIcon: const Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 20),
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
@@ -476,7 +482,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text('Invite'),
+                      child: Text(AppStrings.current.invite),
                     ),
                   ],
                 ),
@@ -492,8 +498,8 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                   child: Row(
                     children: [
                       CircleAvatar(
-                        backgroundColor: m['role'] == 'Owner' ? const Color(0xFFFFD700) : const Color(0xFF2A2A2A),
-                        child: Text(m['avatar'], style: TextStyle(color: m['role'] == 'Owner' ? Colors.black : Colors.white, fontSize: 14)),
+                        backgroundColor: m['role'] == AppStrings.current.owner ? const Color(0xFFFFD700) : const Color(0xFF2A2A2A),
+                        child: Text(m['avatar'], style: TextStyle(color: m['role'] == AppStrings.current.owner ? Colors.black : Colors.white, fontSize: 14)),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -508,12 +514,12 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: m['role'] == 'Owner' ? const Color(0xFFFFD700).withOpacity(0.2) : const Color(0xFF1DB954).withOpacity(0.2),
+                          color: m['role'] == AppStrings.current.owner ? const Color(0xFFFFD700).withOpacity(0.2) : const Color(0xFF1DB954).withOpacity(0.2),
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: Text(m['role'], style: TextStyle(color: m['role'] == 'Owner' ? const Color(0xFFFFD700) : const Color(0xFF1DB954), fontSize: 11)),
+                        child: Text(m['role'], style: TextStyle(color: m['role'] == AppStrings.current.owner ? const Color(0xFFFFD700) : const Color(0xFF1DB954), fontSize: 11)),
                       ),
-                      if (m['role'] != 'Owner')
+                      if (m['role'] != AppStrings.current.owner)
                         IconButton(
                           icon: const Icon(Icons.close_rounded, color: Color(0xFF9A9A9A), size: 18),
                           onPressed: () => _removeMember(m['id']),
@@ -535,13 +541,13 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                       children: [
                         const Icon(Icons.lock_outline_rounded, color: Color(0xFF1DB954), size: 18),
                         const SizedBox(width: 10),
-                        const Expanded(child: Text('Free workspace limited to 5 members. Upgrade for unlimited members.', style: TextStyle(color: Color(0xFF1DB954), fontSize: 13))),
+                        Expanded(child: Text(AppStrings.current.freeWorkspaceLimitMessage, style: const TextStyle(color: Color(0xFF1DB954), fontSize: 13))),
                         GestureDetector(
                           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen())),
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(20)),
-                            child: const Text('Upgrade', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                            child: Text(AppStrings.current.upgrade, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
                           ),
                         ),
                       ],
@@ -565,7 +571,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Workspace', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+        title: Text(AppStrings.current.workspace, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
         centerTitle: true,
       ),
       body: Center(
@@ -588,21 +594,21 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                     children: [
                       Container(width: 64, height: 64, decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(20)), child: const Icon(Icons.group_add_rounded, color: Colors.white, size: 32)),
                       const SizedBox(height: 16),
-                      const Text('Create a Team', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
+                      Text(AppStrings.current.createATeam, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 8),
-                      Text('Work on presentations together', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
+                      Text(AppStrings.current.workOnPresentationsTogether, style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14)),
                     ],
                   ),
                 ),
                 const SizedBox(height: 24),
                 
-                const Text('CREATE WORKSPACE', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
+                Text(AppStrings.current.createWorkspace.toUpperCase(), style: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 12),
                 TextField(
                   controller: _workspaceNameController,
                   style: const TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    hintText: 'Workspace name',
+                    hintText: AppStrings.current.workspaceNameHint,
                     hintStyle: const TextStyle(color: Color(0xFF4A4A4A)),
                     prefixIcon: const Icon(Icons.group_rounded, color: Color(0xFF1DB954)),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF2A2A2A))),
@@ -622,7 +628,7 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: const Text('Create Free Workspace', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+                    child: Text(AppStrings.current.createFreeWorkspace, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
                   ),
                 ),
                 
@@ -634,11 +640,11 @@ class _WorkspaceScreenState extends State<WorkspaceScreen> {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: const Color(0xFF2A2A2A)),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.info_outline_rounded, color: Color(0xFF1DB954), size: 16),
-                      SizedBox(width: 8),
-                      Expanded(child: Text('Free workspace includes: 5 members, 5 presentations/month, 10 slides per presentation', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 12))),
+                      const Icon(Icons.info_outline_rounded, color: Color(0xFF1DB954), size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(child: Text(AppStrings.current.freeWorkspaceIncludes, style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 12))),
                     ],
                   ),
                 ),
