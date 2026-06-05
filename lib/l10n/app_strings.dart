@@ -51,7 +51,6 @@ class AppStrings {
   String get errorApplyingPromoCode => 'Ошибка применения промокода';
   String get daysFree => 'дня бесплатно';
   String get payment => 'Оплата';
-  String get apply => 'Применить';
   String get active => 'Активен';
   String get profile => 'Профиль';
   String get statistics => 'Статистика';
@@ -161,6 +160,18 @@ class AppStrings {
   String get typeLabel => 'Тип';
   
   // ═══════════════════════════════════════════════════════════════
+  // ЭКРАН ШЕРИНГА (SHARE SCREEN)
+  // ═══════════════════════════════════════════════════════════════
+  String get accessLevel => 'Уровень доступа';
+  String get viewTitle => 'Просмотр';
+  String get viewOnly => 'Могут только смотреть';
+  String get commentTitle => 'Комментирование';
+  String get canComment => 'Могут оставлять комментарии';
+  String get editTitle => 'Редактирование';
+  String get canEdit => 'Могут изменять презентацию';
+  String get linkLabel => 'Ссылка';
+  
+  // ═══════════════════════════════════════════════════════════════
   // НАСТРОЙКИ
   // ═══════════════════════════════════════════════════════════════
   String get settings => 'Настройки';
@@ -230,7 +241,6 @@ class AppStrings {
   String get slidesCount => 'Количество слайдов';
   String get limitReached => 'Лимит исчерпан';
   String get generationsLeft => 'Осталось генераций в этом месяце:';
-  String get free => 'Бесплатно';
   String get month => 'Месяц';
   String get halfYear => 'Полгода';
   String get year => 'Год';
@@ -267,9 +277,9 @@ class AppStrings {
   String get unlimitedPresentations => 'Безлимит презентаций';
   String get fiftySlides => '50 слайдов на презентацию';
   String get pdfNoWatermark => 'PDF без водяного знака';
-  String get only499PerMonth => 'Всего $4.99/мес — оплата USDT';
+  String get only499PerMonth => 'Всего \$4.99/мес — оплата USDT';
   String get continueFree => 'Продолжить бесплатно';
-  String get upgradeNow => 'Оформить подписку — $4.99';
+  String get upgradeNow => 'Оформить подписку — \$4.99';
   String get limitReachedLoggedIn => 'Вы использовали все бесплатные генерации на этот месяц.\n\nОформите подписку, чтобы продолжить создавать презентации, уроки и тесты без ограничений.';
   String get limitReachedGuest => 'У вас есть 5 бесплатных генераций без регистрации. Чтобы получить больше, войдите или оформите подписку.';
   String get payWithUSDT => 'Оплатить USDT';
@@ -353,7 +363,6 @@ class AppStrings {
   // ПРОФИЛЬ И НАСТРОЙКИ
   // ═══════════════════════════════════════════════════════════════
   String get history => 'История';
-  String get referralProgram => 'Реферальная программа';
   String get inviteFriends => 'Пригласи друзей';
   String get getBonus => 'Получи бонус';
   String get russian => 'Русский';
@@ -390,7 +399,6 @@ class AppStrings {
   String get forBusiness => 'Бизнесу';
   String get team => 'Команда';
   String get tests => 'Тесты';
-  String get friends => 'Друзья';
   
   // ═══════════════════════════════════════════════════════════════
   // CORPORATE SCREEN
@@ -478,8 +486,6 @@ class AppStringsEn extends AppStrings {
   String get daysFree => 'days free';
   @override
   String get payment => 'Payment';
-  @override
-  String get apply => 'Apply';
   @override
   String get active => 'Active';
   @override
@@ -696,6 +702,23 @@ class AppStringsEn extends AppStrings {
   String get typeLabel => 'Type';
   
   @override
+  String get accessLevel => 'Access level';
+  @override
+  String get viewTitle => 'View';
+  @override
+  String get viewOnly => 'View only';
+  @override
+  String get commentTitle => 'Comment';
+  @override
+  String get canComment => 'Can leave comments';
+  @override
+  String get editTitle => 'Edit';
+  @override
+  String get canEdit => 'Can edit presentation';
+  @override
+  String get linkLabel => 'Link';
+  
+  @override
   String get settings => 'Settings';
   @override
   String get userName => 'Username';
@@ -808,8 +831,6 @@ class AppStringsEn extends AppStrings {
   String get limitReached => 'Limit reached';
   @override
   String get generationsLeft => 'Generations left this month:';
-  @override
-  String get free => 'Free';
   @override
   String get month => 'Month';
   @override
@@ -1020,8 +1041,6 @@ class AppStringsEn extends AppStrings {
   @override
   String get history => 'History';
   @override
-  String get referralProgram => 'Referral program';
-  @override
   String get inviteFriends => 'Invite friends';
   @override
   String get getBonus => 'Get bonus';
@@ -1072,8 +1091,6 @@ class AppStringsEn extends AppStrings {
   String get team => 'Team';
   @override
   String get tests => 'Tests';
-  @override
-  String get friends => 'Friends';
   
   @override
   String get business => 'Business';
