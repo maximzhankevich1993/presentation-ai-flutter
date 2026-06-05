@@ -271,6 +271,39 @@ class AppStrings {
   String get vipPaymentMessage => 'Оплата VIP доступа';
   
   // ═══════════════════════════════════════════════════════════════
+  // ЭКРАН WORKSPACE (WORKSPACE SCREEN)
+  // ═══════════════════════════════════════════════════════════════
+  String get enterWorkspaceName => 'Введите название рабочего пространства';
+  String get me => 'Я';
+  String get owner => 'Владелец';
+  String get enterPresentationTopic => 'Введите тему презентации';
+  String get justNow => 'Только что';
+  String get usedAllFreeGenerationsWorkspace => 'Вы использовали все';
+  String get subscribeToContinueWorkspace => 'бесплатных генераций для этого рабочего пространства.\n\nОформите подписку, чтобы продолжить создавать презентации без ограничений.';
+  String get freeWorkspaceLimited => 'Бесплатное рабочее пространство ограничено';
+  String get members => 'участниками';
+  String get viewer => 'Наблюдатель';
+  String get invitationSent => 'Приглашение отправлено';
+  String get upgradeForMoreMembers => 'Расширьте возможности для большего количества участников';
+  String get upgradeForMoreMembersMessage => 'Бесплатное рабочее пространство ограничено 5 участниками.\n\nПерейдите на тариф Team или Business для неограниченного количества участников.';
+  String get upgrade => 'Расширить';
+  String get workspace => 'Рабочее пространство';
+  String get createATeam => 'Создайте команду';
+  String get workOnPresentationsTogether => 'Работайте над презентациями вместе';
+  String get createWorkspace => 'Создать рабочее пространство';
+  String get workspaceNameHint => 'Название рабочего пространства';
+  String get createFreeWorkspace => 'Создать бесплатное рабочее пространство';
+  String get freeWorkspaceIncludes => 'Бесплатное рабочее пространство включает: 5 участников, 5 презентаций в месяц, 10 слайдов на презентацию';
+  String get teamMembers => 'Участники команды';
+  String get emailToInvite => 'Email для приглашения';
+  String get invite => 'Пригласить';
+  String get freeGenerationsUsedUp => 'Бесплатные генерации закончились.';
+  String get freeGenerationsLeft => 'бесплатных генераций осталось';
+  String get upgradeForUnlimitedMembers => 'Расширьте для неограниченного количества участников';
+  String get payWithUSDTNoFees => 'Оплатите USDT — без комиссий, без банков';
+  String get freeWorkspaceLimitMessage => 'Бесплатное рабочее пространство ограничено 5 участниками. Расширьте для неограниченного количества.';
+  
+  // ═══════════════════════════════════════════════════════════════
   // НАСТРОЙКИ
   // ═══════════════════════════════════════════════════════════════
   String get settings => 'Настройки';
@@ -982,6 +1015,65 @@ class AppStringsEn extends AppStrings {
   String get vipInfoMessage => 'VIP status is given to the first 50 users forever. Hurry up to take your spot!';
   @override
   String get vipPaymentMessage => 'VIP access payment';
+  
+  @override
+  String get enterWorkspaceName => 'Enter workspace name';
+  @override
+  String get me => 'Me';
+  @override
+  String get owner => 'Owner';
+  @override
+  String get enterPresentationTopic => 'Enter presentation topic';
+  @override
+  String get justNow => 'Just now';
+  @override
+  String get usedAllFreeGenerationsWorkspace => 'You have used all';
+  @override
+  String get subscribeToContinueWorkspace => 'free generations for this workspace.\n\nSubscribe to continue creating unlimited presentations.';
+  @override
+  String get freeWorkspaceLimited => 'Free workspace limited to';
+  @override
+  String get members => 'members';
+  @override
+  String get viewer => 'Viewer';
+  @override
+  String get invitationSent => 'Invitation sent';
+  @override
+  String get upgradeForMoreMembers => 'Upgrade for more members';
+  @override
+  String get upgradeForMoreMembersMessage => 'Free workspace is limited to 5 members.\n\nUpgrade to Team or Business plan for unlimited members.';
+  @override
+  String get upgrade => 'Upgrade';
+  @override
+  String get workspace => 'Workspace';
+  @override
+  String get createATeam => 'Create a Team';
+  @override
+  String get workOnPresentationsTogether => 'Work on presentations together';
+  @override
+  String get createWorkspace => 'Create workspace';
+  @override
+  String get workspaceNameHint => 'Workspace name';
+  @override
+  String get createFreeWorkspace => 'Create Free Workspace';
+  @override
+  String get freeWorkspaceIncludes => 'Free workspace includes: 5 members, 5 presentations/month, 10 slides per presentation';
+  @override
+  String get teamMembers => 'Team Members';
+  @override
+  String get emailToInvite => 'Email to invite';
+  @override
+  String get invite => 'Invite';
+  @override
+  String get freeGenerationsUsedUp => 'Free generations used up.';
+  @override
+  String get freeGenerationsLeft => 'free generations left';
+  @override
+  String get upgradeForUnlimitedMembers => 'Upgrade for unlimited members';
+  @override
+  String get payWithUSDTNoFees => 'Pay with USDT — no fees, no banks';
+  @override
+  String get freeWorkspaceLimitMessage => 'Free workspace limited to 5 members. Upgrade for unlimited members.';
   
   @override
   String get settings => 'Settings';
