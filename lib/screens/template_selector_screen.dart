@@ -4,6 +4,7 @@ import '../models/presentation.dart';
 import '../models/design_template.dart';
 import '../data/design_templates.dart';
 import '../providers/user_provider.dart';
+import '../l10n/app_strings.dart';
 import 'editor_screen.dart';
 import 'teacher_screen.dart';
 
@@ -63,14 +64,20 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Шаблоны', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+        title: Text(
+          AppStrings.current.templates,
+          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
+        ),
         centerTitle: true,
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 12),
             child: Row(
               children: [
-                const Text('Бесплатные', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 12)),
+                Text(
+                  AppStrings.current.freeOnly,
+                  style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 12),
+                ),
                 const SizedBox(width: 4),
                 Switch(
                   value: _showOnlyFree,
@@ -100,7 +107,7 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
                     onChanged: (value) => setState(() => _searchQuery = value),
                     style: const TextStyle(color: Colors.white, fontSize: 14),
                     decoration: InputDecoration(
-                      hintText: 'Поиск шаблонов...',
+                      hintText: AppStrings.current.searchTemplates,
                       hintStyle: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 14),
                       prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF1DB954), size: 20),
                       border: InputBorder.none,
@@ -154,13 +161,16 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
               // Список шаблонов
               Expanded(
                 child: _filteredTemplates.isEmpty
-                    ? const Center(
+                    ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.search_off_rounded, size: 48, color: Color(0xFF4A4A4A)),
-                            SizedBox(height: 12),
-                            Text('Ничего не найдено', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14)),
+                            const Icon(Icons.search_off_rounded, size: 48, color: Color(0xFF4A4A4A)),
+                            const SizedBox(height: 12),
+                            Text(
+                              AppStrings.current.noResultsFound,
+                              style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
+                            ),
                           ],
                         ),
                       )
@@ -214,15 +224,21 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Premium шаблон', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
-        content: const Text(
-          'Этот шаблон доступен только по подписке Premium.\n\nОформите подписку, чтобы получить доступ ко всем шаблонам.',
-          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
+        title: Text(
+          AppStrings.current.premiumTemplate,
+          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          AppStrings.current.premiumTemplateMessage,
+          style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Позже', style: TextStyle(color: Color(0xFF9A9A9A))),
+            child: Text(
+              AppStrings.current.later,
+              style: const TextStyle(color: Color(0xFF9A9A9A)),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -233,7 +249,7 @@ class _TemplateSelectorScreenState extends State<TemplateSelectorScreen> {
               );
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
-            child: const Text('Выбрать тариф'),
+            child: Text(AppStrings.current.choosePlan),
           ),
         ],
       ),
@@ -311,7 +327,10 @@ class _TemplateCard extends StatelessWidget {
                             color: const Color(0xFFFFD700).withOpacity(0.2),
                             borderRadius: BorderRadius.circular(6),
                           ),
-                          child: const Text('PRO', style: TextStyle(color: Color(0xFFFFD700), fontSize: 10, fontWeight: FontWeight.w700)),
+                          child: const Text(
+                            'PRO',
+                            style: TextStyle(color: Color(0xFFFFD700), fontSize: 10, fontWeight: FontWeight.w700),
+                          ),
                         ),
                     ],
                   ),
@@ -327,7 +346,10 @@ class _TemplateCard extends StatelessWidget {
                     children: [
                       Icon(Icons.slideshow_rounded, color: cs.accent, size: 12),
                       const SizedBox(width: 4),
-                      Text('${template.slideCount} слайдов', style: TextStyle(color: cs.accent, fontSize: 10, fontWeight: FontWeight.w500)),
+                      Text(
+                        '${template.slideCount} ${AppStrings.current.slidesCount.toLowerCase()}',
+                        style: TextStyle(color: cs.accent, fontSize: 10, fontWeight: FontWeight.w500),
+                      ),
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -347,14 +369,14 @@ class _TemplateCard extends StatelessWidget {
   
   String _getCategoryName(String category) {
     switch (category) {
-      case 'business': return 'Бизнес';
-      case 'technology': return 'Технологии';
-      case 'creative': return 'Креатив';
-      case 'education': return 'Образование';
-      case 'events': return 'Мероприятия';
-      case 'nature': return 'Природа';
-      case 'medical': return 'Медицина';
-      case 'health': return 'Здоровье';
+      case 'business': return AppStrings.current.business;
+      case 'technology': return AppStrings.current.technology;
+      case 'creative': return AppStrings.current.creative;
+      case 'education': return AppStrings.current.education;
+      case 'events': return AppStrings.current.events;
+      case 'nature': return AppStrings.current.nature;
+      case 'medical': return AppStrings.current.medical;
+      case 'health': return AppStrings.current.health;
       default: return category;
     }
   }
