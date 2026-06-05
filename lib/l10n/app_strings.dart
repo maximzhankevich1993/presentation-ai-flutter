@@ -238,6 +238,7 @@ class AppStrings {
   String get events => 'Мероприятия';
   String get nature => 'Природа';
   String get medical => 'Медицина';
+  String get health => 'Здоровье';
   
   // ═══════════════════════════════════════════════════════════════
   // НАСТРОЙКИ
@@ -323,7 +324,6 @@ class AppStrings {
   String get yourText => 'Ваш текст...';
   String get fromText => 'Из текста';
   String get uploadLogo => 'Загрузить логотип';
-  String get templates => 'Шаблоны';
   String get generationsFinished => 'Бесплатные генерации на месяц закончились';
   String get choosePlan => 'Выберите план';
   String get pricesInUSD => 'Цены в USD — оплата USDT';
@@ -897,6 +897,8 @@ class AppStringsEn extends AppStrings {
   String get nature => 'Nature';
   @override
   String get medical => 'Medical';
+  @override
+  String get health => 'Health';
   
   @override
   String get settings => 'Settings';
