@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:presentator_ai/l10n/app_strings.dart';
 
 class ShareScreen extends StatefulWidget {
   final String presentationId;
@@ -24,7 +25,7 @@ class _ShareScreenState extends State<ShareScreen> {
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         backgroundColor: const Color(0xFF121212),
-        title: const Text('Поделиться', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 17)),
+        title: Text(AppStrings.current.share, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 17)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -32,20 +33,25 @@ class _ShareScreenState extends State<ShareScreen> {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(widget.presentationTitle, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
           SizedBox(height: 20.h),
-          Text('Уровень доступа', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFFB3B3B3))),
+          Text(AppStrings.current.accessLevel, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFFB3B3B3))),
           SizedBox(height: 8.h),
-          _option('view', 'Просмотр', 'Могут только смотреть', Icons.visibility_outlined),
-          _option('comment', 'Комментирование', 'Могут оставлять комментарии', Icons.comment_outlined),
-          _option('edit', 'Редактирование', 'Могут изменять презентацию', Icons.edit_outlined),
+          _option('view', AppStrings.current.view, AppStrings.current.viewOnly, Icons.visibility_outlined),
+          _option('comment', AppStrings.current.comment, AppStrings.current.canComment, Icons.comment_outlined),
+          _option('edit', AppStrings.current.edit, AppStrings.current.canEdit, Icons.edit_outlined),
           SizedBox(height: 20.h),
-          Text('Ссылка', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFFB3B3B3))),
+          Text(AppStrings.current.link, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFFB3B3B3))),
           SizedBox(height: 8.h),
           Container(
             padding: EdgeInsets.all(14.w),
             decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(14)),
             child: Row(children: [
               Expanded(child: Text(_link, style: TextStyle(fontSize: 12, color: Colors.white), maxLines: 2, overflow: TextOverflow.ellipsis)),
-              IconButton(onPressed: () {}, icon: const Icon(Icons.copy, color: Color(0xFF1DB954))),
+              IconButton(
+                onPressed: () {
+                  // TODO: добавить копирование в буфер
+                },
+                icon: const Icon(Icons.copy, color: Color(0xFF1DB954)),
+              ),
             ]),
           ),
         ]),
