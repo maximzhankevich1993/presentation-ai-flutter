@@ -241,6 +241,36 @@ class AppStrings {
   String get health => 'Здоровье';
   
   // ═══════════════════════════════════════════════════════════════
+  // ЭКРАН VIP (VIP SCREEN)
+  // ═══════════════════════════════════════════════════════════════
+  String get vipAccess => 'VIP доступ';
+  String get vipStatus => 'VIP статус';
+  String get freeSpots => 'Свободно';
+  String get dataLoadError => 'Ошибка загрузки данных';
+  String get spotsTaken => 'Занято мест';
+  String get onlyLeft => 'Осталось всего';
+  String get spotsLeft => 'мест! Успей забрать VIP навсегда';
+  String get allSpotsTaken => 'Все места заняты. Следите за новостями!';
+  String get retry => 'Повторить';
+  String get vipBenefits => 'ПРЕИМУЩЕСТВА VIP';
+  String get unlimitedPresentationsDesc => 'Неограниченное количество презентаций';
+  String get upTo50Slides => 'До 50 слайдов';
+  String get largestPresentations => 'Самые большие презентации без ограничений';
+  String get allPremiumBackgrounds => 'Все премиум фоны';
+  String get exclusiveBackgrounds => '16+ эксклюзивных фонов и градиентов';
+  String get exportWithoutWatermark => 'Экспорт без знаков';
+  String get pdfPptxNoWatermark => 'PDF и PPTX без водяных знаков';
+  String get aiTextImprovement => 'AI улучшение текста';
+  String get advancedNeuralNetwork => 'Продвинутая нейросеть для контента';
+  String get prioritySupportDesc => 'Приоритетное решение любых вопросов';
+  String get vipForever => 'VIP доступ навсегда';
+  String get payOnce => 'Оплата только один раз';
+  String get getVip => 'Получить VIP';
+  String get noSpots => 'Мест нет';
+  String get vipInfoMessage => 'VIP статус выдаётся первым 50 пользователям навсегда. Успейте занять место!';
+  String get vipPaymentMessage => 'Оплата VIP доступа';
+  
+  // ═══════════════════════════════════════════════════════════════
   // НАСТРОЙКИ
   // ═══════════════════════════════════════════════════════════════
   String get settings => 'Настройки';
@@ -901,6 +931,59 @@ class AppStringsEn extends AppStrings {
   String get health => 'Health';
   
   @override
+  String get vipAccess => 'VIP Access';
+  @override
+  String get vipStatus => 'VIP Status';
+  @override
+  String get freeSpots => 'Free';
+  @override
+  String get dataLoadError => 'Data loading error';
+  @override
+  String get spotsTaken => 'Spots taken';
+  @override
+  String get onlyLeft => 'Only';
+  @override
+  String get spotsLeft => 'spots left! Get VIP forever';
+  @override
+  String get allSpotsTaken => 'All spots are taken. Follow the news!';
+  @override
+  String get retry => 'Retry';
+  @override
+  String get vipBenefits => 'VIP BENEFITS';
+  @override
+  String get unlimitedPresentationsDesc => 'Unlimited presentations';
+  @override
+  String get upTo50Slides => 'Up to 50 slides';
+  @override
+  String get largestPresentations => 'Largest presentations without limits';
+  @override
+  String get allPremiumBackgrounds => 'All premium backgrounds';
+  @override
+  String get exclusiveBackgrounds => '16+ exclusive backgrounds and gradients';
+  @override
+  String get exportWithoutWatermark => 'Export without watermark';
+  @override
+  String get pdfPptxNoWatermark => 'PDF and PPTX without watermarks';
+  @override
+  String get aiTextImprovement => 'AI text improvement';
+  @override
+  String get advancedNeuralNetwork => 'Advanced neural network for content';
+  @override
+  String get prioritySupportDesc => 'Priority solution for any questions';
+  @override
+  String get vipForever => 'VIP access forever';
+  @override
+  String get payOnce => 'Pay only once';
+  @override
+  String get getVip => 'Get VIP';
+  @override
+  String get noSpots => 'No spots';
+  @override
+  String get vipInfoMessage => 'VIP status is given to the first 50 users forever. Hurry up to take your spot!';
+  @override
+  String get vipPaymentMessage => 'VIP access payment';
+  
+  @override
   String get settings => 'Settings';
   @override
   String get userName => 'Username';
@@ -1041,8 +1124,6 @@ class AppStringsEn extends AppStrings {
   String get fromText => 'From text';
   @override
   String get uploadLogo => 'Upload logo';
-  @override
-  String get templates => 'Templates';
   @override
   String get generationsFinished => 'Free generations for the month are over';
   @override
