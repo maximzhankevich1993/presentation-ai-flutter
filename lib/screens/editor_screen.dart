@@ -13,6 +13,7 @@ import '../services/ai_improve_service.dart';
 import '../services/image_service.dart';
 import '../models/design_template.dart';
 import '../data/design_templates.dart';
+import '../l10n/app_strings.dart';
 import 'template_selector_screen.dart';
 import 'premium_screen.dart';
 
@@ -151,7 +152,7 @@ class SlideTemplate {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// EDITOR SCREEN (ПОЛНОСТЬЮ ИСПРАВЛЕННЫЙ)
+// EDITOR SCREEN
 // ═══════════════════════════════════════════════════════════════════════════════
 class EditorScreen extends StatefulWidget {
   final Presentation presentation;
@@ -193,8 +194,8 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
   bool _mobileWarningShown = false;
 
   final List<Map<String, dynamic>> _freeBgs = [
-    {'type': 'solid', 'color': const Color(0xFF1A1A1A), 'label': 'Dark', 'premium': false},
-    {'type': 'solid', 'color': Colors.white, 'label': 'White', 'premium': false},
+    {'type': 'solid', 'color': const Color(0xFF1A1A1A), 'label': AppStrings.current.dark, 'premium': false},
+    {'type': 'solid', 'color': Colors.white, 'label': AppStrings.current.white, 'premium': false},
     {'type': 'gradient', 'colors': [const Color(0xFF1a1a2e), const Color(0xFF16213e)], 'label': 'Midnight', 'premium': false},
     {'type': 'gradient', 'colors': [const Color(0xFF667eea), const Color(0xFF764ba2)], 'label': 'Purple', 'premium': false},
     {'type': 'gradient', 'colors': [const Color(0xFF4facfe), const Color(0xFF00f2fe)], 'label': 'Blue', 'premium': false},
@@ -216,14 +217,14 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
   ];
 
   final List<Map<String, dynamic>> _allTransitions = [
-    {'id': 'none', 'label': 'None', 'premium': false},
-    {'id': 'fade', 'label': 'Fade', 'premium': false},
-    {'id': 'slide', 'label': 'Slide', 'premium': false},
-    {'id': 'zoom', 'label': 'Zoom', 'premium': true},
-    {'id': 'flip', 'label': 'Flip', 'premium': true},
-    {'id': 'blur', 'label': 'Blur', 'premium': true},
-    {'id': 'scale', 'label': 'Scale', 'premium': true},
-    {'id': 'rotate', 'label': 'Rotate', 'premium': true},
+    {'id': 'none', 'label': AppStrings.current.none, 'premium': false},
+    {'id': 'fade', 'label': AppStrings.current.fade, 'premium': false},
+    {'id': 'slide', 'label': AppStrings.current.slide, 'premium': false},
+    {'id': 'zoom', 'label': AppStrings.current.zoom, 'premium': true},
+    {'id': 'flip', 'label': AppStrings.current.flip, 'premium': true},
+    {'id': 'blur', 'label': AppStrings.current.blur, 'premium': true},
+    {'id': 'scale', 'label': AppStrings.current.scale, 'premium': true},
+    {'id': 'rotate', 'label': AppStrings.current.rotate, 'premium': true},
   ];
 
   final List<SlideTemplate> _slideTemplates = [
@@ -235,11 +236,11 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
   ];
 
   final Map<String, TextStylePreset> _textStyles = {
-    'h1': const TextStylePreset(name: 'Heading 1', fontSize: 32, fontWeight: FontWeight.w800),
-    'h2': const TextStylePreset(name: 'Heading 2', fontSize: 28, fontWeight: FontWeight.w700),
-    'h3': const TextStylePreset(name: 'Heading 3', fontSize: 22, fontWeight: FontWeight.w600),
-    'body': const TextStylePreset(name: 'Body', fontSize: 16, fontWeight: FontWeight.w400),
-    'quote': const TextStylePreset(name: 'Quote', fontSize: 18, fontWeight: FontWeight.w400, isItalic: true),
+    'h1': TextStylePreset(name: AppStrings.current.heading1, fontSize: 32, fontWeight: FontWeight.w800),
+    'h2': TextStylePreset(name: AppStrings.current.heading2, fontSize: 28, fontWeight: FontWeight.w700),
+    'h3': TextStylePreset(name: AppStrings.current.heading3, fontSize: 22, fontWeight: FontWeight.w600),
+    'body': TextStylePreset(name: AppStrings.current.body, fontSize: 16, fontWeight: FontWeight.w400),
+    'quote': TextStylePreset(name: AppStrings.current.quote, fontSize: 18, fontWeight: FontWeight.w400, isItalic: true),
   };
 
   @override
@@ -357,26 +358,29 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
       builder: (_) => AlertDialog(
         backgroundColor: _T.bgSurface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, Color(0xFFFFD700), size: 24),
-            SizedBox(width: 8),
-            Text('Limit reached', style: TextStyle(color: _T.txtPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
+            const Icon(Icons.warning_amber_rounded, Color(0xFFFFD700), size: 24),
+            const SizedBox(width: 8),
+            Text(AppStrings.current.limitReachedTitle, style: const TextStyle(color: _T.txtPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
           ],
         ),
-        content: const Text(
-          'Free plan limited to 10 slides per presentation.\n\nSubscribe to create presentations with unlimited slides.',
-          style: TextStyle(color: _T.txtSecondary, fontSize: 14, height: 1.4),
+        content: Text(
+          AppStrings.current.freePlanMaxSlidesMessage,
+          style: const TextStyle(color: _T.txtSecondary, fontSize: 14, height: 1.4),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Later', style: TextStyle(color: _T.txtSecondary))),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppStrings.current.later, style: const TextStyle(color: _T.txtSecondary)),
+          ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               Navigator.push(context, MaterialPageRoute(builder: (_) => const PremiumScreen()));
             },
             style: ElevatedButton.styleFrom(backgroundColor: _T.accent),
-            child: const Text('Subscribe', style: TextStyle(color: Colors.white)),
+            child: Text(AppStrings.current.subscribe, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -387,9 +391,9 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     if (!_canAddSlide()) return;
     setState(() {
       final idx = _activeSlide + 1;
-      _presentation.slides.insert(idx, Slide(title: 'New slide', content: ['Enter text']));
-      _titleCtrl.insert(idx, TextEditingController(text: 'New slide'));
-      _contentCtrl.insert(idx, [TextEditingController(text: 'Enter text')]);
+      _presentation.slides.insert(idx, Slide(title: AppStrings.current.newSlide, content: [AppStrings.current.enterText]));
+      _titleCtrl.insert(idx, TextEditingController(text: AppStrings.current.newSlide));
+      _contentCtrl.insert(idx, [TextEditingController(text: AppStrings.current.enterText)]);
       _customImages.insert(idx, null);
       _customBgs.insert(idx, _templateBackgroundImage);
       _fontSizes.insert(idx, 16.0);
@@ -462,7 +466,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
     _countUploads();
   }
 
-  void _addContentItem(int i) => setState(() => _contentCtrl[i].add(TextEditingController(text: 'New item')));
+  void _addContentItem(int i) => setState(() => _contentCtrl[i].add(TextEditingController(text: AppStrings.current.newItem)));
   
   void _removeContentItem(int slide, int item) {
     if (_contentCtrl[slide].length <= 1) return;
@@ -694,13 +698,16 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
         builder: (_) => AlertDialog(
           backgroundColor: _T.bgSurface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('Desktop recommended', style: TextStyle(color: _T.txtPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
-          content: const Text(
-            'Advanced editing features (shapes, charts, text styles) work best on desktop.\n\nYou can still edit text and add images on mobile.',
-            style: TextStyle(color: _T.txtSecondary, fontSize: 13, height: 1.4),
+          title: Text(AppStrings.current.desktopRecommended, style: const TextStyle(color: _T.txtPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+          content: Text(
+            AppStrings.current.mobileEditorWarning,
+            style: const TextStyle(color: _T.txtSecondary, fontSize: 13, height: 1.4),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Continue', style: TextStyle(color: _T.accent))),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(AppStrings.current.continueText, style: const TextStyle(color: _T.accent)),
+            ),
           ],
         ),
       );
@@ -896,14 +903,14 @@ class _TopBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14),
       color: _T.bgSurface,
       child: Row(children: [
-        _IconBtn(Icons.arrow_back_ios_new_rounded, onBack, size: 15, tooltip: 'Back'),
+        _IconBtn(Icons.arrow_back_ios_new_rounded, onBack, size: 15, tooltip: AppStrings.current.back),
         const SizedBox(width: 10),
         Container(width: 30, height: 30, decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 16)),
         const SizedBox(width: 12),
         Expanded(child: Column(mainAxisAlignment: MainAxisAlignment.center, crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(title, overflow: TextOverflow.ellipsis, style: const TextStyle(color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w700)),
           const SizedBox(height: 1),
-          Text('$slideCount slides', style: const TextStyle(color: _T.txtMuted, fontSize: 11)),
+          Text('${AppStrings.current.slidesCount.toLowerCase()} $slideCount', style: const TextStyle(color: _T.txtMuted, fontSize: 11)),
         ])),
         if (uploadsUsed > 0) ...[
           _Pill(label: '🖼 $uploadsUsed/10', bg: uploadsUsed >= 10 ? const Color(0x1AFFD700) : _T.accentDim, fg: uploadsUsed >= 10 ? _T.gold : _T.accentLight, borderColor: uploadsUsed >= 10 ? const Color(0x33FFD700) : const Color(0x331DB954)),
@@ -911,7 +918,7 @@ class _TopBar extends StatelessWidget {
         ],
         GestureDetector(
           onTap: onExport,
-          child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7), decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(8)), child: const Text('Export', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700))),
+          child: Container(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7), decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(8)), child: Text(AppStrings.current.export, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700))),
         ),
       ]),
     );
@@ -932,7 +939,7 @@ class _TemplateSheet extends StatelessWidget {
       decoration: BoxDecoration(color: _T.bgSurface, borderRadius: const BorderRadius.vertical(top: Radius.circular(20)), border: const Border(top: BorderSide(color: _T.border))),
       child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
         Center(child: Container(width: 36, height: 4, margin: const EdgeInsets.symmetric(vertical: 14), decoration: BoxDecoration(color: _T.border, borderRadius: BorderRadius.circular(2)))),
-        const Text('Add slide template', style: TextStyle(color: _T.txtPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+        Text(AppStrings.current.addSlideTemplate, style: const TextStyle(color: _T.txtPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
         const SizedBox(height: 16),
         GridView.builder(
           shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
@@ -987,7 +994,7 @@ class _SlideNavigator extends StatelessWidget {
       color: _T.bgSurface,
       child: Column(children: [
         SizedBox(height: 36, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 8), child: Row(children: [
-          if (!collapsed) const Text('SLIDES', style: TextStyle(color: _T.txtMuted, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
+          if (!collapsed) Text(AppStrings.current.slides.toUpperCase(), style: const TextStyle(color: _T.txtMuted, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
           const Spacer(),
           _IconBtn(collapsed ? Icons.chevron_right_rounded : Icons.chevron_left_rounded, onToggleCollapse, size: 15),
         ]))),
@@ -1005,7 +1012,7 @@ class _SlideNavigator extends StatelessWidget {
           onTap: onAdd,
           child: Container(height: 40, alignment: Alignment.center, child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             Container(width: 20, height: 20, decoration: BoxDecoration(color: _T.accentDim, borderRadius: BorderRadius.circular(5), border: Border.all(color: _T.accent.withOpacity(0.35))), child: const Icon(Icons.add_rounded, color: _T.accent, size: 14)),
-            if (!collapsed) ...[const SizedBox(width: 7), const Text('Slide', style: TextStyle(color: _T.accent, fontSize: 12, fontWeight: FontWeight.w600))],
+            if (!collapsed) ...[const SizedBox(width: 7), Text(AppStrings.current.slide, style: const TextStyle(color: _T.accent, fontSize: 12, fontWeight: FontWeight.w600))],
           ])),
         ),
       ]),
@@ -1046,7 +1053,7 @@ class _SlideThumbnailState extends State<_SlideThumbnail> {
   Widget _expandedView() => Row(children: [
     Container(width: 50, height: 32, decoration: BoxDecoration(color: widget.bgColor, borderRadius: BorderRadius.circular(4)), child: Center(child: Text('${widget.index + 1}', style: TextStyle(fontSize: 10, color: widget.bgColor.computeLuminance() > 0.5 ? Colors.black38 : Colors.white30, fontWeight: FontWeight.w700)))),
     const SizedBox(width: 8),
-    Expanded(child: Text(widget.title.isEmpty ? 'Slide ${widget.index + 1}' : widget.title, style: TextStyle(color: widget.isActive ? _T.txtPrimary : _T.txtSecondary, fontSize: 11, fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w400), maxLines: 2, overflow: TextOverflow.ellipsis)),
+    Expanded(child: Text(widget.title.isEmpty ? '${AppStrings.current.slide} ${widget.index + 1}' : widget.title, style: TextStyle(color: widget.isActive ? _T.txtPrimary : _T.txtSecondary, fontSize: 11, fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w400), maxLines: 2, overflow: TextOverflow.ellipsis)),
     if (hover) PopupMenuButton<String>(
       padding: EdgeInsets.zero, iconSize: 13, color: _T.bgCard,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10), side: const BorderSide(color: _T.border)),
@@ -1058,10 +1065,10 @@ class _SlideThumbnailState extends State<_SlideThumbnail> {
         if (v == 'down') widget.onMoveDown?.call();
       },
       itemBuilder: (_) => [
-        if (widget.onMoveUp != null) const PopupMenuItem(value: 'up', height: 36, child: Row(children: [Icon(Icons.arrow_upward_rounded, size: 14), SizedBox(width: 8), Text('Up')])),
-        if (widget.onMoveDown != null) const PopupMenuItem(value: 'down', height: 36, child: Row(children: [Icon(Icons.arrow_downward_rounded, size: 14), SizedBox(width: 8), Text('Down')])),
-        const PopupMenuItem(value: 'dup', height: 36, child: Row(children: [Icon(Icons.copy_rounded, size: 14), SizedBox(width: 8), Text('Duplicate')])),
-        if (widget.onDelete != null) const PopupMenuItem(value: 'del', height: 36, child: Row(children: [Icon(Icons.delete_outline_rounded, size: 14, color: _T.danger), SizedBox(width: 8), Text('Delete', style: TextStyle(color: _T.danger))])),
+        if (widget.onMoveUp != null) PopupMenuItem(value: 'up', height: 36, child: Row(children: [const Icon(Icons.arrow_upward_rounded, size: 14), const SizedBox(width: 8), Text(AppStrings.current.up)])),
+        if (widget.onMoveDown != null) PopupMenuItem(value: 'down', height: 36, child: Row(children: [const Icon(Icons.arrow_downward_rounded, size: 14), const SizedBox(width: 8), Text(AppStrings.current.down)])),
+        PopupMenuItem(value: 'dup', height: 36, child: Row(children: [const Icon(Icons.copy_rounded, size: 14), const SizedBox(width: 8), Text(AppStrings.current.duplicate)])),
+        if (widget.onDelete != null) PopupMenuItem(value: 'del', height: 36, child: Row(children: [const Icon(Icons.delete_outline_rounded, size: 14, color: _T.danger), const SizedBox(width: 8), Text(AppStrings.current.delete, style: const TextStyle(color: _T.danger))])),
       ],
     ),
   ]);
@@ -1293,7 +1300,7 @@ class _Canvas extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: _T.bgSurface,
-        title: const Text('Edit data', style: TextStyle(color: _T.txtPrimary)),
+        title: Text(AppStrings.current.editData, style: const TextStyle(color: _T.txtPrimary)),
         content: SizedBox(
           width: 300,
           height: 300,
@@ -1322,7 +1329,7 @@ class _Canvas extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel', style: TextStyle(color: _T.txtSecondary))),
+          TextButton(onPressed: () => Navigator.pop(context), child: Text(AppStrings.current.cancel, style: const TextStyle(color: _T.txtSecondary))),
           ElevatedButton(
             onPressed: () {
               final newData = List<Map<String, dynamic>>.from(chart.data);
@@ -1333,7 +1340,7 @@ class _Canvas extends StatelessWidget {
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(backgroundColor: _T.accent),
-            child: const Text('Save', style: TextStyle(color: Colors.white)),
+            child: Text(AppStrings.current.save, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -1352,7 +1359,7 @@ class _Canvas extends StatelessWidget {
   }
   
   Widget _buildChartWidget(SlideChart chart) {
-    if (chart.data.isEmpty) return const Center(child: Text('No data', style: TextStyle(color: _T.txtSecondary, fontSize: 12)));
+    if (chart.data.isEmpty) return Center(child: Text(AppStrings.current.noData, style: const TextStyle(color: _T.txtSecondary, fontSize: 12)));
     final maxY = chart.data.map((e) => (e['value'] as num).toDouble()).reduce((a, b) => a > b ? a : b) * 1.2;
     switch (chart.type) {
       case 'bar':
@@ -1509,16 +1516,16 @@ class _Canvas extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('CONTENT', style: TextStyle(color: _T.txtMuted, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
+          Text(AppStrings.current.content.toUpperCase(), style: const TextStyle(color: _T.txtMuted, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
           const SizedBox(height: 10),
-          _EditorField(controller: titleCtrl, hint: 'Title...', bold: true),
+          _EditorField(controller: titleCtrl, hint: AppStrings.current.titleHint, bold: true),
           const SizedBox(height: 6),
           ...contentCtrl.asMap().entries.map((e) => Padding(
             padding: const EdgeInsets.only(bottom: 5),
             child: Row(
               children: [
                 const Padding(padding: EdgeInsets.only(right: 7, top: 1), child: Icon(Icons.drag_indicator_rounded, color: _T.txtMuted, size: 13)),
-                Expanded(child: _EditorField(controller: e.value, hint: 'Item ${e.key + 1}...')),
+                Expanded(child: _EditorField(controller: e.value, hint: '${AppStrings.current.item} ${e.key + 1}...')),
                 const SizedBox(width: 4),
                 GestureDetector(
                   onTap: () => onRemoveItem(e.key),
@@ -1530,10 +1537,10 @@ class _Canvas extends StatelessWidget {
           const SizedBox(height: 2),
           GestureDetector(
             onTap: onAddItem,
-            child: const Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.add_rounded, color: _T.accent, size: 14),
-              SizedBox(width: 4),
-              Text('Add item', style: TextStyle(color: _T.accent, fontSize: 12, fontWeight: FontWeight.w500)),
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
+              const Icon(Icons.add_rounded, color: _T.accent, size: 14),
+              const SizedBox(width: 4),
+              Text(AppStrings.current.addItem, style: const TextStyle(color: _T.accent, fontSize: 12, fontWeight: FontWeight.w500)),
             ]),
           ),
         ],
@@ -1630,11 +1637,11 @@ class _PropertiesPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(color: _T.bgSurface, child: Column(children: [
       SizedBox(height: 38, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5), child: Row(children: [
-        _buildTab('design', 'Design', Icons.palette_outlined),
-        _buildTab('media', 'Media', Icons.photo_outlined),
-        _buildTab('shapes', 'Shapes', Icons.category_outlined),
-        _buildTab('charts', 'Charts', Icons.show_chart_rounded),
-        _buildTab('ai', 'AI', Icons.auto_awesome_outlined),
+        _buildTab('design', AppStrings.current.design, Icons.palette_outlined),
+        _buildTab('media', AppStrings.current.media, Icons.photo_outlined),
+        _buildTab('shapes', AppStrings.current.shapes, Icons.category_outlined),
+        _buildTab('charts', AppStrings.current.charts, Icons.show_chart_rounded),
+        _buildTab('ai', AppStrings.current.ai, Icons.auto_awesome_outlined),
       ])), ),
       const _ThinDivider(),
       Expanded(child: SingleChildScrollView(padding: const EdgeInsets.all(14), child: _buildContent())),
@@ -1658,44 +1665,44 @@ class _PropertiesPanel extends StatelessWidget {
   
   Widget _buildDesignTab() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _PropSection('FONT', child: Column(children: [
+      _PropSection(AppStrings.current.font, child: Column(children: [
         for (final f in ['Inter', 'Roboto', 'Playfair Display', 'Montserrat', 'Open Sans'])
           _FontChip(name: f, selected: globalFont == f, onTap: () => onFontChange(f)),
       ])),
       const SizedBox(height: 8),
-      _PropSection('TEXT SIZE', child: _SliderRow(value: fontSize, min: 10, max: 32, label: '${fontSize.round()}px', onChanged: onFontSizeChange)),
+      _PropSection(AppStrings.current.textSize, child: _SliderRow(value: fontSize, min: 10, max: 32, label: '${fontSize.round()}px', onChanged: onFontSizeChange)),
       const SizedBox(height: 8),
-      _PropSection('TEXT STYLE', child: Wrap(spacing: 6, runSpacing: 6, children: textStyles.entries.map((e) {
+      _PropSection(AppStrings.current.textStyle, child: Wrap(spacing: 6, runSpacing: 6, children: textStyles.entries.map((e) {
         final isSelected = currentTextStyle == e.key;
         return GestureDetector(onTap: () => onTextStyleChange(e.key), child: AnimatedContainer(duration: _T.fast, padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), decoration: BoxDecoration(color: isSelected ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(8), border: Border.all(color: isSelected ? _T.accent.withOpacity(0.35) : _T.border)), child: Text(e.value.name, style: TextStyle(fontSize: 11, color: isSelected ? _T.accentLight : _T.txtSecondary, fontWeight: FontWeight.w500))));
       }).toList())),
       const SizedBox(height: 8),
-      _PropSection('ALIGNMENT', child: Row(children: [
+      _PropSection(AppStrings.current.alignment, child: Row(children: [
         for (final pair in [('left', Icons.format_align_left_rounded), ('center', Icons.format_align_center_rounded), ('right', Icons.format_align_right_rounded)])
           Expanded(child: GestureDetector(onTap: () => onTextAlignChange(pair.$1), child: AnimatedContainer(duration: _T.fast, margin: const EdgeInsets.only(right: 4), height: 36, decoration: BoxDecoration(color: currentTextAlign == pair.$1 ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(7), border: Border.all(color: currentTextAlign == pair.$1 ? _T.accent.withOpacity(0.4) : _T.border)), child: Icon(pair.$2, size: 18, color: currentTextAlign == pair.$1 ? _T.accent : _T.txtSecondary)))),
       ])),
       const SizedBox(height: 8),
-      _PropSection('COLUMNS', child: Row(children: [
+      _PropSection(AppStrings.current.columns, child: Row(children: [
         for (int i = 1; i <= 2; i++)
           Expanded(child: GestureDetector(onTap: () => onColumnsChange(i), child: AnimatedContainer(duration: _T.fast, margin: const EdgeInsets.only(right: 4), height: 36, decoration: BoxDecoration(color: columnsCount == i ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(7), border: Border.all(color: columnsCount == i ? _T.accent.withOpacity(0.4) : _T.border)), child: Center(child: Text('$i', style: TextStyle(color: columnsCount == i ? _T.accentLight : _T.txtSecondary, fontWeight: FontWeight.w600)))))),
       ])),
       const SizedBox(height: 8),
-      _PropSection('TEXT COLOR', child: Wrap(spacing: 7, children: [
+      _PropSection(AppStrings.current.textColor, child: Wrap(spacing: 7, children: [
         for (final c in [Colors.white, Colors.black, _T.accent, Colors.blue, Colors.red, _T.gold, Colors.purple, Colors.orange])
           _ColorDot(color: c, selected: fontColor == c, onTap: () => onFontColorChange(c)),
       ])),
       const SizedBox(height: 8),
-      _PropSection('BACKGROUND', child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      _PropSection(AppStrings.current.background, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Wrap(spacing: 8, runSpacing: 8, children: freeBgs.asMap().entries.map((e) {
           final isSelected = selectedBgIndex == e.key && customBg == null;
           final isPremiumBg = e.value['premium'] == true;
           return GestureDetector(onTap: () => onBgSelect(e.key), child: Stack(children: [AnimatedContainer(duration: _T.fast, width: 40, height: 28, decoration: BoxDecoration(gradient: e.value['type'] == 'gradient' ? LinearGradient(colors: e.value['colors'] as List<Color>) : null, color: e.value['type'] == 'solid' ? e.value['color'] as Color : null, borderRadius: BorderRadius.circular(7), border: Border.all(color: isSelected ? _T.accent : _T.border, width: isSelected ? 2 : 1)),), if (isPremiumBg && !isPremium) Positioned(top: 2, right: 2, child: Container(width: 12, height: 12, decoration: BoxDecoration(color: _T.gold, borderRadius: BorderRadius.circular(6)), child: const Icon(Icons.lock_rounded, color: Colors.black, size: 6)))]));
         }).toList()),
         const SizedBox(height: 8),
-        _UploadButton(label: 'Upload background', onTap: onBgUpload),
+        _UploadButton(label: AppStrings.current.uploadBackground, onTap: onBgUpload),
       ])),
       const SizedBox(height: 8),
-      _PropSection('TRANSITION', child: Wrap(spacing: 6, runSpacing: 6, children: allTransitions.map((t) {
+      _PropSection(AppStrings.current.transition, child: Wrap(spacing: 6, runSpacing: 6, children: allTransitions.map((t) {
         final isPremiumTrans = t['premium'] as bool;
         final isSelected = transition == t['id'];
         return GestureDetector(onTap: isPremiumTrans && !isPremium ? null : () => onTransitionChange(t['id'] as String), child: AnimatedContainer(duration: _T.fast, padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5), decoration: BoxDecoration(color: isSelected ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(7), border: Border.all(color: isSelected ? _T.accent.withOpacity(0.35) : _T.border)), child: Row(mainAxisSize: MainAxisSize.min, children: [Text(t['label'] as String, style: TextStyle(fontSize: 11, color: (isPremiumTrans && !isPremium) ? _T.txtMuted : isSelected ? _T.accentLight : _T.txtSecondary)), if (isPremiumTrans && !isPremium) ...[const SizedBox(width: 4), const Icon(Icons.lock_outline_rounded, size: 11, color: _T.txtMuted)]])));
@@ -1705,15 +1712,15 @@ class _PropertiesPanel extends StatelessWidget {
   
   Widget _buildMediaTab() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _PropSection('IMAGE', child: GestureDetector(onTap: onImageUpload, child: Container(height: 72, decoration: BoxDecoration(color: _T.bgCard, borderRadius: _T.r10, border: Border.all(color: hasImage ? _T.accent.withOpacity(0.3) : _T.border)), child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(hasImage ? Icons.swap_horiz_rounded : Icons.add_photo_alternate_outlined, color: _T.accent, size: 22), const SizedBox(height: 4), Text(hasImage ? 'Replace' : 'Upload', style: const TextStyle(color: _T.accent, fontSize: 12, fontWeight: FontWeight.w500))]))))),
+      _PropSection(AppStrings.current.image, child: GestureDetector(onTap: onImageUpload, child: Container(height: 72, decoration: BoxDecoration(color: _T.bgCard, borderRadius: _T.r10, border: Border.all(color: hasImage ? _T.accent.withOpacity(0.3) : _T.border)), child: Center(child: Column(mainAxisSize: MainAxisSize.min, children: [Icon(hasImage ? Icons.swap_horiz_rounded : Icons.add_photo_alternate_outlined, color: _T.accent, size: 22), const SizedBox(height: 4), Text(hasImage ? AppStrings.current.replace : AppStrings.current.upload, style: const TextStyle(color: _T.accent, fontSize: 12, fontWeight: FontWeight.w500))]))))),
       if (hasImage) ...[
         const SizedBox(height: 8),
-        _PropSection('WIDTH', child: _SliderRow(value: imageWidth ?? 0.28, min: 0.1, max: 0.6, label: '${((imageWidth ?? 0.28) * 100).round()}%', onChanged: onImageWidthChange)),
+        _PropSection(AppStrings.current.width, child: _SliderRow(value: imageWidth ?? 0.28, min: 0.1, max: 0.6, label: '${((imageWidth ?? 0.28) * 100).round()}%', onChanged: onImageWidthChange)),
         const SizedBox(height: 8),
-        _PropSection('HEIGHT', child: _SliderRow(value: imageHeight ?? 0.55, min: 0.1, max: 0.8, label: '${((imageHeight ?? 0.55) * 100).round()}%', onChanged: onImageHeightChange)),
+        _PropSection(AppStrings.current.height, child: _SliderRow(value: imageHeight ?? 0.55, min: 0.1, max: 0.8, label: '${((imageHeight ?? 0.55) * 100).round()}%', onChanged: onImageHeightChange)),
         const SizedBox(height: 8),
-        _PropSection('POSITION', child: Row(children: [
-          for (final entry in {'top': 'Top', 'bottom': 'Bottom'}.entries)
+        _PropSection(AppStrings.current.position, child: Row(children: [
+          for (final entry in {'top': AppStrings.current.top, 'bottom': AppStrings.current.bottom}.entries)
             Expanded(child: GestureDetector(onTap: () => onImageTextWrapChange(entry.key), child: AnimatedContainer(duration: _T.fast, margin: const EdgeInsets.only(right: 4), height: 32, decoration: BoxDecoration(color: imageTextWrap == entry.key ? _T.accentDim : _T.bgCard, borderRadius: BorderRadius.circular(7), border: Border.all(color: imageTextWrap == entry.key ? _T.accent.withOpacity(0.4) : _T.border)), child: Center(child: Text(entry.value, style: TextStyle(fontSize: 11, color: imageTextWrap == entry.key ? _T.accentLight : _T.txtSecondary)))))),
         ])),
       ],
@@ -1722,38 +1729,38 @@ class _PropertiesPanel extends StatelessWidget {
   
   Widget _buildShapesTab() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _PropSection('ADD SHAPE', child: Wrap(spacing: 8, runSpacing: 8, children: [
+      _PropSection(AppStrings.current.addShape, child: Wrap(spacing: 8, runSpacing: 8, children: [
         for (final pair in [('circle', Icons.circle_outlined), ('square', Icons.square_outlined), ('rectangle', Icons.rectangle_outlined), ('triangle', Icons.change_history_rounded), ('star', Icons.star_outline_rounded)])
           GestureDetector(onTap: () => onAddShape(pair.$1), child: Container(width: 48, height: 48, decoration: BoxDecoration(color: _T.bgCard, borderRadius: _T.r10, border: Border.all(color: _T.border)), child: Icon(pair.$2, color: _T.accent, size: 24))),
       ])),
       if (shapes.isNotEmpty) ...[
         const SizedBox(height: 8),
-        _PropSection('ON SLIDE', child: Column(children: shapes.map((s) => Container(margin: const EdgeInsets.only(bottom: 6), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8), decoration: BoxDecoration(color: _T.bgCard, borderRadius: _T.r8, border: Border.all(color: _T.border)), child: Row(children: [ Icon(s.type == 'circle' ? Icons.circle_outlined : s.type == 'square' ? Icons.square_outlined : s.type == 'rectangle' ? Icons.rectangle_outlined : s.type == 'triangle' ? Icons.change_history_rounded : Icons.star_outline_rounded, color: s.color, size: 18), const SizedBox(width: 10), Expanded(child: Text(s.type, style: const TextStyle(color: _T.txtPrimary, fontSize: 12))), GestureDetector(onTap: () => onRemoveShape(s.id), child: const Icon(Icons.close_rounded, color: _T.txtMuted, size: 14)) ]))).toList())),
+        _PropSection(AppStrings.current.onSlide, child: Column(children: shapes.map((s) => Container(margin: const EdgeInsets.only(bottom: 6), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8), decoration: BoxDecoration(color: _T.bgCard, borderRadius: _T.r8, border: Border.all(color: _T.border)), child: Row(children: [ Icon(s.type == 'circle' ? Icons.circle_outlined : s.type == 'square' ? Icons.square_outlined : s.type == 'rectangle' ? Icons.rectangle_outlined : s.type == 'triangle' ? Icons.change_history_rounded : Icons.star_outline_rounded, color: s.color, size: 18), const SizedBox(width: 10), Expanded(child: Text(s.type, style: const TextStyle(color: _T.txtPrimary, fontSize: 12))), GestureDetector(onTap: () => onRemoveShape(s.id), child: const Icon(Icons.close_rounded, color: _T.txtMuted, size: 14)) ]))).toList())),
       ],
     ]);
   }
   
   Widget _buildChartsTab() {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _PropSection('ADD CHART', child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        _ChartTypeBtn(icon: Icons.bar_chart_rounded, label: 'Bar', onTap: () => onAddChart('bar')),
-        _ChartTypeBtn(icon: Icons.pie_chart_rounded, label: 'Pie', onTap: () => onAddChart('pie')),
-        _ChartTypeBtn(icon: Icons.show_chart_rounded, label: 'Line', onTap: () => onAddChart('line')),
+      _PropSection(AppStrings.current.addChart, child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+        _ChartTypeBtn(icon: Icons.bar_chart_rounded, label: AppStrings.current.bar, onTap: () => onAddChart('bar')),
+        _ChartTypeBtn(icon: Icons.pie_chart_rounded, label: AppStrings.current.pie, onTap: () => onAddChart('pie')),
+        _ChartTypeBtn(icon: Icons.show_chart_rounded, label: AppStrings.current.line, onTap: () => onAddChart('line')),
       ])),
       if (charts.isNotEmpty) ...[
         const SizedBox(height: 8),
-        _PropSection('ON SLIDE', child: Column(children: charts.map((c) => Container(margin: const EdgeInsets.only(bottom: 6), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8), decoration: BoxDecoration(color: _T.bgCard, borderRadius: _T.r8, border: Border.all(color: _T.border)), child: Row(children: [ Icon(c.type == 'bar' ? Icons.bar_chart_rounded : c.type == 'pie' ? Icons.pie_chart_rounded : Icons.show_chart_rounded, color: _T.accent, size: 18), const SizedBox(width: 10), Expanded(child: Text(c.type, style: const TextStyle(color: _T.txtPrimary, fontSize: 12))), GestureDetector(onTap: () => onRemoveChart(c.id), child: const Icon(Icons.close_rounded, color: _T.txtMuted, size: 14)) ]))).toList())),
+        _PropSection(AppStrings.current.onSlide, child: Column(children: charts.map((c) => Container(margin: const EdgeInsets.only(bottom: 6), padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8), decoration: BoxDecoration(color: _T.bgCard, borderRadius: _T.r8, border: Border.all(color: _T.border)), child: Row(children: [ Icon(c.type == 'bar' ? Icons.bar_chart_rounded : c.type == 'pie' ? Icons.pie_chart_rounded : Icons.show_chart_rounded, color: _T.accent, size: 18), const SizedBox(width: 10), Expanded(child: Text(c.type, style: const TextStyle(color: _T.txtPrimary, fontSize: 12))), GestureDetector(onTap: () => onRemoveChart(c.id), child: const Icon(Icons.close_rounded, color: _T.txtMuted, size: 14)) ]))).toList())),
       ],
     ]);
   }
   
   Widget _buildAiTab() {
     return Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: _T.accentDim, borderRadius: _T.r14, border: Border.all(color: _T.accent.withOpacity(0.18))), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [ Container(width: 34, height: 34, decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(9)), child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 17)), const SizedBox(width: 10), const Text('Improve text', style: TextStyle(color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w700)), ]),
+      Row(children: [ Container(width: 34, height: 34, decoration: BoxDecoration(gradient: const LinearGradient(colors: [_T.accent, _T.accentLight]), borderRadius: BorderRadius.circular(9)), child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 17)), const SizedBox(width: 10), Text(AppStrings.current.improveText, style: const TextStyle(color: _T.txtPrimary, fontSize: 13, fontWeight: FontWeight.w700)), ]),
       const SizedBox(height: 10),
-      const Text('AI will rewrite title and slide content.', style: TextStyle(color: _T.txtSecondary, fontSize: 12, height: 1.5)),
+      Text(AppStrings.current.aiWillRewrite, style: const TextStyle(color: _T.txtSecondary, fontSize: 12, height: 1.5)),
       const SizedBox(height: 12),
-      GestureDetector(onTap: isImproving ? null : onImprove, child: AnimatedContainer(duration: _T.fast, width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 10), decoration: BoxDecoration(gradient: isImproving ? null : const LinearGradient(colors: [_T.accent, _T.accentLight]), color: isImproving ? _T.bgCard : null, borderRadius: _T.r8), child: Center(child: isImproving ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: _T.accent)) : const Text('Improve slide', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700))))),
+      GestureDetector(onTap: isImproving ? null : onImprove, child: AnimatedContainer(duration: _T.fast, width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 10), decoration: BoxDecoration(gradient: isImproving ? null : const LinearGradient(colors: [_T.accent, _T.accentLight]), color: isImproving ? _T.bgCard : null, borderRadius: _T.r8), child: Center(child: isImproving ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: _T.accent)) : Text(AppStrings.current.improveSlide, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700))))),
     ]));
   }
 }
@@ -1763,7 +1770,7 @@ class _PropSection extends StatelessWidget {
   final Widget child;
   const _PropSection(this.title, {required this.child});
   @override
-  Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [ Text(title, style: const TextStyle(color: _T.txtMuted, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8)), const SizedBox(height: 8), child ]);
+  Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [ Text(title.toUpperCase(), style: const TextStyle(color: _T.txtMuted, fontSize: 10, fontWeight: FontWeight.w700, letterSpacing: 0.8)), const SizedBox(height: 8), child ]);
 }
 
 class _FontChip extends StatelessWidget {
@@ -1819,22 +1826,22 @@ class _ExportSheet extends StatelessWidget {
       decoration: BoxDecoration(color: _T.bgSurface, borderRadius: _T.r16, border: Border.all(color: _T.border)),
       child: Column(mainAxisSize: MainAxisSize.min, children: [
         Center(child: Container(width: 36, height: 4, margin: const EdgeInsets.only(top: 12, bottom: 14), decoration: BoxDecoration(color: _T.border, borderRadius: BorderRadius.circular(2)))),
-        const Text('Export', style: TextStyle(color: _T.txtPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
+        Text(AppStrings.current.export, style: const TextStyle(color: _T.txtPrimary, fontSize: 16, fontWeight: FontWeight.w700)),
         const SizedBox(height: 12),
         const _ThinDivider(),
         ListTile(
           onTap: () { Navigator.pop(context); ExportService.exportToPPTX(context: context, presentation: presentation, isPremium: isPremium); },
           leading: Container(width: 36, height: 36, decoration: BoxDecoration(color: const Color(0x1FFF6B35), borderRadius: BorderRadius.circular(8)), child: const Icon(Icons.slideshow_rounded, color: Color(0xFFFF6B35), size: 20)),
-          title: const Text('PowerPoint', style: TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w600)),
-          subtitle: Text(isPremium ? 'No watermark' : 'With watermark', style: const TextStyle(color: _T.txtSecondary, fontSize: 12)),
+          title: Text(AppStrings.current.powerPoint, style: const TextStyle(color: _T.txtPrimary, fontWeight: FontWeight.w600)),
+          subtitle: Text(isPremium ? AppStrings.current.noWatermark : AppStrings.current.withWatermark, style: const TextStyle(color: _T.txtSecondary, fontSize: 12)),
           trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 13, color: _T.txtMuted),
         ),
         ListTile(
           onTap: isPremium ? () { Navigator.pop(context); ExportService.exportToPDF(context: context, presentation: presentation, isPremium: isPremium); } : null,
           leading: Container(width: 36, height: 36, decoration: BoxDecoration(color: isPremium ? const Color(0x1FFF3B30) : _T.bgCard, borderRadius: BorderRadius.circular(8)), child: Icon(Icons.picture_as_pdf_rounded, color: isPremium ? _T.danger : _T.txtMuted, size: 20)),
-          title: Text('PDF', style: TextStyle(color: isPremium ? _T.txtPrimary : _T.txtMuted, fontWeight: FontWeight.w600)),
-          subtitle: Text(isPremium ? 'High quality' : 'Premium only', style: const TextStyle(color: _T.txtSecondary, fontSize: 12)),
-          trailing: !isPremium ? Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3), decoration: BoxDecoration(color: _T.gold.withOpacity(0.12), borderRadius: BorderRadius.circular(6), border: Border.all(color: _T.gold.withOpacity(0.3))), child: const Text('Premium', style: TextStyle(color: _T.gold, fontSize: 10, fontWeight: FontWeight.w700))) : const Icon(Icons.arrow_forward_ios_rounded, size: 13, color: _T.txtMuted),
+          title: Text(AppStrings.current.pdf, style: TextStyle(color: isPremium ? _T.txtPrimary : _T.txtMuted, fontWeight: FontWeight.w600)),
+          subtitle: Text(isPremium ? AppStrings.current.highQuality : AppStrings.current.premiumOnly, style: const TextStyle(color: _T.txtSecondary, fontSize: 12)),
+          trailing: !isPremium ? Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3), decoration: BoxDecoration(color: _T.gold.withOpacity(0.12), borderRadius: BorderRadius.circular(6), border: Border.all(color: _T.gold.withOpacity(0.3))), child: Text(AppStrings.current.premiumPlan, style: const TextStyle(color: _T.gold, fontSize: 10, fontWeight: FontWeight.w700))) : const Icon(Icons.arrow_forward_ios_rounded, size: 13, color: _T.txtMuted),
         ),
         const SizedBox(height: 12),
       ]),
@@ -1851,18 +1858,18 @@ class _ControlBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(height: 50, padding: const EdgeInsets.symmetric(horizontal: 14), color: _T.bgSurface, child: Row(children: [
-      _IconBtn(Icons.copy_rounded, onDuplicate, tooltip: 'Duplicate'),
-      _IconBtn(Icons.delete_outline_rounded, onDelete, tooltip: 'Delete', danger: true),
-      _IconBtn(Icons.view_quilt_rounded, onTemplate, tooltip: 'Slide templates'),
-      _IconBtn(Icons.style_rounded, onApplyTemplate, tooltip: 'Apply template'),
+      _IconBtn(Icons.copy_rounded, onDuplicate, tooltip: AppStrings.current.duplicate),
+      _IconBtn(Icons.delete_outline_rounded, onDelete, tooltip: AppStrings.current.delete, danger: true),
+      _IconBtn(Icons.view_quilt_rounded, onTemplate, tooltip: AppStrings.current.slideTemplates),
+      _IconBtn(Icons.style_rounded, onApplyTemplate, tooltip: AppStrings.current.applyTemplate),
       const Spacer(),
       _IconBtn(Icons.arrow_back_rounded, onPrev, disabled: activeSlide == 0),
       Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text('${activeSlide + 1} / $totalSlides', style: const TextStyle(color: _T.txtSecondary, fontSize: 12, fontWeight: FontWeight.w500))),
       _IconBtn(Icons.arrow_forward_rounded, onNext, disabled: activeSlide == totalSlides - 1),
       const Spacer(),
-      _IconBtn(Icons.add_rounded, onAdd, tooltip: 'New slide'),
+      _IconBtn(Icons.add_rounded, onAdd, tooltip: AppStrings.current.newSlide),
       Container(width: 1, height: 20, color: _T.border, margin: const EdgeInsets.symmetric(horizontal: 6)),
-      _IconBtn(propsPanelOpen ? Icons.view_sidebar_rounded : Icons.view_sidebar_outlined, onToggleProps, tooltip: propsPanelOpen ? 'Hide panel' : 'Show panel'),
+      _IconBtn(propsPanelOpen ? Icons.view_sidebar_rounded : Icons.view_sidebar_outlined, onToggleProps, tooltip: propsPanelOpen ? AppStrings.current.hidePanel : AppStrings.current.showPanel),
     ]));
   }
 }
