@@ -25,36 +25,63 @@ class _ShareScreenState extends State<ShareScreen> {
       backgroundColor: const Color(0xFF121212),
       appBar: AppBar(
         backgroundColor: const Color(0xFF121212),
-        title: Text(AppStrings.current.share, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 17)),
+        title: Text(
+          AppStrings.current.share,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 17),
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(20.w),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(widget.presentationTitle, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white)),
-          SizedBox(height: 20.h),
-          Text(AppStrings.current.accessLevel, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFFB3B3B3))),
-          SizedBox(height: 8.h),
-          _option('view', AppStrings.current.view, AppStrings.current.viewOnly, Icons.visibility_outlined),
-          _option('comment', AppStrings.current.comment, AppStrings.current.canComment, Icons.comment_outlined),
-          _option('edit', AppStrings.current.edit, AppStrings.current.canEdit, Icons.edit_outlined),
-          SizedBox(height: 20.h),
-          Text(AppStrings.current.link, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFFB3B3B3))),
-          SizedBox(height: 8.h),
-          Container(
-            padding: EdgeInsets.all(14.w),
-            decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(14)),
-            child: Row(children: [
-              Expanded(child: Text(_link, style: TextStyle(fontSize: 12, color: Colors.white), maxLines: 2, overflow: TextOverflow.ellipsis)),
-              IconButton(
-                onPressed: () {
-                  // TODO: добавить копирование в буфер
-                },
-                icon: const Icon(Icons.copy, color: Color(0xFF1DB954)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              widget.presentationTitle,
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.white),
+            ),
+            SizedBox(height: 20.h),
+            Text(
+              AppStrings.current.accessLevel,
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFFB3B3B3)),
+            ),
+            SizedBox(height: 8.h),
+            _option('view', AppStrings.current.viewTitle, AppStrings.current.viewOnly, Icons.visibility_outlined),
+            _option('comment', AppStrings.current.commentTitle, AppStrings.current.canComment, Icons.comment_outlined),
+            _option('edit', AppStrings.current.editTitle, AppStrings.current.canEdit, Icons.edit_outlined),
+            SizedBox(height: 20.h),
+            Text(
+              AppStrings.current.linkLabel,
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFFB3B3B3)),
+            ),
+            SizedBox(height: 8.h),
+            Container(
+              padding: EdgeInsets.all(14.w),
+              decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(14)),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _link,
+                      style: TextStyle(fontSize: 12, color: Colors.white),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      // TODO: добавить копирование в буфер
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(AppStrings.current.codeCopied)),
+                      );
+                    },
+                    icon: const Icon(Icons.copy, color: Color(0xFF1DB954)),
+                  ),
+                ],
               ),
-            ]),
-          ),
-        ]),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -71,15 +98,22 @@ class _ShareScreenState extends State<ShareScreen> {
           borderRadius: BorderRadius.circular(14),
           border: Border.all(color: selected ? const Color(0xFF1DB954).withOpacity(0.4) : Colors.white.withOpacity(0.06)),
         ),
-        child: Row(children: [
-          Icon(icon, color: selected ? const Color(0xFF1DB954) : Colors.white54, size: 20),
-          SizedBox(width: 10.w),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
-            Text(subtitle, style: TextStyle(fontSize: 10, color: const Color(0xFFB3B3B3))),
-          ])),
-          if (selected) const Icon(Icons.check_circle, color: Color(0xFF1DB954), size: 20),
-        ]),
+        child: Row(
+          children: [
+            Icon(icon, color: selected ? const Color(0xFF1DB954) : Colors.white54, size: 20),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white)),
+                  Text(subtitle, style: TextStyle(fontSize: 10, color: const Color(0xFFB3B3B3))),
+                ],
+              ),
+            ),
+            if (selected) const Icon(Icons.check_circle, color: Color(0xFF1DB954), size: 20),
+          ],
+        ),
       ),
     );
   }
