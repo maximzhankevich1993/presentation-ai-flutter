@@ -207,6 +207,39 @@ class AppStrings {
   String get payWithUSDTShort => 'Оплатить USDT';
   
   // ═══════════════════════════════════════════════════════════════
+  // ЭКРАН ШАБЛОНОВ (TEMPLATE SELECTOR SCREEN)
+  // ═══════════════════════════════════════════════════════════════
+  String get templates => 'Шаблоны';
+  String get freeOnly => 'Бесплатные';
+  String get searchTemplates => 'Поиск шаблонов...';
+  String get noResultsFound => 'Ничего не найдено';
+  String get presentationInStyle => 'Презентация в стиле';
+  String get createdWithPrezentatorAI => 'Создано в Презентатор ИИ';
+  String get aboutCompany => 'О компании';
+  String get writeAboutCompany => 'Напишите здесь о своей компании';
+  String get keyAdvantages => 'Ключевые преимущества';
+  String get achievementsAndPlans => 'Достижения и планы';
+  String get ourServices => 'Наши услуги';
+  String get service1 => 'Услуга 1 с подробным описанием';
+  String get service2 => 'Услуга 2 с преимуществами';
+  String get service3 => 'Услуга 3 с примерами работ';
+  String get whyUs => 'Почему мы?';
+  String get professionalism => 'Профессионализм и опыт';
+  String get individualApproach => 'Индивидуальный подход';
+  String get qualityGuarantee => 'Гарантия качества';
+  String get contacts => 'Контакты';
+  String get phone => 'Телефон';
+  String get emailLabel => 'Email';
+  String get website => 'Сайт';
+  String get premiumTemplate => 'Premium шаблон';
+  String get premiumTemplateMessage => 'Этот шаблон доступен только по подписке Premium.\n\nОформите подписку, чтобы получить доступ ко всем шаблонам.';
+  String get technology => 'Технологии';
+  String get creative => 'Креатив';
+  String get events => 'Мероприятия';
+  String get nature => 'Природа';
+  String get medical => 'Медицина';
+  
+  // ═══════════════════════════════════════════════════════════════
   // НАСТРОЙКИ
   // ═══════════════════════════════════════════════════════════════
   String get settings => 'Настройки';
@@ -805,6 +838,65 @@ class AppStringsEn extends AppStrings {
   String get popular => 'POPULAR';
   @override
   String get payWithUSDTShort => 'Pay with USDT';
+  
+  @override
+  String get templates => 'Templates';
+  @override
+  String get freeOnly => 'Free only';
+  @override
+  String get searchTemplates => 'Search templates...';
+  @override
+  String get noResultsFound => 'No results found';
+  @override
+  String get presentationInStyle => 'Presentation in style';
+  @override
+  String get createdWithPrezentatorAI => 'Created with Prezentator AI';
+  @override
+  String get aboutCompany => 'About Company';
+  @override
+  String get writeAboutCompany => 'Write about your company here';
+  @override
+  String get keyAdvantages => 'Key advantages';
+  @override
+  String get achievementsAndPlans => 'Achievements and plans';
+  @override
+  String get ourServices => 'Our Services';
+  @override
+  String get service1 => 'Service 1 with detailed description';
+  @override
+  String get service2 => 'Service 2 with benefits';
+  @override
+  String get service3 => 'Service 3 with examples';
+  @override
+  String get whyUs => 'Why us?';
+  @override
+  String get professionalism => 'Professionalism and experience';
+  @override
+  String get individualApproach => 'Individual approach';
+  @override
+  String get qualityGuarantee => 'Quality guarantee';
+  @override
+  String get contacts => 'Contacts';
+  @override
+  String get phone => 'Phone';
+  @override
+  String get emailLabel => 'Email';
+  @override
+  String get website => 'Website';
+  @override
+  String get premiumTemplate => 'Premium template';
+  @override
+  String get premiumTemplateMessage => 'This template is only available with a Premium subscription.\n\nSubscribe to get access to all templates.';
+  @override
+  String get technology => 'Technology';
+  @override
+  String get creative => 'Creative';
+  @override
+  String get events => 'Events';
+  @override
+  String get nature => 'Nature';
+  @override
+  String get medical => 'Medical';
   
   @override
   String get settings => 'Settings';
