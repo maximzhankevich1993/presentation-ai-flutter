@@ -304,6 +304,83 @@ class AppStrings {
   String get freeWorkspaceLimitMessage => 'Бесплатное рабочее пространство ограничено 5 участниками. Расширьте для неограниченного количества.';
   
   // ═══════════════════════════════════════════════════════════════
+  // ЭКРАН РЕДАКТОРА (EDITOR SCREEN)
+  // ═══════════════════════════════════════════════════════════════
+  String get slides => 'Слайды';
+  String get slide => 'Слайд';
+  String get newSlide => 'Новый слайд';
+  String get enterText => 'Введите текст';
+  String get newItem => 'Новый пункт';
+  String get desktopRecommended => 'Рекомендуется десктоп';
+  String get mobileEditorWarning => 'Расширенные функции редактирования (фигуры, графики, стили текста) лучше работают на десктопе.\n\nНа мобильном устройстве вы можете редактировать текст и добавлять изображения.';
+  String get addSlideTemplate => 'Добавить шаблон слайда';
+  String get up => 'Вверх';
+  String get down => 'Вниз';
+  String get editData => 'Редактировать данные';
+  String get noData => 'Нет данных';
+  String get content => 'Контент';
+  String get titleHint => 'Заголовок...';
+  String get item => 'Пункт';
+  String get addItem => 'Добавить пункт';
+  String get design => 'Дизайн';
+  String get media => 'Медиа';
+  String get shapes => 'Фигуры';
+  String get charts => 'Графики';
+  String get ai => 'ИИ';
+  String get font => 'Шрифт';
+  String get textSize => 'Размер текста';
+  String get textStyle => 'Стиль текста';
+  String get alignment => 'Выравнивание';
+  String get columns => 'Колонки';
+  String get textColor => 'Цвет текста';
+  String get background => 'Фон';
+  String get transition => 'Переход';
+  String get image => 'Изображение';
+  String get width => 'Ширина';
+  String get height => 'Высота';
+  String get position => 'Позиция';
+  String get top => 'Сверху';
+  String get bottom => 'Снизу';
+  String get addShape => 'Добавить фигуру';
+  String get onSlide => 'На слайде';
+  String get addChart => 'Добавить график';
+  String get bar => 'Столбцы';
+  String get pie => 'Круг';
+  String get line => 'Линия';
+  String get improveText => 'Улучшить текст';
+  String get aiWillRewrite => 'ИИ перепишет заголовок и содержание слайда.';
+  String get improveSlide => 'Улучшить слайд';
+  String get powerPoint => 'PowerPoint';
+  String get pdf => 'PDF';
+  String get withWatermark => 'С водяным знаком';
+  String get noWatermark => 'Без водяного знака';
+  String get highQuality => 'Высокое качество';
+  String get premiumOnly => 'Только Premium';
+  String get hidePanel => 'Скрыть панель';
+  String get showPanel => 'Показать панель';
+  String get slideTemplates => 'Шаблоны слайдов';
+  String get applyTemplate => 'Применить шаблон';
+  String get heading1 => 'Заголовок 1';
+  String get heading2 => 'Заголовок 2';
+  String get heading3 => 'Заголовок 3';
+  String get body => 'Основной текст';
+  String get quote => 'Цитата';
+  String get none => 'Нет';
+  String get fade => 'Затухание';
+  String get slideTransition => 'Сдвиг';
+  String get zoom => 'Масштаб';
+  String get flip => 'Переворот';
+  String get blur => 'Размытие';
+  String get scale => 'Масштабирование';
+  String get rotate => 'Вращение';
+  String get dark => 'Тёмный';
+  String get white => 'Белый';
+  String get freePlanMaxSlidesMessage => 'Бесплатный тариф ограничен 10 слайдами на презентацию.\n\nОформите подписку, чтобы создавать презентации с неограниченным количеством слайдов.';
+  String get replace => 'Заменить';
+  String get upload => 'Загрузить';
+  String get uploadBackground => 'Загрузить фон';
+  
+  // ═══════════════════════════════════════════════════════════════
   // НАСТРОЙКИ
   // ═══════════════════════════════════════════════════════════════
   String get settings => 'Настройки';
@@ -1074,6 +1151,153 @@ class AppStringsEn extends AppStrings {
   String get payWithUSDTNoFees => 'Pay with USDT — no fees, no banks';
   @override
   String get freeWorkspaceLimitMessage => 'Free workspace limited to 5 members. Upgrade for unlimited members.';
+  
+  @override
+  String get slides => 'Slides';
+  @override
+  String get slide => 'Slide';
+  @override
+  String get newSlide => 'New slide';
+  @override
+  String get enterText => 'Enter text';
+  @override
+  String get newItem => 'New item';
+  @override
+  String get desktopRecommended => 'Desktop recommended';
+  @override
+  String get mobileEditorWarning => 'Advanced editing features (shapes, charts, text styles) work best on desktop.\n\nYou can still edit text and add images on mobile.';
+  @override
+  String get addSlideTemplate => 'Add slide template';
+  @override
+  String get up => 'Up';
+  @override
+  String get down => 'Down';
+  @override
+  String get editData => 'Edit data';
+  @override
+  String get noData => 'No data';
+  @override
+  String get content => 'Content';
+  @override
+  String get titleHint => 'Title...';
+  @override
+  String get item => 'Item';
+  @override
+  String get addItem => 'Add item';
+  @override
+  String get design => 'Design';
+  @override
+  String get media => 'Media';
+  @override
+  String get shapes => 'Shapes';
+  @override
+  String get charts => 'Charts';
+  @override
+  String get ai => 'AI';
+  @override
+  String get font => 'Font';
+  @override
+  String get textSize => 'Text size';
+  @override
+  String get textStyle => 'Text style';
+  @override
+  String get alignment => 'Alignment';
+  @override
+  String get columns => 'Columns';
+  @override
+  String get textColor => 'Text color';
+  @override
+  String get background => 'Background';
+  @override
+  String get transition => 'Transition';
+  @override
+  String get image => 'Image';
+  @override
+  String get width => 'Width';
+  @override
+  String get height => 'Height';
+  @override
+  String get position => 'Position';
+  @override
+  String get top => 'Top';
+  @override
+  String get bottom => 'Bottom';
+  @override
+  String get addShape => 'Add shape';
+  @override
+  String get onSlide => 'On slide';
+  @override
+  String get addChart => 'Add chart';
+  @override
+  String get bar => 'Bar';
+  @override
+  String get pie => 'Pie';
+  @override
+  String get line => 'Line';
+  @override
+  String get improveText => 'Improve text';
+  @override
+  String get aiWillRewrite => 'AI will rewrite title and slide content.';
+  @override
+  String get improveSlide => 'Improve slide';
+  @override
+  String get powerPoint => 'PowerPoint';
+  @override
+  String get pdf => 'PDF';
+  @override
+  String get withWatermark => 'With watermark';
+  @override
+  String get noWatermark => 'No watermark';
+  @override
+  String get highQuality => 'High quality';
+  @override
+  String get premiumOnly => 'Premium only';
+  @override
+  String get hidePanel => 'Hide panel';
+  @override
+  String get showPanel => 'Show panel';
+  @override
+  String get slideTemplates => 'Slide templates';
+  @override
+  String get applyTemplate => 'Apply template';
+  @override
+  String get heading1 => 'Heading 1';
+  @override
+  String get heading2 => 'Heading 2';
+  @override
+  String get heading3 => 'Heading 3';
+  @override
+  String get body => 'Body';
+  @override
+  String get quote => 'Quote';
+  @override
+  String get none => 'None';
+  @override
+  String get fade => 'Fade';
+  @override
+  String get slideTransition => 'Slide';
+  @override
+  String get zoom => 'Zoom';
+  @override
+  String get flip => 'Flip';
+  @override
+  String get blur => 'Blur';
+  @override
+  String get scale => 'Scale';
+  @override
+  String get rotate => 'Rotate';
+  @override
+  String get dark => 'Dark';
+  @override
+  String get white => 'White';
+  @override
+  String get freePlanMaxSlidesMessage => 'Free plan limited to 10 slides per presentation.\n\nSubscribe to create presentations with unlimited slides.';
+  @override
+  String get replace => 'Replace';
+  @override
+  String get upload => 'Upload';
+  @override
+  String get uploadBackground => 'Upload background';
   
   @override
   String get settings => 'Settings';
