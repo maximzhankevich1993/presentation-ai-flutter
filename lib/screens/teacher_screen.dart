@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'dart:html' as html;
 import '../services/generation_counter.dart';
 import '../providers/user_provider.dart';
+import '../l10n/app_strings.dart';
 import 'lesson_constructor_screen.dart';
 import 'login_screen.dart';
 import 'register_payment_screen.dart';
@@ -46,10 +47,9 @@ class _TeacherScreenState extends State<TeacherScreen> {
     final url = amount > 0 ? '$CRYPTO_PAYMENT_URL?amount=$amount' : CRYPTO_PAYMENT_URL;
     html.window.open(url, '_blank');
     
-    // Исправленный SnackBar (убрана ошибка с const)
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('💸 After payment, subscription activates in 1-2 minutes. Promo code CRYPTO10 → second month free!'),
+        content: Text(AppStrings.current.afterPaymentMessage),
         backgroundColor: const Color(0xFF1DB954),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
@@ -85,20 +85,23 @@ class _TeacherScreenState extends State<TeacherScreen> {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1C),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Limit reached', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
-        content: const Text(
-          'You have used all 5 free generations.\n\nChoose a plan to continue.',
-          style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
+        title: Text(AppStrings.current.limitReachedTitle, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700)),
+        content: Text(
+          AppStrings.current.limitReachedMessage,
+          style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Later', style: TextStyle(color: Color(0xFF9A9A9A)))),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppStrings.current.later, style: const TextStyle(color: Color(0xFF9A9A9A))),
+          ),
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
               _openCryptoPayment(_teacherPriceUSD, 'Teacher');
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1DB954)),
-            child: const Text('Subscribe', style: TextStyle(color: Colors.white)),
+            child: Text(AppStrings.current.subscribe, style: const TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -106,20 +109,18 @@ class _TeacherScreenState extends State<TeacherScreen> {
   }
   
   void _showPaymentDialog(String planId, double price, String period) {
-    // Проверяем, залогинен ли пользователь
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     if (!userProvider.isLoggedIn) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please log in to subscribe'),
-          backgroundColor: Color(0xFFFFD700),
+        SnackBar(
+          content: Text(AppStrings.current.pleaseLogIn),
+          backgroundColor: const Color(0xFFFFD700),
           behavior: SnackBarBehavior.floating,
         ),
       );
       return;
     }
     
-    // Открываем напрямую CryptoCloud
     _openCryptoPayment(price, _getPlanName(planId));
   }
   
@@ -143,7 +144,7 @@ class _TeacherScreenState extends State<TeacherScreen> {
           icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('For Teachers', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+        title: Text(AppStrings.current.forTeachers, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
         centerTitle: true,
         actions: [
           Container(
@@ -156,11 +157,11 @@ class _TeacherScreenState extends State<TeacherScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(20)),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.edit_calendar_rounded, color: Colors.white, size: 16),
-                      SizedBox(width: 6),
-                      Text('Lesson Builder', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+                      const Icon(Icons.edit_calendar_rounded, color: Colors.white, size: 16),
+                      const SizedBox(width: 6),
+                      Text(AppStrings.current.lessonBuilder, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ),
@@ -186,9 +187,9 @@ class _TeacherScreenState extends State<TeacherScreen> {
                     children: [
                       Container(width: 48, height: 48, decoration: BoxDecoration(color: Colors.white.withOpacity(0.2), borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.school_rounded, color: Colors.white, size: 26)),
                       const SizedBox(height: 16),
-                      const Text('Educational Plans', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
+                      Text(AppStrings.current.educationalPlans, style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w800)),
                       const SizedBox(height: 6),
-                      Text('For teachers and schools — pay with USDT', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 13)),
+                      Text(AppStrings.current.corporateSubtitle, style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 13)),
                     ],
                   ),
                 ),
@@ -206,30 +207,30 @@ class _TeacherScreenState extends State<TeacherScreen> {
                   ),
                   child: Column(
                     children: [
-                      const Text('💡 Pay with USDT (cryptocurrency)', style: TextStyle(color: Color(0xFF627EEA), fontSize: 13, fontWeight: FontWeight.w600)),
+                      Text('💡 ${AppStrings.current.payWithUSDTLong}', style: const TextStyle(color: Color(0xFF627EEA), fontSize: 13, fontWeight: FontWeight.w600)),
                       const SizedBox(height: 4),
-                      Text('No fees, no banks — secure payment via CryptoCloud', style: TextStyle(color: Colors.grey[400], fontSize: 11)),
+                      Text(AppStrings.current.noFeesNoBanks, style: TextStyle(color: Colors.grey[400], fontSize: 11)),
                       const SizedBox(height: 4),
-                      const Text('🎁 Promo code CRYPTO10 → second month free for first 10 paying users', style: TextStyle(color: Color(0xFFFFD700), fontSize: 11)),
+                      Text(AppStrings.current.promoCodeCRYPTO10, style: const TextStyle(color: Color(0xFFFFD700), fontSize: 11)),
                     ],
                   ),
                 ),
                 
-                const Text('CHOOSE YOUR PLAN', style: TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
+                Text(AppStrings.current.chooseYourPlan, style: const TextStyle(color: Color(0xFF4A4A4A), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.8)),
                 const SizedBox(height: 12),
                 
                 _buildTariffCard(
                   title: 'Teacher',
                   usd: _teacherPriceUSD,
-                  period: '/month',
-                  description: 'For individual teachers',
-                  features: const [
-                    '∞ generations',
-                    '50 slides',
-                    'All templates',
-                    'PDF export',
-                    'Lesson builder',
-                    'Quiz generator',
+                  period: '/${AppStrings.current.monthLower}',
+                  description: AppStrings.current.forIndividualTeachers,
+                  features: [
+                    AppStrings.current.unlimitedGenerations,
+                    AppStrings.current.fiftySlides,
+                    AppStrings.current.allTemplates,
+                    AppStrings.current.pdfExportLower,
+                    AppStrings.current.lessonBuilder,
+                    AppStrings.current.quizGeneratorLower,
                   ],
                   isPopular: true,
                   onTap: () => _showPaymentDialog('teacher', _teacherPriceUSD, '/month'),
@@ -239,15 +240,15 @@ class _TeacherScreenState extends State<TeacherScreen> {
                 _buildTariffCard(
                   title: 'School',
                   usd: _schoolPriceUSD,
-                  period: '/month',
-                  description: 'For schools and classes',
-                  features: const [
-                    'Up to 30 teachers',
-                    '∞ generations',
-                    'Lesson builder PRO',
-                    'Brand kit',
-                    'Priority support',
-                    'Quiz generator',
+                  period: '/${AppStrings.current.monthLower}',
+                  description: AppStrings.current.forSchoolsAndClasses,
+                  features: [
+                    AppStrings.current.upTo30Teachers,
+                    AppStrings.current.unlimitedGenerations,
+                    AppStrings.current.lessonBuilderPro,
+                    AppStrings.current.brandKit,
+                    AppStrings.current.prioritySupport,
+                    AppStrings.current.quizGeneratorLower,
                   ],
                   isPopular: false,
                   onTap: () => _showPaymentDialog('school', _schoolPriceUSD, '/month'),
@@ -257,15 +258,15 @@ class _TeacherScreenState extends State<TeacherScreen> {
                 _buildTariffCard(
                   title: 'University',
                   usd: _universityPriceUSD,
-                  period: '/month',
-                  description: 'For universities and colleges',
-                  features: const [
-                    'Unlimited teachers',
-                    '∞ generations',
-                    'Lesson builder PRO',
-                    'VIP support 24/7',
-                    'Custom settings',
-                    'Analytics dashboard',
+                  period: '/${AppStrings.current.monthLower}',
+                  description: AppStrings.current.forUniversities,
+                  features: [
+                    AppStrings.current.unlimitedTeachers,
+                    AppStrings.current.unlimitedGenerations,
+                    AppStrings.current.lessonBuilderPro,
+                    AppStrings.current.vipSupport247,
+                    AppStrings.current.customSettings,
+                    AppStrings.current.analyticsDashboard,
                   ],
                   isPopular: false,
                   onTap: () => _showPaymentDialog('university', _universityPriceUSD, '/month'),
@@ -279,12 +280,12 @@ class _TeacherScreenState extends State<TeacherScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(16)),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.edit_calendar_rounded, color: Colors.white, size: 20),
-                        SizedBox(width: 10),
-                        Text('Open Lesson Builder', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
+                        const Icon(Icons.edit_calendar_rounded, color: Colors.white, size: 20),
+                        const SizedBox(width: 10),
+                        Text(AppStrings.current.openLessonBuilder, style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w700)),
                       ],
                     ),
                   ),
@@ -297,12 +298,12 @@ class _TeacherScreenState extends State<TeacherScreen> {
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF2A2A2A))),
-                    child: const Row(
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 20),
-                        SizedBox(width: 10),
-                        Text('Contact Education Department', style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+                        const Icon(Icons.email_outlined, color: Color(0xFF1DB954), size: 20),
+                        const SizedBox(width: 10),
+                        Text(AppStrings.current.contactEducationDepartment, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
                       ],
                     ),
                   ),
@@ -363,7 +364,7 @@ class _TeacherScreenState extends State<TeacherScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF1DB954), Color(0xFF1ED760)]), borderRadius: BorderRadius.circular(12)),
-                      child: const Text('POPULAR', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+                      child: Text(AppStrings.current.popular, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
                     ),
                 ],
               ),
@@ -389,7 +390,7 @@ class _TeacherScreenState extends State<TeacherScreen> {
               const SizedBox(height: 20),
               const Divider(color: Color(0xFF2A2A2A), height: 1),
               const SizedBox(height: 16),
-              const Text('INCLUDED:', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 11, fontWeight: FontWeight.w600)),
+              Text(AppStrings.current.included, style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 11, fontWeight: FontWeight.w600)),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 12, runSpacing: 10,
@@ -414,7 +415,7 @@ class _TeacherScreenState extends State<TeacherScreen> {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  child: const Text('💳 Pay with USDT', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                  child: Text(AppStrings.current.payWithUSDTShort, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
                 ),
               ),
             ],
@@ -437,16 +438,16 @@ class _TeacherScreenState extends State<TeacherScreen> {
             children: [
               Container(width: 48, height: 48, decoration: BoxDecoration(color: const Color(0xFF1DB954).withOpacity(0.1), borderRadius: BorderRadius.circular(16)), child: const Icon(Icons.email_rounded, color: Color(0xFF1DB954), size: 26)),
               const SizedBox(height: 16),
-              const Text('Education Department', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
+              Text(AppStrings.current.educationDepartment, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
-              const Text('Contact us for custom educational pricing', style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 13), textAlign: TextAlign.center),
+              Text(AppStrings.current.contactSalesText, style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13), textAlign: TextAlign.center),
               const SizedBox(height: 20),
               GestureDetector(
                 onTap: () {
                   Navigator.pop(ctx);
                   html.window.navigator.clipboard?.writeText('edu@presentator.ai');
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Email copied to clipboard'), backgroundColor: Color(0xFF1DB954)),
+                    SnackBar(content: Text(AppStrings.current.codeCopied), backgroundColor: const Color(0xFF1DB954)),
                   );
                 },
                 child: Container(
@@ -458,7 +459,7 @@ class _TeacherScreenState extends State<TeacherScreen> {
               const SizedBox(height: 20),
               GestureDetector(
                 onTap: () => Navigator.pop(ctx),
-                child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 12), decoration: BoxDecoration(color: const Color(0xFF252525), borderRadius: BorderRadius.circular(12)), child: const Center(child: Text('Close', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)))),
+                child: Container(width: double.infinity, padding: const EdgeInsets.symmetric(vertical: 12), decoration: BoxDecoration(color: const Color(0xFF252525), borderRadius: BorderRadius.circular(12)), child: Center(child: Text(AppStrings.current.close, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 14)))),
               ),
             ],
           ),
