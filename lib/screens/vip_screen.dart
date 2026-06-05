@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../l10n/app_strings.dart';
 
 class VipScreen extends StatefulWidget {
   const VipScreen({super.key});
@@ -28,7 +29,6 @@ class _VipScreenState extends State<VipScreen> {
     });
     
     try {
-      // Реальный API запрос к бэкенду
       final response = await ApiService.getVipStats();
       
       if (mounted) {
@@ -43,7 +43,6 @@ class _VipScreenState extends State<VipScreen> {
         setState(() {
           _errorMessage = e.toString().replaceAll('Exception:', '');
           _isLoading = false;
-          // В случае ошибки показываем заглушку (0 занято)
           _occupiedSpots = 0;
           _availableSpots = _totalSpots;
         });
@@ -75,9 +74,9 @@ class _VipScreenState extends State<VipScreen> {
             ),
           ),
         ),
-        title: const Text(
-          'VIP доступ',
-          style: TextStyle(
+        title: Text(
+          AppStrings.current.vipAccess,
+          style: const TextStyle(
             color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.w700,
@@ -101,7 +100,7 @@ class _VipScreenState extends State<VipScreen> {
                   ),
                   SizedBox(height: 16),
                   Text(
-                    'Загрузка данных...',
+                    'Loading...',
                     style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 14),
                   ),
                 ],
@@ -150,9 +149,9 @@ class _VipScreenState extends State<VipScreen> {
                               ),
                             ),
                             const SizedBox(height: 16),
-                            const Text(
-                              'VIP статус',
-                              style: TextStyle(
+                            Text(
+                              AppStrings.current.vipStatus,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 28,
                                 fontWeight: FontWeight.w800,
@@ -162,8 +161,8 @@ class _VipScreenState extends State<VipScreen> {
                             const SizedBox(height: 6),
                             Text(
                               _errorMessage.isNotEmpty
-                                  ? 'Ошибка загрузки данных'
-                                  : 'Свободно $_availableSpots мест из $_totalSpots',
+                                  ? AppStrings.current.dataLoadError
+                                  : '${AppStrings.current.freeSpots} $_availableSpots ${AppStrings.current.of} $_totalSpots',
                               style: TextStyle(
                                 color: _errorMessage.isNotEmpty
                                     ? const Color(0xFFFF3B30)
@@ -191,9 +190,9 @@ class _VipScreenState extends State<VipScreen> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                const Text(
-                                  'Занято мест',
-                                  style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 13),
+                                Text(
+                                  AppStrings.current.spotsTaken,
+                                  style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 13),
                                 ),
                                 Text(
                                   '$_occupiedSpots / $_totalSpots',
@@ -219,8 +218,8 @@ class _VipScreenState extends State<VipScreen> {
                             if (_errorMessage.isEmpty)
                               Text(
                                 _availableSpots > 0
-                                    ? '🔥 Осталось всего $_availableSpots мест! Успей забрать VIP навсегда'
-                                    : 'Все места заняты. Следите за новостями!',
+                                    ? '🔥 ${AppStrings.current.onlyLeft} $_availableSpots ${AppStrings.current.spotsLeft}'
+                                    : AppStrings.current.allSpotsTaken,
                                 style: TextStyle(
                                   color: _availableSpots > 0 ? const Color(0xFFFFD700) : const Color(0xFF9A9A9A),
                                   fontSize: 13,
@@ -250,9 +249,9 @@ class _VipScreenState extends State<VipScreen> {
                                       cursor: SystemMouseCursors.click,
                                       child: GestureDetector(
                                         onTap: _loadVipStats,
-                                        child: const Text(
-                                          'Повторить',
-                                          style: TextStyle(color: Color(0xFFFFD700), fontSize: 12, fontWeight: FontWeight.w600),
+                                        child: Text(
+                                          AppStrings.current.retry,
+                                          style: const TextStyle(color: Color(0xFFFFD700), fontSize: 12, fontWeight: FontWeight.w600),
                                         ),
                                       ),
                                     ),
@@ -265,9 +264,9 @@ class _VipScreenState extends State<VipScreen> {
                       const SizedBox(height: 24),
 
                       // Benefits
-                      const Text(
-                        'ПРЕИМУЩЕСТВА VIP',
-                        style: TextStyle(
+                      Text(
+                        AppStrings.current.vipBenefits,
+                        style: const TextStyle(
                           color: Color(0xFF4A4A4A),
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -278,43 +277,43 @@ class _VipScreenState extends State<VipScreen> {
 
                       _buildBenefitCard(
                         icon: Icons.all_inclusive_rounded,
-                        title: '∞ генераций',
-                        description: 'Неограниченное количество презентаций',
+                        title: AppStrings.current.unlimitedGenerations,
+                        description: AppStrings.current.unlimitedPresentationsDesc,
                         color: const Color(0xFFFFD700),
                       ),
                       const SizedBox(height: 10),
                       _buildBenefitCard(
                         icon: Icons.slideshow_rounded,
-                        title: 'До 50 слайдов',
-                        description: 'Самые большие презентации без ограничений',
+                        title: AppStrings.current.upTo50Slides,
+                        description: AppStrings.current.largestPresentations,
                         color: const Color(0xFFFFD700),
                       ),
                       const SizedBox(height: 10),
                       _buildBenefitCard(
                         icon: Icons.palette_rounded,
-                        title: 'Все премиум фоны',
-                        description: '16+ эксклюзивных фонов и градиентов',
+                        title: AppStrings.current.allPremiumBackgrounds,
+                        description: AppStrings.current.exclusiveBackgrounds,
                         color: const Color(0xFFFFD700),
                       ),
                       const SizedBox(height: 10),
                       _buildBenefitCard(
                         icon: Icons.picture_as_pdf_rounded,
-                        title: 'Экспорт без знаков',
-                        description: 'PDF и PPTX без водяных знаков',
+                        title: AppStrings.current.exportWithoutWatermark,
+                        description: AppStrings.current.pdfPptxNoWatermark,
                         color: const Color(0xFFFFD700),
                       ),
                       const SizedBox(height: 10),
                       _buildBenefitCard(
                         icon: Icons.auto_awesome_rounded,
-                        title: 'AI улучшение текста',
-                        description: 'Продвинутая нейросеть для контента',
+                        title: AppStrings.current.aiTextImprovement,
+                        description: AppStrings.current.advancedNeuralNetwork,
                         color: const Color(0xFFFFD700),
                       ),
                       const SizedBox(height: 10),
                       _buildBenefitCard(
                         icon: Icons.support_agent_rounded,
-                        title: 'VIP поддержка 24/7',
-                        description: 'Приоритетное решение любых вопросов',
+                        title: AppStrings.current.vipSupport247,
+                        description: AppStrings.current.prioritySupportDesc,
                         color: const Color(0xFFFFD700),
                       ),
                       const SizedBox(height: 24),
@@ -334,9 +333,9 @@ class _VipScreenState extends State<VipScreen> {
                         ),
                         child: Column(
                           children: [
-                            const Text(
-                              'VIP доступ навсегда',
-                              style: TextStyle(
+                            Text(
+                              AppStrings.current.vipForever,
+                              style: const TextStyle(
                                 color: Color(0xFFFFD700),
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
@@ -371,9 +370,9 @@ class _VipScreenState extends State<VipScreen> {
                               ],
                             ),
                             const SizedBox(height: 4),
-                            const Text(
-                              'Оплата только один раз',
-                              style: TextStyle(
+                            Text(
+                              AppStrings.current.payOnce,
+                              style: const TextStyle(
                                 color: Color(0xFF9A9A9A),
                                 fontSize: 12,
                               ),
@@ -397,7 +396,9 @@ class _VipScreenState extends State<VipScreen> {
                                   ),
                                   child: Center(
                                     child: Text(
-                                      (_availableSpots > 0 && _errorMessage.isEmpty) ? 'Получить VIP' : 'Мест нет',
+                                      (_availableSpots > 0 && _errorMessage.isEmpty) 
+                                          ? AppStrings.current.getVip 
+                                          : AppStrings.current.noSpots,
                                       style: TextStyle(
                                         color: (_availableSpots > 0 && _errorMessage.isEmpty) ? Colors.white : const Color(0xFF9A9A9A),
                                         fontSize: 18,
@@ -421,14 +422,14 @@ class _VipScreenState extends State<VipScreen> {
                           borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: const Color(0xFF2A2A2A)),
                         ),
-                        child: const Row(
+                        child: Row(
                           children: [
-                            Icon(Icons.info_outline_rounded, color: Color(0xFFFFD700), size: 20),
-                            SizedBox(width: 12),
+                            const Icon(Icons.info_outline_rounded, color: Color(0xFFFFD700), size: 20),
+                            const SizedBox(width: 12),
                             Expanded(
                               child: Text(
-                                'VIP статус выдаётся первым 50 пользователям навсегда. Успейте занять место!',
-                                style: TextStyle(color: Color(0xFF9A9A9A), fontSize: 12, height: 1.4),
+                                AppStrings.current.vipInfoMessage,
+                                style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 12, height: 1.4),
                               ),
                             ),
                           ],
@@ -501,7 +502,7 @@ class _VipScreenState extends State<VipScreen> {
     // TODO: Интеграция с платёжной системой
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Оплата VIP доступа'),
+        content: Text(AppStrings.current.vipPaymentMessage),
         backgroundColor: const Color(0xFFFFD700),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
