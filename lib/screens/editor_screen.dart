@@ -360,7 +360,7 @@ class _EditorScreenState extends State<EditorScreen> with TickerProviderStateMix
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            const Icon(Icons.warning_amber_rounded, Color(0xFFFFD700), size: 24),
+            const Icon(Icons.warning_amber_rounded, color: Color(0xFFFFD700), size: 24),
             const SizedBox(width: 8),
             Text(AppStrings.current.limitReachedTitle, style: const TextStyle(color: _T.txtPrimary, fontSize: 18, fontWeight: FontWeight.w700)),
           ],
