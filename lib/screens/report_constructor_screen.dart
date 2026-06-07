@@ -46,13 +46,13 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
     _reportTypes.addAll([
       {'id': 'financial', 'name': AppStrings.current.financialReport, 'icon': Icons.attach_money_rounded},
       {'id': 'annual', 'name': AppStrings.current.annualReport, 'icon': Icons.calendar_today_rounded},
-      {'id': 'esg', 'name': AppStrings.current.esgReport, 'icon': Icons. eco_rounded},
+      {'id': 'esg', 'name': AppStrings.current.esgReport, 'icon': Icons.eco_rounded},
       {'id': 'management', 'name': AppStrings.current.managementReport, 'icon': Icons.analytics_rounded},
-()    ]);
+    ]);
   }
 
   @override
- {
+  void dispose() {
     _companyController.dispose();
     _periodController.dispose();
     super.dispose();
@@ -120,7 +120,7 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
     
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     
-    if (userProvider.freeGenerationsLeft <= 0) {
+    if (userProvider.freeGenerationsLeft <= 0 && !userProvider.isPremium) {
       _showLimitDialog();
       return;
     }
@@ -379,7 +379,7 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
                                 child: Text(
                                   remaining <= 0 
                                       ? AppStrings.current.generationsFinished
-                                      : '${AppStrings.current.generationsLeft} $remaining ${AppStrings.current.ofFive}',
+                                      : '$remaining ${AppStrings.current.generationsLeftLower}',
                                   style: TextStyle(
                                     color: remaining <= 0 ? const Color(0xFFFF3B30) : const Color(0xFF1DB954),
                                     fontSize: 13,
@@ -523,8 +523,6 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
         }).toList(),
         onChanged: (v) => setState(() => _selectedStandard = v!),
         decoration: InputDecoration(
-          labelText: AppStrings.current.standardLabel,
-          labelStyle: const TextStyle(color: Color(0xFF4A4A4A)),
           border: InputBorder.none,
         ),
         dropdownColor: const Color(0xFF1E1E1E),
