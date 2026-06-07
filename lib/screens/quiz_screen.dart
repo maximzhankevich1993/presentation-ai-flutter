@@ -514,7 +514,7 @@ class _QuizScreenState extends State<QuizScreen> {
         Text(percentage >= 80 ? AppStrings.current.excellent : (percentage >= 60 ? AppStrings.current.good : AppStrings.current.tryAgain), style: const TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w800)),
         const SizedBox(height: 32),
         Container(padding: const EdgeInsets.all(20), decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFF2A2A2A))), child: Column(children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(AppStrings.current.correctAnswers, style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 14)), Text('$_score / ${_currentQuiz!.questions.length}', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 20, fontWeight: FontWeight.w700))]),
+          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(AppStrings.current.correctAnswersTitle, style: const TextStyle(color: Color(0xFF9A9A9A), fontSize: 14)), Text('$_score / ${_currentQuiz!.questions.length}', style: const TextStyle(color: Color(0xFF1DB954), fontSize: 20, fontWeight: FontWeight.w700))]),
           const SizedBox(height: 12),
           LinearProgressIndicator(value: _score / _currentQuiz!.questions.length, backgroundColor: const Color(0xFF2A2A2A), color: const Color(0xFF1DB954)),
         ])),
