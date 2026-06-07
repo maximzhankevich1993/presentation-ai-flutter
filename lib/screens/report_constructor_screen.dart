@@ -47,7 +47,7 @@ class _ReportConstructorScreenState extends State<ReportConstructorScreen> {
       {'id': 'financial', 'name': AppStrings.current.financialReport, 'icon': Icons.attach_money_rounded},
       {'id': 'annual', 'name': AppStrings.current.annualReport, 'icon': Icons.calendar_today_rounded},
       {'id': 'esg', 'name': AppStrings.current.esgReport, 'icon': Icons. eco_rounded},
-      {'id': 'management', void 'name': AppStrings.current.managementReport, 'icon': dispose Icons.analytics_rounded},
+      {'id': 'management', 'name': AppStrings.current.managementReport, 'icon': Icons.analytics_rounded},
 ()    ]);
   }
 
