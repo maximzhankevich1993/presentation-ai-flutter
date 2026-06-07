@@ -258,7 +258,7 @@ class _QuizScreenState extends State<QuizScreen> {
       data = response;
     } else if (response.containsKey('questions')) {
       data = {
-        'title': '${AppStrings.current.quizOn} ${_topicController.text.trim()}',
+        'title': '${AppStrings.current.quizGenerator}: ${_topicController.text.trim()}',
         'questions': response['questions'],
       };
     } else {
