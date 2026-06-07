@@ -501,7 +501,6 @@ class AppStrings {
   String get unlockEverything => 'Разблокируй всё';
   String get feature => 'Функция';
   String get presentations => 'Презентаций';
-  String get slides => 'Слайдов';
   String get backgrounds => 'Фоны';
   String get fonts => 'Шрифты';
   String get animations => 'Анимации';
@@ -535,7 +534,6 @@ class AppStrings {
   String get gradeLabel => 'Класс';
   String get durationLabel => 'Длительность';
   String get minutes => 'мин';
-  String get slide => 'Слайд';
   String get lessonTitle => 'Урок:';
   String get topicHintLesson => 'Тема урока';
   String get subjectHint => 'Предмет';
@@ -560,9 +558,6 @@ class AppStrings {
   // ═══════════════════════════════════════════════════════════════
   String get exportToPPTX => 'PowerPoint';
   String get exportToPDF => 'PDF';
-  String get withWatermark => 'С водяным знаком';
-  String get noWatermark => 'Без водяного знака';
-  String get highQuality => 'Высокое качество';
   
   // ═══════════════════════════════════════════════════════════════
   // ПРОФИЛЬ И НАСТРОЙКИ
@@ -621,6 +616,11 @@ class AppStrings {
   String get included => 'Включено';
   String get salesDepartment => 'Отдел продаж';
   String get contactSalesText => 'Свяжитесь с нами для подбора индивидуального тарифа';
+  
+  // ═══════════════════════════════════════════════════════════════
+  // ДОПОЛНИТЕЛЬНЫЕ
+  // ═══════════════════════════════════════════════════════════════
+  String get prioritySupport => 'Приоритетная поддержка';
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1508,8 +1508,6 @@ class AppStringsEn extends AppStrings {
   @override
   String get presentations => 'Presentations';
   @override
-  String get slides => 'Slides';
-  @override
   String get backgrounds => 'Backgrounds';
   @override
   String get fonts => 'Fonts';
@@ -1569,8 +1567,6 @@ class AppStringsEn extends AppStrings {
   @override
   String get minutes => 'min';
   @override
-  String get slide => 'Slide';
-  @override
   String get lessonTitle => 'Lesson:';
   @override
   String get topicHintLesson => 'Lesson topic';
@@ -1604,12 +1600,6 @@ class AppStringsEn extends AppStrings {
   String get exportToPPTX => 'PowerPoint';
   @override
   String get exportToPDF => 'PDF';
-  @override
-  String get withWatermark => 'With watermark';
-  @override
-  String get noWatermark => 'No watermark';
-  @override
-  String get highQuality => 'High quality';
   
   @override
   String get history => 'History';
@@ -1691,4 +1681,7 @@ class AppStringsEn extends AppStrings {
   String get salesDepartment => 'Sales Department';
   @override
   String get contactSalesText => 'Contact us for custom corporate pricing';
+  
+  @override
+  String get prioritySupport => 'Priority support';
 }
