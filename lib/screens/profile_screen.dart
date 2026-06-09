@@ -66,6 +66,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 700),
                   child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       Center(
                         child: Container(
@@ -180,7 +181,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       fontSize: 12,
                                     ),
                                   ),
-                                ),
+                                ],
                               ),
                             ),
                             if (!up.isPremium)
