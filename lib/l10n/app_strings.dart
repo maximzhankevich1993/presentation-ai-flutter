@@ -621,6 +621,12 @@ class AppStrings {
   // ДОПОЛНИТЕЛЬНЫЕ
   // ═══════════════════════════════════════════════════════════════
   String get prioritySupport => 'Приоритетная поддержка';
+  
+  // ═══════════════════════════════════════════════════════════════
+  // НЕДОСТАЮЩИЕ ГЕТТЕРЫ (для ошибок компиляции)
+  // ═══════════════════════════════════════════════════════════════
+  String get education => 'Образование';
+  String get generateReport => 'Создать отчёт';
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1684,4 +1690,9 @@ class AppStringsEn extends AppStrings {
   
   @override
   String get prioritySupport => 'Priority support';
+  
+  @override
+  String get education => 'Education';
+  @override
+  String get generateReport => 'Generate report';
 }
