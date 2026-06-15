@@ -5,7 +5,10 @@ import '../models/presentation.dart';
 import '../models/user.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://presentation-ai-backend.onrender.com/api';
+  // ============================================
+  // ИСПРАВЛЕНО: НОВЫЙ БАЗОВЫЙ URL (Zeabur)
+  // ============================================
+  static const String baseUrl = 'https://prezentator-ai.zeabur.app/api';
   
   static String? _authToken;
   
@@ -184,7 +187,7 @@ class ApiService {
   }
 
   // ============================================
-  // ПРОМОКОДЫ (НОВЫЕ МЕТОДЫ)
+  // ПРОМОКОДЫ
   // ============================================
   
   static Future<Map<String, dynamic>> validatePromoCode(String code) async {
